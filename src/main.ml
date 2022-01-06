@@ -7,18 +7,23 @@ let read_lines chan =
   in
   read_lines_tail chan [] |> List.rev
 
+let check_tv before_graph_lines after_graph_lines _desc =
+  let before_graph = IR.lines_to_graph before_graph_lines in
+  let after_graph = IR.lines_to_graph after_graph_lines in
+  IR.generate_graph_output "before.dot" before_graph;
+  IR.generate_graph_output "after.dot" after_graph
+
 let run_tv filename =
   let lines = open_in filename |> read_lines in
   let reductions = Reduction.get_reductions lines in
   List.iter
-    (fun reduction ->
-      print_endline "reduction phase";
-      List.iter
-        (fun (i, line) ->
-          print_int i;
-          print_char ' ';
-          print_endline line)
-        reduction)
+    (fun (before_graph_lines, after_graph_lines, desc) ->
+      if
+        String.equal desc
+          "- Replacement of #17: Int32Add(32, 33) with #32: \
+           CheckedTaggedSignedToInt32[FeedbackSource(INVALID)](2, 14, 41) by \
+           reducer MachineOperatorReducer"
+      then check_tv before_graph_lines after_graph_lines desc)
     reductions
 
 let main () =

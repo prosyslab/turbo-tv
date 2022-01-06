@@ -1,8 +1,6 @@
 let special_prefix = "- "
 let in_place_prefix = "- In-place update"
 let replacement_prefix = "- Replacement"
-let graph_start_prefix = "- Start Graph"
-let graph_end_prefix = "- End Graph"
 
 let extract_special_lines lines =
   lines
@@ -25,6 +23,18 @@ let is_reduction_occur line =
   String.starts_with ~prefix:in_place_prefix line
   || String.starts_with ~prefix:replacement_prefix line
 
+let get_indices_and_desc reduction =
+  let before_graph_start = List.nth reduction 0 |> fst in
+  let before_graph_end = List.nth reduction 1 |> fst in
+  let after_graph_start = List.nth reduction 3 |> fst in
+  let after_graph_end = List.nth reduction 4 |> fst in
+  let desc = List.nth reduction 2 |> snd in
+  ( before_graph_start,
+    before_graph_end,
+    after_graph_start,
+    after_graph_end,
+    desc )
+
 let get_reductions lines =
   let special_lines = extract_special_lines lines in
   let reductions =
@@ -36,4 +46,27 @@ let get_reductions lines =
            let center = List.nth reduction 2 |> snd in
            is_reduction_occur center)
   in
-  reductions
+  let lines_with_ind = lines |> List.mapi (fun i line -> (i, line)) in
+  List.map
+    (fun reduction ->
+      let ( before_graph_start,
+            before_graph_end,
+            after_graph_start,
+            after_graph_end,
+            desc ) =
+        get_indices_and_desc reduction
+      in
+      let before_graph_lines =
+        lines_with_ind
+        |> List.filteri (fun i _ ->
+               before_graph_start < i && i < before_graph_end)
+        |> List.map (fun (_, line) -> line)
+      in
+      let after_graph_lines =
+        lines_with_ind
+        |> List.filteri (fun i _ ->
+               after_graph_start < i && i < after_graph_end)
+        |> List.map (fun (_, line) -> line)
+      in
+      (before_graph_lines, after_graph_lines, desc))
+    reductions

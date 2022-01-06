@@ -1,3 +1,4 @@
 (executable
  (name main)
- (modules main options reduction))
+ (modules main options reduction opcode IR)
+ (libraries ocamlgraph str))
