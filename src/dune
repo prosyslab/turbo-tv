@@ -1,4 +1,4 @@
 (executable
  (name main)
- (modules main options reduction opcode IR)
- (libraries ocamlgraph str))
+ (modules main options reduction opcode IR tv utils)
+ (libraries core cmdliner ocamlgraph str))

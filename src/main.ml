@@ -1,36 +1,46 @@
-let read_lines chan =
-  let rec read_lines_tail chan lines =
-    try
-      let line = input_line chan in
-      read_lines_tail chan (line :: lines)
-    with End_of_file -> lines
+open Cmdliner
+
+type conf = { target : string; parse_graph : bool; outdir : string }
+
+let jstv_args =
+  (* Arguments *)
+  let target_arg =
+    let doc = "Target for translation validation." in
+    Arg.(required & pos 0 (some string) None & info [] ~docv:"TARGET" ~doc)
   in
-  read_lines_tail chan [] |> List.rev
 
-let check_tv before_graph_lines after_graph_lines _desc =
-  let before_graph = IR.lines_to_graph before_graph_lines in
-  let after_graph = IR.lines_to_graph after_graph_lines in
-  IR.generate_graph_output "before.dot" before_graph;
-  IR.generate_graph_output "after.dot" after_graph
+  let parse_graph_arg =
+    let doc = "Generate parsed graph into OUT directory" in
+    Arg.(value & flag & info [ "parse-graph" ] ~doc)
+  in
 
-let run_tv filename =
-  let lines = open_in filename |> read_lines in
-  let reductions = Reduction.get_reductions lines in
-  List.iter
-    (fun (before_graph_lines, after_graph_lines, desc) ->
-      if
-        String.equal desc
-          "- Replacement of #17: Int32Add(32, 33) with #32: \
-           CheckedTaggedSignedToInt32[FeedbackSource(INVALID)](2, 14, 41) by \
-           reducer MachineOperatorReducer"
-      then check_tv before_graph_lines after_graph_lines desc)
-    reductions
+  let outdir_arg =
+    let doc = "Output directory" in
+    Arg.(value & opt string "./out" & info [ "o"; "out" ] ~docv:"OUTDIR" ~doc)
+  in
+
+  let mk_conf target parse_graph outdir = { target; parse_graph; outdir } in
+  Term.(const mk_conf $ target_arg $ parse_graph_arg $ outdir_arg)
+
+let parse_command_line () =
+  let doc = "Translation validation for TurboFan IR" in
+  let info = Term.info ~doc "turbo-tv" in
+  match Term.eval (jstv_args, info) with
+  | `Error _ -> exit 1
+  | `Version | `Help -> exit 0
+  | `Ok conf -> conf
 
 let main () =
-  Arg.parse []
-    (fun arg ->
-      if Sys.file_exists arg then run_tv arg
-      else Printf.printf "File \"%s\" does not exist\n" arg)
-    Options.usage
+  Printexc.record_backtrace true;
+  let conf = parse_command_line () in
+  let res = Tv.run_tv conf.target conf.parse_graph conf.outdir in
+
+  try res with
+  | Failure msg ->
+      Printf.eprintf "Error: %s\n%!" msg;
+      exit 1
+  | e ->
+      let trace = Printexc.get_backtrace () in
+      Printf.eprintf "Error: exception %s\n%s%!" (Printexc.to_string e) trace
 
 let () = main ()
