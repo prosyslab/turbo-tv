@@ -69,4 +69,4 @@ let get_reductions lines =
         |> List.map (fun (_, line) -> line)
       in
       (before_graph_lines, after_graph_lines, desc))
-    reductions
+    (List.rev reductions)

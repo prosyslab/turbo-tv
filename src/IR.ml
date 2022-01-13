@@ -1,23 +1,23 @@
 module Node = struct
   type id = int
-  type t = id * Opcode.t
+  type t = id * Instr.t
 
   let compare = compare
   let hash = Hashtbl.hash
   let equal = ( = )
-  let create id opcode = (id, Opcode.create opcode)
-  let label (id, opcode) = String.concat "_" [ opcode; string_of_int id ]
+  let create id instr = (id, instr)
+
+  let label (id, instr) =
+    let opcode, operands = instr in
+    String.concat ":"
+      [
+        "#" ^ string_of_int id;
+        Opcode.to_str opcode;
+        Operand.str_of_operands operands;
+      ]
 end
 
 module G = Graph.Persistent.Digraph.ConcreteBidirectional (Node)
-
-let parse_id_and_opcode s =
-  let r = Str.regexp "#\\([0-9]+\\):\\([a-zA-Z0-9]+\\)" in
-  let is_correct = Str.string_match r s 0 in
-  if not is_correct then failwith "Input file does not follow format";
-  let id = Str.matched_group 1 s |> int_of_string in
-  let opcode = Str.matched_group 2 s in
-  (id, opcode)
 
 let extract_edge_string line =
   let check_bracket_match left right =
@@ -48,16 +48,16 @@ let add_edges node egde_string g =
   in
   List.fold_left
     (fun g from_node ->
-      let id, opcode = parse_id_and_opcode from_node in
-      G.add_edge g (Node.create id opcode) node)
+      let id, instr = Instr.parse_instr from_node in
+      G.add_edge g (Node.create id instr) node)
     g from_nodes
 
 let lines_to_graph graph_lines =
   let g = G.empty in
   List.fold_left
     (fun g line ->
-      let id, opcode = parse_id_and_opcode line in
-      let node = Node.create id opcode in
+      let id, instr = Instr.parse_instr line in
+      let node = Node.create id instr in
       let edge_string = extract_edge_string line in
       G.add_vertex g node |> add_edges node edge_string)
     g graph_lines
@@ -68,7 +68,7 @@ module Dot = Graph.Graphviz.Dot (struct
 
   let graph_attributes _ = []
   let default_vertex_attributes _ = []
-  let vertex_name v = Node.label v
+  let vertex_name v = "\"" ^ String.escaped (Node.label v) ^ "\""
   let vertex_attributes _ = [ `Shape `Box ]
   let get_subgraph _ = None
   let default_edge_attributes _ = []
