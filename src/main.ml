@@ -1,6 +1,5 @@
 open Cmdliner
-
-type conf = { target : string; parse_graph : bool; outdir : string }
+open Options
 
 let jstv_args =
   (* Arguments *)
@@ -9,9 +8,14 @@ let jstv_args =
     Arg.(required & pos 0 (some string) None & info [] ~docv:"TARGET" ~doc)
   in
 
-  let parse_graph_arg =
-    let doc = "Generate parsed graph into OUT directory" in
-    Arg.(value & flag & info [ "parse-graph" ] ~doc)
+  let emit_graph_arg =
+    let doc = "Emit graphs of each reduction step into OUT directory" in
+    Arg.(value & flag & info [ "emit-graph" ] ~doc)
+  in
+
+  let emit_reduction_arg =
+    let doc = "Emit reductions of each step into OUT/[id]/reduction.txt" in
+    Arg.(value & flag & info [ "emit-reduction" ] ~doc)
   in
 
   let outdir_arg =
@@ -19,8 +23,12 @@ let jstv_args =
     Arg.(value & opt string "./out" & info [ "o"; "out" ] ~docv:"OUTDIR" ~doc)
   in
 
-  let mk_conf target parse_graph outdir = { target; parse_graph; outdir } in
-  Term.(const mk_conf $ target_arg $ parse_graph_arg $ outdir_arg)
+  let mk_conf target emit_graph emit_reduction outdir =
+    { target; emit_graph; emit_reduction; outdir }
+  in
+  Term.(
+    const mk_conf $ target_arg $ emit_graph_arg $ emit_reduction_arg
+    $ outdir_arg)
 
 let parse_command_line () =
   let doc = "Translation validation for TurboFan IR" in
@@ -33,7 +41,7 @@ let parse_command_line () =
 let main () =
   Printexc.record_backtrace true;
   let conf = parse_command_line () in
-  let res = Tv.run_tv conf.target conf.parse_graph conf.outdir in
+  let res = Tv.run_tv conf in
 
   try res with
   | Failure msg ->

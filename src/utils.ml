@@ -6,3 +6,6 @@ let read_lines chan =
     with End_of_file -> lines
   in
   read_lines_tail chan [] |> List.rev
+
+let write_lines chan lines =
+  List.iter (fun line -> output_string chan (line ^ "\n")) lines
