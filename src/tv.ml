@@ -30,8 +30,8 @@ let run_tv conf =
           after_graph_lines |> Utils.write_lines after_out_chan);
 
         if emit_graph then (
-          let before_graph = IR.lines_to_graph before_graph_lines in
-          let after_graph = IR.lines_to_graph after_graph_lines in
+          let before_graph = IR.create_from before_graph_lines in
+          let after_graph = IR.create_from after_graph_lines in
           let parent = String.concat "/" [ outdir; string_of_int !idx; "" ] in
           Core.Unix.mkdir_p parent ~perm:0o775;
 
