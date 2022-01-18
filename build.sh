@@ -20,5 +20,5 @@ else
 fi
 
 eval $(SHELL=bash opam env --switch=$JSTV_OPAM_SWITCH)
-opam install dune ocamlgraph core cmdliner
+opam install core cmdliner dune ocamlgraph   
 make
