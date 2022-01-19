@@ -27,8 +27,6 @@ end
 
 module RegisterFile = Map.Make (String)
 
-let get_nth_id operands n = List.nth operands n |> IR.parse_id |> string_of_int
-
 let update_register_file id node register_file =
   let instr = IR.Node.instr node in
   let opcode = Instr.opcode instr in
@@ -36,23 +34,24 @@ let update_register_file id node register_file =
   match opcode with
   | Int32Constant | Int64Constant ->
       assert (List.length operands = 1);
-      let n = List.hd operands |> int_of_string in
+      let n = List.hd operands |> Operand.to_int in
       RegisterFile.add id (Value.create_int n) register_file
   | HeapConstant | ExternalConstant ->
       assert (List.length operands = 1);
       let re = Re.Pcre.regexp "(0x[0-9a-f]+)" in
       let addr =
-        Re.Group.get (Re.exec re (List.hd operands)) 1 |> int_of_string
+        Re.Group.get (Re.exec re (List.hd operands |> Operand.to_str)) 1
+        |> int_of_string
       in
       RegisterFile.add id (Value.create_addr addr) register_file
   | Return ->
       assert (List.length operands = 1);
-      let input_id = get_nth_id operands 0 in
+      let input_id = Operand.get_nth_id operands 0 in
       let v = RegisterFile.find input_id register_file in
       RegisterFile.add id v register_file
   | CheckedTaggedSignedToInt32 ->
       assert (List.length operands = 1);
-      let input_id = get_nth_id operands 0 in
+      let input_id = Operand.get_nth_id operands 0 in
       let v =
         match RegisterFile.find input_id register_file with
         | Tagged i -> Value.create_int i
@@ -61,7 +60,7 @@ let update_register_file id node register_file =
       RegisterFile.add id v register_file
   | ChangeInt32ToTagged ->
       assert (List.length operands = 1);
-      let input_id = get_nth_id operands 0 in
+      let input_id = Operand.get_nth_id operands 0 in
       let v =
         match RegisterFile.find input_id register_file with
         | Int i -> Value.create_tagged i
@@ -70,8 +69,8 @@ let update_register_file id node register_file =
       RegisterFile.add id v register_file
   | Int32Add ->
       assert (List.length operands = 2);
-      let left_id = get_nth_id operands 0 in
-      let right_id = get_nth_id operands 1 in
+      let left_id = Operand.get_nth_id operands 0 in
+      let right_id = Operand.get_nth_id operands 1 in
       let left_v = RegisterFile.find left_id register_file in
       let right_v = RegisterFile.find right_id register_file in
       let v = Value.int32add left_v right_v in

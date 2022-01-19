@@ -131,7 +131,7 @@ def gen_match_from_kind(kind):
     match = (
         f"| {kind} ->\n"
         f"  let {kind.lower()}= \n"
-        f"    Re.Group.get(Re.exec {kind.lower()}_re instr) 1 |> Operand.{operand_type}_of_str \n"
+        f"    Re.Group.get(Re.exec {kind.lower()}_re instr) 1 |> Operand.of_{operand_type} \n"
         f"  in \n"
         f"  parse_operand t instr ({kind.lower()}::operands)")
     return match

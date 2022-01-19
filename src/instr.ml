@@ -42,17 +42,17 @@ let create_from instr =
             match k with
             | B1 ->
                 let b1 =
-                  Re.Group.get (Re.exec b1_re instr) 1 |> Operand.const_of_str
+                  Re.Group.get (Re.exec b1_re instr) 1 |> Operand.of_const
                 in
                 parse_operand t instr (b1 :: operands)
             | P1 ->
                 let p1 =
-                  Re.Group.get (Re.exec p1_re instr) 1 |> Operand.id_of_str
+                  Re.Group.get (Re.exec p1_re instr) 1 |> Operand.of_id
                 in
                 parse_operand t instr (p1 :: operands)
             | P2 ->
                 let p2 =
-                  Re.Group.get (Re.exec p2_re instr) 1 |> Operand.id_of_str
+                  Re.Group.get (Re.exec p2_re instr) 1 |> Operand.of_id
                 in
                 parse_operand t instr (p2 :: operands)
             | UNIMPL -> parse_operand [] instr []
