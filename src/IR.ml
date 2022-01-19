@@ -8,6 +8,7 @@ module Node = struct
   let create id instr = (id, instr)
   let empty = (-1, Instr.empty)
   let id (id, _) : id = id
+  let instr (_, instr) : Instr.t = instr
 
   let label node =
     let id, instr = node in
@@ -47,15 +48,14 @@ let find_node id graph =
 let connect_n1_n2 n1 n2 graph =
   G.add_edge graph (find_node n1 graph) (find_node n2 graph)
 
-let create_from graph_lines =
-  let parse_id line =
-    let re = Re.Pcre.regexp "#([0-9]+):" in
-    try Re.Group.get (Re.exec re line) 1 |> int_of_string
-    with Not_found ->
-      let reason = Format.asprintf "Printf.sprintf %a" Re.pp_re re in
-      err (Node_not_found (line, reason))
-  in
+let parse_id line =
+  let re = Re.Pcre.regexp "#([0-9]+):" in
+  try Re.Group.get (Re.exec re line) 1 |> int_of_string
+  with Not_found ->
+    let reason = Format.asprintf "Printf.sprintf %a" Re.pp_re re in
+    err (Node_not_found (line, reason))
 
+let create_from graph_lines =
   let parse_innodes line =
     let check_bracket_match left right =
       match (left, right) with

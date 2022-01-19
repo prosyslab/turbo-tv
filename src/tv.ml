@@ -1,6 +1,11 @@
 open Options
 
-let check_tv _before_graph_lines _after_graph_lines _desc = ()
+let check_tv before_graph_lines _after_graph_lines _desc =
+  let before_graph = IR.create_from before_graph_lines in
+  let before_graph_return_value =
+    Semantics.get_return_value before_graph_lines before_graph
+  in
+  Semantics.print_return_value before_graph_return_value
 
 let run_tv conf =
   let { target; emit_reduction; emit_graph; outdir } = conf in
@@ -20,6 +25,7 @@ let run_tv conf =
            CheckedTaggedSignedToInt32[FeedbackSource(INVALID)](2, 14, 41) by \
            reducer MachineOperatorReducer"
       then (
+        check_tv before_graph_lines after_graph_lines desc;
         if emit_reduction then (
           let parent = String.concat "/" [ outdir; string_of_int !idx; "" ] in
           Core.Unix.mkdir_p parent ~perm:0o775;
@@ -38,6 +44,5 @@ let run_tv conf =
           IR.generate_graph_output (parent ^ "before.dot") before_graph;
           IR.generate_graph_output (parent ^ "after.dot") after_graph));
       idx := !idx + 1;
-      check_tv before_graph_lines after_graph_lines desc;
       print_newline ())
     reductions
