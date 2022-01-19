@@ -20,5 +20,10 @@ else
 fi
 
 eval $(SHELL=bash opam env --switch=$JSTV_OPAM_SWITCH)
-opam install core cmdliner dune ocamlgraph   
+opam install core cmdliner dune ocamlgraph
+
+# generage source codes from `specs/opcodes.spec`
+scripts/spec2ml.py --instr --replace
+scripts/spec2ml.py --opcode --replace
+
 make

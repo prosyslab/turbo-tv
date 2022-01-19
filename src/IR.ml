@@ -5,7 +5,7 @@ module Node = struct
   let compare = compare
   let hash = Hashtbl.hash
   let equal = ( = )
-  let create id instr = (id, instr)
+  let create id instr : t = (id, instr)
   let empty = (-1, Instr.empty)
   let id (id, _) : id = id
   let instr (_, instr) : Instr.t = instr
@@ -15,7 +15,7 @@ module Node = struct
     let opcode = instr |> Instr.opcode in
     let operands = instr |> Instr.operands in
     Printf.sprintf "#%d:%s(%s)" id (Opcode.to_str opcode)
-      (String.concat ", " operands)
+      (Operand.str_of_operands operands)
 end
 
 module G = Graph.Persistent.Digraph.ConcreteBidirectional (Node)
