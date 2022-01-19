@@ -5,6 +5,7 @@ type kind =
   | B1
   | UNIMPL
   | P1P2
+  | P2
   | Empty
 
 type t = 
@@ -12,18 +13,21 @@ type t =
   | Branch  | ChangeInt32ToTagged  | CheckedTaggedSignedToInt32  | StackPointerGreaterThan
   (* b1 *)
   | Call  | ExternalConstant  | HeapConstant  | Int32Constant  | Int64Constant
-  (* UnImpl *)
-  | Checkpoint  | EffectPhi  | End  | FrameState  | IfFalse  | IfTrue  | LoadStackCheckOffset  | Merge  | Parameter  | Return  | Start  | TypedStateValues
+  (* unimpl *)
+  | Checkpoint  | EffectPhi  | End  | FrameState  | IfFalse  | IfTrue  | LoadStackCheckOffset  | Merge  | Parameter  | Start  | TypedStateValues
   (* p1p2 *)
   | Int32Add  | Load
+  (* p2 *)
+  | Return
   | Empty
 
 let get_kind opcode = 
   match opcode with
   | Branch  | ChangeInt32ToTagged  | CheckedTaggedSignedToInt32  | StackPointerGreaterThan -> P1
   | Call  | ExternalConstant  | HeapConstant  | Int32Constant  | Int64Constant -> B1
-  | Checkpoint  | EffectPhi  | End  | FrameState  | IfFalse  | IfTrue  | LoadStackCheckOffset  | Merge  | Parameter  | Return  | Start  | TypedStateValues -> UNIMPL
+  | Checkpoint  | EffectPhi  | End  | FrameState  | IfFalse  | IfTrue  | LoadStackCheckOffset  | Merge  | Parameter  | Start  | TypedStateValues -> UNIMPL
   | Int32Add  | Load -> P1P2
+  | Return -> P2
   | Empty -> Empty 
 
 let empty = Empty
@@ -48,11 +52,11 @@ let of_str str =
   | "LoadStackCheckOffset" ->  LoadStackCheckOffset
   | "Merge" ->  Merge
   | "Parameter" ->  Parameter
-  | "Return" ->  Return
   | "Start" ->  Start
   | "TypedStateValues" ->  TypedStateValues
   | "Int32Add" ->  Int32Add
   | "Load" ->  Load
+  | "Return" ->  Return
   | _ -> raise Invalid_opcode
 
 let to_str opcode = 
@@ -75,10 +79,10 @@ let to_str opcode =
   |  LoadStackCheckOffset -> "LoadStackCheckOffset"
   |  Merge -> "Merge"
   |  Parameter -> "Parameter"
-  |  Return -> "Return"
   |  Start -> "Start"
   |  TypedStateValues -> "TypedStateValues"
   |  Int32Add -> "Int32Add"
   |  Load -> "Load"
+  |  Return -> "Return"
   | Empty -> failwith "Unreachable"
 

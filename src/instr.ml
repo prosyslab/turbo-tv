@@ -60,5 +60,12 @@ let create_from instr =
         |> Array.to_list |> List.tl
       in
       create opcode operands
+  | P2 ->
+      let operands =
+        instr
+        |> parse_operands "(?:\\[[^\\]]*\\]){0,1}\\([^,]*, ([^,]*)[^\\)]*\\)"
+        |> Array.to_list |> List.tl
+      in
+      create opcode operands
   | UNIMPL -> create opcode []
   | _ -> failwith "Unreachable"

@@ -17,7 +17,7 @@ Load,p1,p2
 LoadStackCheckOffset
 Merge
 Parameter
-Return
+Return,p2
 StackPointerGreaterThan,p1
 Start
 TypedStateValues
