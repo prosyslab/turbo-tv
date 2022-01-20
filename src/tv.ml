@@ -1,9 +1,9 @@
 open Options
 
-let check_tv before_graph_lines _after_graph_lines _desc =
+let check_tv before_graph_lines _after_graph_lines params =
   let before_graph = IR.create_from before_graph_lines in
   let before_graph_return_value =
-    Semantics.get_return_value before_graph_lines before_graph
+    Semantics.get_return_value before_graph_lines before_graph params
   in
   Semantics.print_return_value before_graph_return_value
 
@@ -18,10 +18,20 @@ let run_d8 target =
   let chan = Unix.open_process_in cmd in
   Core.In_channel.input_lines chan
 
+let get_params target =
+  let lines = open_in target |> Utils.read_lines in
+  let re =
+    Re.Pcre.regexp
+      "[\\s\\S]*%OptimizeFunctionOnNextCall\\(.*\\);\n.*\\((.*)\\);"
+  in
+  let params = Re.Group.get (String.concat "\n" lines |> Re.exec re) 1 in
+  params |> StringLabels.split_on_char ~sep:',' |> List.map String.trim
+
 let run_tv conf =
   let { target; emit_reduction; emit_graph; outdir } = conf in
 
   let lines = run_d8 target in
+  let params = get_params target in
   let reductions = Reduction.get_reductions lines in
   let idx = ref 1 in
 
@@ -36,7 +46,7 @@ let run_tv conf =
            CheckedTaggedSignedToInt32[FeedbackSource(INVALID)](2, 14, 41) by \
            reducer MachineOperatorReducer"
       then (
-        check_tv before_graph_lines after_graph_lines desc;
+        check_tv before_graph_lines after_graph_lines params;
         if emit_reduction then (
           let parent = String.concat "/" [ outdir; string_of_int !idx; "" ] in
           Core.Unix.mkdir_p parent ~perm:0o775;

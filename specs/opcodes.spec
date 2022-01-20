@@ -599,7 +599,7 @@ ObjectIsUndetectable,
 ObjectState,
 OrdinaryHasInstance,
 OsrValue,
-Parameter,
+Parameter,b1
 ParseInt,
 PerformPromiseThen,
 Phi,

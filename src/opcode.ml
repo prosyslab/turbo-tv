@@ -595,7 +595,6 @@ type t =
   | ObjectState
   | OrdinaryHasInstance
   | OsrValue
-  | Parameter
   | ParseInt
   | PerformPromiseThen
   | Phi
@@ -826,6 +825,7 @@ type t =
   | HeapConstant
   | Int32Constant
   | Int64Constant
+  | Parameter
   (* p1p2 *)
   | Int32Add
   | Load
@@ -980,21 +980,21 @@ let get_kind opcode =
   | ObjectIsInteger | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable
   | ObjectIsNumber | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi
   | ObjectIsString | ObjectIsSymbol | ObjectIsUndetectable | ObjectState
-  | OrdinaryHasInstance | OsrValue | Parameter | ParseInt | PerformPromiseThen
-  | Phi | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber
-  | PlainPrimitiveToWord32 | Plug | PointerConstant | Projection
-  | PromiseResolve | ProtectedLoad | ProtectedStore | ReferenceEqual
-  | RegExpTest | RejectPromise | RelocatableInt32Constant
-  | RelocatableInt64Constant | ResizeMergeOrPhi | ResolvePromise | RestLength
-  | Retain | RoundFloat64ToInt32 | RoundInt32ToFloat32 | RoundInt64ToFloat32
-  | RoundInt64ToFloat64 | RoundUint32ToFloat32 | RoundUint64ToFloat32
-  | RoundUint64ToFloat64 | RuntimeAbort | S128And | S128AndNot | S128Const
-  | S128Not | S128Or | S128Select | S128Xor | S128Zero | SameValue
-  | SameValueNumbersOnly | Select | ShiftLeft | ShiftRight | ShiftRightLogical
-  | SignExtendWord16ToInt32 | SignExtendWord16ToInt64 | SignExtendWord32ToInt64
-  | SignExtendWord8ToInt32 | SignExtendWord8ToInt64 | Simd128ReverseBytes
-  | SpeculativeBigIntAdd | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN
-  | SpeculativeBigIntNegate | SpeculativeBigIntSubtract | SpeculativeNumberAdd
+  | OrdinaryHasInstance | OsrValue | ParseInt | PerformPromiseThen | Phi
+  | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber | PlainPrimitiveToWord32
+  | Plug | PointerConstant | Projection | PromiseResolve | ProtectedLoad
+  | ProtectedStore | ReferenceEqual | RegExpTest | RejectPromise
+  | RelocatableInt32Constant | RelocatableInt64Constant | ResizeMergeOrPhi
+  | ResolvePromise | RestLength | Retain | RoundFloat64ToInt32
+  | RoundInt32ToFloat32 | RoundInt64ToFloat32 | RoundInt64ToFloat64
+  | RoundUint32ToFloat32 | RoundUint64ToFloat32 | RoundUint64ToFloat64
+  | RuntimeAbort | S128And | S128AndNot | S128Const | S128Not | S128Or
+  | S128Select | S128Xor | S128Zero | SameValue | SameValueNumbersOnly | Select
+  | ShiftLeft | ShiftRight | ShiftRightLogical | SignExtendWord16ToInt32
+  | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
+  | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
+  | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
+  | SpeculativeBigIntSubtract | SpeculativeNumberAdd
   | SpeculativeNumberBitwiseAnd | SpeculativeNumberBitwiseOr
   | SpeculativeNumberBitwiseXor | SpeculativeNumberDivide
   | SpeculativeNumberEqual | SpeculativeNumberLessThan
@@ -1046,7 +1046,9 @@ let get_kind opcode =
   | Branch | ChangeInt32ToTagged | ChangeTaggedSignedToInt32
   | CheckedTaggedSignedToInt32 | StackPointerGreaterThan ->
       P1
-  | Call | ExternalConstant | HeapConstant | Int32Constant | Int64Constant -> B1
+  | Call | ExternalConstant | HeapConstant | Int32Constant | Int64Constant
+  | Parameter ->
+      B1
   | Int32Add | Load -> P1P2
   | Return -> P2
   | Empty -> Empty
@@ -1654,7 +1656,6 @@ let of_str str =
   | "ObjectState" -> ObjectState
   | "OrdinaryHasInstance" -> OrdinaryHasInstance
   | "OsrValue" -> OsrValue
-  | "Parameter" -> Parameter
   | "ParseInt" -> ParseInt
   | "PerformPromiseThen" -> PerformPromiseThen
   | "Phi" -> Phi
@@ -1883,6 +1884,7 @@ let of_str str =
   | "HeapConstant" -> HeapConstant
   | "Int32Constant" -> Int32Constant
   | "Int64Constant" -> Int64Constant
+  | "Parameter" -> Parameter
   | "Int32Add" -> Int32Add
   | "Load" -> Load
   | "Return" -> Return
@@ -2480,7 +2482,6 @@ let to_str opcode =
   | ObjectState -> "ObjectState"
   | OrdinaryHasInstance -> "OrdinaryHasInstance"
   | OsrValue -> "OsrValue"
-  | Parameter -> "Parameter"
   | ParseInt -> "ParseInt"
   | PerformPromiseThen -> "PerformPromiseThen"
   | Phi -> "Phi"
@@ -2709,6 +2710,7 @@ let to_str opcode =
   | HeapConstant -> "HeapConstant"
   | Int32Constant -> "Int32Constant"
   | Int64Constant -> "Int64Constant"
+  | Parameter -> "Parameter"
   | Int32Add -> "Int32Add"
   | Load -> "Load"
   | Return -> "Return"
