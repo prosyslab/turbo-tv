@@ -1,3 +1,7 @@
+let project_root =
+  Sys.executable_name |> Filename.dirname |> Filename.dirname
+  |> Filename.dirname |> Filename.dirname |> Filename.dirname
+
 let usage = "Usage: ./jstv [ INPUT_FILE ]"
 
 type conf = {

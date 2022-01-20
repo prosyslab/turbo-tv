@@ -7,10 +7,21 @@ let check_tv before_graph_lines _after_graph_lines _desc =
   in
   Semantics.print_return_value before_graph_return_value
 
+let run_d8 target =
+  let d8_path = Filename.concat (Filename.concat project_root "d8") "d8" in
+  if not (Sys.file_exists d8_path) then failwith "d8 is not exist";
+
+  let cmd =
+    String.concat " "
+      [ d8_path; "--trace-turbo-reduction"; "--allow-natives-syntax"; target ]
+  in
+  let chan = Unix.open_process_in cmd in
+  Core.In_channel.input_lines chan
+
 let run_tv conf =
   let { target; emit_reduction; emit_graph; outdir } = conf in
 
-  let lines = open_in target |> Utils.read_lines in
+  let lines = run_d8 target in
   let reductions = Reduction.get_reductions lines in
   let idx = ref 1 in
 
