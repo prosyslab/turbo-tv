@@ -82,6 +82,7 @@ let update_register_file id node register_file =
   | FrameState | IfFalse | IfTrue | LoadStackCheckOffset | Merge | Start
   | TypedStateValues | Load | Empty ->
       register_file
+  | _ -> failwith "Unimplemented Opcode"
 
 let get_return_value graph_lines graph =
   let register_file = RegisterFile.empty in

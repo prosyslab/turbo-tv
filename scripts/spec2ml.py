@@ -75,7 +75,7 @@ def gen_opcode(opcodes, replace=False):
         get_kind += f" -> {k}\n"
         split_kind += f"| {k} -> [{k if (k == 'UNIMPL') else ';'.join([k[2*i:2*i+2] for i in range(len(k)//2)])}]\n"
         t += "\n"
-
+ 
     t += "  | Empty\n\n"
     get_kind += "  | Empty -> Empty \n\n"
     split_kind += "| Empty -> [Empty]\n"
