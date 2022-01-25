@@ -1,11 +1,17 @@
 open Options
 
-let check_tv before_graph_lines _after_graph_lines params =
+let check_tv before_graph_lines after_graph_lines params =
   let before_graph = IR.create_from before_graph_lines in
   let before_graph_return_value =
     Semantics.get_return_value before_graph_lines before_graph params
   in
-  Semantics.print_return_value before_graph_return_value
+  let after_graph = IR.create_from after_graph_lines in
+  let after_graph_return_value =
+    Semantics.get_return_value after_graph_lines after_graph params
+  in
+  if before_graph_return_value = after_graph_return_value then
+    print_endline "check_tv success!"
+  else print_endline "check_tv fail..."
 
 let run_d8 target =
   let d8_path = Filename.concat (Filename.concat project_root "d8") "d8" in
@@ -46,7 +52,6 @@ let run_tv conf =
            CheckedTaggedSignedToInt32[FeedbackSource(INVALID)](2, 14, 41) by \
            reducer MachineOperatorReducer"
       then (
-        check_tv before_graph_lines after_graph_lines params;
         if emit_reduction then (
           let parent = String.concat "/" [ outdir; string_of_int !idx; "" ] in
           Core.Unix.mkdir_p parent ~perm:0o775;
@@ -65,5 +70,6 @@ let run_tv conf =
           IR.generate_graph_output (parent ^ "before.dot") before_graph;
           IR.generate_graph_output (parent ^ "after.dot") after_graph));
       idx := !idx + 1;
+      check_tv before_graph_lines after_graph_lines params;
       print_newline ())
     reductions

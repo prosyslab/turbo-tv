@@ -1,17 +1,19 @@
 module Node = struct
+  type address = int
   type id = int
-  type t = id * Instr.t
+  type t = address * id * Instr.t
 
   let compare = compare
   let hash = Hashtbl.hash
   let equal = ( = )
-  let create id instr : t = (id, instr)
-  let empty = (-1, Instr.empty)
-  let id (id, _) : id = id
-  let instr (_, instr) : Instr.t = instr
+  let create address id instr : t = (address, id, instr)
+  let empty = (-1, -1, Instr.empty)
+  let address (address, _, _) : address = address
+  let id (_, id, _) : id = id
+  let instr (_, _, instr) : Instr.t = instr
 
   let label node =
-    let id, instr = node in
+    let _, id, instr = node in
     let opcode = instr |> Instr.opcode in
     let operands = instr |> Instr.operands in
     Printf.sprintf "#%d:%s(%s)" id (Opcode.to_str opcode)
@@ -90,15 +92,16 @@ let create_from graph_lines =
   in
 
   let graph = G.empty in
-  List.fold_left
-    (fun g line ->
-      let id = line |> parse_id in
-      let instr = line |> Instr.create_from in
-      let node = Node.create id instr in
-
-      let in_nodes = line |> parse_innodes in
-      G.add_vertex g node |> connect_inedges id in_nodes)
-    graph graph_lines
+  graph_lines
+  |> List.mapi (fun i line -> (i, line))
+  |> List.fold_left
+       (fun g (i, line) ->
+         let id = line |> parse_id in
+         let instr = line |> Instr.create_from in
+         let node = Node.create i id instr in
+         let in_nodes = line |> parse_innodes in
+         G.add_vertex g node |> connect_inedges id in_nodes)
+       graph
 
 (** Graph Visualization *)
 module Dot = Graph.Graphviz.Dot (struct

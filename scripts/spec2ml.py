@@ -34,15 +34,14 @@ def print_in_format(src):
     with open(tmp, "w") as tmp_out:
         tmp_out.write(src)
 
-    subprocess.run(
-        f"ocamlformat --enable-outside-detected-project {tmp}", shell=True)
+    subprocess.run(f"ocamlformat --enable-outside-detected-project {tmp}",
+                   shell=True)
 
 
 def save_in_format(src, dst_p):
     with open(dst_p, "w") as out:
         out.write(src)
-    subprocess.run(
-        f"ocamlformat -i {dst_p}", shell=True)
+    subprocess.run(f"ocamlformat -i {dst_p}", shell=True)
 
 
 def gen_opcode(opcodes, replace=False):
@@ -75,8 +74,9 @@ def gen_opcode(opcodes, replace=False):
         get_kind += f" -> {k}\n"
         split_kind += f"| {k} -> [{k if (k == 'UNIMPL') else ';'.join([k[2*i:2*i+2] for i in range(len(k)//2)])}]\n"
         t += "\n"
- 
-    t += "  | Empty\n\n"
+
+    t += ("  | Empty\n"
+          "[@@deriving equal]\n\n")
     get_kind += "  | Empty -> Empty \n\n"
     split_kind += "| Empty -> [Empty]\n"
     of_str += "  | _ -> raise Invalid_opcode\n\n"
@@ -84,8 +84,12 @@ def gen_opcode(opcodes, replace=False):
     split_kind += "\n\n"
 
     opcode_tmpl = open(TMPL_PATH / "opcode.mlt").read()
-    opcode_gen = opcode_tmpl.format(
-        kind=kind, t=t, get_kind=get_kind, split_kind=split_kind, of_str=of_str, to_str=to_str)
+    opcode_gen = opcode_tmpl.format(kind=kind,
+                                    t=t,
+                                    get_kind=get_kind,
+                                    split_kind=split_kind,
+                                    of_str=of_str,
+                                    to_str=to_str)
 
     if replace:
         save_in_format(opcode_gen, SRC_PATH / "opcode.ml")
@@ -94,7 +98,9 @@ def gen_opcode(opcodes, replace=False):
 
 
 def split_kind(kind):
-    return [kind] if (kind == 'UNIMPL') else [kind[2*i:2*i+2] for i in range(len(kind)//2)]
+    return [kind] if (kind == 'UNIMPL') else [
+        kind[2 * i:2 * i + 2] for i in range(len(kind) // 2)
+    ]
 
 
 def gen_re_from_kind(kind):
@@ -114,7 +120,7 @@ def gen_re_from_kind(kind):
     operand_kind = kind[0].upper()
     operand_pos = int(kind[1])
 
-    skips_re = skip_re * (operand_pos-1)
+    skips_re = skip_re * (operand_pos - 1)
 
     if operand_kind == "B":
         re = f"let {kind.lower()}_re = Re.Pcre.regexp \"{b_re_prefix}{skips_re}{b_operand_re}{b_re_suffix}{p_re_prefix}{p_re_suffix}\" in"
@@ -140,17 +146,21 @@ def gen_match_from_kind(kind):
 def gen_instr(opcodes, replace=False):
     '''Generate the part of `src/instr.ml` from `specs/opcodes.spec`'''
     unique_kinds = set(
-        reduce(lambda r, k: r+split_kind(k), opcodes.keys(), []))
+        reduce(lambda r, k: r + split_kind(k), opcodes.keys(), []))
     unique_kinds = dict({k: {} for k in unique_kinds})
 
     for kind in unique_kinds.keys():
         unique_kinds[kind]["re"] = gen_re_from_kind(kind)
         unique_kinds[kind]["match"] = gen_match_from_kind(kind)
 
-    kinds_re = "\n".join(
-        [v["re"] if k != "UNIMPL" else "" for k, v in sorted(unique_kinds.items())])
-    kinds_match = "\n".join([v["match"] if k != "UNIMPL" else "" for k,
-                             v in sorted(unique_kinds.items())])
+    kinds_re = "\n".join([
+        v["re"] if k != "UNIMPL" else ""
+        for k, v in sorted(unique_kinds.items())
+    ])
+    kinds_match = "\n".join([
+        v["match"] if k != "UNIMPL" else ""
+        for k, v in sorted(unique_kinds.items())
+    ])
     kinds_match += ("| UNIMPL -> parse_operand [] instr []\n"
                     "|_ -> failwith \"Unreachable\"\n")
 
@@ -166,8 +176,7 @@ def gen_instr(opcodes, replace=False):
         "let reason = \"Cannot parse operands\" in\n"
         "err instr reason)\n"
         "| [] -> List.rev operands\n"
-        "in\n"
-    )
+        "in\n")
 
     instr_tmpl = open(TMPL_PATH / "instr.mlt", "r").read()
     instr_gen = instr_tmpl.format(parse_operand=parse_operand)
@@ -181,16 +190,18 @@ def gen_instr(opcodes, replace=False):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--opcode", action="store_true",
+    parser.add_argument("--opcode",
+                        action="store_true",
                         help="Generate opcode.ml")
-    parser.add_argument("--instr", action="store_true",
+    parser.add_argument("--instr",
+                        action="store_true",
                         help="Generate instr.ml")
     parser.add_argument("--replace", default=False, action="store_true")
 
     args = parser.parse_args()
 
-    spec_p = (Path(__file__).parent.parent /
-              "specs" / "opcodes.spec").resolve()
+    spec_p = (Path(__file__).parent.parent / "specs" /
+              "opcodes.spec").resolve()
     spec = read_spec(spec_p)
 
     if args.opcode:

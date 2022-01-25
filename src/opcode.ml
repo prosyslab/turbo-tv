@@ -832,6 +832,7 @@ type t =
   (* p2 *)
   | Return
   | Empty
+[@@deriving equal]
 
 let get_kind opcode =
   match opcode with
