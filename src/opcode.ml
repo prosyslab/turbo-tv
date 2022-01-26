@@ -6,16 +6,12 @@ type kind = UNIMPL | P1 | B1 | P1P2 | P2 | Empty
 type t =
   (* unimpl *)
   | AbortCSADcheck
-  | Add
   | Allocate
   | AllocateRaw
   | ArgumentsElementsState
   | ArgumentsLength
   | ArgumentsLengthState
   | AssertType
-  | AsyncFunctionEnter
-  | AsyncFunctionReject
-  | AsyncFunctionResolve
   | BeginRegion
   | BigIntAdd
   | BigIntNegate
@@ -30,15 +26,7 @@ type t =
   | BitcastWord32ToWord64
   | BitcastWordToTagged
   | BitcastWordToTaggedSigned
-  | BitwiseAnd
-  | BitwiseNot
-  | BitwiseOr
-  | BitwiseXor
   | BooleanNot
-  | CallForwardVarargs
-  | CallRuntime
-  | CallWasm
-  | CallWithArrayLike
   | ChangeBitToTagged
   | ChangeFloat32ToFloat64
   | ChangeFloat64ToInt32
@@ -106,59 +94,24 @@ type t =
   | CheckedUint64ToInt32
   | CheckedUint64ToTaggedSigned
   | Checkpoint
-  | CloneObject
   | Comment
   | CompareMaps
   | CompressedHeapConstant
-  | ConstructForwardVarargs
-  | ConstructWithArrayLike
   | ConvertReceiver
   | ConvertTaggedHoleToUndefined
-  | Create
-  | CreateArguments
-  | CreateArray
-  | CreateArrayFromIterable
-  | CreateArrayIterator
-  | CreateAsyncFunctionObject
-  | CreateBlockContext
-  | CreateBoundFunction
-  | CreateCatchContext
-  | CreateClosure
-  | CreateCollectionIterator
-  | CreateEmptyLiteralArray
-  | CreateEmptyLiteralObject
-  | CreateFunctionContext
-  | CreateGeneratorObject
-  | CreateIterResultObject
-  | CreateKeyValueArray
-  | CreateLiteralArray
-  | CreateLiteralObject
-  | CreateLiteralRegExp
-  | CreateObject
-  | CreatePromise
-  | CreateStringIterator
-  | CreateTypedArray
-  | CreateWithContext
   | DateNow
   | Dead
   | DeadValue
   | DebugBreak
-  | Debugger
-  | Decrement
-  | DefineProperty
   | DelayedStringConstant
-  | DeleteProperty
   | Deoptimize
   | DeoptimizeIf
   | DeoptimizeUnless
-  | Divide
   | DynamicCheckMaps
   | DynamicCheckMapsWithDeoptUnless
   | EffectPhi
   | End
   | EnsureWritableFastElements
-  | Equal
-  | Exponentiate
   | F32x4Abs
   | F32x4Add
   | F32x4Ceil
@@ -277,25 +230,7 @@ type t =
   | Float64Tan
   | Float64Tanh
   | FoldConstant
-  | ForInEnumerate
-  | ForInNext
-  | ForInPrepare
   | FrameState
-  | FulfillPromise
-  | GeneratorRestoreContext
-  | GeneratorRestoreContinuation
-  | GeneratorRestoreInputOrDebugPos
-  | GeneratorRestoreRegister
-  | GeneratorStore
-  | GetImportMeta
-  | GetIterator
-  | GetSuperConstructor
-  | GetTemplateObject
-  | GreaterThan
-  | GreaterThanOrEqual
-  | HasContextExtension
-  | HasInPrototypeChain
-  | HasProperty
   | I16x8Abs
   | I16x8Add
   | I16x8AddSatS
@@ -450,9 +385,8 @@ type t =
   | IfSuccess
   | IfTrue
   | IfValue
-  | Increment
   | InductionVariablePhi
-  | InstanceOf
+  | InitializeImmutableInObject
   | Int32AddWithOverflow
   | Int32Div
   | Int32LessThan
@@ -475,24 +409,126 @@ type t =
   | Int64Mul
   | Int64Sub
   | Int64SubWithOverflow
-  | LessThan
-  | LessThanOrEqual
-  | LoadContext
+  | JSAdd
+  | JSAsyncFunctionEnter
+  | JSAsyncFunctionReject
+  | JSAsyncFunctionResolve
+  | JSBitwiseAnd
+  | JSBitwiseNot
+  | JSBitwiseOr
+  | JSBitwiseXor
+  | JSCallForwardVarargs
+  | JSCallRuntime
+  | JSCallWasm
+  | JSCallWithArrayLike
+  | JSCloneObject
+  | JSConstructForwardVarargs
+  | JSConstructWithArrayLike
+  | JSCreate
+  | JSCreateArguments
+  | JSCreateArray
+  | JSCreateArrayFromIterable
+  | JSCreateArrayIterator
+  | JSCreateAsyncFunctionObject
+  | JSCreateBlockContext
+  | JSCreateBoundFunction
+  | JSCreateCatchContext
+  | JSCreateClosure
+  | JSCreateCollectionIterator
+  | JSCreateEmptyLiteralArray
+  | JSCreateEmptyLiteralObject
+  | JSCreateFunctionContext
+  | JSCreateGeneratorObject
+  | JSCreateIterResultObject
+  | JSCreateKeyValueArray
+  | JSCreateLiteralArray
+  | JSCreateLiteralObject
+  | JSCreateLiteralRegExp
+  | JSCreateObject
+  | JSCreatePromise
+  | JSCreateStringIterator
+  | JSCreateTypedArray
+  | JSCreateWithContext
+  | JSDebugger
+  | JSDecrement
+  | JSDefineProperty
+  | JSDeleteProperty
+  | JSDivide
+  | JSEqual
+  | JSExponentiate
+  | JSForInEnumerate
+  | JSForInNext
+  | JSForInPrepare
+  | JSFulfillPromise
+  | JSGeneratorRestoreContext
+  | JSGeneratorRestoreContinuation
+  | JSGeneratorRestoreInputOrDebugPos
+  | JSGeneratorRestoreRegister
+  | JSGeneratorStore
+  | JSGetImportMeta
+  | JSGetIterator
+  | JSGetSuperConstructor
+  | JSGetTemplateObject
+  | JSGreaterThan
+  | JSGreaterThanOrEqual
+  | JSHasContextExtension
+  | JSHasInPrototypeChain
+  | JSHasProperty
+  | JSIncrement
+  | JSInstanceOf
+  | JSLessThan
+  | JSLessThanOrEqual
+  | JSLoadContext
+  | JSLoadGlobal
+  | JSLoadMessage
+  | JSLoadModule
+  | JSLoadNamed
+  | JSLoadNamedFromSuper
+  | JSLoadProperty
+  | JSModulus
+  | JSMultiply
+  | JSNegate
+  | JSObjectIsArray
+  | JSOrdinaryHasInstance
+  | JSParseInt
+  | JSPerformPromiseThen
+  | JSPromiseResolve
+  | JSRegExpTest
+  | JSRejectPromise
+  | JSResolvePromise
+  | JSShiftLeft
+  | JSShiftRight
+  | JSShiftRightLogical
+  | JSStackCheck
+  | JSStoreContext
+  | JSStoreDataPropertyInLiteral
+  | JSStoreGlobal
+  | JSStoreInArrayLiteral
+  | JSStoreMessage
+  | JSStoreModule
+  | JSStoreNamed
+  | JSStoreNamedOwn
+  | JSStoreProperty
+  | JSStrictEqual
+  | JSSubtract
+  | JSToLength
+  | JSToName
+  | JSToNumber
+  | JSToNumberConvertBigInt
+  | JSToNumeric
+  | JSToObject
+  | JSToString
   | LoadDataViewElement
   | LoadElement
   | LoadField
   | LoadFieldByIndex
   | LoadFramePointer
   | LoadFromObject
-  | LoadGlobal
   | LoadImmutable
+  | LoadImmutableFromObject
   | LoadLane
   | LoadMessage
-  | LoadModule
-  | LoadNamed
-  | LoadNamedFromSuper
   | LoadParentFramePointer
-  | LoadProperty
   | LoadStackArgument
   | LoadStackCheckOffset
   | LoadTransform
@@ -505,9 +541,6 @@ type t =
   | MaybeGrowFastElements
   | MemBarrier
   | Merge
-  | Modulus
-  | Multiply
-  | Negate
   | NewArgumentsElements
   | NewConsString
   | NewDoubleElements
@@ -574,7 +607,6 @@ type t =
   | NumberToUint8Clamped
   | NumberTrunc
   | ObjectId
-  | ObjectIsArray
   | ObjectIsArrayBufferView
   | ObjectIsBigInt
   | ObjectIsCallable
@@ -593,10 +625,7 @@ type t =
   | ObjectIsSymbol
   | ObjectIsUndetectable
   | ObjectState
-  | OrdinaryHasInstance
   | OsrValue
-  | ParseInt
-  | PerformPromiseThen
   | Phi
   | PlainPrimitiveToFloat64
   | PlainPrimitiveToNumber
@@ -604,16 +633,12 @@ type t =
   | Plug
   | PointerConstant
   | Projection
-  | PromiseResolve
   | ProtectedLoad
   | ProtectedStore
   | ReferenceEqual
-  | RegExpTest
-  | RejectPromise
   | RelocatableInt32Constant
   | RelocatableInt64Constant
   | ResizeMergeOrPhi
-  | ResolvePromise
   | RestLength
   | Retain
   | RoundFloat64ToInt32
@@ -635,9 +660,6 @@ type t =
   | SameValue
   | SameValueNumbersOnly
   | Select
-  | ShiftLeft
-  | ShiftRight
-  | ShiftRightLogical
   | SignExtendWord16ToInt32
   | SignExtendWord16ToInt64
   | SignExtendWord32ToInt64
@@ -667,29 +689,19 @@ type t =
   | SpeculativeSafeIntegerAdd
   | SpeculativeSafeIntegerSubtract
   | SpeculativeToNumber
-  | StackCheck
   | StackSlot
   | Start
   | StateValues
   | StaticAssert
   | Store
-  | StoreContext
-  | StoreDataPropertyInLiteral
   | StoreDataViewElement
   | StoreElement
   | StoreField
-  | StoreGlobal
-  | StoreInArrayLiteral
   | StoreLane
   | StoreMessage
-  | StoreModule
-  | StoreNamed
-  | StoreNamedOwn
-  | StoreProperty
   | StoreSignedSmallElement
   | StoreToObject
   | StoreTypedElement
-  | StrictEqual
   | StringCharCodeAt
   | StringCodePointAt
   | StringConcat
@@ -705,7 +717,6 @@ type t =
   | StringToLowerCaseIntl
   | StringToNumber
   | StringToUpperCaseIntl
-  | Subtract
   | Switch
   | TaggedIndexConstant
   | TailCall
@@ -713,13 +724,6 @@ type t =
   | Throw
   | TierUpCheck
   | ToBoolean
-  | ToLength
-  | ToName
-  | ToNumber
-  | ToNumberConvertBigInt
-  | ToNumeric
-  | ToObject
-  | ToString
   | TransitionAndStoreElement
   | TransitionAndStoreNonNumberElement
   | TransitionAndStoreNumberElement
@@ -757,6 +761,7 @@ type t =
   | Uint64Mod
   | UnalignedLoad
   | UnalignedStore
+  | Unreachable
   | UnsafePointerAdd
   | UpdateInterruptBudget
   | V128AnyTrue
@@ -836,27 +841,25 @@ type t =
 
 let get_kind opcode =
   match opcode with
-  | AbortCSADcheck | Add | Allocate | AllocateRaw | ArgumentsElementsState
-  | ArgumentsLength | ArgumentsLengthState | AssertType | AsyncFunctionEnter
-  | AsyncFunctionReject | AsyncFunctionResolve | BeginRegion | BigIntAdd
-  | BigIntNegate | BigIntSubtract | BitcastFloat32ToInt32
+  | AbortCSADcheck | Allocate | AllocateRaw | ArgumentsElementsState
+  | ArgumentsLength | ArgumentsLengthState | AssertType | BeginRegion
+  | BigIntAdd | BigIntNegate | BigIntSubtract | BitcastFloat32ToInt32
   | BitcastFloat64ToInt64 | BitcastInt32ToFloat32 | BitcastInt64ToFloat64
   | BitcastMaybeObjectToWord | BitcastTaggedToWord
   | BitcastTaggedToWordForTagAndSmiBits | BitcastWord32ToWord64
-  | BitcastWordToTagged | BitcastWordToTaggedSigned | BitwiseAnd | BitwiseNot
-  | BitwiseOr | BitwiseXor | BooleanNot | CallForwardVarargs | CallRuntime
-  | CallWasm | CallWithArrayLike | ChangeBitToTagged | ChangeFloat32ToFloat64
-  | ChangeFloat64ToInt32 | ChangeFloat64ToInt64 | ChangeFloat64ToTagged
-  | ChangeFloat64ToTaggedPointer | ChangeFloat64ToUint32 | ChangeFloat64ToUint64
-  | ChangeInt31ToTaggedSigned | ChangeInt32ToFloat64 | ChangeInt32ToInt64
-  | ChangeInt64ToBigInt | ChangeInt64ToFloat64 | ChangeInt64ToTagged
-  | ChangeTaggedSignedToInt64 | ChangeTaggedToBit | ChangeTaggedToFloat64
-  | ChangeTaggedToInt32 | ChangeTaggedToInt64 | ChangeTaggedToTaggedSigned
-  | ChangeTaggedToUint32 | ChangeUint32ToFloat64 | ChangeUint32ToTagged
-  | ChangeUint32ToUint64 | ChangeUint64ToBigInt | ChangeUint64ToTagged
-  | CheckBigInt | CheckBounds | CheckClosure | CheckEqualsInternalizedString
-  | CheckEqualsSymbol | CheckFloat64Hole | CheckHeapObject
-  | CheckInternalizedString | CheckNotTaggedHole | CheckNumber | CheckReceiver
+  | BitcastWordToTagged | BitcastWordToTaggedSigned | BooleanNot
+  | ChangeBitToTagged | ChangeFloat32ToFloat64 | ChangeFloat64ToInt32
+  | ChangeFloat64ToInt64 | ChangeFloat64ToTagged | ChangeFloat64ToTaggedPointer
+  | ChangeFloat64ToUint32 | ChangeFloat64ToUint64 | ChangeInt31ToTaggedSigned
+  | ChangeInt32ToFloat64 | ChangeInt32ToInt64 | ChangeInt64ToBigInt
+  | ChangeInt64ToFloat64 | ChangeInt64ToTagged | ChangeTaggedSignedToInt64
+  | ChangeTaggedToBit | ChangeTaggedToFloat64 | ChangeTaggedToInt32
+  | ChangeTaggedToInt64 | ChangeTaggedToTaggedSigned | ChangeTaggedToUint32
+  | ChangeUint32ToFloat64 | ChangeUint32ToTagged | ChangeUint32ToUint64
+  | ChangeUint64ToBigInt | ChangeUint64ToTagged | CheckBigInt | CheckBounds
+  | CheckClosure | CheckEqualsInternalizedString | CheckEqualsSymbol
+  | CheckFloat64Hole | CheckHeapObject | CheckInternalizedString
+  | CheckNotTaggedHole | CheckNumber | CheckReceiver
   | CheckReceiverOrNullOrUndefined | CheckSmi | CheckString | CheckSymbol
   | CheckedFloat64ToInt32 | CheckedFloat64ToInt64 | CheckedInt32Add
   | CheckedInt32Div | CheckedInt32Mod | CheckedInt32Mul | CheckedInt32Sub
@@ -867,21 +870,11 @@ let get_kind opcode =
   | CheckedTruncateTaggedToWord32 | CheckedUint32Bounds | CheckedUint32Div
   | CheckedUint32Mod | CheckedUint32ToInt32 | CheckedUint32ToTaggedSigned
   | CheckedUint64Bounds | CheckedUint64ToInt32 | CheckedUint64ToTaggedSigned
-  | Checkpoint | CloneObject | Comment | CompareMaps | CompressedHeapConstant
-  | ConstructForwardVarargs | ConstructWithArrayLike | ConvertReceiver
-  | ConvertTaggedHoleToUndefined | Create | CreateArguments | CreateArray
-  | CreateArrayFromIterable | CreateArrayIterator | CreateAsyncFunctionObject
-  | CreateBlockContext | CreateBoundFunction | CreateCatchContext
-  | CreateClosure | CreateCollectionIterator | CreateEmptyLiteralArray
-  | CreateEmptyLiteralObject | CreateFunctionContext | CreateGeneratorObject
-  | CreateIterResultObject | CreateKeyValueArray | CreateLiteralArray
-  | CreateLiteralObject | CreateLiteralRegExp | CreateObject | CreatePromise
-  | CreateStringIterator | CreateTypedArray | CreateWithContext | DateNow | Dead
-  | DeadValue | DebugBreak | Debugger | Decrement | DefineProperty
-  | DelayedStringConstant | DeleteProperty | Deoptimize | DeoptimizeIf
-  | DeoptimizeUnless | Divide | DynamicCheckMaps
-  | DynamicCheckMapsWithDeoptUnless | EffectPhi | End
-  | EnsureWritableFastElements | Equal | Exponentiate | F32x4Abs | F32x4Add
+  | Checkpoint | Comment | CompareMaps | CompressedHeapConstant
+  | ConvertReceiver | ConvertTaggedHoleToUndefined | DateNow | Dead | DeadValue
+  | DebugBreak | DelayedStringConstant | Deoptimize | DeoptimizeIf
+  | DeoptimizeUnless | DynamicCheckMaps | DynamicCheckMapsWithDeoptUnless
+  | EffectPhi | End | EnsureWritableFastElements | F32x4Abs | F32x4Add
   | F32x4Ceil | F32x4DemoteF64x2Zero | F32x4Div | F32x4Eq | F32x4ExtractLane
   | F32x4Floor | F32x4Le | F32x4Lt | F32x4Max | F32x4Min | F32x4Mul | F32x4Ne
   | F32x4NearestInt | F32x4Neg | F32x4Pmax | F32x4Pmin | F32x4Qfma | F32x4Qfms
@@ -906,14 +899,9 @@ let get_kind opcode =
   | Float64Log | Float64Log10 | Float64Log1p | Float64Log2 | Float64Max
   | Float64Min | Float64Mod | Float64Mul | Float64Neg | Float64Pow
   | Float64SilenceNaN | Float64Sin | Float64Sinh | Float64Sqrt | Float64Sub
-  | Float64Tan | Float64Tanh | FoldConstant | ForInEnumerate | ForInNext
-  | ForInPrepare | FrameState | FulfillPromise | GeneratorRestoreContext
-  | GeneratorRestoreContinuation | GeneratorRestoreInputOrDebugPos
-  | GeneratorRestoreRegister | GeneratorStore | GetImportMeta | GetIterator
-  | GetSuperConstructor | GetTemplateObject | GreaterThan | GreaterThanOrEqual
-  | HasContextExtension | HasInPrototypeChain | HasProperty | I16x8Abs
-  | I16x8Add | I16x8AddSatS | I16x8AddSatU | I16x8AllTrue | I16x8BitMask
-  | I16x8Eq | I16x8ExtAddPairwiseI8x16S | I16x8ExtAddPairwiseI8x16U
+  | Float64Tan | Float64Tanh | FoldConstant | FrameState | I16x8Abs | I16x8Add
+  | I16x8AddSatS | I16x8AddSatU | I16x8AllTrue | I16x8BitMask | I16x8Eq
+  | I16x8ExtAddPairwiseI8x16S | I16x8ExtAddPairwiseI8x16U
   | I16x8ExtMulHighI8x16S | I16x8ExtMulHighI8x16U | I16x8ExtMulLowI8x16S
   | I16x8ExtMulLowI8x16U | I16x8ExtractLaneS | I16x8ExtractLaneU | I16x8GeS
   | I16x8GeU | I16x8GtS | I16x8GtU | I16x8MaxS | I16x8MaxU | I16x8MinS
@@ -948,20 +936,48 @@ let get_kind opcode =
   | I8x16RoundingAverageU | I8x16SConvertI16x8 | I8x16Shl | I8x16ShrS
   | I8x16ShrU | I8x16Shuffle | I8x16Splat | I8x16Sub | I8x16SubSatS
   | I8x16SubSatU | I8x16Swizzle | I8x16UConvertI16x8 | IfDefault | IfException
-  | IfFalse | IfSuccess | IfTrue | IfValue | Increment | InductionVariablePhi
-  | InstanceOf | Int32AddWithOverflow | Int32Div | Int32LessThan
-  | Int32LessThanOrEqual | Int32Mod | Int32Mul | Int32MulHigh
+  | IfFalse | IfSuccess | IfTrue | IfValue | InductionVariablePhi
+  | InitializeImmutableInObject | Int32AddWithOverflow | Int32Div
+  | Int32LessThan | Int32LessThanOrEqual | Int32Mod | Int32Mul | Int32MulHigh
   | Int32MulWithOverflow | Int32PairAdd | Int32PairMul | Int32PairSub | Int32Sub
   | Int32SubWithOverflow | Int64Add | Int64AddWithOverflow | Int64Div
   | Int64LessThan | Int64LessThanOrEqual | Int64Mod | Int64Mul | Int64Sub
-  | Int64SubWithOverflow | LessThan | LessThanOrEqual | LoadContext
-  | LoadDataViewElement | LoadElement | LoadField | LoadFieldByIndex
-  | LoadFramePointer | LoadFromObject | LoadGlobal | LoadImmutable | LoadLane
-  | LoadMessage | LoadModule | LoadNamed | LoadNamedFromSuper
-  | LoadParentFramePointer | LoadProperty | LoadStackArgument
-  | LoadStackCheckOffset | LoadTransform | LoadTypedElement | Loop | LoopExit
-  | LoopExitEffect | LoopExitValue | MapGuard | MaybeGrowFastElements
-  | MemBarrier | Merge | Modulus | Multiply | Negate | NewArgumentsElements
+  | Int64SubWithOverflow | JSAdd | JSAsyncFunctionEnter | JSAsyncFunctionReject
+  | JSAsyncFunctionResolve | JSBitwiseAnd | JSBitwiseNot | JSBitwiseOr
+  | JSBitwiseXor | JSCallForwardVarargs | JSCallRuntime | JSCallWasm
+  | JSCallWithArrayLike | JSCloneObject | JSConstructForwardVarargs
+  | JSConstructWithArrayLike | JSCreate | JSCreateArguments | JSCreateArray
+  | JSCreateArrayFromIterable | JSCreateArrayIterator
+  | JSCreateAsyncFunctionObject | JSCreateBlockContext | JSCreateBoundFunction
+  | JSCreateCatchContext | JSCreateClosure | JSCreateCollectionIterator
+  | JSCreateEmptyLiteralArray | JSCreateEmptyLiteralObject
+  | JSCreateFunctionContext | JSCreateGeneratorObject | JSCreateIterResultObject
+  | JSCreateKeyValueArray | JSCreateLiteralArray | JSCreateLiteralObject
+  | JSCreateLiteralRegExp | JSCreateObject | JSCreatePromise
+  | JSCreateStringIterator | JSCreateTypedArray | JSCreateWithContext
+  | JSDebugger | JSDecrement | JSDefineProperty | JSDeleteProperty | JSDivide
+  | JSEqual | JSExponentiate | JSForInEnumerate | JSForInNext | JSForInPrepare
+  | JSFulfillPromise | JSGeneratorRestoreContext
+  | JSGeneratorRestoreContinuation | JSGeneratorRestoreInputOrDebugPos
+  | JSGeneratorRestoreRegister | JSGeneratorStore | JSGetImportMeta
+  | JSGetIterator | JSGetSuperConstructor | JSGetTemplateObject | JSGreaterThan
+  | JSGreaterThanOrEqual | JSHasContextExtension | JSHasInPrototypeChain
+  | JSHasProperty | JSIncrement | JSInstanceOf | JSLessThan | JSLessThanOrEqual
+  | JSLoadContext | JSLoadGlobal | JSLoadMessage | JSLoadModule | JSLoadNamed
+  | JSLoadNamedFromSuper | JSLoadProperty | JSModulus | JSMultiply | JSNegate
+  | JSObjectIsArray | JSOrdinaryHasInstance | JSParseInt | JSPerformPromiseThen
+  | JSPromiseResolve | JSRegExpTest | JSRejectPromise | JSResolvePromise
+  | JSShiftLeft | JSShiftRight | JSShiftRightLogical | JSStackCheck
+  | JSStoreContext | JSStoreDataPropertyInLiteral | JSStoreGlobal
+  | JSStoreInArrayLiteral | JSStoreMessage | JSStoreModule | JSStoreNamed
+  | JSStoreNamedOwn | JSStoreProperty | JSStrictEqual | JSSubtract | JSToLength
+  | JSToName | JSToNumber | JSToNumberConvertBigInt | JSToNumeric | JSToObject
+  | JSToString | LoadDataViewElement | LoadElement | LoadField
+  | LoadFieldByIndex | LoadFramePointer | LoadFromObject | LoadImmutable
+  | LoadImmutableFromObject | LoadLane | LoadMessage | LoadParentFramePointer
+  | LoadStackArgument | LoadStackCheckOffset | LoadTransform | LoadTypedElement
+  | Loop | LoopExit | LoopExitEffect | LoopExitValue | MapGuard
+  | MaybeGrowFastElements | MemBarrier | Merge | NewArgumentsElements
   | NewConsString | NewDoubleElements | NewSmiOrObjectElements | NumberAbs
   | NumberAcos | NumberAcosh | NumberAdd | NumberAsin | NumberAsinh | NumberAtan
   | NumberAtan2 | NumberAtanh | NumberBitwiseAnd | NumberBitwiseOr
@@ -976,22 +992,20 @@ let get_kind opcode =
   | NumberSilenceNaN | NumberSin | NumberSinh | NumberSqrt | NumberSubtract
   | NumberTan | NumberTanh | NumberToBoolean | NumberToInt32 | NumberToString
   | NumberToUint32 | NumberToUint8Clamped | NumberTrunc | ObjectId
-  | ObjectIsArray | ObjectIsArrayBufferView | ObjectIsBigInt | ObjectIsCallable
+  | ObjectIsArrayBufferView | ObjectIsBigInt | ObjectIsCallable
   | ObjectIsConstructor | ObjectIsDetectableCallable | ObjectIsFiniteNumber
   | ObjectIsInteger | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable
   | ObjectIsNumber | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi
   | ObjectIsString | ObjectIsSymbol | ObjectIsUndetectable | ObjectState
-  | OrdinaryHasInstance | OsrValue | ParseInt | PerformPromiseThen | Phi
-  | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber | PlainPrimitiveToWord32
-  | Plug | PointerConstant | Projection | PromiseResolve | ProtectedLoad
-  | ProtectedStore | ReferenceEqual | RegExpTest | RejectPromise
+  | OsrValue | Parameter | Phi | PlainPrimitiveToFloat64
+  | PlainPrimitiveToNumber | PlainPrimitiveToWord32 | Plug | PointerConstant
+  | Projection | ProtectedLoad | ProtectedStore | ReferenceEqual
   | RelocatableInt32Constant | RelocatableInt64Constant | ResizeMergeOrPhi
-  | ResolvePromise | RestLength | Retain | RoundFloat64ToInt32
-  | RoundInt32ToFloat32 | RoundInt64ToFloat32 | RoundInt64ToFloat64
-  | RoundUint32ToFloat32 | RoundUint64ToFloat32 | RoundUint64ToFloat64
-  | RuntimeAbort | S128And | S128AndNot | S128Const | S128Not | S128Or
-  | S128Select | S128Xor | S128Zero | SameValue | SameValueNumbersOnly | Select
-  | ShiftLeft | ShiftRight | ShiftRightLogical | SignExtendWord16ToInt32
+  | RestLength | Retain | RoundFloat64ToInt32 | RoundInt32ToFloat32
+  | RoundInt64ToFloat32 | RoundInt64ToFloat64 | RoundUint32ToFloat32
+  | RoundUint64ToFloat32 | RoundUint64ToFloat64 | RuntimeAbort | S128And
+  | S128AndNot | S128Const | S128Not | S128Or | S128Select | S128Xor | S128Zero
+  | SameValue | SameValueNumbersOnly | Select | SignExtendWord16ToInt32
   | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
   | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
   | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
@@ -1004,19 +1018,15 @@ let get_kind opcode =
   | SpeculativeNumberShiftLeft | SpeculativeNumberShiftRight
   | SpeculativeNumberShiftRightLogical | SpeculativeNumberSubtract
   | SpeculativeSafeIntegerAdd | SpeculativeSafeIntegerSubtract
-  | SpeculativeToNumber | StackCheck | StackSlot | Start | StateValues
-  | StaticAssert | Store | StoreContext | StoreDataPropertyInLiteral
-  | StoreDataViewElement | StoreElement | StoreField | StoreGlobal
-  | StoreInArrayLiteral | StoreLane | StoreMessage | StoreModule | StoreNamed
-  | StoreNamedOwn | StoreProperty | StoreSignedSmallElement | StoreToObject
-  | StoreTypedElement | StrictEqual | StringCharCodeAt | StringCodePointAt
-  | StringConcat | StringEqual | StringFromCodePointAt
-  | StringFromSingleCharCode | StringFromSingleCodePoint | StringIndexOf
-  | StringLength | StringLessThan | StringLessThanOrEqual | StringSubstring
-  | StringToLowerCaseIntl | StringToNumber | StringToUpperCaseIntl | Subtract
-  | Switch | TaggedIndexConstant | TailCall | Terminate | Throw | TierUpCheck
-  | ToBoolean | ToLength | ToName | ToNumber | ToNumberConvertBigInt | ToNumeric
-  | ToObject | ToString | TransitionAndStoreElement
+  | SpeculativeToNumber | StackSlot | Start | StateValues | StaticAssert | Store
+  | StoreDataViewElement | StoreElement | StoreField | StoreLane | StoreMessage
+  | StoreSignedSmallElement | StoreToObject | StoreTypedElement
+  | StringCharCodeAt | StringCodePointAt | StringConcat | StringEqual
+  | StringFromCodePointAt | StringFromSingleCharCode | StringFromSingleCodePoint
+  | StringIndexOf | StringLength | StringLessThan | StringLessThanOrEqual
+  | StringSubstring | StringToLowerCaseIntl | StringToNumber
+  | StringToUpperCaseIntl | Switch | TaggedIndexConstant | TailCall | Terminate
+  | Throw | TierUpCheck | ToBoolean | TransitionAndStoreElement
   | TransitionAndStoreNonNumberElement | TransitionAndStoreNumberElement
   | TransitionElementsKind | TrapIf | TrapUnless | TruncateBigIntToWord64
   | TruncateFloat32ToInt32 | TruncateFloat32ToUint32 | TruncateFloat64ToFloat32
@@ -1028,21 +1038,21 @@ let get_kind opcode =
   | TypedStateValues | Uint32Div | Uint32LessThan | Uint32LessThanOrEqual
   | Uint32Mod | Uint32MulHigh | Uint64Div | Uint64LessThan
   | Uint64LessThanOrEqual | Uint64Mod | UnalignedLoad | UnalignedStore
-  | UnsafePointerAdd | UpdateInterruptBudget | V128AnyTrue | VerifyType
-  | Word32And | Word32AtomicAdd | Word32AtomicAnd | Word32AtomicCompareExchange
-  | Word32AtomicExchange | Word32AtomicLoad | Word32AtomicOr
-  | Word32AtomicPairAdd | Word32AtomicPairAnd | Word32AtomicPairCompareExchange
-  | Word32AtomicPairExchange | Word32AtomicPairLoad | Word32AtomicPairOr
-  | Word32AtomicPairStore | Word32AtomicPairSub | Word32AtomicPairXor
-  | Word32AtomicStore | Word32AtomicSub | Word32AtomicXor | Word32Clz
-  | Word32Equal | Word32Or | Word32PairSar | Word32PairShl | Word32PairShr
-  | Word32ReverseBytes | Word32Ror | Word32Sar | Word32Shl | Word32Shr
-  | Word32Xor | Word64And | Word64AtomicAdd | Word64AtomicAnd
-  | Word64AtomicCompareExchange | Word64AtomicExchange | Word64AtomicLoad
-  | Word64AtomicOr | Word64AtomicStore | Word64AtomicSub | Word64AtomicXor
-  | Word64Clz | Word64ClzLowerable | Word64Equal | Word64Or | Word64ReverseBytes
-  | Word64Ror | Word64RorLowerable | Word64Sar | Word64Shl | Word64Shr
-  | Word64Xor ->
+  | Unreachable | UnsafePointerAdd | UpdateInterruptBudget | V128AnyTrue
+  | VerifyType | Word32And | Word32AtomicAdd | Word32AtomicAnd
+  | Word32AtomicCompareExchange | Word32AtomicExchange | Word32AtomicLoad
+  | Word32AtomicOr | Word32AtomicPairAdd | Word32AtomicPairAnd
+  | Word32AtomicPairCompareExchange | Word32AtomicPairExchange
+  | Word32AtomicPairLoad | Word32AtomicPairOr | Word32AtomicPairStore
+  | Word32AtomicPairSub | Word32AtomicPairXor | Word32AtomicStore
+  | Word32AtomicSub | Word32AtomicXor | Word32Clz | Word32Equal | Word32Or
+  | Word32PairSar | Word32PairShl | Word32PairShr | Word32ReverseBytes
+  | Word32Ror | Word32Sar | Word32Shl | Word32Shr | Word32Xor | Word64And
+  | Word64AtomicAdd | Word64AtomicAnd | Word64AtomicCompareExchange
+  | Word64AtomicExchange | Word64AtomicLoad | Word64AtomicOr | Word64AtomicStore
+  | Word64AtomicSub | Word64AtomicXor | Word64Clz | Word64ClzLowerable
+  | Word64Equal | Word64Or | Word64ReverseBytes | Word64Ror | Word64RorLowerable
+  | Word64Sar | Word64Shl | Word64Shr | Word64Xor ->
       UNIMPL
   | Branch | ChangeInt32ToTagged | ChangeTaggedSignedToInt32
   | CheckedTaggedSignedToInt32 | StackPointerGreaterThan ->
@@ -1068,16 +1078,12 @@ let empty = Empty
 let of_str str =
   match str with
   | "AbortCSADcheck" -> AbortCSADcheck
-  | "Add" -> Add
   | "Allocate" -> Allocate
   | "AllocateRaw" -> AllocateRaw
   | "ArgumentsElementsState" -> ArgumentsElementsState
   | "ArgumentsLength" -> ArgumentsLength
   | "ArgumentsLengthState" -> ArgumentsLengthState
   | "AssertType" -> AssertType
-  | "AsyncFunctionEnter" -> AsyncFunctionEnter
-  | "AsyncFunctionReject" -> AsyncFunctionReject
-  | "AsyncFunctionResolve" -> AsyncFunctionResolve
   | "BeginRegion" -> BeginRegion
   | "BigIntAdd" -> BigIntAdd
   | "BigIntNegate" -> BigIntNegate
@@ -1092,15 +1098,7 @@ let of_str str =
   | "BitcastWord32ToWord64" -> BitcastWord32ToWord64
   | "BitcastWordToTagged" -> BitcastWordToTagged
   | "BitcastWordToTaggedSigned" -> BitcastWordToTaggedSigned
-  | "BitwiseAnd" -> BitwiseAnd
-  | "BitwiseNot" -> BitwiseNot
-  | "BitwiseOr" -> BitwiseOr
-  | "BitwiseXor" -> BitwiseXor
   | "BooleanNot" -> BooleanNot
-  | "CallForwardVarargs" -> CallForwardVarargs
-  | "CallRuntime" -> CallRuntime
-  | "CallWasm" -> CallWasm
-  | "CallWithArrayLike" -> CallWithArrayLike
   | "ChangeBitToTagged" -> ChangeBitToTagged
   | "ChangeFloat32ToFloat64" -> ChangeFloat32ToFloat64
   | "ChangeFloat64ToInt32" -> ChangeFloat64ToInt32
@@ -1168,59 +1166,24 @@ let of_str str =
   | "CheckedUint64ToInt32" -> CheckedUint64ToInt32
   | "CheckedUint64ToTaggedSigned" -> CheckedUint64ToTaggedSigned
   | "Checkpoint" -> Checkpoint
-  | "CloneObject" -> CloneObject
   | "Comment" -> Comment
   | "CompareMaps" -> CompareMaps
   | "CompressedHeapConstant" -> CompressedHeapConstant
-  | "ConstructForwardVarargs" -> ConstructForwardVarargs
-  | "ConstructWithArrayLike" -> ConstructWithArrayLike
   | "ConvertReceiver" -> ConvertReceiver
   | "ConvertTaggedHoleToUndefined" -> ConvertTaggedHoleToUndefined
-  | "Create" -> Create
-  | "CreateArguments" -> CreateArguments
-  | "CreateArray" -> CreateArray
-  | "CreateArrayFromIterable" -> CreateArrayFromIterable
-  | "CreateArrayIterator" -> CreateArrayIterator
-  | "CreateAsyncFunctionObject" -> CreateAsyncFunctionObject
-  | "CreateBlockContext" -> CreateBlockContext
-  | "CreateBoundFunction" -> CreateBoundFunction
-  | "CreateCatchContext" -> CreateCatchContext
-  | "CreateClosure" -> CreateClosure
-  | "CreateCollectionIterator" -> CreateCollectionIterator
-  | "CreateEmptyLiteralArray" -> CreateEmptyLiteralArray
-  | "CreateEmptyLiteralObject" -> CreateEmptyLiteralObject
-  | "CreateFunctionContext" -> CreateFunctionContext
-  | "CreateGeneratorObject" -> CreateGeneratorObject
-  | "CreateIterResultObject" -> CreateIterResultObject
-  | "CreateKeyValueArray" -> CreateKeyValueArray
-  | "CreateLiteralArray" -> CreateLiteralArray
-  | "CreateLiteralObject" -> CreateLiteralObject
-  | "CreateLiteralRegExp" -> CreateLiteralRegExp
-  | "CreateObject" -> CreateObject
-  | "CreatePromise" -> CreatePromise
-  | "CreateStringIterator" -> CreateStringIterator
-  | "CreateTypedArray" -> CreateTypedArray
-  | "CreateWithContext" -> CreateWithContext
   | "DateNow" -> DateNow
   | "Dead" -> Dead
   | "DeadValue" -> DeadValue
   | "DebugBreak" -> DebugBreak
-  | "Debugger" -> Debugger
-  | "Decrement" -> Decrement
-  | "DefineProperty" -> DefineProperty
   | "DelayedStringConstant" -> DelayedStringConstant
-  | "DeleteProperty" -> DeleteProperty
   | "Deoptimize" -> Deoptimize
   | "DeoptimizeIf" -> DeoptimizeIf
   | "DeoptimizeUnless" -> DeoptimizeUnless
-  | "Divide" -> Divide
   | "DynamicCheckMaps" -> DynamicCheckMaps
   | "DynamicCheckMapsWithDeoptUnless" -> DynamicCheckMapsWithDeoptUnless
   | "EffectPhi" -> EffectPhi
   | "End" -> End
   | "EnsureWritableFastElements" -> EnsureWritableFastElements
-  | "Equal" -> Equal
-  | "Exponentiate" -> Exponentiate
   | "F32x4Abs" -> F32x4Abs
   | "F32x4Add" -> F32x4Add
   | "F32x4Ceil" -> F32x4Ceil
@@ -1339,25 +1302,7 @@ let of_str str =
   | "Float64Tan" -> Float64Tan
   | "Float64Tanh" -> Float64Tanh
   | "FoldConstant" -> FoldConstant
-  | "ForInEnumerate" -> ForInEnumerate
-  | "ForInNext" -> ForInNext
-  | "ForInPrepare" -> ForInPrepare
   | "FrameState" -> FrameState
-  | "FulfillPromise" -> FulfillPromise
-  | "GeneratorRestoreContext" -> GeneratorRestoreContext
-  | "GeneratorRestoreContinuation" -> GeneratorRestoreContinuation
-  | "GeneratorRestoreInputOrDebugPos" -> GeneratorRestoreInputOrDebugPos
-  | "GeneratorRestoreRegister" -> GeneratorRestoreRegister
-  | "GeneratorStore" -> GeneratorStore
-  | "GetImportMeta" -> GetImportMeta
-  | "GetIterator" -> GetIterator
-  | "GetSuperConstructor" -> GetSuperConstructor
-  | "GetTemplateObject" -> GetTemplateObject
-  | "GreaterThan" -> GreaterThan
-  | "GreaterThanOrEqual" -> GreaterThanOrEqual
-  | "HasContextExtension" -> HasContextExtension
-  | "HasInPrototypeChain" -> HasInPrototypeChain
-  | "HasProperty" -> HasProperty
   | "I16x8Abs" -> I16x8Abs
   | "I16x8Add" -> I16x8Add
   | "I16x8AddSatS" -> I16x8AddSatS
@@ -1512,9 +1457,8 @@ let of_str str =
   | "IfSuccess" -> IfSuccess
   | "IfTrue" -> IfTrue
   | "IfValue" -> IfValue
-  | "Increment" -> Increment
   | "InductionVariablePhi" -> InductionVariablePhi
-  | "InstanceOf" -> InstanceOf
+  | "InitializeImmutableInObject" -> InitializeImmutableInObject
   | "Int32AddWithOverflow" -> Int32AddWithOverflow
   | "Int32Div" -> Int32Div
   | "Int32LessThan" -> Int32LessThan
@@ -1537,24 +1481,126 @@ let of_str str =
   | "Int64Mul" -> Int64Mul
   | "Int64Sub" -> Int64Sub
   | "Int64SubWithOverflow" -> Int64SubWithOverflow
-  | "LessThan" -> LessThan
-  | "LessThanOrEqual" -> LessThanOrEqual
-  | "LoadContext" -> LoadContext
+  | "JSAdd" -> JSAdd
+  | "JSAsyncFunctionEnter" -> JSAsyncFunctionEnter
+  | "JSAsyncFunctionReject" -> JSAsyncFunctionReject
+  | "JSAsyncFunctionResolve" -> JSAsyncFunctionResolve
+  | "JSBitwiseAnd" -> JSBitwiseAnd
+  | "JSBitwiseNot" -> JSBitwiseNot
+  | "JSBitwiseOr" -> JSBitwiseOr
+  | "JSBitwiseXor" -> JSBitwiseXor
+  | "JSCallForwardVarargs" -> JSCallForwardVarargs
+  | "JSCallRuntime" -> JSCallRuntime
+  | "JSCallWasm" -> JSCallWasm
+  | "JSCallWithArrayLike" -> JSCallWithArrayLike
+  | "JSCloneObject" -> JSCloneObject
+  | "JSConstructForwardVarargs" -> JSConstructForwardVarargs
+  | "JSConstructWithArrayLike" -> JSConstructWithArrayLike
+  | "JSCreate" -> JSCreate
+  | "JSCreateArguments" -> JSCreateArguments
+  | "JSCreateArray" -> JSCreateArray
+  | "JSCreateArrayFromIterable" -> JSCreateArrayFromIterable
+  | "JSCreateArrayIterator" -> JSCreateArrayIterator
+  | "JSCreateAsyncFunctionObject" -> JSCreateAsyncFunctionObject
+  | "JSCreateBlockContext" -> JSCreateBlockContext
+  | "JSCreateBoundFunction" -> JSCreateBoundFunction
+  | "JSCreateCatchContext" -> JSCreateCatchContext
+  | "JSCreateClosure" -> JSCreateClosure
+  | "JSCreateCollectionIterator" -> JSCreateCollectionIterator
+  | "JSCreateEmptyLiteralArray" -> JSCreateEmptyLiteralArray
+  | "JSCreateEmptyLiteralObject" -> JSCreateEmptyLiteralObject
+  | "JSCreateFunctionContext" -> JSCreateFunctionContext
+  | "JSCreateGeneratorObject" -> JSCreateGeneratorObject
+  | "JSCreateIterResultObject" -> JSCreateIterResultObject
+  | "JSCreateKeyValueArray" -> JSCreateKeyValueArray
+  | "JSCreateLiteralArray" -> JSCreateLiteralArray
+  | "JSCreateLiteralObject" -> JSCreateLiteralObject
+  | "JSCreateLiteralRegExp" -> JSCreateLiteralRegExp
+  | "JSCreateObject" -> JSCreateObject
+  | "JSCreatePromise" -> JSCreatePromise
+  | "JSCreateStringIterator" -> JSCreateStringIterator
+  | "JSCreateTypedArray" -> JSCreateTypedArray
+  | "JSCreateWithContext" -> JSCreateWithContext
+  | "JSDebugger" -> JSDebugger
+  | "JSDecrement" -> JSDecrement
+  | "JSDefineProperty" -> JSDefineProperty
+  | "JSDeleteProperty" -> JSDeleteProperty
+  | "JSDivide" -> JSDivide
+  | "JSEqual" -> JSEqual
+  | "JSExponentiate" -> JSExponentiate
+  | "JSForInEnumerate" -> JSForInEnumerate
+  | "JSForInNext" -> JSForInNext
+  | "JSForInPrepare" -> JSForInPrepare
+  | "JSFulfillPromise" -> JSFulfillPromise
+  | "JSGeneratorRestoreContext" -> JSGeneratorRestoreContext
+  | "JSGeneratorRestoreContinuation" -> JSGeneratorRestoreContinuation
+  | "JSGeneratorRestoreInputOrDebugPos" -> JSGeneratorRestoreInputOrDebugPos
+  | "JSGeneratorRestoreRegister" -> JSGeneratorRestoreRegister
+  | "JSGeneratorStore" -> JSGeneratorStore
+  | "JSGetImportMeta" -> JSGetImportMeta
+  | "JSGetIterator" -> JSGetIterator
+  | "JSGetSuperConstructor" -> JSGetSuperConstructor
+  | "JSGetTemplateObject" -> JSGetTemplateObject
+  | "JSGreaterThan" -> JSGreaterThan
+  | "JSGreaterThanOrEqual" -> JSGreaterThanOrEqual
+  | "JSHasContextExtension" -> JSHasContextExtension
+  | "JSHasInPrototypeChain" -> JSHasInPrototypeChain
+  | "JSHasProperty" -> JSHasProperty
+  | "JSIncrement" -> JSIncrement
+  | "JSInstanceOf" -> JSInstanceOf
+  | "JSLessThan" -> JSLessThan
+  | "JSLessThanOrEqual" -> JSLessThanOrEqual
+  | "JSLoadContext" -> JSLoadContext
+  | "JSLoadGlobal" -> JSLoadGlobal
+  | "JSLoadMessage" -> JSLoadMessage
+  | "JSLoadModule" -> JSLoadModule
+  | "JSLoadNamed" -> JSLoadNamed
+  | "JSLoadNamedFromSuper" -> JSLoadNamedFromSuper
+  | "JSLoadProperty" -> JSLoadProperty
+  | "JSModulus" -> JSModulus
+  | "JSMultiply" -> JSMultiply
+  | "JSNegate" -> JSNegate
+  | "JSObjectIsArray" -> JSObjectIsArray
+  | "JSOrdinaryHasInstance" -> JSOrdinaryHasInstance
+  | "JSParseInt" -> JSParseInt
+  | "JSPerformPromiseThen" -> JSPerformPromiseThen
+  | "JSPromiseResolve" -> JSPromiseResolve
+  | "JSRegExpTest" -> JSRegExpTest
+  | "JSRejectPromise" -> JSRejectPromise
+  | "JSResolvePromise" -> JSResolvePromise
+  | "JSShiftLeft" -> JSShiftLeft
+  | "JSShiftRight" -> JSShiftRight
+  | "JSShiftRightLogical" -> JSShiftRightLogical
+  | "JSStackCheck" -> JSStackCheck
+  | "JSStoreContext" -> JSStoreContext
+  | "JSStoreDataPropertyInLiteral" -> JSStoreDataPropertyInLiteral
+  | "JSStoreGlobal" -> JSStoreGlobal
+  | "JSStoreInArrayLiteral" -> JSStoreInArrayLiteral
+  | "JSStoreMessage" -> JSStoreMessage
+  | "JSStoreModule" -> JSStoreModule
+  | "JSStoreNamed" -> JSStoreNamed
+  | "JSStoreNamedOwn" -> JSStoreNamedOwn
+  | "JSStoreProperty" -> JSStoreProperty
+  | "JSStrictEqual" -> JSStrictEqual
+  | "JSSubtract" -> JSSubtract
+  | "JSToLength" -> JSToLength
+  | "JSToName" -> JSToName
+  | "JSToNumber" -> JSToNumber
+  | "JSToNumberConvertBigInt" -> JSToNumberConvertBigInt
+  | "JSToNumeric" -> JSToNumeric
+  | "JSToObject" -> JSToObject
+  | "JSToString" -> JSToString
   | "LoadDataViewElement" -> LoadDataViewElement
   | "LoadElement" -> LoadElement
   | "LoadField" -> LoadField
   | "LoadFieldByIndex" -> LoadFieldByIndex
   | "LoadFramePointer" -> LoadFramePointer
   | "LoadFromObject" -> LoadFromObject
-  | "LoadGlobal" -> LoadGlobal
   | "LoadImmutable" -> LoadImmutable
+  | "LoadImmutableFromObject" -> LoadImmutableFromObject
   | "LoadLane" -> LoadLane
   | "LoadMessage" -> LoadMessage
-  | "LoadModule" -> LoadModule
-  | "LoadNamed" -> LoadNamed
-  | "LoadNamedFromSuper" -> LoadNamedFromSuper
   | "LoadParentFramePointer" -> LoadParentFramePointer
-  | "LoadProperty" -> LoadProperty
   | "LoadStackArgument" -> LoadStackArgument
   | "LoadStackCheckOffset" -> LoadStackCheckOffset
   | "LoadTransform" -> LoadTransform
@@ -1567,9 +1613,6 @@ let of_str str =
   | "MaybeGrowFastElements" -> MaybeGrowFastElements
   | "MemBarrier" -> MemBarrier
   | "Merge" -> Merge
-  | "Modulus" -> Modulus
-  | "Multiply" -> Multiply
-  | "Negate" -> Negate
   | "NewArgumentsElements" -> NewArgumentsElements
   | "NewConsString" -> NewConsString
   | "NewDoubleElements" -> NewDoubleElements
@@ -1636,7 +1679,6 @@ let of_str str =
   | "NumberToUint8Clamped" -> NumberToUint8Clamped
   | "NumberTrunc" -> NumberTrunc
   | "ObjectId" -> ObjectId
-  | "ObjectIsArray" -> ObjectIsArray
   | "ObjectIsArrayBufferView" -> ObjectIsArrayBufferView
   | "ObjectIsBigInt" -> ObjectIsBigInt
   | "ObjectIsCallable" -> ObjectIsCallable
@@ -1655,10 +1697,8 @@ let of_str str =
   | "ObjectIsSymbol" -> ObjectIsSymbol
   | "ObjectIsUndetectable" -> ObjectIsUndetectable
   | "ObjectState" -> ObjectState
-  | "OrdinaryHasInstance" -> OrdinaryHasInstance
   | "OsrValue" -> OsrValue
-  | "ParseInt" -> ParseInt
-  | "PerformPromiseThen" -> PerformPromiseThen
+  | "Parameter" -> Parameter
   | "Phi" -> Phi
   | "PlainPrimitiveToFloat64" -> PlainPrimitiveToFloat64
   | "PlainPrimitiveToNumber" -> PlainPrimitiveToNumber
@@ -1666,16 +1706,12 @@ let of_str str =
   | "Plug" -> Plug
   | "PointerConstant" -> PointerConstant
   | "Projection" -> Projection
-  | "PromiseResolve" -> PromiseResolve
   | "ProtectedLoad" -> ProtectedLoad
   | "ProtectedStore" -> ProtectedStore
   | "ReferenceEqual" -> ReferenceEqual
-  | "RegExpTest" -> RegExpTest
-  | "RejectPromise" -> RejectPromise
   | "RelocatableInt32Constant" -> RelocatableInt32Constant
   | "RelocatableInt64Constant" -> RelocatableInt64Constant
   | "ResizeMergeOrPhi" -> ResizeMergeOrPhi
-  | "ResolvePromise" -> ResolvePromise
   | "RestLength" -> RestLength
   | "Retain" -> Retain
   | "RoundFloat64ToInt32" -> RoundFloat64ToInt32
@@ -1697,9 +1733,6 @@ let of_str str =
   | "SameValue" -> SameValue
   | "SameValueNumbersOnly" -> SameValueNumbersOnly
   | "Select" -> Select
-  | "ShiftLeft" -> ShiftLeft
-  | "ShiftRight" -> ShiftRight
-  | "ShiftRightLogical" -> ShiftRightLogical
   | "SignExtendWord16ToInt32" -> SignExtendWord16ToInt32
   | "SignExtendWord16ToInt64" -> SignExtendWord16ToInt64
   | "SignExtendWord32ToInt64" -> SignExtendWord32ToInt64
@@ -1729,29 +1762,19 @@ let of_str str =
   | "SpeculativeSafeIntegerAdd" -> SpeculativeSafeIntegerAdd
   | "SpeculativeSafeIntegerSubtract" -> SpeculativeSafeIntegerSubtract
   | "SpeculativeToNumber" -> SpeculativeToNumber
-  | "StackCheck" -> StackCheck
   | "StackSlot" -> StackSlot
   | "Start" -> Start
   | "StateValues" -> StateValues
   | "StaticAssert" -> StaticAssert
   | "Store" -> Store
-  | "StoreContext" -> StoreContext
-  | "StoreDataPropertyInLiteral" -> StoreDataPropertyInLiteral
   | "StoreDataViewElement" -> StoreDataViewElement
   | "StoreElement" -> StoreElement
   | "StoreField" -> StoreField
-  | "StoreGlobal" -> StoreGlobal
-  | "StoreInArrayLiteral" -> StoreInArrayLiteral
   | "StoreLane" -> StoreLane
   | "StoreMessage" -> StoreMessage
-  | "StoreModule" -> StoreModule
-  | "StoreNamed" -> StoreNamed
-  | "StoreNamedOwn" -> StoreNamedOwn
-  | "StoreProperty" -> StoreProperty
   | "StoreSignedSmallElement" -> StoreSignedSmallElement
   | "StoreToObject" -> StoreToObject
   | "StoreTypedElement" -> StoreTypedElement
-  | "StrictEqual" -> StrictEqual
   | "StringCharCodeAt" -> StringCharCodeAt
   | "StringCodePointAt" -> StringCodePointAt
   | "StringConcat" -> StringConcat
@@ -1767,7 +1790,6 @@ let of_str str =
   | "StringToLowerCaseIntl" -> StringToLowerCaseIntl
   | "StringToNumber" -> StringToNumber
   | "StringToUpperCaseIntl" -> StringToUpperCaseIntl
-  | "Subtract" -> Subtract
   | "Switch" -> Switch
   | "TaggedIndexConstant" -> TaggedIndexConstant
   | "TailCall" -> TailCall
@@ -1775,13 +1797,6 @@ let of_str str =
   | "Throw" -> Throw
   | "TierUpCheck" -> TierUpCheck
   | "ToBoolean" -> ToBoolean
-  | "ToLength" -> ToLength
-  | "ToName" -> ToName
-  | "ToNumber" -> ToNumber
-  | "ToNumberConvertBigInt" -> ToNumberConvertBigInt
-  | "ToNumeric" -> ToNumeric
-  | "ToObject" -> ToObject
-  | "ToString" -> ToString
   | "TransitionAndStoreElement" -> TransitionAndStoreElement
   | "TransitionAndStoreNonNumberElement" -> TransitionAndStoreNonNumberElement
   | "TransitionAndStoreNumberElement" -> TransitionAndStoreNumberElement
@@ -1819,6 +1834,7 @@ let of_str str =
   | "Uint64Mod" -> Uint64Mod
   | "UnalignedLoad" -> UnalignedLoad
   | "UnalignedStore" -> UnalignedStore
+  | "Unreachable" -> Unreachable
   | "UnsafePointerAdd" -> UnsafePointerAdd
   | "UpdateInterruptBudget" -> UpdateInterruptBudget
   | "V128AnyTrue" -> V128AnyTrue
@@ -1894,16 +1910,12 @@ let of_str str =
 let to_str opcode =
   match opcode with
   | AbortCSADcheck -> "AbortCSADcheck"
-  | Add -> "Add"
   | Allocate -> "Allocate"
   | AllocateRaw -> "AllocateRaw"
   | ArgumentsElementsState -> "ArgumentsElementsState"
   | ArgumentsLength -> "ArgumentsLength"
   | ArgumentsLengthState -> "ArgumentsLengthState"
   | AssertType -> "AssertType"
-  | AsyncFunctionEnter -> "AsyncFunctionEnter"
-  | AsyncFunctionReject -> "AsyncFunctionReject"
-  | AsyncFunctionResolve -> "AsyncFunctionResolve"
   | BeginRegion -> "BeginRegion"
   | BigIntAdd -> "BigIntAdd"
   | BigIntNegate -> "BigIntNegate"
@@ -1918,15 +1930,7 @@ let to_str opcode =
   | BitcastWord32ToWord64 -> "BitcastWord32ToWord64"
   | BitcastWordToTagged -> "BitcastWordToTagged"
   | BitcastWordToTaggedSigned -> "BitcastWordToTaggedSigned"
-  | BitwiseAnd -> "BitwiseAnd"
-  | BitwiseNot -> "BitwiseNot"
-  | BitwiseOr -> "BitwiseOr"
-  | BitwiseXor -> "BitwiseXor"
   | BooleanNot -> "BooleanNot"
-  | CallForwardVarargs -> "CallForwardVarargs"
-  | CallRuntime -> "CallRuntime"
-  | CallWasm -> "CallWasm"
-  | CallWithArrayLike -> "CallWithArrayLike"
   | ChangeBitToTagged -> "ChangeBitToTagged"
   | ChangeFloat32ToFloat64 -> "ChangeFloat32ToFloat64"
   | ChangeFloat64ToInt32 -> "ChangeFloat64ToInt32"
@@ -1994,59 +1998,24 @@ let to_str opcode =
   | CheckedUint64ToInt32 -> "CheckedUint64ToInt32"
   | CheckedUint64ToTaggedSigned -> "CheckedUint64ToTaggedSigned"
   | Checkpoint -> "Checkpoint"
-  | CloneObject -> "CloneObject"
   | Comment -> "Comment"
   | CompareMaps -> "CompareMaps"
   | CompressedHeapConstant -> "CompressedHeapConstant"
-  | ConstructForwardVarargs -> "ConstructForwardVarargs"
-  | ConstructWithArrayLike -> "ConstructWithArrayLike"
   | ConvertReceiver -> "ConvertReceiver"
   | ConvertTaggedHoleToUndefined -> "ConvertTaggedHoleToUndefined"
-  | Create -> "Create"
-  | CreateArguments -> "CreateArguments"
-  | CreateArray -> "CreateArray"
-  | CreateArrayFromIterable -> "CreateArrayFromIterable"
-  | CreateArrayIterator -> "CreateArrayIterator"
-  | CreateAsyncFunctionObject -> "CreateAsyncFunctionObject"
-  | CreateBlockContext -> "CreateBlockContext"
-  | CreateBoundFunction -> "CreateBoundFunction"
-  | CreateCatchContext -> "CreateCatchContext"
-  | CreateClosure -> "CreateClosure"
-  | CreateCollectionIterator -> "CreateCollectionIterator"
-  | CreateEmptyLiteralArray -> "CreateEmptyLiteralArray"
-  | CreateEmptyLiteralObject -> "CreateEmptyLiteralObject"
-  | CreateFunctionContext -> "CreateFunctionContext"
-  | CreateGeneratorObject -> "CreateGeneratorObject"
-  | CreateIterResultObject -> "CreateIterResultObject"
-  | CreateKeyValueArray -> "CreateKeyValueArray"
-  | CreateLiteralArray -> "CreateLiteralArray"
-  | CreateLiteralObject -> "CreateLiteralObject"
-  | CreateLiteralRegExp -> "CreateLiteralRegExp"
-  | CreateObject -> "CreateObject"
-  | CreatePromise -> "CreatePromise"
-  | CreateStringIterator -> "CreateStringIterator"
-  | CreateTypedArray -> "CreateTypedArray"
-  | CreateWithContext -> "CreateWithContext"
   | DateNow -> "DateNow"
   | Dead -> "Dead"
   | DeadValue -> "DeadValue"
   | DebugBreak -> "DebugBreak"
-  | Debugger -> "Debugger"
-  | Decrement -> "Decrement"
-  | DefineProperty -> "DefineProperty"
   | DelayedStringConstant -> "DelayedStringConstant"
-  | DeleteProperty -> "DeleteProperty"
   | Deoptimize -> "Deoptimize"
   | DeoptimizeIf -> "DeoptimizeIf"
   | DeoptimizeUnless -> "DeoptimizeUnless"
-  | Divide -> "Divide"
   | DynamicCheckMaps -> "DynamicCheckMaps"
   | DynamicCheckMapsWithDeoptUnless -> "DynamicCheckMapsWithDeoptUnless"
   | EffectPhi -> "EffectPhi"
   | End -> "End"
   | EnsureWritableFastElements -> "EnsureWritableFastElements"
-  | Equal -> "Equal"
-  | Exponentiate -> "Exponentiate"
   | F32x4Abs -> "F32x4Abs"
   | F32x4Add -> "F32x4Add"
   | F32x4Ceil -> "F32x4Ceil"
@@ -2165,25 +2134,7 @@ let to_str opcode =
   | Float64Tan -> "Float64Tan"
   | Float64Tanh -> "Float64Tanh"
   | FoldConstant -> "FoldConstant"
-  | ForInEnumerate -> "ForInEnumerate"
-  | ForInNext -> "ForInNext"
-  | ForInPrepare -> "ForInPrepare"
   | FrameState -> "FrameState"
-  | FulfillPromise -> "FulfillPromise"
-  | GeneratorRestoreContext -> "GeneratorRestoreContext"
-  | GeneratorRestoreContinuation -> "GeneratorRestoreContinuation"
-  | GeneratorRestoreInputOrDebugPos -> "GeneratorRestoreInputOrDebugPos"
-  | GeneratorRestoreRegister -> "GeneratorRestoreRegister"
-  | GeneratorStore -> "GeneratorStore"
-  | GetImportMeta -> "GetImportMeta"
-  | GetIterator -> "GetIterator"
-  | GetSuperConstructor -> "GetSuperConstructor"
-  | GetTemplateObject -> "GetTemplateObject"
-  | GreaterThan -> "GreaterThan"
-  | GreaterThanOrEqual -> "GreaterThanOrEqual"
-  | HasContextExtension -> "HasContextExtension"
-  | HasInPrototypeChain -> "HasInPrototypeChain"
-  | HasProperty -> "HasProperty"
   | I16x8Abs -> "I16x8Abs"
   | I16x8Add -> "I16x8Add"
   | I16x8AddSatS -> "I16x8AddSatS"
@@ -2338,9 +2289,8 @@ let to_str opcode =
   | IfSuccess -> "IfSuccess"
   | IfTrue -> "IfTrue"
   | IfValue -> "IfValue"
-  | Increment -> "Increment"
   | InductionVariablePhi -> "InductionVariablePhi"
-  | InstanceOf -> "InstanceOf"
+  | InitializeImmutableInObject -> "InitializeImmutableInObject"
   | Int32AddWithOverflow -> "Int32AddWithOverflow"
   | Int32Div -> "Int32Div"
   | Int32LessThan -> "Int32LessThan"
@@ -2363,24 +2313,126 @@ let to_str opcode =
   | Int64Mul -> "Int64Mul"
   | Int64Sub -> "Int64Sub"
   | Int64SubWithOverflow -> "Int64SubWithOverflow"
-  | LessThan -> "LessThan"
-  | LessThanOrEqual -> "LessThanOrEqual"
-  | LoadContext -> "LoadContext"
+  | JSAdd -> "JSAdd"
+  | JSAsyncFunctionEnter -> "JSAsyncFunctionEnter"
+  | JSAsyncFunctionReject -> "JSAsyncFunctionReject"
+  | JSAsyncFunctionResolve -> "JSAsyncFunctionResolve"
+  | JSBitwiseAnd -> "JSBitwiseAnd"
+  | JSBitwiseNot -> "JSBitwiseNot"
+  | JSBitwiseOr -> "JSBitwiseOr"
+  | JSBitwiseXor -> "JSBitwiseXor"
+  | JSCallForwardVarargs -> "JSCallForwardVarargs"
+  | JSCallRuntime -> "JSCallRuntime"
+  | JSCallWasm -> "JSCallWasm"
+  | JSCallWithArrayLike -> "JSCallWithArrayLike"
+  | JSCloneObject -> "JSCloneObject"
+  | JSConstructForwardVarargs -> "JSConstructForwardVarargs"
+  | JSConstructWithArrayLike -> "JSConstructWithArrayLike"
+  | JSCreate -> "JSCreate"
+  | JSCreateArguments -> "JSCreateArguments"
+  | JSCreateArray -> "JSCreateArray"
+  | JSCreateArrayFromIterable -> "JSCreateArrayFromIterable"
+  | JSCreateArrayIterator -> "JSCreateArrayIterator"
+  | JSCreateAsyncFunctionObject -> "JSCreateAsyncFunctionObject"
+  | JSCreateBlockContext -> "JSCreateBlockContext"
+  | JSCreateBoundFunction -> "JSCreateBoundFunction"
+  | JSCreateCatchContext -> "JSCreateCatchContext"
+  | JSCreateClosure -> "JSCreateClosure"
+  | JSCreateCollectionIterator -> "JSCreateCollectionIterator"
+  | JSCreateEmptyLiteralArray -> "JSCreateEmptyLiteralArray"
+  | JSCreateEmptyLiteralObject -> "JSCreateEmptyLiteralObject"
+  | JSCreateFunctionContext -> "JSCreateFunctionContext"
+  | JSCreateGeneratorObject -> "JSCreateGeneratorObject"
+  | JSCreateIterResultObject -> "JSCreateIterResultObject"
+  | JSCreateKeyValueArray -> "JSCreateKeyValueArray"
+  | JSCreateLiteralArray -> "JSCreateLiteralArray"
+  | JSCreateLiteralObject -> "JSCreateLiteralObject"
+  | JSCreateLiteralRegExp -> "JSCreateLiteralRegExp"
+  | JSCreateObject -> "JSCreateObject"
+  | JSCreatePromise -> "JSCreatePromise"
+  | JSCreateStringIterator -> "JSCreateStringIterator"
+  | JSCreateTypedArray -> "JSCreateTypedArray"
+  | JSCreateWithContext -> "JSCreateWithContext"
+  | JSDebugger -> "JSDebugger"
+  | JSDecrement -> "JSDecrement"
+  | JSDefineProperty -> "JSDefineProperty"
+  | JSDeleteProperty -> "JSDeleteProperty"
+  | JSDivide -> "JSDivide"
+  | JSEqual -> "JSEqual"
+  | JSExponentiate -> "JSExponentiate"
+  | JSForInEnumerate -> "JSForInEnumerate"
+  | JSForInNext -> "JSForInNext"
+  | JSForInPrepare -> "JSForInPrepare"
+  | JSFulfillPromise -> "JSFulfillPromise"
+  | JSGeneratorRestoreContext -> "JSGeneratorRestoreContext"
+  | JSGeneratorRestoreContinuation -> "JSGeneratorRestoreContinuation"
+  | JSGeneratorRestoreInputOrDebugPos -> "JSGeneratorRestoreInputOrDebugPos"
+  | JSGeneratorRestoreRegister -> "JSGeneratorRestoreRegister"
+  | JSGeneratorStore -> "JSGeneratorStore"
+  | JSGetImportMeta -> "JSGetImportMeta"
+  | JSGetIterator -> "JSGetIterator"
+  | JSGetSuperConstructor -> "JSGetSuperConstructor"
+  | JSGetTemplateObject -> "JSGetTemplateObject"
+  | JSGreaterThan -> "JSGreaterThan"
+  | JSGreaterThanOrEqual -> "JSGreaterThanOrEqual"
+  | JSHasContextExtension -> "JSHasContextExtension"
+  | JSHasInPrototypeChain -> "JSHasInPrototypeChain"
+  | JSHasProperty -> "JSHasProperty"
+  | JSIncrement -> "JSIncrement"
+  | JSInstanceOf -> "JSInstanceOf"
+  | JSLessThan -> "JSLessThan"
+  | JSLessThanOrEqual -> "JSLessThanOrEqual"
+  | JSLoadContext -> "JSLoadContext"
+  | JSLoadGlobal -> "JSLoadGlobal"
+  | JSLoadMessage -> "JSLoadMessage"
+  | JSLoadModule -> "JSLoadModule"
+  | JSLoadNamed -> "JSLoadNamed"
+  | JSLoadNamedFromSuper -> "JSLoadNamedFromSuper"
+  | JSLoadProperty -> "JSLoadProperty"
+  | JSModulus -> "JSModulus"
+  | JSMultiply -> "JSMultiply"
+  | JSNegate -> "JSNegate"
+  | JSObjectIsArray -> "JSObjectIsArray"
+  | JSOrdinaryHasInstance -> "JSOrdinaryHasInstance"
+  | JSParseInt -> "JSParseInt"
+  | JSPerformPromiseThen -> "JSPerformPromiseThen"
+  | JSPromiseResolve -> "JSPromiseResolve"
+  | JSRegExpTest -> "JSRegExpTest"
+  | JSRejectPromise -> "JSRejectPromise"
+  | JSResolvePromise -> "JSResolvePromise"
+  | JSShiftLeft -> "JSShiftLeft"
+  | JSShiftRight -> "JSShiftRight"
+  | JSShiftRightLogical -> "JSShiftRightLogical"
+  | JSStackCheck -> "JSStackCheck"
+  | JSStoreContext -> "JSStoreContext"
+  | JSStoreDataPropertyInLiteral -> "JSStoreDataPropertyInLiteral"
+  | JSStoreGlobal -> "JSStoreGlobal"
+  | JSStoreInArrayLiteral -> "JSStoreInArrayLiteral"
+  | JSStoreMessage -> "JSStoreMessage"
+  | JSStoreModule -> "JSStoreModule"
+  | JSStoreNamed -> "JSStoreNamed"
+  | JSStoreNamedOwn -> "JSStoreNamedOwn"
+  | JSStoreProperty -> "JSStoreProperty"
+  | JSStrictEqual -> "JSStrictEqual"
+  | JSSubtract -> "JSSubtract"
+  | JSToLength -> "JSToLength"
+  | JSToName -> "JSToName"
+  | JSToNumber -> "JSToNumber"
+  | JSToNumberConvertBigInt -> "JSToNumberConvertBigInt"
+  | JSToNumeric -> "JSToNumeric"
+  | JSToObject -> "JSToObject"
+  | JSToString -> "JSToString"
   | LoadDataViewElement -> "LoadDataViewElement"
   | LoadElement -> "LoadElement"
   | LoadField -> "LoadField"
   | LoadFieldByIndex -> "LoadFieldByIndex"
   | LoadFramePointer -> "LoadFramePointer"
   | LoadFromObject -> "LoadFromObject"
-  | LoadGlobal -> "LoadGlobal"
   | LoadImmutable -> "LoadImmutable"
+  | LoadImmutableFromObject -> "LoadImmutableFromObject"
   | LoadLane -> "LoadLane"
   | LoadMessage -> "LoadMessage"
-  | LoadModule -> "LoadModule"
-  | LoadNamed -> "LoadNamed"
-  | LoadNamedFromSuper -> "LoadNamedFromSuper"
   | LoadParentFramePointer -> "LoadParentFramePointer"
-  | LoadProperty -> "LoadProperty"
   | LoadStackArgument -> "LoadStackArgument"
   | LoadStackCheckOffset -> "LoadStackCheckOffset"
   | LoadTransform -> "LoadTransform"
@@ -2393,9 +2445,6 @@ let to_str opcode =
   | MaybeGrowFastElements -> "MaybeGrowFastElements"
   | MemBarrier -> "MemBarrier"
   | Merge -> "Merge"
-  | Modulus -> "Modulus"
-  | Multiply -> "Multiply"
-  | Negate -> "Negate"
   | NewArgumentsElements -> "NewArgumentsElements"
   | NewConsString -> "NewConsString"
   | NewDoubleElements -> "NewDoubleElements"
@@ -2462,7 +2511,6 @@ let to_str opcode =
   | NumberToUint8Clamped -> "NumberToUint8Clamped"
   | NumberTrunc -> "NumberTrunc"
   | ObjectId -> "ObjectId"
-  | ObjectIsArray -> "ObjectIsArray"
   | ObjectIsArrayBufferView -> "ObjectIsArrayBufferView"
   | ObjectIsBigInt -> "ObjectIsBigInt"
   | ObjectIsCallable -> "ObjectIsCallable"
@@ -2481,10 +2529,8 @@ let to_str opcode =
   | ObjectIsSymbol -> "ObjectIsSymbol"
   | ObjectIsUndetectable -> "ObjectIsUndetectable"
   | ObjectState -> "ObjectState"
-  | OrdinaryHasInstance -> "OrdinaryHasInstance"
   | OsrValue -> "OsrValue"
-  | ParseInt -> "ParseInt"
-  | PerformPromiseThen -> "PerformPromiseThen"
+  | Parameter -> "Parameter"
   | Phi -> "Phi"
   | PlainPrimitiveToFloat64 -> "PlainPrimitiveToFloat64"
   | PlainPrimitiveToNumber -> "PlainPrimitiveToNumber"
@@ -2492,16 +2538,12 @@ let to_str opcode =
   | Plug -> "Plug"
   | PointerConstant -> "PointerConstant"
   | Projection -> "Projection"
-  | PromiseResolve -> "PromiseResolve"
   | ProtectedLoad -> "ProtectedLoad"
   | ProtectedStore -> "ProtectedStore"
   | ReferenceEqual -> "ReferenceEqual"
-  | RegExpTest -> "RegExpTest"
-  | RejectPromise -> "RejectPromise"
   | RelocatableInt32Constant -> "RelocatableInt32Constant"
   | RelocatableInt64Constant -> "RelocatableInt64Constant"
   | ResizeMergeOrPhi -> "ResizeMergeOrPhi"
-  | ResolvePromise -> "ResolvePromise"
   | RestLength -> "RestLength"
   | Retain -> "Retain"
   | RoundFloat64ToInt32 -> "RoundFloat64ToInt32"
@@ -2523,9 +2565,6 @@ let to_str opcode =
   | SameValue -> "SameValue"
   | SameValueNumbersOnly -> "SameValueNumbersOnly"
   | Select -> "Select"
-  | ShiftLeft -> "ShiftLeft"
-  | ShiftRight -> "ShiftRight"
-  | ShiftRightLogical -> "ShiftRightLogical"
   | SignExtendWord16ToInt32 -> "SignExtendWord16ToInt32"
   | SignExtendWord16ToInt64 -> "SignExtendWord16ToInt64"
   | SignExtendWord32ToInt64 -> "SignExtendWord32ToInt64"
@@ -2555,29 +2594,19 @@ let to_str opcode =
   | SpeculativeSafeIntegerAdd -> "SpeculativeSafeIntegerAdd"
   | SpeculativeSafeIntegerSubtract -> "SpeculativeSafeIntegerSubtract"
   | SpeculativeToNumber -> "SpeculativeToNumber"
-  | StackCheck -> "StackCheck"
   | StackSlot -> "StackSlot"
   | Start -> "Start"
   | StateValues -> "StateValues"
   | StaticAssert -> "StaticAssert"
   | Store -> "Store"
-  | StoreContext -> "StoreContext"
-  | StoreDataPropertyInLiteral -> "StoreDataPropertyInLiteral"
   | StoreDataViewElement -> "StoreDataViewElement"
   | StoreElement -> "StoreElement"
   | StoreField -> "StoreField"
-  | StoreGlobal -> "StoreGlobal"
-  | StoreInArrayLiteral -> "StoreInArrayLiteral"
   | StoreLane -> "StoreLane"
   | StoreMessage -> "StoreMessage"
-  | StoreModule -> "StoreModule"
-  | StoreNamed -> "StoreNamed"
-  | StoreNamedOwn -> "StoreNamedOwn"
-  | StoreProperty -> "StoreProperty"
   | StoreSignedSmallElement -> "StoreSignedSmallElement"
   | StoreToObject -> "StoreToObject"
   | StoreTypedElement -> "StoreTypedElement"
-  | StrictEqual -> "StrictEqual"
   | StringCharCodeAt -> "StringCharCodeAt"
   | StringCodePointAt -> "StringCodePointAt"
   | StringConcat -> "StringConcat"
@@ -2593,7 +2622,6 @@ let to_str opcode =
   | StringToLowerCaseIntl -> "StringToLowerCaseIntl"
   | StringToNumber -> "StringToNumber"
   | StringToUpperCaseIntl -> "StringToUpperCaseIntl"
-  | Subtract -> "Subtract"
   | Switch -> "Switch"
   | TaggedIndexConstant -> "TaggedIndexConstant"
   | TailCall -> "TailCall"
@@ -2601,13 +2629,6 @@ let to_str opcode =
   | Throw -> "Throw"
   | TierUpCheck -> "TierUpCheck"
   | ToBoolean -> "ToBoolean"
-  | ToLength -> "ToLength"
-  | ToName -> "ToName"
-  | ToNumber -> "ToNumber"
-  | ToNumberConvertBigInt -> "ToNumberConvertBigInt"
-  | ToNumeric -> "ToNumeric"
-  | ToObject -> "ToObject"
-  | ToString -> "ToString"
   | TransitionAndStoreElement -> "TransitionAndStoreElement"
   | TransitionAndStoreNonNumberElement -> "TransitionAndStoreNonNumberElement"
   | TransitionAndStoreNumberElement -> "TransitionAndStoreNumberElement"
@@ -2645,6 +2666,7 @@ let to_str opcode =
   | Uint64Mod -> "Uint64Mod"
   | UnalignedLoad -> "UnalignedLoad"
   | UnalignedStore -> "UnalignedStore"
+  | Unreachable -> "Unreachable"
   | UnsafePointerAdd -> "UnsafePointerAdd"
   | UpdateInterruptBudget -> "UpdateInterruptBudget"
   | V128AnyTrue -> "V128AnyTrue"
