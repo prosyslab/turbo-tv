@@ -1,5 +1,11 @@
 open Cmdliner
-open Options
+
+type conf = {
+  target : string;
+  emit_graph : bool;
+  emit_reduction : bool;
+  outdir : string;
+}
 
 let jstv_args =
   (* Arguments *)
@@ -40,7 +46,7 @@ let parse_command_line () =
 
 let main () =
   Printexc.record_backtrace true;
-  let {target; emit_reduction; emit_graph; outdir} = parse_command_line () in
+  let { target; emit_reduction; emit_graph; outdir } = parse_command_line () in
 
   let lines = Utils.run_d8 target in
   let reductions = Reduction.get_reductions lines in
@@ -74,9 +80,9 @@ let main () =
 
           IR.generate_graph_output (parent ^ "before.dot") before_graph;
           IR.generate_graph_output (parent ^ "after.dot") after_graph);
-        Tv.run before_graph after_graph
-        );
+        Tv.run before_graph after_graph);
       idx := !idx + 1;
-      print_newline ()) reductions
+      print_newline ())
+    reductions
 
 let () = main ()
