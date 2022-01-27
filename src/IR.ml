@@ -1,40 +1,28 @@
+open Err
+
 module Node = struct
-  type address = int
   type id = int
-  type t = address * id * Instr.t
+  type t = id * Instr.t
 
   let compare = compare
   let hash = Hashtbl.hash
   let equal = ( = )
-  let create address id instr : t = (address, id, instr)
-  let empty = (-1, -1, Instr.empty)
-  let address (address, _, _) : address = address
-  let id (_, id, _) : id = id
-  let instr (_, _, instr) : Instr.t = instr
+  let create id instr : t = (id, instr)
+  let empty = (-1, Instr.empty)
+  let id (id, _) : id = id
+  let instr (_, instr) : Instr.t = instr
 
   let label node =
-    let _, id, instr = node in
+    let id, instr = node in
     let opcode = instr |> Instr.opcode in
     let operands = instr |> Instr.operands in
     Printf.sprintf "#%d:%s(%s)" id (Opcode.to_str opcode)
-      (Operand.str_of_operands operands)
+      (Operands.to_str operands)
 end
 
 module G = Graph.Persistent.Digraph.ConcreteBidirectional (Node)
 
-exception Node_not_found of string * string
-exception Invalid_graph_line of string * string
-
-let err excpt =
-  (match excpt with
-  | Invalid_graph_line (c, r) ->
-      Printf.fprintf stderr "Invalid graph line: %s\n%s\n\n" c r
-  | Node_not_found (c, r) ->
-      Printf.fprintf stderr "Node not found: %s\n%s\n\n" c r
-  | _ -> ());
-  raise excpt
-
-let find_node id graph =
+let find_by_id id graph =
   let node =
     G.fold_vertex
       (fun n found -> if Node.id n = id then n else found)
@@ -42,22 +30,63 @@ let find_node id graph =
   in
 
   if node = Node.empty then
-    err
-      (Node_not_found
-         (id |> string_of_int, Printf.sprintf "Cannot found node#%d" id))
+    let reason = Printf.sprintf "Cannot found node#%d" id in
+    err (NodeNotFound (id |> string_of_int, reason))
   else node
 
-let connect_n1_n2 n1 n2 graph =
-  G.add_edge graph (find_node n1 graph) (find_node n2 graph)
-
-let parse_id line =
-  let re = Re.Pcre.regexp "#([0-9]+):" in
-  try Re.Group.get (Re.exec re line) 1 |> int_of_string
+let find_in_succ cond id graph =
+  let node = find_by_id id graph in
+  let succ = G.succ graph node in
+  try List.find cond succ
   with Not_found ->
-    let reason = Format.asprintf "Printf.sprintf %a" Re.pp_re re in
-    err (Node_not_found (line, reason))
+    let reason =
+      Printf.sprintf "Cannot found node that satisfy your condition"
+    in
+    err (NodeNotFound ("", reason))
+
+let true_br_of id graph =
+  find_in_succ
+    (fun node -> node |> Node.instr |> Instr.opcode = Opcode.IfTrue)
+    id graph
+  |> Node.id
+
+let false_br_of id graph =
+  find_in_succ
+    (fun node -> node |> Node.instr |> Instr.opcode = Opcode.IfFalse)
+    id graph
+  |> Node.id
+
+let instr_of id graph = find_by_id id graph |> Node.instr
+
+let connect_n1_n2 n1 n2 graph =
+  G.add_edge graph (find_by_id n1 graph) (find_by_id n2 graph)
+
+(* parse instrction id from  *)
+let parse_iid line =
+  let re = Re.Pcre.regexp "#([0-9]+):" in
+  try Re.Group.get (Re.exec re line) 1
+  with Not_found ->
+    let reason = Format.asprintf "%a" Re.pp_re re in
+    err (NodeNotFound (line, reason))
 
 let create_from graph_lines =
+  let module IN = Map.Make (struct
+    type t = string
+
+    let compare = compare
+  end) in
+  let iid2nid =
+    graph_lines
+    |> List.mapi (fun addr line -> (addr, line))
+    |> List.fold_left
+         (fun m (addr, line) ->
+           let instr_id = line |> parse_iid in
+           IN.add instr_id addr m)
+         IN.empty
+  in
+
+  let find_nid iid = IN.find iid iid2nid in
+
   let parse_innodes line =
     let check_bracket_match left right =
       match (left, right) with
@@ -82,7 +111,7 @@ let create_from graph_lines =
     String.sub result 1 (result_len - 1)
     |> StringLabels.split_on_char ~sep:' '
     |> List.filter (fun s -> String.length s > 0)
-    |> List.map (fun n -> parse_id n)
+    |> List.map (fun n -> n |> parse_iid |> find_nid)
   in
 
   let connect_inedges node in_nodes graph =
@@ -91,17 +120,31 @@ let create_from graph_lines =
       in_nodes graph
   in
 
-  let graph = G.empty in
+  let rec iid_operands_to_nid_operands operands res =
+    let module Operand = Operands.Operand in
+    match operands with
+    | h :: t -> (
+        match h with
+        | Operands.Operand.Id iid ->
+            iid_operands_to_nid_operands t
+              ((find_nid iid |> string_of_int |> Operand.of_id) :: res)
+        | v -> iid_operands_to_nid_operands t (v :: res))
+    | [] -> List.rev res
+  in
+
   graph_lines
-  |> List.mapi (fun i line -> (i, line))
   |> List.fold_left
-       (fun g (i, line) ->
-         let id = line |> parse_id in
-         let instr = line |> Instr.create_from in
-         let node = Node.create i id instr in
+       (fun g line ->
+         let instr_id = line |> parse_iid in
+         let node_id = instr_id |> find_nid in
+         let opcode, operands = line |> Instr.create_from in
+         let instr =
+           Instr.create opcode (iid_operands_to_nid_operands operands [])
+         in
+         let node = Node.create node_id instr in
          let in_nodes = line |> parse_innodes in
-         G.add_vertex g node |> connect_inedges id in_nodes)
-       graph
+         G.add_vertex g node |> connect_inedges node_id in_nodes)
+       G.empty
 
 (** Graph Visualization *)
 module Dot = Graph.Graphviz.Dot (struct

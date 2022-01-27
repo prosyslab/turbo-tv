@@ -1,13 +1,15 @@
+module Operand = Operands.Operand
+
 exception Invalid_instruction of string * string
 
-type t = Opcode.t * Operand.t list
+type t = Opcode.t * Operands.t
 
 let create opcode operands : t = (opcode, operands)
 let empty : t = (Opcode.empty, [])
 
 (* getter *)
 let opcode (opcode, _) : Opcode.t = opcode
-let operands (_, operands) : Operand.t list = operands
+let operands (_, operands) : Operands.t = operands
 
 let err instr reason =
   Printf.fprintf stderr "Invalid Instruction: %s\n%s\n\n" instr reason;

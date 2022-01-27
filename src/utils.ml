@@ -9,3 +9,25 @@ let read_lines chan =
 
 let write_lines chan lines =
   List.iter (fun line -> output_string chan (line ^ "\n")) lines
+
+let run_d8 target =
+  let d8_path =
+    Filename.concat (Filename.concat Options.project_root "d8") "d8"
+  in
+  if not (Sys.file_exists d8_path) then failwith "d8 is not exist";
+
+  let cmd =
+    String.concat " "
+      [ d8_path; "--trace-turbo-reduction"; "--allow-natives-syntax"; target ]
+  in
+  let chan = Unix.open_process_in cmd in
+  Core.In_channel.input_lines chan
+
+let get_params target =
+  let lines = open_in target |> read_lines in
+  let re =
+    Re.Pcre.regexp
+      "[\\s\\S]*%OptimizeFunctionOnNextCall\\(.*\\);\n.*\\((.*)\\);"
+  in
+  let params = Re.Group.get (String.concat "\n" lines |> Re.exec re) 1 in
+  params |> StringLabels.split_on_char ~sep:',' |> List.map String.trim

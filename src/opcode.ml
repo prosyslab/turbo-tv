@@ -997,7 +997,7 @@ let get_kind opcode =
   | ObjectIsInteger | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable
   | ObjectIsNumber | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi
   | ObjectIsString | ObjectIsSymbol | ObjectIsUndetectable | ObjectState
-  | OsrValue | Parameter | Phi | PlainPrimitiveToFloat64
+  | OsrValue | Phi | PlainPrimitiveToFloat64
   | PlainPrimitiveToNumber | PlainPrimitiveToWord32 | Plug | PointerConstant
   | Projection | ProtectedLoad | ProtectedStore | ReferenceEqual
   | RelocatableInt32Constant | RelocatableInt64Constant | ResizeMergeOrPhi
@@ -1698,7 +1698,6 @@ let of_str str =
   | "ObjectIsUndetectable" -> ObjectIsUndetectable
   | "ObjectState" -> ObjectState
   | "OsrValue" -> OsrValue
-  | "Parameter" -> Parameter
   | "Phi" -> Phi
   | "PlainPrimitiveToFloat64" -> PlainPrimitiveToFloat64
   | "PlainPrimitiveToNumber" -> PlainPrimitiveToNumber
@@ -2530,7 +2529,6 @@ let to_str opcode =
   | ObjectIsUndetectable -> "ObjectIsUndetectable"
   | ObjectState -> "ObjectState"
   | OsrValue -> "OsrValue"
-  | Parameter -> "Parameter"
   | Phi -> "Phi"
   | PlainPrimitiveToFloat64 -> "PlainPrimitiveToFloat64"
   | PlainPrimitiveToNumber -> "PlainPrimitiveToNumber"

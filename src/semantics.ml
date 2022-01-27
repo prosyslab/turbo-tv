@@ -1,188 +1,210 @@
+open Err
+
 module Value = struct
-  type t = Int of int | Float of float | Address of int | Tagged of int
-  [@@deriving equal]
+  type t =
+    | Bit of int
+    | Float64 of float
+    | Int31 of int
+    | Int32 of int
+    | BigInt of int
+    | UInt32 of int
+    | Int64 of int
+    | Tagged of int
+    | TaggedSigned of int
+    | TaggedPointer of int
+    | Addr of int
+    | Empty
 
-  let create_int i = Int i
-  let create_addr addr = Address addr
-  let create_tagged i = Tagged i
-
-  let int32add t1 t2 =
-    match (t1, t2) with
-    | Int i1, Int i2 -> Int ((i1 + i2) mod Int.shift_left 1 32)
-    | _, _ -> failwith "bad operand type"
-
-  let eval_bool t =
-    match t with
-    | Int i -> if i = 0 then false else true
-    | _ -> failwith "bad operand type"
+  let of_int32 i = Int32 i
+  let of_int64 i = Int64 i
+  let of_addr p = Addr p
+  let of_tagged i = Tagged i
+  let of_tagged_signed i = TaggedSigned i
 
   let type_of t =
     match t with
-    | Int _ -> "Int"
-    | Float _ -> "Float"
-    | Address _ -> "Address"
+    | Bit _ -> "Bit"
+    | Float64 _ -> "Float64"
+    | Int31 _ -> "Int31"
+    | Int32 _ -> "Int32"
+    | BigInt _ -> "BigInt"
+    | UInt32 _ -> "UInt32"
+    | Int64 _ -> "Int64"
     | Tagged _ -> "Tagged"
+    | TaggedSigned _ -> "TaggedSigned"
+    | TaggedPointer _ -> "TaggedPointer"
+    | Addr _ -> "Addr"
+    | Empty -> "Empty"
 
-  let to_string t =
-    match t with
-    | Int i -> string_of_int i
-    | Float f -> string_of_float f
-    | Address addr -> Printf.sprintf "0x%x" addr
-    | Tagged i -> string_of_int i
+  let is_type_of v t = v |> type_of = t
+
+  let to_str v =
+    match v with
+    | Bit b -> string_of_int b
+    | Float64 f -> string_of_float f
+    | Int31 i | Int32 i | Int64 i | BigInt i | UInt32 i -> string_of_int i
+    | Tagged i | TaggedSigned i | TaggedPointer i -> string_of_int i
+    | Addr p -> Printf.sprintf "0x%x" p
+    | Empty -> ""
+
+  let is_true v =
+    match v with
+    | Int31 i | Int32 i | UInt32 i | Int64 i -> if i = 0 then false else true
+    | _ ->
+        let cause = v |> to_str in
+        let reason =
+          Format.sprintf "Value `%s` cannot be evaluated as boolean" cause
+        in
+        err (TypeMismatch (cause, reason))
+
+  let tagged_to_i32 v =
+    match v with
+    | Tagged t -> of_int32 t
+    | _ ->
+        let cause = v |> to_str in
+        let reason =
+          Format.sprintf "Value `%s` is not type of `%s`" cause "Tagged"
+        in
+        err (TypeMismatch (cause, reason))
+    
+  let tagged_signed_to_i32 v =
+    match v with
+    | TaggedSigned t -> of_int32 t
+    | _ ->
+        let cause = v |> to_str in
+        let reason =
+          Format.sprintf "Value `%s` is not type of `%s`" cause "TaggedSigned"
+        in
+        err (TypeMismatch (cause, reason))
+
+  let i32_to_tagged v =
+    match v with
+    | Int32 t -> of_tagged t
+    | _ ->
+        let cause = v |> to_str in
+        let reason =
+          Format.sprintf "Value `%s` is not type of `%s`" cause "Int32"
+        in
+        err (TypeMismatch (cause, reason))
+
+  let int32add v1 v2 =
+    match (v1, v2) with
+    | Int32 i1, Int32 i2 -> Int32 ((i1 + i2) mod Int.shift_left 1 32)
+    | _, _ -> failwith "bad operand type"
 end
 
-module RegisterFile = Map.Make (String)
+module RegisterFile = struct
+  module R = Map.Make (String)
+
+  let add = R.add
+
+  let find id rf =
+    try R.find id rf
+    with Not_found ->
+      let cause = id in
+      let reason = Format.sprintf "Cannot find #%s from RegisterFile" cause in
+      err (IdNotFound (cause, reason))
+
+  let find_type_of id ty register_type =
+    let v = find id register_type in
+    if Value.is_type_of v ty then v
+    else
+      let cause = v |> Value.to_str in
+      let reason = Format.sprintf "Value `%s` is not type of `%s`" cause ty in
+      err (TypeMismatch (cause, reason))
+
+  let empty = R.empty
+  let iter = R.iter
+end
 
 module State = struct
   type t = {
-    pc : int;
-    rf : Value.t RegisterFile.t;
-    graph_lines : string list;
-    graph : IR.G.t;
+    pc : IR.Node.id;
+    rf : Value.t RegisterFile.R.t;
     params : string list;
-    return_value : Value.t Option.t;
+    return_value : Value.t;
   }
 
+  let init params =
+    { pc = 0; rf = RegisterFile.empty; params; return_value = Value.Empty }
+
+  (* getter *)
   let pc t = t.pc
+  let rf t = t.rf
   let params t = t.params
   let return_value t = t.return_value
-
-  let init graph_lines graph params =
-    {
-      pc = 0;
-      rf = RegisterFile.empty;
-      graph_lines;
-      graph;
-      params;
-      return_value = None;
-    }
-
-  let get_id t =
-    let line = List.nth t.graph_lines t.pc in
-    IR.parse_id line |> string_of_int
-
-  let get_node t =
-    let id = get_id t |> int_of_string in
-    IR.find_node id t.graph
-
-  let get_instr t =
-    let node = get_node t in
-    IR.Node.instr node
-
-  let get_tf_addr t =
-    let find_node opcode nodes =
-      List.find
-        (fun node ->
-          let node_opcode = IR.Node.instr node |> Instr.opcode in
-          opcode = node_opcode)
-        nodes
-    in
-    let node = get_node t in
-    let next_nodes = IR.G.succ t.graph node in
-    let true_node = find_node Opcode.IfTrue next_nodes in
-    let false_node = find_node Opcode.IfFalse next_nodes in
-    (IR.Node.address true_node, IR.Node.address false_node)
-
-  let update_rf id value t =
-    let rf = t.rf in
-    { t with rf = RegisterFile.add id value rf }
-
-  let find_rf id t = RegisterFile.find id t.rf
-
-  let update_pc ?pc t =
-    match pc with Some pc -> { t with pc } | None -> { t with pc = t.pc + 1 }
-
-  let program_ends t =
-    if 0 <= t.pc && t.pc < List.length t.graph_lines then false else true
+  let update rf pc t = { t with rf; pc }
+  let is_final t = t.pc = -1
 
   let print_register_file t =
     RegisterFile.iter
       (fun key v ->
         print_endline
-          ("#" ^ key ^ " (" ^ Value.type_of v ^ " : " ^ Value.to_string v ^ ")"))
+          ("#" ^ key ^ " (" ^ Value.type_of v ^ " : " ^ Value.to_str v ^ ")"))
       t.rf
 end
 
-let next_state state =
+let apply program state =
   let pc = State.pc state in
+  let rf = State.rf state in
   print_endline (string_of_int pc);
-  let id = State.get_id state in
-  let instr = State.get_instr state in
-  let opcode = Instr.opcode instr in
-  let operands = Instr.operands instr in
-  match opcode with
-  | Int32Constant | Int64Constant ->
-      assert (List.length operands = 1);
-      let n = List.hd operands |> Operand.to_int in
-      state |> State.update_rf id (Value.create_int n) |> State.update_pc
-  | HeapConstant | ExternalConstant ->
-      assert (List.length operands = 1);
-      let re = Re.Pcre.regexp "(0x[0-9a-f]+)" in
-      let addr =
-        Re.Group.get (Re.exec re (List.hd operands |> Operand.to_str)) 1
-        |> int_of_string
-      in
-      state |> State.update_rf id (Value.create_addr addr) |> State.update_pc
-  | Return ->
-      assert (List.length operands = 1);
-      let input_id = Operand.get_nth_id operands 0 in
-      let v = State.find_rf input_id state in
-      state |> State.update_rf id v |> State.update_pc ~pc:(-1)
-  | CheckedTaggedSignedToInt32 ->
-      assert (List.length operands = 1);
-      let input_id = Operand.get_nth_id operands 0 in
-      let v =
-        match State.find_rf input_id state with
-        | Tagged i -> Value.create_int i
-        | _ -> failwith "bad operand type"
-      in
-      state |> State.update_rf id v |> State.update_pc
-  | ChangeInt32ToTagged ->
-      assert (List.length operands = 1);
-      let input_id = Operand.get_nth_id operands 0 in
-      let v =
-        match State.find_rf input_id state with
-        | Int i -> Value.create_tagged i
-        | _ -> failwith "bad operand type"
-      in
-      state |> State.update_rf id v |> State.update_pc
-  | Int32Add ->
-      assert (List.length operands = 2);
-      let left_id = Operand.get_nth_id operands 0 in
-      let right_id = Operand.get_nth_id operands 1 in
-      let left_v = State.find_rf left_id state in
-      let right_v = State.find_rf right_id state in
-      let v = Value.int32add left_v right_v in
-      state |> State.update_rf id v |> State.update_pc
-  | Parameter ->
-      assert (List.length operands = 1);
-      let params = State.params state in
-      let param_idx = (List.hd operands |> Operand.to_int) - 1 in
-      (if 0 <= param_idx && param_idx < List.length params then
-       let param = List.nth params param_idx |> int_of_string in
-       state |> State.update_rf id (Value.create_tagged param)
-      else state)
-      |> State.update_pc
-  | StackPointerGreaterThan ->
-      (* TODO: implement StackPointerGreaterThan *)
-      state |> State.update_rf id (Value.create_int 1) |> State.update_pc
-  | Branch ->
-      assert (List.length operands = 1);
-      let input_id = Operand.get_nth_id operands 0 in
-      let b = State.find_rf input_id state |> Value.eval_bool in
-      let true_addr, false_addr = State.get_tf_addr state in
-      if b then state |> State.update_pc ~pc:true_addr
-      else state |> State.update_pc ~pc:false_addr
-  (* Unimplemented *)
-  | Call | Checkpoint | EffectPhi | End | FrameState | IfFalse | IfTrue
-  | LoadStackCheckOffset | Merge | Start | TypedStateValues | Load | Empty ->
-      state |> State.update_pc
-  | _ -> state |> State.update_pc
 
-let rec execute state =
-  if State.program_ends state then state else execute (next_state state)
+  let opcode, operands = IR.instr_of pc program in
+  let next_pc =
+    match opcode with
+    | Branch ->
+        let b_id = Operands.id_of_nth operands 0 in
+        let b = RegisterFile.find b_id rf in
 
-let get_return_value graph_lines graph params =
-  let init_state = State.init graph_lines graph params in
-  let final_state = execute init_state in
-  State.return_value final_state
+        if b |> Value.is_true then IR.true_br_of pc program
+        else IR.false_br_of pc program
+    | Return -> -1
+    | _ -> pc + 1
+  in
+
+  let value =
+    match opcode with
+    | Int32Constant -> Operands.int_of_nth operands 0 |> Value.of_int32
+    | Int64Constant -> Operands.int_of_nth operands 0 |> Value.of_int64
+    | HeapConstant | ExternalConstant ->
+        Operands.addr_of_nth operands 0 |> Value.of_addr
+    | Return ->
+        let k = Operands.id_of_nth operands 0 in
+        RegisterFile.find k rf
+    | CheckedTaggedSignedToInt32 ->
+        let k = Operands.id_of_nth operands 0 in
+        let v = RegisterFile.find_type_of k "TaggedSigned" rf in
+        Value.tagged_signed_to_i32 v
+    | ChangeInt32ToTagged ->
+        let k = Operands.id_of_nth operands 0 in
+        let v = RegisterFile.find_type_of k "Int32" rf in
+        Value.i32_to_tagged v
+    | Int32Add ->
+        let lid = Operands.id_of_nth operands 0 in
+        let rid = Operands.id_of_nth operands 1 in
+        let lv = RegisterFile.find_type_of lid "Int32" rf in
+        let rv = RegisterFile.find_type_of rid "Int32" rf in
+        Value.int32add lv rv
+    | Parameter ->
+        let params = State.params state in
+        let param_idx = Operands.int_of_nth operands 0 - 1 in
+
+        if 0 <= param_idx && param_idx < List.length params then
+          let param = List.nth params param_idx |> int_of_string in
+          Value.of_tagged_signed param
+        else Value.Empty
+    | StackPointerGreaterThan ->
+        (* TODO: implement StackPointerGreaterThan *)
+        Value.of_int32 1
+    | Branch -> Value.Empty
+    (* Unimplemented *)
+    | Call | Checkpoint | EffectPhi | End | FrameState | IfFalse | IfTrue
+    | LoadStackCheckOffset | Merge | Start | TypedStateValues | Load | Empty ->
+        Value.Empty
+    | _ -> Value.Empty
+  in
+  let updated_rf = RegisterFile.add (pc |> string_of_int) value rf in
+  let next_state = State.update updated_rf next_pc state in
+
+  if opcode = Return then {next_state with return_value=value}
+  else next_state
