@@ -115,6 +115,13 @@ module RegisterFile = struct
 
   let empty = R.empty
   let iter = R.iter
+
+  let print t =
+    R.iter
+      (fun key v ->
+        print_endline
+          ("#" ^ key ^ " (" ^ Value.type_of v ^ " : " ^ Value.to_str v ^ ")"))
+      t
 end
 
 module State = struct
@@ -135,13 +142,6 @@ module State = struct
   let return_value t = t.return_value
   let update rf pc t = { t with rf; pc }
   let is_final t = t.pc = -1
-
-  let print_register_file t =
-    RegisterFile.iter
-      (fun key v ->
-        print_endline
-          ("#" ^ key ^ " (" ^ Value.type_of v ^ " : " ^ Value.to_str v ^ ")"))
-      t.rf
 end
 
 let apply program state =
