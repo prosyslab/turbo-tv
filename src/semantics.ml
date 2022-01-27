@@ -66,7 +66,7 @@ module Value = struct
           Format.sprintf "Value `%s` is not type of `%s`" cause "Tagged"
         in
         err (TypeMismatch (cause, reason))
-    
+
   let tagged_signed_to_i32 v =
     match v with
     | TaggedSigned t -> of_int32 t
@@ -206,5 +206,5 @@ let apply program state =
   let updated_rf = RegisterFile.add (pc |> string_of_int) value rf in
   let next_state = State.update updated_rf next_pc state in
 
-  if opcode = Return then {next_state with return_value=value}
+  if opcode = Return then { next_state with return_value = value }
   else next_state

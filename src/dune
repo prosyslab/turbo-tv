@@ -1,15 +1,4 @@
 (executable
  (name main)
- (modules
-  main
-  options
-  reduction
-  opcode
-  operands
-  instr
-  IR
-  tv
-  utils
-  semantics
-  err)
+ (modules main reduction opcode operands instr IR tv utils semantics err)
  (libraries core cmdliner ocamlgraph str re z3))

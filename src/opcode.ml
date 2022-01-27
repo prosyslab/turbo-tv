@@ -997,15 +997,15 @@ let get_kind opcode =
   | ObjectIsInteger | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable
   | ObjectIsNumber | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi
   | ObjectIsString | ObjectIsSymbol | ObjectIsUndetectable | ObjectState
-  | OsrValue | Phi | PlainPrimitiveToFloat64
-  | PlainPrimitiveToNumber | PlainPrimitiveToWord32 | Plug | PointerConstant
-  | Projection | ProtectedLoad | ProtectedStore | ReferenceEqual
-  | RelocatableInt32Constant | RelocatableInt64Constant | ResizeMergeOrPhi
-  | RestLength | Retain | RoundFloat64ToInt32 | RoundInt32ToFloat32
-  | RoundInt64ToFloat32 | RoundInt64ToFloat64 | RoundUint32ToFloat32
-  | RoundUint64ToFloat32 | RoundUint64ToFloat64 | RuntimeAbort | S128And
-  | S128AndNot | S128Const | S128Not | S128Or | S128Select | S128Xor | S128Zero
-  | SameValue | SameValueNumbersOnly | Select | SignExtendWord16ToInt32
+  | OsrValue | Phi | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber
+  | PlainPrimitiveToWord32 | Plug | PointerConstant | Projection | ProtectedLoad
+  | ProtectedStore | ReferenceEqual | RelocatableInt32Constant
+  | RelocatableInt64Constant | ResizeMergeOrPhi | RestLength | Retain
+  | RoundFloat64ToInt32 | RoundInt32ToFloat32 | RoundInt64ToFloat32
+  | RoundInt64ToFloat64 | RoundUint32ToFloat32 | RoundUint64ToFloat32
+  | RoundUint64ToFloat64 | RuntimeAbort | S128And | S128AndNot | S128Const
+  | S128Not | S128Or | S128Select | S128Xor | S128Zero | SameValue
+  | SameValueNumbersOnly | Select | SignExtendWord16ToInt32
   | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
   | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
   | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
