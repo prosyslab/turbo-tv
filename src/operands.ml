@@ -61,12 +61,10 @@ let nth operands idx =
     err (InvalidIndex (idx |> string_of_int, reason))
 
 let id_of_nth operands idx = nth operands idx |> Operand.id
+let const_of_nth operands idx = nth operands idx |> Operand.const
 
 let int_of_nth operands idx =
   nth operands idx |> Operand.const |> Operand.c_as_int
-
-let float_of_nth operands idx =
-  nth operands idx |> Operand.const |> Operand.c_as_float
 
 let addr_of_nth operands idx =
   nth operands idx |> Operand.const |> Operand.c_as_addr

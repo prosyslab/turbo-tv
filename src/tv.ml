@@ -1,17 +1,32 @@
 module State = Semantics.State
 
-let execute program params =
+let ctx = Semantics.Value.ctx
+let validator = Z3.Solver.mk_solver ctx None
+
+let execute program params prefix =
   let init_state = State.init params in
   let rec next program state =
-    if State.is_final state then state.return_value
-    else Semantics.apply program state |> next program
+    if State.is_final state then (state.retvar |> Option.get, state.retexp)
+    else Semantics.apply program state prefix |> next program
   in
 
   next program init_state
 
 let run before after =
-  let final_state_A = execute before [ "3" ] in
-  let final_state_B = execute after [ "3" ] in
+  let retvar_A, retexp_A = execute before [ "3000000000000000" ] "a" in
+  let retvar_B, retexp_B = execute after [ "3000000000000000" ] "b" in
 
-  if final_state_A = final_state_B then print_endline "success"
-  else print_endline "fail"
+  let query =
+    Z3.Expr.simplify
+      (Z3.Boolean.mk_and ctx
+         [
+           retexp_A;
+           retexp_B;
+           Z3.Boolean.mk_not ctx (Z3.Boolean.mk_eq ctx retvar_A retvar_B);
+         ])
+      None
+  in
+  query |> Z3.Expr.to_string |> print_endline;
+
+  let status = Z3.Solver.check validator [ query ] in
+  print_endline (status |> Z3.Solver.string_of_status)
