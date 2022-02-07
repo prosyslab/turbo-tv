@@ -1,51 +1,48 @@
 open Err
+open Z3utils
 
 module Value = struct
   type t =
-    | Bit of Z3.Expr.expr
-    | Float64 of Z3.Expr.expr
-    | Int31 of Z3.Expr.expr
-    | Int32 of Z3.Expr.expr
-    | BigInt of Z3.Expr.expr
-    | UInt32 of Z3.Expr.expr
-    | Int64 of Z3.Expr.expr
-    | Tagged of Z3.Expr.expr
-    | TaggedSigned of Z3.Expr.expr
-    | TaggedPointer of Z3.Expr.expr
-    | Addr of Z3.Expr.expr
+    | Bit of BitVec.t
+    | Float64 of BitVec.t
+    | Int31 of BitVec.t
+    | Int32 of BitVec.t
+    | BigInt of BitVec.t
+    | UInt32 of BitVec.t
+    | Int64 of BitVec.t
+    | Tagged of BitVec.t
+    | TaggedSigned of BitVec.t
+    | TaggedPointer of BitVec.t
+    | Addr of BitVec.t
     | Empty
 
-  let ctx = Z3.mk_context [ ("model", "true"); ("unsat_core", "true") ]
   let vlen = 64
   let smilen = 32
-  let true_b = Z3.Boolean.mk_true ctx
-  let true_bv = Z3.BitVector.mk_numeral ctx "1" vlen
 
   let of_int32 pc v =
-    let var = Z3.BitVector.mk_const_s ctx pc vlen in
-    let value = Z3.BitVector.mk_numeral ctx v 64 in
-    Int32 (Z3.Boolean.mk_eq ctx var value)
+    let var = BitVec.init pc in
+    let value = BitVecVal.of_str v in
+    Int32 (BitVec.eqb var value)
 
   let of_int64 pc v =
-    let var = Z3.BitVector.mk_const_s ctx pc vlen in
-    let value = Z3.BitVector.mk_numeral ctx v 64 in
-    Int64 (Z3.Boolean.mk_eq ctx var value)
+    let var = BitVec.init pc in
+    let value = BitVecVal.of_str v in
+    Int64 (BitVec.eqb var value)
 
-  let of_addr pc _v =
-    let addr = "12345678" in
-    let var = Z3.BitVector.mk_const_s ctx pc vlen in
-    let value = Z3.BitVector.mk_numeral ctx addr 64 in
-    Addr (Z3.Boolean.mk_eq ctx var value)
+  let of_addr pc v =
+    let var = BitVec.init pc in
+    let addr = BitVecVal.of_str v in
+    Addr (BitVec.eqb var addr)
 
   let of_tagged pc v =
-    let var = Z3.BitVector.mk_const_s ctx pc vlen in
-    let value = Z3.BitVector.mk_numeral ctx v 64 in
-    Tagged (Z3.Boolean.mk_eq ctx var value)
+    let var = BitVec.init pc in
+    let value = BitVecVal.of_str v in
+    Tagged (BitVec.eqb var value)
 
   let of_tagged_signed pc v =
-    let var = Z3.BitVector.mk_const_s ctx pc vlen in
-    let value = Z3.BitVector.mk_numeral ctx v 64 in
-    TaggedSigned (Z3.Boolean.mk_eq ctx var value)
+    let var = BitVec.init pc in
+    let value = BitVecVal.of_str v in
+    TaggedSigned (BitVec.eqb var value)
 
   let type_of t =
     match t with
@@ -98,9 +95,7 @@ module Value = struct
 
   let is_true t =
     match t with
-    | Int31 e | Int32 e | UInt32 e | Int64 e ->
-        let cond = Z3.BitVector.mk_uge ctx e true_bv in
-        Z3.Boolean.mk_eq ctx true_b cond
+    | Int31 e | Int32 e | UInt32 e | Int64 e -> BitVec.is_true e
     | _ ->
         let cause = t |> to_str in
         let reason =
@@ -108,50 +103,39 @@ module Value = struct
         in
         err (TypeMismatch (cause, reason))
 
+  let eq lval rval = Int64 (BitVec.eqb (BitVec.init lval) (BitVec.init rval))
+
   let int32add pc lid rid =
-    let var = Z3.BitVector.mk_const_s ctx pc vlen in
-    let lvar = Z3.BitVector.mk_const_s ctx lid vlen in
-    let rvar = Z3.BitVector.mk_const_s ctx rid vlen in
+    let var = BitVec.init pc in
+    let lvar = BitVec.init lid in
+    let rvar = BitVec.init rid in
     let value = Z3.BitVector.mk_add ctx lvar rvar in
-    Int32 (Z3.Boolean.mk_eq ctx var value)
-
-  let eq pc id =
-    let var = Z3.BitVector.mk_const_s ctx pc vlen in
-    let value = Z3.BitVector.mk_const_s ctx id vlen in
-    Int64 (Z3.Boolean.mk_eq ctx var value)
-
-  let shl e c =
-    let count = Z3.BitVector.mk_numeral ctx (c |> string_of_int) vlen in
-    Z3.BitVector.mk_shl ctx e count
-
-  let ashr e c =
-    let count = Z3.BitVector.mk_numeral ctx (c |> string_of_int) vlen in
-    Z3.BitVector.mk_ashr ctx e count
+    Int32 (BitVec.eqb var value)
 
   let tagged_signed_to_i32 pc operand =
-    let var = Z3.BitVector.mk_const_s ctx pc vlen in
-    let value = ashr (Z3.BitVector.mk_const_s ctx operand vlen) smilen in
-    Int32 (Z3.Boolean.mk_eq ctx var value)
+    let var = BitVec.init pc in
+    let value = BitVec.ashri (BitVec.init operand) smilen in
+    Int32 (BitVec.eqb var value)
 
   let i32_to_tagged pc operand =
-    let var = Z3.BitVector.mk_const_s ctx pc vlen in
-    let value = shl (Z3.BitVector.mk_const_s ctx operand vlen) smilen in
-    Tagged (Z3.Boolean.mk_eq ctx var value)
+    let var = BitVec.init pc in
+    let value = BitVec.shli (BitVec.init operand) smilen in
+    Tagged (BitVec.eqb var value)
 end
 
 module State = struct
   type t = {
     pc : IR.Node.id;
     params : string list;
-    retexp : Z3.Expr.expr;
-    retvar : Z3.Expr.expr Option.t;
+    retexp : BitVec.t;
+    retvar : BitVec.t Option.t;
   }
 
   let init params =
     {
       pc = 0;
       params;
-      retexp = Z3.Boolean.mk_or Value.ctx [ Z3.Boolean.mk_true Value.ctx ];
+      retexp = Z3.Boolean.mk_or ctx [ Z3.Boolean.mk_true ctx ];
       retvar = None;
     }
 
@@ -166,7 +150,6 @@ end
 let apply program state prefix =
   let pc = State.pc state in
   let pc_str = prefix ^ string_of_int pc in
-  print_endline (string_of_int pc);
 
   let opcode, operands = IR.instr_of pc program in
   let next_pc =
@@ -187,7 +170,9 @@ let apply program state prefix =
     | Int32Constant -> Operands.const_of_nth operands 0 |> Value.of_int32 pc_str
     | Int64Constant -> Operands.const_of_nth operands 0 |> Value.of_int64 pc_str
     | HeapConstant | ExternalConstant ->
-        Operands.const_of_nth operands 0 |> Value.of_addr pc_str
+        let addr_re = Re.Pcre.regexp "(0x[0-9a-f]*)" in
+        let operand = Operands.const_of_nth operands 0 in
+        Re.Group.get (Re.exec addr_re operand) 1 |> Value.of_addr pc_str
     | CheckedTaggedSignedToInt32 ->
         let k = Operands.id_of_nth operands 0 in
         Value.tagged_signed_to_i32 pc_str (prefix ^ k)
@@ -220,13 +205,10 @@ let apply program state prefix =
     | _ -> Value.Empty
   in
 
-  let rv = Z3.Boolean.mk_and Value.ctx [ state.retexp; value |> Value.expr ] in
+  let rv = Z3.Boolean.mk_and ctx [ state.retexp; value |> Value.expr ] in
 
   let next_state = State.update next_pc rv state in
 
   if State.is_final next_state then
-    {
-      next_state with
-      retvar = Option.some (Z3.BitVector.mk_const_s Value.ctx pc_str 64);
-    }
+    { next_state with retvar = Option.some (BitVec.init pc_str) }
   else next_state

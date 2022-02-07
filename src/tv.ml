@@ -1,6 +1,6 @@
 module State = Semantics.State
 
-let ctx = Semantics.Value.ctx
+let ctx = Z3utils.ctx
 let validator = Z3.Solver.mk_solver ctx None
 
 let execute program params prefix =

@@ -13,7 +13,7 @@ module BitVecVal = struct
   type t = Expr.expr
 
   (* numeral const *)
-  let zero ?(len : int = !bvlen) = BV.mk_numeral ctx "0" len
+  let zero (len : int) () : t = BV.mk_numeral ctx "0" len
 
   (* constructor *)
   let of_int ?(len = !bvlen) value =
@@ -78,6 +78,13 @@ module BitVec = struct
   let ugei lbv rval =
     let rbv = BitVecVal.of_int ~len:(len lbv) rval in
     BV.mk_uge ctx lbv rbv
+
+  (* arithmetic operation *)
+  let ashrb lbv rbv = BV.mk_ashr ctx lbv rbv
+
+  let ashri lbv rval =
+    let rbv = BitVecVal.of_int ~len:(len lbv) rval in
+    BV.mk_ashr ctx lbv rbv
 
   (* boolean operation *)
   let is_true bv =
