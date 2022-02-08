@@ -4,10 +4,34 @@ module B = Boolean
 module BV = BitVector
 
 let ctx = mk_context [ ("model", "true"); ("unsat_core", "true") ]
-let str_of_expr expr = expr |> Expr.to_string
-let simplify opt expr = Expr.simplify expr opt
+let str_of_exp exp = exp |> Expr.to_string
+let simplify opt exp = Expr.simplify exp opt
+let print exp = exp |> str_of_exp |> print_endline
+let print_simplified exp = exp |> simplify None |> str_of_exp |> print_endline
 let bvlen = ref 64
 let set_bvlen len = bvlen := len
+
+module Bool = struct
+  type t = Expr.expr
+
+  (* constructor *)
+  let init name = B.mk_const_s ctx name
+
+  (* constants *)
+  let t = B.mk_true ctx
+  let f = B.mk_false ctx
+
+  (* logical operation *)
+  let and_ lexp rexp = B.mk_and ctx [ lexp; rexp ]
+  let ands exps = B.mk_and ctx exps
+  let or_ lexp rexp = B.mk_or ctx [ lexp; rexp ]
+  let ors exps = B.mk_or ctx exps
+  let not exp = B.mk_not ctx exp
+
+  (* comparison *)
+  let eq lexp rexp = B.mk_eq ctx lexp rexp
+  let neq lexp rexp = B.mk_not ctx (B.mk_eq ctx lexp rexp)
+end
 
 module BitVecVal = struct
   type t = Expr.expr
