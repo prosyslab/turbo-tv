@@ -1,6 +1,7 @@
 open Err
 module B = Z3.Boolean
 module E = Z3.Expr
+module M = Z3.Model
 module S = Z3.Solver
 module BV = Z3.BitVector
 
@@ -8,20 +9,29 @@ module BV = Z3.BitVector
 let ctx = Z3.mk_context [ ("model", "true"); ("unsat_core", "true") ]
 
 (* print *)
-let str_of_exp exp = exp |> E.to_string
 let simplify opt exp = E.simplify exp opt
-let print exp = exp |> str_of_exp |> print_endline
+let str_of_exp exp = exp |> E.to_string
+let str_of_simplified exp = exp |> simplify None |> str_of_exp
+let print_exp exp = exp |> str_of_exp |> print_endline
 let print_simplified exp = exp |> simplify None |> str_of_exp |> print_endline
 
 (* default bitvector length *)
 let bvlen = ref 64
 let set_bvlen len = bvlen := len
 
+module Model = struct
+  type t = M.model
+
+  let to_str = M.to_string
+end
+
 module Solver = struct
   type t = S.solver
+  type status = SATISFIABLE | UNSATISFIABLE | UNKNOWN
 
   let init = S.mk_solver ctx None
   let check solver query = S.check solver [ query ]
+  let get_model = S.get_model
   let str_of_status = S.string_of_status
 end
 
@@ -118,6 +128,17 @@ module BitVec = struct
     BV.mk_uge ctx lbv rbv
 
   (* arithmetic operation *)
+  let addb lbv rbv = BV.mk_add ctx lbv rbv
+
+  let addi lbv rval =
+    let rbv = BitVecVal.of_int ~len:(len lbv) rval in
+    BV.mk_add ctx lbv rbv
+
+  (* rbv != 0 && lbv % rbv *)
+  let modb lbv rbv =
+    let zdiv_cond = neqi rbv 0 in
+    andb zdiv_cond (BV.mk_smod ctx lbv rbv)
+
   let ashrb lbv rbv = BV.mk_ashr ctx lbv rbv
 
   let ashri lbv rval =

@@ -1,7 +1,26 @@
 open Err
 open Z3utils
 
+module Params = struct
+  module Param = struct
+    type t = BitVec.t
+
+    let init pid = BitVec.init pid
+  end
+
+  type t = Param.t list
+
+  let init nparams =
+    let rec mk_param cnt res =
+      if cnt == nparams then res
+      else mk_param (cnt + 1) (Param.init ("p" ^ (cnt |> string_of_int)) :: res)
+    in
+    mk_param 0 []
+end
+
 module Value = struct
+  type id = string
+
   type t =
     | Bit of BitVec.t
     | Float64 of BitVec.t
@@ -15,34 +34,6 @@ module Value = struct
     | TaggedPointer of BitVec.t
     | Addr of BitVec.t
     | Empty
-
-  let vlen = 64
-  let smilen = 32
-
-  let of_int32 pc v =
-    let var = BitVec.init pc in
-    let value = BitVecVal.of_str v in
-    Int32 (BitVec.eqb var value)
-
-  let of_int64 pc v =
-    let var = BitVec.init pc in
-    let value = BitVecVal.of_str v in
-    Int64 (BitVec.eqb var value)
-
-  let of_addr pc v =
-    let var = BitVec.init pc in
-    let addr = BitVecVal.of_str v in
-    Addr (BitVec.eqb var addr)
-
-  let of_tagged pc v =
-    let var = BitVec.init pc in
-    let value = BitVecVal.of_str v in
-    Tagged (BitVec.eqb var value)
-
-  let of_tagged_signed pc v =
-    let var = BitVec.init pc in
-    let value = BitVecVal.of_str v in
-    TaggedSigned (BitVec.eqb var value)
 
   let type_of t =
     match t with
@@ -59,156 +50,236 @@ module Value = struct
     | Addr _ -> "Addr"
     | Empty -> "Empty"
 
-  let is_type_of t ty = t |> type_of = ty
-
   let to_str t =
     match t with
-    | Bit e
-    | Float64 e
-    | Int31 e
-    | Int32 e
-    | BigInt e
-    | UInt32 e
-    | Int64 e
-    | Tagged e
-    | TaggedSigned e
-    | TaggedPointer e
-    | Addr e ->
-        Z3.Expr.to_string e
     | Empty -> ""
+    | Bit exp
+    | Float64 exp
+    | Int31 exp
+    | Int32 exp
+    | BigInt exp
+    | UInt32 exp
+    | Int64 exp
+    | Tagged exp
+    | TaggedSigned exp
+    | TaggedPointer exp
+    | Addr exp ->
+        str_of_exp exp
 
-  let expr t =
+  let bv t =
     match t with
-    | Bit e
-    | Float64 e
-    | Int31 e
-    | Int32 e
-    | BigInt e
-    | UInt32 e
-    | Int64 e
-    | Tagged e
-    | TaggedSigned e
-    | TaggedPointer e
-    | Addr e ->
-        e
-    | Empty -> Z3.Boolean.mk_or ctx [ Z3.Boolean.mk_true ctx ]
+    | Bit bv
+    | Float64 bv
+    | Int31 bv
+    | Int32 bv
+    | BigInt bv
+    | UInt32 bv
+    | Int64 bv
+    | Tagged bv
+    | TaggedSigned bv
+    | TaggedPointer bv
+    | Addr bv ->
+        bv
+    | Empty -> Bool.tr
 
-  let is_true t =
-    match t with
-    | Int31 e | Int32 e | UInt32 e | Int64 e -> BitVec.is_true e
-    | _ ->
-        let cause = t |> to_str in
-        let reason =
-          Format.sprintf "Value `%s` cannot be evaluated as boolean" cause
+  (* constants *)
+  let len = 64
+  let smilen = 32
+  let smimask = 0xffffffff
+
+  (* assignment *)
+  let of_int32 vid c =
+    let var = BitVec.init vid in
+    let value = Int32 var in
+    let assertion = BitVec.eqb var (BitVecVal.of_str c) in
+    (value, assertion)
+
+  let of_int64 vid c =
+    let var = BitVec.init vid in
+    let value = Int64 var in
+    let assertion = BitVec.eqb var (BitVecVal.of_str c) in
+    (value, assertion)
+
+  let of_addr vid c =
+    let var = BitVec.init vid in
+    let value = Addr var in
+    let assertion = BitVec.eqb var (BitVecVal.of_str c) in
+    (value, assertion)
+
+  let of_tagged vid c =
+    let var = BitVec.init vid in
+    let value = Tagged var in
+    let assertion = BitVec.eqb var (BitVecVal.of_str c) in
+    (value, assertion)
+
+  let of_tagged_signed vid c =
+    let var = BitVec.init vid in
+    let value = TaggedSigned var in
+    let assertion = BitVec.eqb var (BitVecVal.of_str c) in
+    (value, assertion)
+
+  (* var = (lpvar + rpvar) mod 2^32 *)
+  let int32add vid lval rval =
+    let var = BitVec.init vid in
+    let value = Int32 var in
+    match (lval, rval) with
+    | Int32 lbv, Int32 rbv ->
+        let assertion =
+          BitVec.eqb var (BitVec.andi (BitVec.addb lbv rbv) smimask)
         in
+        (value, assertion)
+    | _ ->
+        let cause = (lval |> to_str) ^ " or " ^ (rval |> to_str) in
+        let reason = Format.sprintf "%s is not type of 'Int32'" cause in
         err (TypeMismatch (cause, reason))
 
-  let eq lval rval = Int64 (BitVec.eqb (BitVec.init lval) (BitVec.init rval))
+  (* var = pvar >> 32 *)
+  let tagged_signed_to_i32 vid pval =
+    let var = BitVec.init vid in
+    let value = Int32 var in
+    match pval with
+    | TaggedSigned bv ->
+        let assertion = BitVec.eqb var (BitVec.ashri bv smilen) in
+        (value, assertion)
+    | _ ->
+        let cause = pval |> to_str in
+        let reason = Format.sprintf "%s is not type of 'TaggedSigned'" cause in
+        err (TypeMismatch (cause, reason))
 
-  let int32add pc lid rid =
-    let var = BitVec.init pc in
-    let lvar = BitVec.init lid in
-    let rvar = BitVec.init rid in
-    let value = Z3.BitVector.mk_add ctx lvar rvar in
-    Int32 (BitVec.eqb var value)
+  (* var = pvar << 32 *)
+  let i32_to_tagged vid pval =
+    let var = BitVec.init vid in
+    let value = Tagged var in
+    match pval with
+    | Int32 bv ->
+        let assertion = BitVec.eqb var (BitVec.shli bv smilen) in
+        (value, assertion)
+    | _ ->
+        let cause = pval |> to_str in
+        let reason = Format.sprintf "%s is not type of 'Int32'" cause in
+        err (TypeMismatch (cause, reason))
 
-  let tagged_signed_to_i32 pc operand =
-    let var = BitVec.init pc in
-    let value = BitVec.ashri (BitVec.init operand) smilen in
-    Int32 (BitVec.eqb var value)
+  let parameter vid param =
+    let var = BitVec.init vid in
+    let value = TaggedSigned var in
+    let assertion = BitVec.eqb var param in
+    (value, assertion)
 
-  let i32_to_tagged pc operand =
-    let var = BitVec.init pc in
-    let value = BitVec.shli (BitVec.init operand) smilen in
-    Tagged (BitVec.eqb var value)
+  let return vid pval =
+    let var = BitVec.init vid in
+    let assertion = BitVec.eqb var (pval |> bv) in
+    (Empty, assertion)
+end
+
+module RegisterFile = struct
+  module R = Map.Make (String)
+
+  let add = R.add
+
+  let find vid rf =
+    try R.find vid rf
+    with Not_found ->
+      let cause = vid in
+      let reason = Format.sprintf "Cannot find %s from RegisterFile" cause in
+      err (IdNotFound (cause, reason))
+
+  let empty = R.empty
+  let iter = R.iter
+
+  let print t =
+    iter
+      (fun key v ->
+        print_endline
+          ("#" ^ key ^ " (" ^ Value.type_of v ^ " : " ^ Value.to_str v ^ ")"))
+      t
 end
 
 module State = struct
   type t = {
     pc : IR.Node.id;
-    params : string list;
-    retexp : BitVec.t;
+    register_file : Value.t RegisterFile.R.t;
+    params : BitVec.t list;
     retvar : BitVec.t Option.t;
+    assertion : BitVec.t;
   }
 
-  let init params =
+  let init nparams : t =
     {
       pc = 0;
-      params;
-      retexp = Z3.Boolean.mk_or ctx [ Z3.Boolean.mk_true ctx ];
+      register_file = RegisterFile.empty;
+      params = Params.init nparams;
       retvar = None;
+      assertion = Bool.tr;
     }
+
+  let update pc register_file assertion t =
+    { t with pc; register_file; assertion }
 
   (* getter *)
   let pc t = t.pc
+  let register_file t = t.register_file
   let params t = t.params
-  let return_expr t = t.retexp
-  let update pc rv t = { t with pc; retexp = rv }
+  let retvar t = t.retvar
+  let assertion t = t.assertion
   let is_final t = t.pc = -1
 end
 
+(* apply semantics to create SMT query *)
 let apply program state prefix =
   let pc = State.pc state in
-  let pc_str = prefix ^ string_of_int pc in
+  let rf = State.register_file state in
+  let params = State.params state in
+  let vid = prefix ^ string_of_int pc in
 
   let opcode, operands = IR.instr_of pc program in
-  let next_pc =
-    match opcode with
-    (* ignore branch for now *)
-    (* | Branch ->
-           let b_id = Operands.id_of_nth operands 0 in
-           let b = RegisterFile.find b_id rf in
+  let next_pc = match opcode with Return -> -1 | _ -> pc + 1 in
 
-           if b |> Value.is_true then IR.true_br_of pc program
-           else IR.false_br_of pc program *)
-    | Return -> -1
-    | _ -> pc + 1
-  in
-
-  let value =
+  let value, assertion =
     match opcode with
-    | Int32Constant -> Operands.const_of_nth operands 0 |> Value.of_int32 pc_str
-    | Int64Constant -> Operands.const_of_nth operands 0 |> Value.of_int64 pc_str
+    | Int32Constant -> Operands.const_of_nth operands 0 |> Value.of_int32 vid
+    | Int64Constant -> Operands.const_of_nth operands 0 |> Value.of_int64 vid
     | HeapConstant | ExternalConstant ->
         let addr_re = Re.Pcre.regexp "(0x[0-9a-f]*)" in
         let operand = Operands.const_of_nth operands 0 in
-        Re.Group.get (Re.exec addr_re operand) 1 |> Value.of_addr pc_str
+        Re.Group.get (Re.exec addr_re operand) 1 |> Value.of_addr vid
     | CheckedTaggedSignedToInt32 ->
-        let k = Operands.id_of_nth operands 0 in
-        Value.tagged_signed_to_i32 pc_str (prefix ^ k)
+        let pid = prefix ^ Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        Value.tagged_signed_to_i32 vid pval
     | ChangeInt32ToTagged ->
-        let k = Operands.id_of_nth operands 0 in
-        Value.i32_to_tagged pc_str (prefix ^ k)
+        let pid = prefix ^ Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        Value.i32_to_tagged vid pval
     | Int32Add ->
-        let lid = Operands.id_of_nth operands 0 in
-        let rid = Operands.id_of_nth operands 1 in
-        Value.int32add pc_str (prefix ^ lid) (prefix ^ rid)
-    | Parameter ->
-        let params = State.params state in
-        let param_idx = Operands.int_of_nth operands 0 - 1 in
-
-        if 0 <= param_idx && param_idx < List.length params then
-          let param = List.nth params param_idx in
-          Value.of_tagged_signed pc_str param
-        else Value.Empty
+        let lpid = prefix ^ Operands.id_of_nth operands 0 in
+        let rpid = prefix ^ Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        Value.int32add vid lval rval
     | StackPointerGreaterThan ->
         (* TODO: implement StackPointerGreaterThan *)
-        Value.of_int32 pc_str "1"
+        Value.of_int32 vid "1"
+    | Parameter ->
+        let pidx = Operands.const_of_nth operands 0 |> int_of_string in
+        if 0 < pidx && pidx <= List.length params then
+          let param = List.nth params (pidx - 1) in
+          Value.parameter vid param
+        else (Value.Empty, Bool.tr)
     | Return ->
-        let k = Operands.id_of_nth operands 0 in
-        Value.eq pc_str (prefix ^ k)
-    | Branch -> Value.Empty
+        let pid = prefix ^ Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        Value.return vid pval
+    | Branch -> (Value.Empty, Bool.tr)
     (* Unimplemented *)
     | Call | Checkpoint | EffectPhi | End | FrameState | IfFalse | IfTrue
     | Empty ->
-        Value.Empty
-    | _ -> Value.Empty
+        (Value.Empty, Bool.tr)
+    | _ -> (Value.Empty, Bool.tr)
   in
-
-  let rv = Z3.Boolean.mk_and ctx [ state.retexp; value |> Value.expr ] in
-
-  let next_state = State.update next_pc rv state in
+  let updated_rf = RegisterFile.add vid value rf in
+  let updated_asrt = Bool.and_ (State.assertion state) assertion in
+  let next_state = State.update next_pc updated_rf updated_asrt state in
 
   if State.is_final next_state then
-    { next_state with retvar = Option.some (BitVec.init pc_str) }
+    { next_state with retvar = Option.some (BitVec.init vid) }
   else next_state

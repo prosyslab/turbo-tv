@@ -24,3 +24,12 @@ let run_d8 target =
   in
   let chan = Unix.open_process_in cmd in
   Core.In_channel.input_lines chan
+
+let get_nparams target =
+  let lines = open_in target |> read_lines in
+  let re =
+    Re.Pcre.regexp
+      "[\\s\\S]*%OptimizeFunctionOnNextCall\\(.*\\);\n.*\\((.*)\\);"
+  in
+  let params = Re.Group.get (String.concat "\n" lines |> Re.exec re) 1 in
+  params |> StringLabels.split_on_char ~sep:',' |> List.length

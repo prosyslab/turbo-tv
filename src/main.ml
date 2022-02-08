@@ -48,6 +48,7 @@ let main () =
   Printexc.record_backtrace true;
   let { target; emit_reduction; emit_graph; outdir } = parse_command_line () in
 
+  let nparams = Utils.get_nparams target in
   let lines = Utils.run_d8 target in
   let reductions = Reduction.get_reductions lines in
   let idx = ref 1 in
@@ -55,8 +56,7 @@ let main () =
   Printf.printf "Number of reductions: %d\n" (List.length reductions);
   List.iter
     (fun (before_rdc, after_rdc, desc) ->
-      Printf.printf "Validate reduction #%d\n" !idx;
-      Printf.printf "%s\n" desc;
+      Printf.printf "Reduction #%d: " !idx;
       let before_graph = IR.create_from before_rdc in
       let after_graph = IR.create_from after_rdc in
       if
@@ -80,7 +80,7 @@ let main () =
 
           IR.generate_graph_output (parent ^ "before.dot") before_graph;
           IR.generate_graph_output (parent ^ "after.dot") after_graph);
-        Tv.run before_graph after_graph);
+        Tv.run nparams before_graph after_graph);
       idx := !idx + 1;
       print_newline ())
     reductions
