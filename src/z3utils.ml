@@ -1,25 +1,39 @@
-open Z3
 open Err
-module B = Boolean
-module BV = BitVector
+module B = Z3.Boolean
+module E = Z3.Expr
+module S = Z3.Solver
+module BV = Z3.BitVector
 
-let ctx = mk_context [ ("model", "true"); ("unsat_core", "true") ]
-let str_of_exp exp = exp |> Expr.to_string
-let simplify opt exp = Expr.simplify exp opt
+(* global context *)
+let ctx = Z3.mk_context [ ("model", "true"); ("unsat_core", "true") ]
+
+(* print *)
+let str_of_exp exp = exp |> E.to_string
+let simplify opt exp = E.simplify exp opt
 let print exp = exp |> str_of_exp |> print_endline
 let print_simplified exp = exp |> simplify None |> str_of_exp |> print_endline
+
+(* default bitvector length *)
 let bvlen = ref 64
 let set_bvlen len = bvlen := len
 
+module Solver = struct
+  type t = S.solver
+
+  let init = S.mk_solver ctx None
+  let check solver query = S.check solver [ query ]
+  let str_of_status = S.string_of_status
+end
+
 module Bool = struct
-  type t = Expr.expr
+  type t = E.expr
 
   (* constructor *)
   let init name = B.mk_const_s ctx name
 
   (* constants *)
-  let t = B.mk_true ctx
-  let f = B.mk_false ctx
+  let tr = B.mk_true ctx
+  let fl = B.mk_false ctx
 
   (* logical operation *)
   let and_ lexp rexp = B.mk_and ctx [ lexp; rexp ]
@@ -34,7 +48,7 @@ module Bool = struct
 end
 
 module BitVecVal = struct
-  type t = Expr.expr
+  type t = E.expr
 
   (* numeral const *)
   let zero (len : int) () : t = BV.mk_numeral ctx "0" len
@@ -58,15 +72,15 @@ module BitVecVal = struct
     BV.mk_numeral ctx dec_str len
 
   (* boolean const *)
-  let t ?(len = !bvlen) () = BV.mk_numeral ctx "1" len
-  let f ?(len = !bvlen) () = BV.mk_numeral ctx "0" len
+  let tr ?(len = !bvlen) () = BV.mk_numeral ctx "1" len
+  let fl ?(len = !bvlen) () = BV.mk_numeral ctx "0" len
 end
 
 module BitVec = struct
-  type t = Expr.expr
+  type t = E.expr
 
   let init ?(len = !bvlen) name = BV.mk_const_s ctx name len
-  let len bv = bv |> Expr.get_sort |> BV.get_size
+  let len bv = bv |> E.get_sort |> BV.get_size
 
   (* logical operation *)
   let andb lbv rbv = BV.mk_and ctx lbv rbv
@@ -112,10 +126,10 @@ module BitVec = struct
 
   (* boolean operation *)
   let is_true bv =
-    let fbv = BitVecVal.f ~len:(len bv) () in
+    let fbv = BitVecVal.fl ~len:(len bv) () in
     neqb bv fbv
 
   let is_false bv =
-    let fbv = BitVecVal.f ~len:(len bv) () in
+    let fbv = BitVecVal.fl ~len:(len bv) () in
     eqb bv fbv
 end
