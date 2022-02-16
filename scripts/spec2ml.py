@@ -25,6 +25,11 @@ def read_spec(spec_p: Path):
         else:
             opcodes[kind].append(opcode)
 
+        elem_kinds = split_kind(kind)
+        for ek in elem_kinds:
+            if ek not in opcodes:
+                opcodes[ek] = []
+
     return opcodes
 
 

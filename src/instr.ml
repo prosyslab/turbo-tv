@@ -5,10 +5,12 @@ exception Invalid_instruction of string * string
 type t = Opcode.t * Operands.t
 
 let create opcode operands : t = (opcode, operands)
+
 let empty : t = (Opcode.empty, [])
 
 (* getter *)
 let opcode (opcode, _) : Opcode.t = opcode
+
 let operands (_, operands) : Operands.t = operands
 
 let err instr reason =
@@ -38,6 +40,10 @@ let create_from instr =
       let p2_re =
         Re.Pcre.regexp "(?:\\[[^\\]]*\\]){0,1}\\([^,]*, #(\\d*)[^\\)]*\\)"
       in
+      let p3_re =
+        Re.Pcre.regexp
+          "(?:\\[[^\\]]*\\]){0,1}\\([^,]*, [^,]*, #(\\d*)[^\\)]*\\)"
+      in
       match kinds with
       | k :: t -> (
           try
@@ -57,6 +63,11 @@ let create_from instr =
                   Re.Group.get (Re.exec p2_re instr) 1 |> Operand.of_id
                 in
                 parse_operand t instr (p2 :: operands)
+            | P3 ->
+                let p3 =
+                  Re.Group.get (Re.exec p3_re instr) 1 |> Operand.of_id
+                in
+                parse_operand t instr (p3 :: operands)
             | UNIMPL -> parse_operand [] instr []
             | _ -> failwith "Unreachable"
           with Not_found ->
