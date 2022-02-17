@@ -38,11 +38,11 @@ let jstv_args =
 
 let parse_command_line () =
   let doc = "Translation validation for TurboFan IR" in
-  let info = Term.info ~doc "turbo-tv" in
-  match Term.eval (jstv_args, info) with
-  | `Error _ -> exit 1
-  | `Version | `Help -> exit 0
-  | `Ok conf -> conf
+  let info = Cmd.info ~doc "turbo-tv" in
+  match Cmd.v info jstv_args |> Cmd.eval_value with
+  | Error _ -> exit 1
+  | Ok `Version | Ok `Help -> exit 0
+  | Ok (`Ok conf) -> conf
 
 let main () =
   Printexc.record_backtrace true;
