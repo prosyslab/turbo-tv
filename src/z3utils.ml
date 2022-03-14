@@ -121,11 +121,27 @@ module BitVec = struct
 
   let neqb lbv rbv = B.mk_not ctx (eqb lbv rbv)
   let neqi lbv rval = B.mk_not ctx (eqi lbv rval)
+  let sgeb lbv rbv = BV.mk_sge ctx lbv rbv
+  let sgei lbv rval = BV.mk_sge ctx lbv (BitVecVal.of_int ~len:(len lbv) rval)
   let ugeb lbv rbv = BV.mk_uge ctx lbv rbv
 
   let ugei lbv rval =
     let rbv = BitVecVal.of_int ~len:(len lbv) rval in
     BV.mk_uge ctx lbv rbv
+
+  let sltb lbv rbv = BV.mk_slt ctx lbv rbv
+  let slti lbv rval = BV.mk_slt ctx lbv (BitVecVal.of_int ~len:(len lbv) rval)
+  let ultb lbv rbv = BV.mk_ult ctx lbv rbv
+
+  let ulti lbv rval =
+    let rbv = BitVecVal.of_int ~len:(len lbv) rval in
+    BV.mk_ult ctx lbv rbv
+
+  let uleb lbv rbv = BV.mk_ule ctx lbv rbv
+
+  let ulei lbv rval =
+    let rbv = BitVecVal.of_int ~len:(len lbv) rval in
+    BV.mk_ule ctx lbv rbv
 
   (* arithmetic operation *)
   let addb lbv rbv = BV.mk_add ctx lbv rbv

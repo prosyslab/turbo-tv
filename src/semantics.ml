@@ -28,10 +28,13 @@ module Value = struct
   let to_str t = str_of_exp t
 
   (* constants *)
-  let len = 69
   let tylen = 5
-  let smilen = 32
-  let smimask = 0xffffffff
+  let datalen = 64
+  let len = tylen + datalen
+  let smilen = 31
+  let smimask = 0xfffffffe
+  let smimin = -1073741824
+  let smimax = 1073741823
 
   (* type-constants *)
   let int8_ty = BitVecVal.of_int ~len:tylen 0
@@ -55,8 +58,17 @@ module Value = struct
   let sandboxedpointer_ty = BitVecVal.of_int ~len:tylen 18
   let bool_ty = BitVecVal.of_int ~len:tylen 19
   let none_ty = BitVecVal.of_int ~len:tylen 20
+
+  (* getter *)
   let ty_of t = BitVec.extract 0 tylen t
   let data_of t = BitVec.extract tylen len t
+
+  (* typing *)
+  let data_to_int32 data = BitVec.concat int32_ty data
+  let data_to_int64 data = BitVec.concat int64_ty data
+  let data_to_pointer data = BitVec.concat pointer_ty data
+  let data_to_taggedsigned data = BitVec.concat taggedsigned_ty data
+  let data_to_anytagged data = BitVec.concat anytagged_ty data
 
   (* type check *)
   let is_int32 value =
@@ -76,42 +88,60 @@ module Value = struct
     BitVec.eqb value_ty taggedsigned_ty
 
   (* comparison *)
-  let is_equal lval rval = Bool.ands [ BitVec.eqb lval rval ]
+  (* lty = rty && ldata = rdata *)
+  let is_equal lval rval = BitVec.eqb lval rval
 
-  (* typing *)
-  let data_to_int32 data = BitVec.concat int32_ty data
-  let data_to_int64 data = BitVec.concat int64_ty data
-  let data_to_pointer data = BitVec.concat pointer_ty data
-  let data_to_taggedsigned data = BitVec.concat taggedsigned_ty data
+  (* ldata = rdata *)
+  let is_weak_equal lval rval =
+    let ldata = data_of lval in
+    let rdata = data_of rval in
+    BitVec.eqb ldata rdata
+
+  let can_be_smi bv = Bool.ands [ BitVec.sgei bv smimin; BitVec.slti bv smimax ]
 
   (* constant assignment *)
-  let of_int32 vid c =
-    let value = BitVec.init vid in
+  let int32_constant vid c =
+    let value = BitVec.init ~len vid in
     let cval = BitVec.concat int32_ty (BitVecVal.of_str c) in
     let assertion = Bool.ands [ is_equal value cval ] in
     (value, assertion)
 
-  let of_int64 vid c =
-    let value = BitVec.init vid in
+  let int64_constant vid c =
+    let value = BitVec.init ~len vid in
     let cval = BitVec.concat int64_ty (BitVecVal.of_str c) in
     let assertion = Bool.ands [ is_equal value cval ] in
     (value, assertion)
 
-  let of_pointer vid c =
-    let value = BitVec.init vid in
+  let external_constant vid c =
+    let value = BitVec.init ~len vid in
     let cval = BitVec.concat pointer_ty (BitVecVal.of_str c) in
     let assertion = Bool.ands [ is_equal value cval ] in
     (value, assertion)
 
-  let of_taggedsigned vid c =
-    let value = BitVec.init vid in
-    let cval = BitVec.concat taggedsigned_ty (BitVecVal.of_str c) in
-    let assertion = Bool.ands [ is_equal value cval ] in
+  let heap_constant = external_constant
+
+  let number_constant vid c =
+    let value = BitVec.init ~len vid in
+    let cbv = BitVecVal.of_str c in
+
+    value |> to_str |> print_endline;
+    data_to_taggedsigned cbv |> to_str |> print_endline;
+
+    let c_is_smi =
+      Bool.ands [ can_be_smi cbv; is_equal value (data_to_taggedsigned cbv) ]
+    in
+
+    let c_is_not_smi =
+      Bool.ands
+        [ Bool.not (can_be_smi cbv); is_equal value (data_to_anytagged cbv) ]
+    in
+
+    let assertion = Bool.ands [ c_is_smi; c_is_not_smi ] in
     (value, assertion)
 
   (* var = (lval + rval) mod 2^32 *)
   let int32add vid lval rval =
-    let value = BitVec.init vid in
+    let value = BitVec.init ~len vid in
 
     let ldata = data_of lval in
     let rdata = data_of rval in
@@ -124,12 +154,12 @@ module Value = struct
     (value, assertion)
 
   (* var = pval >> 32 *)
-  let checked_tagged_signed_to_i32 vid pval = failwith "Not implemented"
+  let checked_tagged_signed_to_i32 _vid _pval = failwith "Not implemented"
 
   (* var = pvar << 32 *)
-  let i32_to_tagged vid pval = failwith "Not implemented"
-  let parameter vid param = failwith "Not implemented"
-  let return vid pval = failwith "Not implemented"
+  let i32_to_tagged _vid _pval = failwith "Not implemented"
+  let parameter _vid _param = failwith "Not implemented"
+  let return _vid _pval = failwith "Not implemented"
 end
 
 module RegisterFile = struct
@@ -146,7 +176,7 @@ module RegisterFile = struct
 
   let empty = R.empty
   let iter = R.iter
-  let print t = failwith "Not implemented"
+  let print _t = failwith "Not implemented"
 end
 
 module State = struct
@@ -181,8 +211,6 @@ end
 
 (* apply semantics to create SMT query *)
 let apply program state prefix =
-  set_bvlen Value.len;
-
   let pc = State.pc state in
   let rf = State.register_file state in
   let params = State.params state in
@@ -195,15 +223,15 @@ let apply program state prefix =
     match opcode with
     (* common: constants *)
     | HeapConstant | ExternalConstant ->
-        let addr_re = Re.Pcre.regexp "(0x[0-9a-f]*)" in
-        let operand = Operands.const_of_nth operands 0 in
-        Re.Group.get (Re.exec addr_re operand) 1 |> Value.of_pointer vid
-    | Int32Constant -> Operands.const_of_nth operands 0 |> Value.of_int32 vid
-    | Int64Constant -> Operands.const_of_nth operands 0 |> Value.of_int64 vid
-    | NumberConstant
+        Operands.const_of_nth operands 0 |> Value.heap_constant vid
+    | Int32Constant ->
+        Operands.const_of_nth operands 0 |> Value.int32_constant vid
+    | Int64Constant ->
+        Operands.const_of_nth operands 0 |> Value.int64_constant vid
+    | NumberConstant ->
+        Operands.const_of_nth operands 0 |> Value.number_constant vid
     (* common: control *)
-    | Branch | Projection ->
-        failwith "Not implemented"
+    | Branch | Projection -> failwith "Not implemented"
     (* common: procedure *)
     | Parameter ->
         let pidx = Operands.const_of_nth operands 0 |> int_of_string in
@@ -243,5 +271,5 @@ let apply program state prefix =
   let next_state = State.update next_pc updated_rf updated_asrt state in
 
   if State.is_final next_state then
-    { next_state with retvar = Option.some (BitVec.init vid) }
+    { next_state with retvar = Option.some (BitVec.init ~len:Value.len vid) }
   else next_state
