@@ -60,8 +60,8 @@ module Value = struct
   let none_ty = BitVecVal.of_int ~len:tylen 20
 
   (* getter *)
-  let ty_of t = BitVec.extract 0 tylen t
-  let data_of t = BitVec.extract tylen len t
+  let ty_of t = BitVec.extract (tylen - 1) 0 t
+  let data_of t = BitVec.extract (len - 1) tylen t
 
   (* typing *)
   let data_to_int32 data = BitVec.concat int32_ty data
@@ -70,6 +70,9 @@ module Value = struct
   let data_to_pointer data = BitVec.concat pointer_ty data
   let data_to_tagged_signed data = BitVec.concat tagged_signed_ty data
   let data_to_any_tagged data = BitVec.concat any_tagged_ty data
+
+  (* conversion *)
+  let smi_to_int31 data = BitVec.extract 31 1 data
 
   (* type check *)
   let is_int32 value =
@@ -86,7 +89,9 @@ module Value = struct
 
   let is_tagged_signed value =
     let value_ty = ty_of value in
-    BitVec.eqb value_ty tagged_signed_ty
+    Bool.ands [ BitVec.eqb value_ty tagged_signed_ty; BitVec.eqi value 1 ]
+
+  let can_be_smi bv = Bool.ands [ BitVec.sgei bv smimin; BitVec.slti bv smimax ]
 
   (* comparison *)
   (* lty = rty && ldata = rdata *)
@@ -97,8 +102,6 @@ module Value = struct
     let ldata = data_of lval in
     let rdata = data_of rval in
     BitVec.eqb ldata rdata
-
-  let can_be_smi bv = Bool.ands [ BitVec.sgei bv smimin; BitVec.slti bv smimax ]
 
   (* common: constants *)
   let int32_constant vid c =
@@ -125,9 +128,6 @@ module Value = struct
     let value = BitVec.init ~len vid in
     let cbv = BitVecVal.of_str c in
 
-    value |> to_str |> print_endline;
-    data_to_tagged_signed cbv |> to_str |> print_endline;
-
     let c_is_smi =
       Bool.ands [ can_be_smi cbv; is_equal value (data_to_tagged_signed cbv) ]
     in
@@ -137,16 +137,27 @@ module Value = struct
         [ Bool.not (can_be_smi cbv); is_equal value (data_to_any_tagged cbv) ]
     in
 
-    let assertion = Bool.ands [ c_is_smi; c_is_not_smi ] in
+    let assertion = Bool.ors [ c_is_smi; c_is_not_smi ] in
     (value, assertion)
+
+  (* common: procedure *)
+  let parameter vid param =
+    let value = BitVec.init ~len vid in
+    let assertion = BitVec.eqb value (data_to_tagged_signed param) in
+    (value, assertion)
+
+  let return _vid _pval = failwith "Not implemented"
 
   (* simplified: arithmetic *)
   let speculative_safe_integer_add vid lval rval =
     let value = BitVec.init ~len vid in
     let ldata = data_of lval in
-    let rdata = data_of rval in
+    let rdata = data_of lval in
+
+    (* subtract two to ignore the smi tag value(0b1) *)
     let res =
-      BitVec.andi (BitVec.addb ldata rdata) smimask |> data_to_tagged_signed
+      BitVec.andi (BitVec.subi (BitVec.addb ldata rdata) 2) smimask
+      |> data_to_tagged_signed
     in
 
     let assertion =
@@ -207,9 +218,6 @@ module Value = struct
     in
 
     (value, assertion)
-
-  let parameter _vid _param = failwith "Not implemented"
-  let return _vid _pval = failwith "Not implemented"
 end
 
 module RegisterFile = struct
@@ -226,7 +234,6 @@ module RegisterFile = struct
 
   let empty = R.empty
   let iter = R.iter
-  let print _t = failwith "Not implemented"
 end
 
 module State = struct
@@ -273,7 +280,9 @@ let apply program state prefix =
     match opcode with
     (* common: constants *)
     | HeapConstant | ExternalConstant ->
-        Operands.const_of_nth operands 0 |> Value.heap_constant vid
+        let addr_re = Re.Pcre.regexp "(0x[0-9a-f]*)" in
+        let operand = Operands.const_of_nth operands 0 in
+        Re.Group.get (Re.exec addr_re operand) 1 |> Value.heap_constant vid
     | Int32Constant ->
         Operands.const_of_nth operands 0 |> Value.int32_constant vid
     | Int64Constant ->
@@ -332,6 +341,11 @@ let apply program state prefix =
     | _ -> (Value.empty, Bool.tr)
   in
   let updated_rf = RegisterFile.add vid value rf in
+  String.concat "(" [ opcode |> Opcode.to_str; operands |> Operands.to_str ]
+  ^ ")"
+  |> print_endline;
+  assertion |> simplify None |> print_exp;
+
   let updated_asrt = Bool.and_ (State.assertion state) assertion in
   let next_state = State.update next_pc updated_rf updated_asrt state in
 
