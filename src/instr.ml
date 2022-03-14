@@ -36,6 +36,13 @@ let create_from instr =
   let parse_operands kind instr =
     let rec parse_operand (kinds : Opcode.kind list) instr operands =
       let b1_re = Re.Pcre.regexp "(?:\\[([^,]*)[^\\]]*\\])\\([^\\)]*\\)" in
+      let b2_re =
+        Re.Pcre.regexp "(?:\\[[^,]*, ([^,]*)[^\\]]*\\])\\([^\\)]*\\)"
+      in
+      let b4_re =
+        Re.Pcre.regexp
+          "(?:\\[[^,]*, [^,]*, [^,]*, ([^,]*)[^\\]]*\\])\\([^\\)]*\\)"
+      in
       let p1_re = Re.Pcre.regexp "(?:\\[[^\\]]*\\]){0,1}\\(#(\\d*)[^\\)]*\\)" in
       let p2_re =
         Re.Pcre.regexp "(?:\\[[^\\]]*\\]){0,1}\\([^,]*, #(\\d*)[^\\)]*\\)"
@@ -44,6 +51,7 @@ let create_from instr =
         Re.Pcre.regexp
           "(?:\\[[^\\]]*\\]){0,1}\\([^,]*, [^,]*, #(\\d*)[^\\)]*\\)"
       in
+
       match kinds with
       | k :: t -> (
           try
@@ -53,6 +61,16 @@ let create_from instr =
                   Re.Group.get (Re.exec b1_re instr) 1 |> Operand.of_const
                 in
                 parse_operand t instr (b1 :: operands)
+            | B2 ->
+                let b2 =
+                  Re.Group.get (Re.exec b2_re instr) 1 |> Operand.of_const
+                in
+                parse_operand t instr (b2 :: operands)
+            | B4 ->
+                let b4 =
+                  Re.Group.get (Re.exec b4_re instr) 1 |> Operand.of_const
+                in
+                parse_operand t instr (b4 :: operands)
             | P1 ->
                 let p1 =
                   Re.Group.get (Re.exec p1_re instr) 1 |> Operand.of_id
@@ -68,7 +86,7 @@ let create_from instr =
                   Re.Group.get (Re.exec p3_re instr) 1 |> Operand.of_id
                 in
                 parse_operand t instr (p3 :: operands)
-            | UNIMPL -> parse_operand [] instr []
+            | UNIMPL | VARGS -> parse_operand [] instr []
             | _ -> failwith "Unreachable"
           with Not_found ->
             let reason = "Cannot parse operands" in

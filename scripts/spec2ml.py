@@ -46,6 +46,7 @@ def print_in_format(src):
 def save_in_format(src, dst_p):
     with open(dst_p, "w") as out:
         out.write(src)
+        
     subprocess.run(f"ocamlformat -i {dst_p}", shell=True)
 
 
@@ -75,9 +76,10 @@ def gen_opcode(opcodes, replace=False):
             of_str += f"  | \"{opcode}\" ->  {opcode}\n"
             to_str += f"  |  {opcode} -> \"{opcode}\"\n"
             get_kind += f"  | {opcode}"
-
-        get_kind += f" -> {k}\n"
-        split_kind += f"| {k} -> [{k if (k == 'UNIMPL') else ';'.join([k[2*i:2*i+2] for i in range(len(k)//2)])}]\n"
+        
+        if opcode_group != []: 
+            get_kind += f" -> {k}\n"
+        split_kind += f"| {k} -> [{k if (k == 'UNIMPL' or k == 'VARGS') else ';'.join([k[2*i:2*i+2] for i in range(len(k)//2)])}]\n"
         t += "\n"
 
     t += ("  | Empty\n"
@@ -103,13 +105,13 @@ def gen_opcode(opcodes, replace=False):
 
 
 def split_kind(kind):
-    return [kind] if (kind == 'UNIMPL') else [
+    return [kind] if (kind == 'UNIMPL' or kind == "VARGS") else [
         kind[2 * i:2 * i + 2] for i in range(len(kind) // 2)
     ]
 
 
 def gen_re_from_kind(kind):
-    if kind == "UNIMPL":
+    if kind == "UNIMPL" or kind == "VARGS":
         return ""
 
     p_operand_re = "#(\\\\d*)"
@@ -159,14 +161,14 @@ def gen_instr(opcodes, replace=False):
         unique_kinds[kind]["match"] = gen_match_from_kind(kind)
 
     kinds_re = "\n".join([
-        v["re"] if k != "UNIMPL" else ""
+        v["re"] if (k != "UNIMPL" and k != "VARGS") else ""
         for k, v in sorted(unique_kinds.items())
     ])
     kinds_match = "\n".join([
-        v["match"] if k != "UNIMPL" else ""
+        v["match"] if (k != "UNIMPL" and k!= "VARGS") else ""
         for k, v in sorted(unique_kinds.items())
     ])
-    kinds_match += ("| UNIMPL -> parse_operand [] instr []\n"
+    kinds_match += ("| UNIMPL | VARGS -> parse_operand [] instr []\n"
                     "|_ -> failwith \"Unreachable\"\n")
 
     parse_operand = (
