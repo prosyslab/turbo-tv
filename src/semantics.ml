@@ -49,13 +49,13 @@ module Value = struct
   let float64_ty = BitVecVal.of_int ~len:tylen 9
   let simd128_ty = BitVecVal.of_int ~len:tylen 10
   let pointer_ty = BitVecVal.of_int ~len:tylen 11
-  let taggedpointer_ty = BitVecVal.of_int ~len:tylen 12
-  let mapinheader_ty = BitVecVal.of_int ~len:tylen 13
-  let taggedsigned_ty = BitVecVal.of_int ~len:tylen 14
-  let anytagged_ty = BitVecVal.of_int ~len:tylen 15
-  let compressedpointer_ty = BitVecVal.of_int ~len:tylen 16
-  let anycompressed_ty = BitVecVal.of_int ~len:tylen 17
-  let sandboxedpointer_ty = BitVecVal.of_int ~len:tylen 18
+  let tagged_pointer_ty = BitVecVal.of_int ~len:tylen 12
+  let map_in_header_ty = BitVecVal.of_int ~len:tylen 13
+  let tagged_signed_ty = BitVecVal.of_int ~len:tylen 14
+  let any_tagged_ty = BitVecVal.of_int ~len:tylen 15
+  let compressed_pointer_ty = BitVecVal.of_int ~len:tylen 16
+  let any_compressed_ty = BitVecVal.of_int ~len:tylen 17
+  let sandboxed_pointer_ty = BitVecVal.of_int ~len:tylen 18
   let bool_ty = BitVecVal.of_int ~len:tylen 19
   let none_ty = BitVecVal.of_int ~len:tylen 20
 
@@ -66,9 +66,10 @@ module Value = struct
   (* typing *)
   let data_to_int32 data = BitVec.concat int32_ty data
   let data_to_int64 data = BitVec.concat int64_ty data
+  let data_to_float64 data = BitVec.concat float64_ty data
   let data_to_pointer data = BitVec.concat pointer_ty data
-  let data_to_taggedsigned data = BitVec.concat taggedsigned_ty data
-  let data_to_anytagged data = BitVec.concat anytagged_ty data
+  let data_to_tagged_signed data = BitVec.concat tagged_signed_ty data
+  let data_to_any_tagged data = BitVec.concat any_tagged_ty data
 
   (* type check *)
   let is_int32 value =
@@ -83,9 +84,9 @@ module Value = struct
     let value_ty = ty_of value in
     BitVec.eqb value_ty pointer_ty
 
-  let is_taggedsigned value =
+  let is_tagged_signed value =
     let value_ty = ty_of value in
-    BitVec.eqb value_ty taggedsigned_ty
+    BitVec.eqb value_ty tagged_signed_ty
 
   (* comparison *)
   (* lty = rty && ldata = rdata *)
@@ -99,7 +100,7 @@ module Value = struct
 
   let can_be_smi bv = Bool.ands [ BitVec.sgei bv smimin; BitVec.slti bv smimax ]
 
-  (* constant assignment *)
+  (* common: constants *)
   let int32_constant vid c =
     let value = BitVec.init ~len vid in
     let cval = BitVec.concat int32_ty (BitVecVal.of_str c) in
@@ -125,24 +126,78 @@ module Value = struct
     let cbv = BitVecVal.of_str c in
 
     value |> to_str |> print_endline;
-    data_to_taggedsigned cbv |> to_str |> print_endline;
+    data_to_tagged_signed cbv |> to_str |> print_endline;
 
     let c_is_smi =
-      Bool.ands [ can_be_smi cbv; is_equal value (data_to_taggedsigned cbv) ]
+      Bool.ands [ can_be_smi cbv; is_equal value (data_to_tagged_signed cbv) ]
     in
 
     let c_is_not_smi =
       Bool.ands
-        [ Bool.not (can_be_smi cbv); is_equal value (data_to_anytagged cbv) ]
+        [ Bool.not (can_be_smi cbv); is_equal value (data_to_any_tagged cbv) ]
     in
 
     let assertion = Bool.ands [ c_is_smi; c_is_not_smi ] in
     (value, assertion)
 
-  (* var = (lval + rval) mod 2^32 *)
+  (* simplified: arithmetic *)
+  let speculative_safe_integer_add vid lval rval =
+    let value = BitVec.init ~len vid in
+    let ldata = data_of lval in
+    let rdata = data_of rval in
+    let res =
+      BitVec.andi (BitVec.addb ldata rdata) smimask |> data_to_tagged_signed
+    in
+
+    let assertion =
+      Bool.ands
+        [ is_tagged_signed lval; is_tagged_signed rval; is_equal value res ]
+    in
+
+    (value, assertion)
+
+  (* simplified: type-conversion *)
+  let change_int32_to_tagged vid pval =
+    let value = BitVec.init ~len vid in
+    let pdata = data_of pval in
+    let assertion =
+      Bool.ands [ is_int32 pval; is_equal value (data_to_tagged_signed pdata) ]
+    in
+
+    (value, assertion)
+
+  let change_int32_to_float64 vid pval =
+    let value = BitVec.init ~len vid in
+    let pdata = data_of pval in
+    let ovf = BitVec.ugei (BitVec.addb pdata pdata) smimax in
+
+    (* TODO: memory allocation *)
+    (* let if_ovf = Bool.ands [ ovf ] in *)
+    let if_not_ovf =
+      Bool.ands [ Bool.not ovf; is_equal value (data_to_tagged_signed pdata) ]
+    in
+
+    (* TODO: memory allocation *)
+    (* let assertion = Bool.ands [ if_ovf; if_not_ovf ] in *)
+    let assertion = Bool.ands [ if_not_ovf ] in
+    (value, assertion)
+
+  let checked_tagged_signed_to_int32 vid pval =
+    let value = BitVec.init ~len vid in
+    let pdata = data_of pval in
+
+    (* TODO: handling deoptimization *)
+    (* let deopt = Bool.not (is_tagged_signed pval) in *)
+    let assertion =
+      Bool.ands [ is_tagged_signed pval; is_equal value (data_to_int32 pdata) ]
+    in
+
+    (value, assertion)
+
+  (* machine: arithmetic *)
+  (* value = (lval + rval) mod 2^32 *)
   let int32add vid lval rval =
     let value = BitVec.init ~len vid in
-
     let ldata = data_of lval in
     let rdata = data_of rval in
     let res = BitVec.andi (BitVec.addb ldata rdata) smimask |> data_to_int32 in
@@ -153,11 +208,6 @@ module Value = struct
 
     (value, assertion)
 
-  (* var = pval >> 32 *)
-  let checked_tagged_signed_to_i32 _vid _pval = failwith "Not implemented"
-
-  (* var = pvar << 32 *)
-  let i32_to_tagged _vid _pval = failwith "Not implemented"
   let parameter _vid _param = failwith "Not implemented"
   let return _vid _pval = failwith "Not implemented"
 end
@@ -239,14 +289,29 @@ let apply program state prefix =
           let param = List.nth params (pidx - 1) in
           Value.parameter vid param
         else (Value.empty, Bool.tr)
-    | Return | Call | End
+    | Return | Call | End -> failwith "Not implemented"
     (* simplified: arithmetic *)
-    | SpeculativeSafeIntegerAdd
+    | SpeculativeSafeIntegerAdd ->
+        let lpid = prefix ^ Operands.id_of_nth operands 0 in
+        let rpid = prefix ^ Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        Value.speculative_safe_integer_add vid lval rval
     (* simplified: memory *)
-    | AllocateRaw | StoreField
+    | AllocateRaw | StoreField -> failwith "Not implemented"
     (* simplified: type-conversion *)
-    | ChangeInt32ToTagged | ChangeInt32ToFloat64 | CheckedTaggedSignedToInt32 ->
-        failwith "Not implemented"
+    | ChangeInt32ToTagged ->
+        let pid = prefix ^ Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        Value.change_int32_to_tagged vid pval
+    | ChangeInt32ToFloat64 ->
+        let pid = prefix ^ Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        Value.change_int32_to_float64 vid pval
+    | CheckedTaggedSignedToInt32 ->
+        let pid = prefix ^ Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        Value.checked_tagged_signed_to_int32 vid pval
     (* machine: arithmetic *)
     | Int32Add ->
         let lpid = prefix ^ Operands.id_of_nth operands 0 in
