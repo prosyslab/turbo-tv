@@ -5,170 +5,131 @@ module Params = struct
   module Param = struct
     type t = BitVec.t
 
+    (* paramater id *)
     let init pid = BitVec.init pid
   end
 
   type t = Param.t list
 
   let init nparams =
-    let rec mk_param cnt res =
-      if cnt == nparams then res
-      else mk_param (cnt + 1) (Param.init ("p" ^ (cnt |> string_of_int)) :: res)
+    let rec mk_param cnt params =
+      if cnt == nparams then params
+      else
+        mk_param (cnt + 1) (Param.init ("p" ^ (cnt |> string_of_int)) :: params)
     in
     mk_param 0 []
 end
 
 module Value = struct
   type id = string
+  type t = BitVec.t
 
-  type t =
-    | Bit of BitVec.t
-    | Float64 of BitVec.t
-    | Int31 of BitVec.t
-    | Int32 of BitVec.t
-    | BigInt of BitVec.t
-    | UInt32 of BitVec.t
-    | Int64 of BitVec.t
-    | Tagged of BitVec.t
-    | TaggedSigned of BitVec.t
-    | TaggedPointer of BitVec.t
-    | Addr of BitVec.t
-    | Empty
-
-  let type_of t =
-    match t with
-    | Bit _ -> "Bit"
-    | Float64 _ -> "Float64"
-    | Int31 _ -> "Int31"
-    | Int32 _ -> "Int32"
-    | BigInt _ -> "BigInt"
-    | UInt32 _ -> "UInt32"
-    | Int64 _ -> "Int64"
-    | Tagged _ -> "Tagged"
-    | TaggedSigned _ -> "TaggedSigned"
-    | TaggedPointer _ -> "TaggedPointer"
-    | Addr _ -> "Addr"
-    | Empty -> "Empty"
-
-  let to_str t =
-    match t with
-    | Empty -> ""
-    | Bit exp
-    | Float64 exp
-    | Int31 exp
-    | Int32 exp
-    | BigInt exp
-    | UInt32 exp
-    | Int64 exp
-    | Tagged exp
-    | TaggedSigned exp
-    | TaggedPointer exp
-    | Addr exp ->
-        str_of_exp exp
-
-  let bv t =
-    match t with
-    | Bit bv
-    | Float64 bv
-    | Int31 bv
-    | Int32 bv
-    | BigInt bv
-    | UInt32 bv
-    | Int64 bv
-    | Tagged bv
-    | TaggedSigned bv
-    | TaggedPointer bv
-    | Addr bv ->
-        bv
-    | Empty -> Bool.tr
+  let empty = BitVecVal.zero 1 ()
+  let to_str t = str_of_exp t
 
   (* constants *)
-  let len = 64
+  let len = 69
+  let tylen = 5
   let smilen = 32
   let smimask = 0xffffffff
 
-  (* assignment *)
+  (* type-constants *)
+  let int8_ty = BitVecVal.of_int ~len:tylen 0
+  let uint8_ty = BitVecVal.of_int ~len:tylen 1
+  let int16_ty = BitVecVal.of_int ~len:tylen 2
+  let uint16_ty = BitVecVal.of_int ~len:tylen 3
+  let int32_ty = BitVecVal.of_int ~len:tylen 4
+  let uint32_ty = BitVecVal.of_int ~len:tylen 5
+  let int64_ty = BitVecVal.of_int ~len:tylen 6
+  let uint64_ty = BitVecVal.of_int ~len:tylen 7
+  let float32_ty = BitVecVal.of_int ~len:tylen 8
+  let float64_ty = BitVecVal.of_int ~len:tylen 9
+  let simd128_ty = BitVecVal.of_int ~len:tylen 10
+  let pointer_ty = BitVecVal.of_int ~len:tylen 11
+  let taggedpointer_ty = BitVecVal.of_int ~len:tylen 12
+  let mapinheader_ty = BitVecVal.of_int ~len:tylen 13
+  let taggedsigned_ty = BitVecVal.of_int ~len:tylen 14
+  let anytagged_ty = BitVecVal.of_int ~len:tylen 15
+  let compressedpointer_ty = BitVecVal.of_int ~len:tylen 16
+  let anycompressed_ty = BitVecVal.of_int ~len:tylen 17
+  let sandboxedpointer_ty = BitVecVal.of_int ~len:tylen 18
+  let bool_ty = BitVecVal.of_int ~len:tylen 19
+  let none_ty = BitVecVal.of_int ~len:tylen 20
+  let ty_of t = BitVec.extract 0 tylen t
+  let data_of t = BitVec.extract tylen len t
+
+  (* type check *)
+  let is_int32 value =
+    let value_ty = ty_of value in
+    BitVec.eqb value_ty int32_ty
+
+  let is_int64 value =
+    let value_ty = ty_of value in
+    BitVec.eqb value_ty int64_ty
+
+  let is_pointer value =
+    let value_ty = ty_of value in
+    BitVec.eqb value_ty pointer_ty
+
+  let is_taggedsigned value =
+    let value_ty = ty_of value in
+    BitVec.eqb value_ty taggedsigned_ty
+
+  (* comparison *)
+  let is_equal lval rval = Bool.ands [ BitVec.eqb lval rval ]
+
+  (* typing *)
+  let data_to_int32 data = BitVec.concat int32_ty data
+  let data_to_int64 data = BitVec.concat int64_ty data
+  let data_to_pointer data = BitVec.concat pointer_ty data
+  let data_to_taggedsigned data = BitVec.concat taggedsigned_ty data
+
+  (* constant assignment *)
   let of_int32 vid c =
-    let var = BitVec.init vid in
-    let value = Int32 var in
-    let assertion = BitVec.eqb var (BitVecVal.of_str c) in
+    let value = BitVec.init vid in
+    let cval = BitVec.concat int32_ty (BitVecVal.of_str c) in
+    let assertion = Bool.ands [ is_equal value cval ] in
     (value, assertion)
 
   let of_int64 vid c =
-    let var = BitVec.init vid in
-    let value = Int64 var in
-    let assertion = BitVec.eqb var (BitVecVal.of_str c) in
+    let value = BitVec.init vid in
+    let cval = BitVec.concat int64_ty (BitVecVal.of_str c) in
+    let assertion = Bool.ands [ is_equal value cval ] in
     (value, assertion)
 
-  let of_addr vid c =
-    let var = BitVec.init vid in
-    let value = Addr var in
-    let assertion = BitVec.eqb var (BitVecVal.of_str c) in
+  let of_pointer vid c =
+    let value = BitVec.init vid in
+    let cval = BitVec.concat pointer_ty (BitVecVal.of_str c) in
+    let assertion = Bool.ands [ is_equal value cval ] in
     (value, assertion)
 
-  let of_tagged vid c =
-    let var = BitVec.init vid in
-    let value = Tagged var in
-    let assertion = BitVec.eqb var (BitVecVal.of_str c) in
+  let of_taggedsigned vid c =
+    let value = BitVec.init vid in
+    let cval = BitVec.concat taggedsigned_ty (BitVecVal.of_str c) in
+    let assertion = Bool.ands [ is_equal value cval ] in
     (value, assertion)
 
-  let of_tagged_signed vid c =
-    let var = BitVec.init vid in
-    let value = TaggedSigned var in
-    let assertion = BitVec.eqb var (BitVecVal.of_str c) in
-    (value, assertion)
-
-  (* var = (lpvar + rpvar) mod 2^32 *)
+  (* var = (lval + rval) mod 2^32 *)
   let int32add vid lval rval =
-    let var = BitVec.init vid in
-    let value = Int32 var in
-    match (lval, rval) with
-    | Int32 lbv, Int32 rbv ->
-        let assertion =
-          BitVec.eqb var (BitVec.andi (BitVec.addb lbv rbv) smimask)
-        in
-        (value, assertion)
-    | _ ->
-        let cause = (lval |> to_str) ^ " or " ^ (rval |> to_str) in
-        let reason = Format.sprintf "%s is not type of 'Int32'" cause in
-        err (TypeMismatch (cause, reason))
+    let value = BitVec.init vid in
 
-  (* var = pvar >> 32 *)
-  let tagged_signed_to_i32 vid pval =
-    let var = BitVec.init vid in
-    let value = Int32 var in
-    match pval with
-    | TaggedSigned bv ->
-        let assertion = BitVec.eqb var (BitVec.ashri bv smilen) in
-        (value, assertion)
-    | _ ->
-        let cause = pval |> to_str in
-        let reason = Format.sprintf "%s is not type of 'TaggedSigned'" cause in
-        err (TypeMismatch (cause, reason))
+    let ldata = data_of lval in
+    let rdata = data_of rval in
+    let res = BitVec.andi (BitVec.addb ldata rdata) smimask |> data_to_int32 in
+
+    let assertion =
+      Bool.ands [ is_int32 lval; is_int32 rval; is_equal value res ]
+    in
+
+    (value, assertion)
+
+  (* var = pval >> 32 *)
+  let checked_tagged_signed_to_i32 vid pval = failwith "Not implemented"
 
   (* var = pvar << 32 *)
-  let i32_to_tagged vid pval =
-    let var = BitVec.init vid in
-    let value = Tagged var in
-    match pval with
-    | Int32 bv ->
-        let assertion = BitVec.eqb var (BitVec.shli bv smilen) in
-        (value, assertion)
-    | _ ->
-        let cause = pval |> to_str in
-        let reason = Format.sprintf "%s is not type of 'Int32'" cause in
-        err (TypeMismatch (cause, reason))
-
-  let parameter vid param =
-    let var = BitVec.init vid in
-    let value = TaggedSigned var in
-    let assertion = BitVec.eqb var param in
-    (value, assertion)
-
-  let return vid pval =
-    let var = BitVec.init vid in
-    let assertion = BitVec.eqb var (pval |> bv) in
-    (Empty, assertion)
+  let i32_to_tagged vid pval = failwith "Not implemented"
+  let parameter vid param = failwith "Not implemented"
+  let return vid pval = failwith "Not implemented"
 end
 
 module RegisterFile = struct
@@ -185,13 +146,7 @@ module RegisterFile = struct
 
   let empty = R.empty
   let iter = R.iter
-
-  let print t =
-    iter
-      (fun key v ->
-        print_endline
-          ("#" ^ key ^ " (" ^ Value.type_of v ^ " : " ^ Value.to_str v ^ ")"))
-      t
+  let print t = failwith "Not implemented"
 end
 
 module State = struct
@@ -226,6 +181,8 @@ end
 
 (* apply semantics to create SMT query *)
 let apply program state prefix =
+  set_bvlen Value.len;
+
   let pc = State.pc state in
   let rf = State.register_file state in
   let params = State.params state in
@@ -236,45 +193,50 @@ let apply program state prefix =
 
   let value, assertion =
     match opcode with
-    | Int32Constant -> Operands.const_of_nth operands 0 |> Value.of_int32 vid
-    | Int64Constant -> Operands.const_of_nth operands 0 |> Value.of_int64 vid
+    (* common: constants *)
     | HeapConstant | ExternalConstant ->
         let addr_re = Re.Pcre.regexp "(0x[0-9a-f]*)" in
         let operand = Operands.const_of_nth operands 0 in
-        Re.Group.get (Re.exec addr_re operand) 1 |> Value.of_addr vid
-    | CheckedTaggedSignedToInt32 ->
-        let pid = prefix ^ Operands.id_of_nth operands 0 in
-        let pval = RegisterFile.find pid rf in
-        Value.tagged_signed_to_i32 vid pval
-    | ChangeInt32ToTagged ->
-        let pid = prefix ^ Operands.id_of_nth operands 0 in
-        let pval = RegisterFile.find pid rf in
-        Value.i32_to_tagged vid pval
+        Re.Group.get (Re.exec addr_re operand) 1 |> Value.of_pointer vid
+    | Int32Constant -> Operands.const_of_nth operands 0 |> Value.of_int32 vid
+    | Int64Constant -> Operands.const_of_nth operands 0 |> Value.of_int64 vid
+    | NumberConstant
+    (* common: control *)
+    | Branch | Projection ->
+        failwith "Not implemented"
+    (* common: procedure *)
+    | Parameter ->
+        let pidx = Operands.const_of_nth operands 0 |> int_of_string in
+        if 0 < pidx && pidx <= List.length params then
+          let param = List.nth params (pidx - 1) in
+          Value.parameter vid param
+        else (Value.empty, Bool.tr)
+    | Return | Call | End
+    (* simplified: arithmetic *)
+    | SpeculativeSafeIntegerAdd
+    (* simplified: memory *)
+    | AllocateRaw | StoreField
+    (* simplified: type-conversion *)
+    | ChangeInt32ToTagged | ChangeInt32ToFloat64 | CheckedTaggedSignedToInt32 ->
+        failwith "Not implemented"
+    (* machine: arithmetic *)
     | Int32Add ->
         let lpid = prefix ^ Operands.id_of_nth operands 0 in
         let rpid = prefix ^ Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
         Value.int32add vid lval rval
-    | StackPointerGreaterThan ->
-        (* TODO: implement StackPointerGreaterThan *)
-        Value.of_int32 vid "1"
-    | Parameter ->
-        let pidx = Operands.const_of_nth operands 0 |> int_of_string in
-        if 0 < pidx && pidx <= List.length params then
-          let param = List.nth params (pidx - 1) in
-          Value.parameter vid param
-        else (Value.Empty, Bool.tr)
-    | Return ->
-        let pid = prefix ^ Operands.id_of_nth operands 0 in
-        let pval = RegisterFile.find pid rf in
-        Value.return vid pval
-    | Branch -> (Value.Empty, Bool.tr)
-    (* Unimplemented *)
-    | Call | Checkpoint | EffectPhi | End | FrameState | IfFalse | IfTrue
-    | Empty ->
-        (Value.Empty, Bool.tr)
-    | _ -> (Value.Empty, Bool.tr)
+    | Int32AddWithOverflow | Int64Add | Int64Sub | Word32Sar
+    (* machine: comparison *)
+    | StackPointerGreaterThan | Word32Equal | Uint64LessThan
+    (* machine: memory *)
+    | Store | Load
+    (* machine: bitcast *)
+    | BitcastTaggedToWord | BitcastWord32ToWord64 | BitcastWordToTagged
+    | TruncateInt64ToInt32 ->
+        failwith "Not implemented"
+    | Empty -> (Value.empty, Bool.tr)
+    | _ -> (Value.empty, Bool.tr)
   in
   let updated_rf = RegisterFile.add vid value rf in
   let updated_asrt = Bool.and_ (State.assertion state) assertion in

@@ -153,4 +153,10 @@ module BitVec = struct
   let is_false bv =
     let fbv = BitVecVal.fl ~len:(len bv) () in
     eqb bv fbv
+
+  (* Un-BitVec Operation*)
+  let extract high low bv = BV.mk_extract ctx high low bv
+
+  (* Bi-BitVec operation *)
+  let concat lbv rbv = BV.mk_concat ctx lbv rbv
 end
