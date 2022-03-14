@@ -150,6 +150,9 @@ module BitVec = struct
     let rbv = BitVecVal.of_int ~len:(len lbv) rval in
     BV.mk_add ctx lbv rbv
 
+  let subb lbv rbv = BV.mk_sub ctx lbv rbv
+  let subi lbv rval = BV.mk_sub ctx lbv (BitVecVal.of_int ~len:(len lbv) rval)
+
   (* rbv != 0 && lbv % rbv *)
   let modb lbv rbv =
     let zdiv_cond = neqi rbv 0 in
