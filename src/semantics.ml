@@ -92,9 +92,9 @@ module Value = struct
 
   let data_of t = BitVec.extract (len - 1) tylen t
 
-  let first_of t = BitVec.extract 0 len t
+  let first_of t = BitVec.extract (len-1) 0 t
 
-  let second_of t = BitVec.extract len (2 * len) t
+  let second_of t = BitVec.extract (2*len-1) len t
 
   (* typing *)
   let data_to_int32 data = BitVec.concat int32_ty data
