@@ -34,9 +34,9 @@ let size bid mem =
 
 let read bid pos size mem =
   let block = find bid mem in
-  BitVec.extract (pos + size - 1) pos block
+  BitVec.extract (((pos + size) * 8) - 1) (pos * 8) block
 
-let write bid pos value size mem =
+let write bid pos size value mem =
   let target = read bid pos size mem in
   Bool.eq value target
 

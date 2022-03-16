@@ -12,7 +12,7 @@ type kind =
   | B1P1
   | B1P1P2P3
   | P3
-  | B2B4P1P2
+  | P1B2B4P2
   | B2
   | B4
   | Empty
@@ -853,7 +853,7 @@ type t =
   | Projection
   (* b1p1p2p3 *)
   | Store (* p3 *)
-  (* b2b4p1p2 *)
+  (* p1b2b4p2 *)
   | StoreField (* b2 *)
   (* b4 *)
   | Empty
@@ -1084,7 +1084,7 @@ let get_kind opcode =
   | Load | Word32Sar -> B1P1P2
   | Projection -> B1P1
   | Store -> B1P1P2P3
-  | StoreField -> B2B4P1P2
+  | StoreField -> P1B2B4P2
   | Empty -> Empty
 
 let split_kind kind =
@@ -1099,7 +1099,7 @@ let split_kind kind =
   | B1P1 -> [ B1; P1 ]
   | B1P1P2P3 -> [ B1; P1; P2; P3 ]
   | P3 -> [ P3 ]
-  | B2B4P1P2 -> [ B2; B4; P1; P2 ]
+  | P1B2B4P2 -> [ P1; B2; B4; P2 ]
   | B2 -> [ B2 ]
   | B4 -> [ B4 ]
   | Empty -> [ Empty ]

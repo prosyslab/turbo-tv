@@ -10,18 +10,13 @@ let ctx = Z3.mk_context [ ("model", "true"); ("unsat_core", "true") ]
 
 (* print *)
 let simplify opt exp = E.simplify exp opt
-
 let str_of_exp exp = exp |> E.to_string
-
 let str_of_simplified exp = exp |> simplify None |> str_of_exp
-
 let print_exp exp = exp |> str_of_exp |> print_endline
-
 let print_simplified exp = exp |> simplify None |> str_of_exp |> print_endline
 
 (* default bitvector length *)
 let bvlen = ref 64
-
 let set_bvlen len = bvlen := len
 
 module Model = struct
@@ -32,15 +27,11 @@ end
 
 module Solver = struct
   type t = S.solver
-
   type status = SATISFIABLE | UNSATISFIABLE | UNKNOWN
 
   let init = S.mk_solver ctx None
-
   let check solver query = S.check solver [ query ]
-
   let get_model = S.get_model
-
   let str_of_status = S.string_of_status
 end
 
@@ -52,24 +43,22 @@ module Bool = struct
 
   (* constants *)
   let tr = B.mk_true ctx
-
   let fl = B.mk_false ctx
 
   (* logical operation *)
   let and_ lexp rexp = B.mk_and ctx [ lexp; rexp ]
-
   let ands exps = B.mk_and ctx exps
-
   let or_ lexp rexp = B.mk_or ctx [ lexp; rexp ]
-
   let ors exps = B.mk_or ctx exps
-
   let not exp = B.mk_not ctx exp
 
   (* comparison *)
   let eq lexp rexp = B.mk_eq ctx lexp rexp
-
   let neq lexp rexp = B.mk_not ctx (B.mk_eq ctx lexp rexp)
+
+  (* logic expression *)
+  let ite cond t f = 
+    B.mk_ite ctx cond t f
 end
 
 module BitVecVal = struct
@@ -98,7 +87,6 @@ module BitVecVal = struct
 
   (* boolean const *)
   let tr ?(len = !bvlen) () = BV.mk_numeral ctx "1" len
-
   let fl ?(len = !bvlen) () = BV.mk_numeral ctx "0" len
 end
 
@@ -106,7 +94,6 @@ module BitVec = struct
   type t = E.expr
 
   let init ?(len = !bvlen) name = BV.mk_const_s ctx name len
-
   let len bv = bv |> E.get_sort |> BV.get_size
 
   (* logical operation *)
@@ -123,7 +110,6 @@ module BitVec = struct
     BV.mk_or ctx lbv rbv
 
   let notb bv = BV.mk_not ctx bv
-
   let shlb bv off = BV.mk_shl ctx bv off
 
   let shli bv off =
@@ -138,13 +124,9 @@ module BitVec = struct
     B.mk_eq ctx lbv rbv
 
   let neqb lbv rbv = B.mk_not ctx (eqb lbv rbv)
-
   let neqi lbv rval = B.mk_not ctx (eqi lbv rval)
-
   let sgeb lbv rbv = BV.mk_sge ctx lbv rbv
-
   let sgei lbv rval = BV.mk_sge ctx lbv (BitVecVal.of_int ~len:(len lbv) rval)
-
   let ugeb lbv rbv = BV.mk_uge ctx lbv rbv
 
   let ugei lbv rval =
@@ -152,9 +134,7 @@ module BitVec = struct
     BV.mk_uge ctx lbv rbv
 
   let sltb lbv rbv = BV.mk_slt ctx lbv rbv
-
   let slti lbv rval = BV.mk_slt ctx lbv (BitVecVal.of_int ~len:(len lbv) rval)
-
   let ultb lbv rbv = BV.mk_ult ctx lbv rbv
 
   let ulti lbv rval =
@@ -175,7 +155,6 @@ module BitVec = struct
     BV.mk_add ctx lbv rbv
 
   let subb lbv rbv = BV.mk_sub ctx lbv rbv
-
   let subi lbv rval = BV.mk_sub ctx lbv (BitVecVal.of_int ~len:(len lbv) rval)
 
   (* rbv != 0 && lbv % rbv *)

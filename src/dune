@@ -9,6 +9,8 @@
   IR
   tv
   utils
+  memory
+  machineType
   semantics
   err
   z3utils)

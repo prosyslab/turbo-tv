@@ -703,7 +703,7 @@ StaticAssert,
 Store,b1,p1,p2,p3
 StoreDataViewElement,
 StoreElement,
-StoreField,b2,b4,p1,p2
+StoreField,p1,b2,b4,p2
 StoreLane,
 StoreMessage,
 StoreSignedSmallElement,
