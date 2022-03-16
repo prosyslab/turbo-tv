@@ -284,12 +284,25 @@ module Value = struct
     (value, assertion)
 
   (* simplified: type-conversion *)
-  let change_int32_to_tagged vid pval =
+  let change_int32_to_tagged vid pval mem =
     let value = BitVec.init ~len vid in
     let pdata = data_of pval in
-    let assertion =
-      Bool.ands [ is_int32 pval; is_equal value (data_to_tagged_signed pdata) ]
+    let ovf = BitVec.ugei (BitVec.addb pdata pdata) smimax in
+
+    let if_ovf =
+      let bid, updated = Memory.allocate 12 !mem in
+      (* TODO: Define map constants *)
+      let heap_number_map = BitVecVal.of_int ~len:4 1234 in
+      mem := updated;
+      Bool.ands
+        [
+          Memory.write bid 0 4 heap_number_map !mem;
+          Memory.write bid 4 12 pdata !mem;
+        ]
     in
+    let if_not_ovf = is_equal value (cast_to_tagged_signed pdata) in
+
+    let assertion = Bool.ite ovf if_ovf if_not_ovf in
 
     (value, assertion)
 
