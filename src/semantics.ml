@@ -84,6 +84,18 @@ module Value = struct
   let sandboxed_pointer_ty = BitVecVal.of_int ~len:tylen 18
 
   let bool_ty = BitVecVal.of_int ~len:tylen 19
+  let none_ty = BitVecVal.of_int ~len:tylen 20
+
+  (* type-cast *)
+  let cast_to_int32 data = BitVec.concat int32_ty data
+  let cast_to_int64 data = BitVec.concat int64_ty data
+  let cast_to_uint64 data = BitVec.concat uint64_ty data
+  let cast_to_float64 data = BitVec.concat float64_ty data
+  let cast_to_pointer data = BitVec.concat pointer_ty data
+  let cast_to_tagged_signed data = BitVec.concat tagged_signed_ty data
+  let cast_to_any_tagged data = BitVec.concat any_tagged_ty data
+  let cast_to_bool data = BitVec.concat bool_ty data
+  let cast_to_ty ty data = BitVec.concat ty data
 
   let none_ty = BitVecVal.of_int ~len:tylen 20
 
@@ -178,7 +190,10 @@ module Value = struct
 
   let is_tagged_signed value =
     let value_ty = ty_of value in
-    Bool.ands [ BitVec.eqb value_ty tagged_signed_ty; BitVec.eqi value 1 ]
+    Bool.ands
+      [
+        BitVec.eqb value_ty tagged_signed_ty; BitVec.eqi (BitVec.andi value 1) 1;
+      ]
 
   let is_tagged_pointer value =
     let value_ty = ty_of value in
@@ -255,12 +270,10 @@ module Value = struct
   let speculative_safe_integer_add vid lval rval =
     let value = BitVec.init ~len vid in
     let ldata = data_of lval in
-    let rdata = data_of lval in
+    let rdata = data_of rval in
 
-    (* subtract two to ignore the smi tag value(0b1) *)
     let res =
-      BitVec.andi (BitVec.subi (BitVec.addb ldata rdata) 2) smimask
-      |> data_to_tagged_signed
+      BitVec.andi (BitVec.addb ldata rdata) smimask |> cast_to_tagged_signed
     in
 
     let assertion =
