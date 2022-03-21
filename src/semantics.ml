@@ -22,52 +22,88 @@ end
 
 module Value = struct
   type id = string
+
   type t = BitVec.t
 
   let empty = BitVecVal.zero 1 ()
+
   let to_string t = str_of_exp t
 
   (* constants *)
   let tylen = 5
+
   let datalen = 64
+
   let len = tylen + datalen
+
   let smilen = 31
+
   let smimask = 0xfffffffe
+
   let smimin = -1073741824
+
   let smimax = 1073741823
 
   (* type-constants *)
   let int8_ty = BitVecVal.of_int ~len:tylen 0
+
   let uint8_ty = BitVecVal.of_int ~len:tylen 1
+
   let int16_ty = BitVecVal.of_int ~len:tylen 2
+
   let uint16_ty = BitVecVal.of_int ~len:tylen 3
+
   let int32_ty = BitVecVal.of_int ~len:tylen 4
+
   let uint32_ty = BitVecVal.of_int ~len:tylen 5
+
   let int64_ty = BitVecVal.of_int ~len:tylen 6
+
   let uint64_ty = BitVecVal.of_int ~len:tylen 7
+
   let float32_ty = BitVecVal.of_int ~len:tylen 8
+
   let float64_ty = BitVecVal.of_int ~len:tylen 9
+
   let simd128_ty = BitVecVal.of_int ~len:tylen 10
+
   let pointer_ty = BitVecVal.of_int ~len:tylen 11
+
   let tagged_pointer_ty = BitVecVal.of_int ~len:tylen 12
+
   let map_in_header_ty = BitVecVal.of_int ~len:tylen 13
+
   let tagged_signed_ty = BitVecVal.of_int ~len:tylen 14
+
   let any_tagged_ty = BitVecVal.of_int ~len:tylen 15
+
   let compressed_pointer_ty = BitVecVal.of_int ~len:tylen 16
+
   let any_compressed_ty = BitVecVal.of_int ~len:tylen 17
+
   let sandboxed_pointer_ty = BitVecVal.of_int ~len:tylen 18
+
   let bool_ty = BitVecVal.of_int ~len:tylen 19
+
   let none_ty = BitVecVal.of_int ~len:tylen 20
 
   (* type-cast *)
   let cast_to_int32 data = BitVec.concat int32_ty data
+
   let cast_to_int64 data = BitVec.concat int64_ty data
+
   let cast_to_uint64 data = BitVec.concat uint64_ty data
+
   let cast_to_float64 data = BitVec.concat float64_ty data
+
   let cast_to_pointer data = BitVec.concat pointer_ty data
+
   let cast_to_tagged_signed data = BitVec.concat tagged_signed_ty data
+
   let cast_to_any_tagged data = BitVec.concat any_tagged_ty data
+
   let cast_to_bool data = BitVec.concat bool_ty data
+
   let cast_to_ty ty data = BitVec.concat ty data
 
   (* type vector of machine type *)
@@ -97,8 +133,11 @@ module Value = struct
 
   (* getter *)
   let ty_of t = BitVec.extract (tylen - 1) 0 t
+
   let data_of t = BitVec.extract (len - 1) tylen t
+
   let first_of t = BitVec.extract (len - 1) 0 t
+
   let second_of t = BitVec.extract ((2 * len) - 1) len t
 
   (* type check *)
@@ -120,6 +159,7 @@ module Value = struct
     BitVec.eqb value_ty uint16_ty
 
   let is_word8 value = Bool.ors [ is_int8 value; is_uint8 value ]
+
   let is_word16 value = Bool.ors [ is_int16 value; is_uint16 value ]
 
   let is_int32 value =
@@ -230,6 +270,20 @@ module Value = struct
     in
 
     let assertion = Bool.ors [ c_is_smi; c_is_not_smi ] in
+    (value, assertion)
+
+  (* common: control *)
+  let projection vid pidx pval =
+    let value = BitVec.init ~len vid in
+
+    let res =
+      if pidx = 0 then BitVec.extract (len - 1) 0 pval
+      else if pidx = 1 then BitVec.extract ((2 * len) - 1) len pval
+      else raise (Invalid_argument "Projection index out of range")
+    in
+
+    let assertion = is_equal value res in
+
     (value, assertion)
 
   (* common: procedure *)
@@ -547,6 +601,7 @@ module RegisterFile = struct
       err (IdNotFound (cause, reason))
 
   let empty = R.empty
+
   let iter = R.iter
 end
 
@@ -575,11 +630,17 @@ module State = struct
 
   (* getter *)
   let pc t = t.pc
+
   let register_file t = t.register_file
+
   let memory t = t.memory
+
   let params t = t.params
+
   let retvar t = t.retvar
+
   let assertion t = t.assertion
+
   let is_final t = t.pc = -1
 end
 
@@ -608,7 +669,12 @@ let apply program state prefix =
     | NumberConstant ->
         Operands.const_of_nth operands 0 |> Value.number_constant vid
     (* common: control *)
-    | Branch | Projection -> (Value.empty, Bool.tr)
+    | Branch -> failwith "Not implemented"
+    | Projection ->
+        let pidx = Operands.const_of_nth operands 0 |> int_of_string in
+        let pid = prefix ^ Operands.id_of_nth operands 1 in
+        let pval = RegisterFile.find pid rf in
+        Value.projection vid pidx pval
     (* common: procedure *)
     | Parameter ->
         let pidx = Operands.const_of_nth operands 0 |> int_of_string in
