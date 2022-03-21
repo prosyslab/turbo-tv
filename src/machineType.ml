@@ -19,22 +19,22 @@ module Repr = struct
 
   let of_string str =
     match str with
-    | "Word8" -> Word8
-    | "Word16" -> Word16
-    | "Word32" -> Word32
-    | "Word64" -> Word64
-    | "Float32" -> Float32
-    | "Float64" -> Float64
-    | "Simd128" -> Simd128
-    | "TaggedPointer" -> TaggedPointer
-    | "MapWord" -> MapWord
-    | "TaggedSigned" -> TaggedSigned
-    | "Tagged" -> Tagged
-    | "CompressedPointer" -> CompressedPointer
-    | "Compressed" -> Compressed
-    | "SandboxedPointer" -> SandboxedPointer
-    | "Bit" -> Bit
-    | "None" -> None
+    | "kRepWord8" -> Word8
+    | "kRepWord16" -> Word16
+    | "kRepWord32" -> Word32
+    | "kRepWord64" -> Word64
+    | "kRepFloat32" -> Float32
+    | "kRepFloat64" -> Float64
+    | "kRepSimd128" -> Simd128
+    | "kRepTaggedPointer" -> TaggedPointer
+    | "kRepMapWord" -> MapWord
+    | "kRepTaggedSigned" -> TaggedSigned
+    | "kRepTagged" -> Tagged
+    | "kRepCompressedPointer" -> CompressedPointer
+    | "kRepCompressed" -> Compressed
+    | "kRepSandboxedPointer" -> SandboxedPointer
+    | "kRepBit" -> Bit
+    | "kNone" -> None
     | _ -> failwith "Invalid repr"
 
   let size_of t =

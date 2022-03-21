@@ -4,10 +4,10 @@ exception Invalid_opcode
 type kind =
   | UNIMPL
   | P1
-  | B1
-  | VARGS
   | P1P2
   | P2
+  | B1
+  | VARGS
   | B1P1P2
   | B1P1
   | B1P1P2P3
@@ -542,7 +542,6 @@ type t =
   | MapGuard
   | MaybeGrowFastElements
   | MemBarrier
-  | Merge
   | NewArgumentsElements
   | NewConsString
   | NewDoubleElements
@@ -815,7 +814,6 @@ type t =
   | BitcastTaggedToWord
   | BitcastWord32ToWord64
   | BitcastWordToTagged
-  | Branch
   | ChangeInt32ToFloat64
   | ChangeInt32ToTagged
   | ChangeTaggedSignedToInt32
@@ -824,6 +822,18 @@ type t =
   | IfTrue
   | StackPointerGreaterThan
   | TruncateInt64ToInt32
+  (* p1p2 *)
+  | Branch
+  | Int32Add
+  | Int32AddWithOverflow
+  | Int64Add
+  | Int64Sub
+  | SpeculativeSafeIntegerAdd
+  | Uint64LessThan
+  | Word32And
+  | Word32Equal
+  (* p2 *)
+  | Return
   (* b1 *)
   | Call
   | ExternalConstant
@@ -835,17 +845,7 @@ type t =
   | Parameter
   (* vargs *)
   | End
-  (* p1p2 *)
-  | Int32Add
-  | Int32AddWithOverflow
-  | Int64Add
-  | Int64Sub
-  | SpeculativeSafeIntegerAdd
-  | Uint64LessThan
-  | Word32And
-  | Word32Equal
-  (* p2 *)
-  | Return
+  | Merge
   (* b1p1p2 *)
   | Load
   | Word32Sar
@@ -993,35 +993,34 @@ let get_kind opcode =
   | LoadLane | LoadMessage | LoadParentFramePointer | LoadStackArgument
   | LoadStackCheckOffset | LoadTransform | LoadTypedElement | Loop | LoopExit
   | LoopExitEffect | LoopExitValue | MapGuard | MaybeGrowFastElements
-  | MemBarrier | Merge | NewArgumentsElements | NewConsString
-  | NewDoubleElements | NewSmiOrObjectElements | NumberAbs | NumberAcos
-  | NumberAcosh | NumberAdd | NumberAsin | NumberAsinh | NumberAtan
-  | NumberAtan2 | NumberAtanh | NumberBitwiseAnd | NumberBitwiseOr
-  | NumberBitwiseXor | NumberCbrt | NumberCeil | NumberClz32 | NumberCos
-  | NumberCosh | NumberDivide | NumberEqual | NumberExp | NumberExpm1
-  | NumberFloor | NumberFround | NumberImul | NumberIsFinite
-  | NumberIsFloat64Hole | NumberIsInteger | NumberIsMinusZero | NumberIsNaN
-  | NumberIsSafeInteger | NumberLessThan | NumberLessThanOrEqual | NumberLog
-  | NumberLog10 | NumberLog1p | NumberLog2 | NumberMax | NumberMin
-  | NumberModulus | NumberMultiply | NumberPow | NumberRound | NumberSameValue
-  | NumberShiftLeft | NumberShiftRight | NumberShiftRightLogical | NumberSign
-  | NumberSilenceNaN | NumberSin | NumberSinh | NumberSqrt | NumberSubtract
-  | NumberTan | NumberTanh | NumberToBoolean | NumberToInt32 | NumberToString
-  | NumberToUint32 | NumberToUint8Clamped | NumberTrunc | ObjectId
-  | ObjectIsArrayBufferView | ObjectIsBigInt | ObjectIsCallable
-  | ObjectIsConstructor | ObjectIsDetectableCallable | ObjectIsFiniteNumber
-  | ObjectIsInteger | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable
-  | ObjectIsNumber | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi
-  | ObjectIsString | ObjectIsSymbol | ObjectIsUndetectable | ObjectState
-  | OsrValue | Phi | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber
-  | PlainPrimitiveToWord32 | Plug | PointerConstant | ProtectedLoad
-  | ProtectedStore | ReferenceEqual | RelocatableInt32Constant
-  | RelocatableInt64Constant | ResizeMergeOrPhi | RestLength | Retain
-  | RoundFloat64ToInt32 | RoundInt32ToFloat32 | RoundInt64ToFloat32
-  | RoundInt64ToFloat64 | RoundUint32ToFloat32 | RoundUint64ToFloat32
-  | RoundUint64ToFloat64 | RuntimeAbort | S128And | S128AndNot | S128Const
-  | S128Not | S128Or | S128Select | S128Xor | S128Zero | SameValue
-  | SameValueNumbersOnly | Select | SignExtendWord16ToInt32
+  | MemBarrier | NewArgumentsElements | NewConsString | NewDoubleElements
+  | NewSmiOrObjectElements | NumberAbs | NumberAcos | NumberAcosh | NumberAdd
+  | NumberAsin | NumberAsinh | NumberAtan | NumberAtan2 | NumberAtanh
+  | NumberBitwiseAnd | NumberBitwiseOr | NumberBitwiseXor | NumberCbrt
+  | NumberCeil | NumberClz32 | NumberCos | NumberCosh | NumberDivide
+  | NumberEqual | NumberExp | NumberExpm1 | NumberFloor | NumberFround
+  | NumberImul | NumberIsFinite | NumberIsFloat64Hole | NumberIsInteger
+  | NumberIsMinusZero | NumberIsNaN | NumberIsSafeInteger | NumberLessThan
+  | NumberLessThanOrEqual | NumberLog | NumberLog10 | NumberLog1p | NumberLog2
+  | NumberMax | NumberMin | NumberModulus | NumberMultiply | NumberPow
+  | NumberRound | NumberSameValue | NumberShiftLeft | NumberShiftRight
+  | NumberShiftRightLogical | NumberSign | NumberSilenceNaN | NumberSin
+  | NumberSinh | NumberSqrt | NumberSubtract | NumberTan | NumberTanh
+  | NumberToBoolean | NumberToInt32 | NumberToString | NumberToUint32
+  | NumberToUint8Clamped | NumberTrunc | ObjectId | ObjectIsArrayBufferView
+  | ObjectIsBigInt | ObjectIsCallable | ObjectIsConstructor
+  | ObjectIsDetectableCallable | ObjectIsFiniteNumber | ObjectIsInteger
+  | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable | ObjectIsNumber
+  | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi | ObjectIsString
+  | ObjectIsSymbol | ObjectIsUndetectable | ObjectState | OsrValue | Phi
+  | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber | PlainPrimitiveToWord32
+  | Plug | PointerConstant | ProtectedLoad | ProtectedStore | ReferenceEqual
+  | RelocatableInt32Constant | RelocatableInt64Constant | ResizeMergeOrPhi
+  | RestLength | Retain | RoundFloat64ToInt32 | RoundInt32ToFloat32
+  | RoundInt64ToFloat32 | RoundInt64ToFloat64 | RoundUint32ToFloat32
+  | RoundUint64ToFloat32 | RoundUint64ToFloat64 | RuntimeAbort | S128And
+  | S128AndNot | S128Const | S128Not | S128Or | S128Select | S128Xor | S128Zero
+  | SameValue | SameValueNumbersOnly | Select | SignExtendWord16ToInt32
   | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
   | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
   | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
@@ -1069,18 +1068,18 @@ let get_kind opcode =
   | Word64Shr | Word64Xor ->
       UNIMPL
   | AllocateRaw | BitcastTaggedToWord | BitcastWord32ToWord64
-  | BitcastWordToTagged | Branch | ChangeInt32ToFloat64 | ChangeInt32ToTagged
+  | BitcastWordToTagged | ChangeInt32ToFloat64 | ChangeInt32ToTagged
   | ChangeTaggedSignedToInt32 | CheckedTaggedSignedToInt32 | IfFalse | IfTrue
   | StackPointerGreaterThan | TruncateInt64ToInt32 ->
       P1
-  | Call | ExternalConstant | HeapConstant | Int32Constant | Int64Constant
-  | JSStackCheck | NumberConstant | Parameter ->
-      B1
-  | End -> VARGS
-  | Int32Add | Int32AddWithOverflow | Int64Add | Int64Sub
+  | Branch | Int32Add | Int32AddWithOverflow | Int64Add | Int64Sub
   | SpeculativeSafeIntegerAdd | Uint64LessThan | Word32And | Word32Equal ->
       P1P2
   | Return -> P2
+  | Call | ExternalConstant | HeapConstant | Int32Constant | Int64Constant
+  | JSStackCheck | NumberConstant | Parameter ->
+      B1
+  | End | Merge -> VARGS
   | Load | Word32Sar -> B1P1P2
   | Projection -> B1P1
   | Store -> B1P1P2P3
@@ -1091,10 +1090,10 @@ let split_kind kind =
   match kind with
   | UNIMPL -> [ UNIMPL ]
   | P1 -> [ P1 ]
-  | B1 -> [ B1 ]
-  | VARGS -> [ VARGS ]
   | P1P2 -> [ P1; P2 ]
   | P2 -> [ P2 ]
+  | B1 -> [ B1 ]
+  | VARGS -> [ VARGS ]
   | B1P1P2 -> [ B1; P1; P2 ]
   | B1P1 -> [ B1; P1 ]
   | B1P1P2P3 -> [ B1; P1; P2; P3 ]
@@ -1631,7 +1630,6 @@ let of_str str =
   | "MapGuard" -> MapGuard
   | "MaybeGrowFastElements" -> MaybeGrowFastElements
   | "MemBarrier" -> MemBarrier
-  | "Merge" -> Merge
   | "NewArgumentsElements" -> NewArgumentsElements
   | "NewConsString" -> NewConsString
   | "NewDoubleElements" -> NewDoubleElements
@@ -1903,7 +1901,6 @@ let of_str str =
   | "BitcastTaggedToWord" -> BitcastTaggedToWord
   | "BitcastWord32ToWord64" -> BitcastWord32ToWord64
   | "BitcastWordToTagged" -> BitcastWordToTagged
-  | "Branch" -> Branch
   | "ChangeInt32ToFloat64" -> ChangeInt32ToFloat64
   | "ChangeInt32ToTagged" -> ChangeInt32ToTagged
   | "ChangeTaggedSignedToInt32" -> ChangeTaggedSignedToInt32
@@ -1912,15 +1909,7 @@ let of_str str =
   | "IfTrue" -> IfTrue
   | "StackPointerGreaterThan" -> StackPointerGreaterThan
   | "TruncateInt64ToInt32" -> TruncateInt64ToInt32
-  | "Call" -> Call
-  | "ExternalConstant" -> ExternalConstant
-  | "HeapConstant" -> HeapConstant
-  | "Int32Constant" -> Int32Constant
-  | "Int64Constant" -> Int64Constant
-  | "JSStackCheck" -> JSStackCheck
-  | "NumberConstant" -> NumberConstant
-  | "Parameter" -> Parameter
-  | "End" -> End
+  | "Branch" -> Branch
   | "Int32Add" -> Int32Add
   | "Int32AddWithOverflow" -> Int32AddWithOverflow
   | "Int64Add" -> Int64Add
@@ -1930,6 +1919,16 @@ let of_str str =
   | "Word32And" -> Word32And
   | "Word32Equal" -> Word32Equal
   | "Return" -> Return
+  | "Call" -> Call
+  | "ExternalConstant" -> ExternalConstant
+  | "HeapConstant" -> HeapConstant
+  | "Int32Constant" -> Int32Constant
+  | "Int64Constant" -> Int64Constant
+  | "JSStackCheck" -> JSStackCheck
+  | "NumberConstant" -> NumberConstant
+  | "Parameter" -> Parameter
+  | "End" -> End
+  | "Merge" -> Merge
   | "Load" -> Load
   | "Word32Sar" -> Word32Sar
   | "Projection" -> Projection
@@ -2462,7 +2461,6 @@ let to_str opcode =
   | MapGuard -> "MapGuard"
   | MaybeGrowFastElements -> "MaybeGrowFastElements"
   | MemBarrier -> "MemBarrier"
-  | Merge -> "Merge"
   | NewArgumentsElements -> "NewArgumentsElements"
   | NewConsString -> "NewConsString"
   | NewDoubleElements -> "NewDoubleElements"
@@ -2734,7 +2732,6 @@ let to_str opcode =
   | BitcastTaggedToWord -> "BitcastTaggedToWord"
   | BitcastWord32ToWord64 -> "BitcastWord32ToWord64"
   | BitcastWordToTagged -> "BitcastWordToTagged"
-  | Branch -> "Branch"
   | ChangeInt32ToFloat64 -> "ChangeInt32ToFloat64"
   | ChangeInt32ToTagged -> "ChangeInt32ToTagged"
   | ChangeTaggedSignedToInt32 -> "ChangeTaggedSignedToInt32"
@@ -2743,15 +2740,7 @@ let to_str opcode =
   | IfTrue -> "IfTrue"
   | StackPointerGreaterThan -> "StackPointerGreaterThan"
   | TruncateInt64ToInt32 -> "TruncateInt64ToInt32"
-  | Call -> "Call"
-  | ExternalConstant -> "ExternalConstant"
-  | HeapConstant -> "HeapConstant"
-  | Int32Constant -> "Int32Constant"
-  | Int64Constant -> "Int64Constant"
-  | JSStackCheck -> "JSStackCheck"
-  | NumberConstant -> "NumberConstant"
-  | Parameter -> "Parameter"
-  | End -> "End"
+  | Branch -> "Branch"
   | Int32Add -> "Int32Add"
   | Int32AddWithOverflow -> "Int32AddWithOverflow"
   | Int64Add -> "Int64Add"
@@ -2761,6 +2750,16 @@ let to_str opcode =
   | Word32And -> "Word32And"
   | Word32Equal -> "Word32Equal"
   | Return -> "Return"
+  | Call -> "Call"
+  | ExternalConstant -> "ExternalConstant"
+  | HeapConstant -> "HeapConstant"
+  | Int32Constant -> "Int32Constant"
+  | Int64Constant -> "Int64Constant"
+  | JSStackCheck -> "JSStackCheck"
+  | NumberConstant -> "NumberConstant"
+  | Parameter -> "Parameter"
+  | End -> "End"
+  | Merge -> "Merge"
   | Load -> "Load"
   | Word32Sar -> "Word32Sar"
   | Projection -> "Projection"

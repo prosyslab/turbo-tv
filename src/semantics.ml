@@ -22,88 +22,52 @@ end
 
 module Value = struct
   type id = string
-
   type t = BitVec.t
 
   let empty = BitVecVal.zero 1 ()
-
   let to_string t = str_of_exp t
 
   (* constants *)
   let tylen = 5
-
   let datalen = 64
-
   let len = tylen + datalen
-
   let smilen = 31
-
   let smimask = 0xfffffffe
-
   let smimin = -1073741824
-
   let smimax = 1073741823
 
   (* type-constants *)
   let int8_ty = BitVecVal.of_int ~len:tylen 0
-
   let uint8_ty = BitVecVal.of_int ~len:tylen 1
-
   let int16_ty = BitVecVal.of_int ~len:tylen 2
-
   let uint16_ty = BitVecVal.of_int ~len:tylen 3
-
   let int32_ty = BitVecVal.of_int ~len:tylen 4
-
   let uint32_ty = BitVecVal.of_int ~len:tylen 5
-
   let int64_ty = BitVecVal.of_int ~len:tylen 6
-
   let uint64_ty = BitVecVal.of_int ~len:tylen 7
-
   let float32_ty = BitVecVal.of_int ~len:tylen 8
-
   let float64_ty = BitVecVal.of_int ~len:tylen 9
-
   let simd128_ty = BitVecVal.of_int ~len:tylen 10
-
   let pointer_ty = BitVecVal.of_int ~len:tylen 11
-
   let tagged_pointer_ty = BitVecVal.of_int ~len:tylen 12
-
   let map_in_header_ty = BitVecVal.of_int ~len:tylen 13
-
   let tagged_signed_ty = BitVecVal.of_int ~len:tylen 14
-
   let any_tagged_ty = BitVecVal.of_int ~len:tylen 15
-
   let compressed_pointer_ty = BitVecVal.of_int ~len:tylen 16
-
   let any_compressed_ty = BitVecVal.of_int ~len:tylen 17
-
   let sandboxed_pointer_ty = BitVecVal.of_int ~len:tylen 18
-
   let bool_ty = BitVecVal.of_int ~len:tylen 19
-
   let none_ty = BitVecVal.of_int ~len:tylen 20
 
   (* type-cast *)
   let cast_to_int32 data = BitVec.concat int32_ty data
-
   let cast_to_int64 data = BitVec.concat int64_ty data
-
   let cast_to_uint64 data = BitVec.concat uint64_ty data
-
   let cast_to_float64 data = BitVec.concat float64_ty data
-
   let cast_to_pointer data = BitVec.concat pointer_ty data
-
   let cast_to_tagged_signed data = BitVec.concat tagged_signed_ty data
-
   let cast_to_any_tagged data = BitVec.concat any_tagged_ty data
-
   let cast_to_bool data = BitVec.concat bool_ty data
-
   let cast_to_ty ty data = BitVec.concat ty data
 
   (* type vector of machine type *)
@@ -133,11 +97,8 @@ module Value = struct
 
   (* getter *)
   let ty_of t = BitVec.extract (tylen - 1) 0 t
-
   let data_of t = BitVec.extract (len - 1) tylen t
-
   let first_of t = BitVec.extract (len - 1) 0 t
-
   let second_of t = BitVec.extract ((2 * len) - 1) len t
 
   (* type check *)
@@ -159,7 +120,6 @@ module Value = struct
     BitVec.eqb value_ty uint16_ty
 
   let is_word8 value = Bool.ors [ is_int8 value; is_uint8 value ]
-
   let is_word16 value = Bool.ors [ is_int16 value; is_uint16 value ]
 
   let is_int32 value =
@@ -283,7 +243,48 @@ module Value = struct
     in
 
     let assertion = is_equal value res in
+    (value, assertion)
 
+  (* | --- True Condition --- | --- False Condition --- | *)
+  (* True condition: precond ^ cond *)
+  (* False condition: precond ^ not cond *)
+  let branch vid cond precond =
+    let value = BitVec.init ~len:138 vid in
+    let cond_data = data_of cond in
+    let precond_data = data_of precond in
+    let if_true = cast_to_bool (BitVec.andb precond_data cond_data) in
+    let if_false =
+      cast_to_bool (BitVec.andb precond_data (BitVec.xori cond_data 1))
+    in
+    let cond = BitVec.concat if_true if_false in
+
+    let assertion = BitVec.eqb value cond in
+    (value, assertion)
+
+  let end_ vid values =
+    let value = BitVec.init ~len vid in
+    let assertion = BitVec.eqb value (Bool.ands values) in
+    (value, assertion)
+
+  let if_false vid cond =
+    let value = BitVec.init ~len vid in
+    let assertion = BitVec.eqb value (cond |> second_of) in
+    (value, assertion)
+
+  let if_true vid cond =
+    let value = BitVec.init ~len vid in
+    let assertion = BitVec.eqb value (cond |> first_of) in
+    (value, assertion)
+
+  let merge vid conds =
+    let value = BitVec.init ~len vid in
+    let assertion =
+      BitVec.eqb value
+        (cast_to_bool
+           (List.fold_left
+              (fun asrt cond -> BitVec.orb asrt (data_of cond))
+              (BitVecVal.tr ()) conds))
+    in
     (value, assertion)
 
   (* common: procedure *)
@@ -292,7 +293,10 @@ module Value = struct
     let assertion = BitVec.eqb value (cast_to_tagged_signed param) in
     (value, assertion)
 
-  let return _vid _pval = failwith "Not implemented"
+  let return vid return_value =
+    let value = BitVec.init ~len vid in
+    let assertion = BitVec.eqb value return_value in
+    (value, assertion)
 
   (* simplified: arithmetic *)
   let speculative_safe_integer_add vid lval rval =
@@ -312,8 +316,12 @@ module Value = struct
     (value, assertion)
 
   (* simplified: memory *)
-  let allocate_raw vid size mem =
+  let allocate_raw vid size_value mem =
     let value = BitVec.init ~len vid in
+    let size =
+      Z3.Expr.simplify size_value None
+      |> Z3.BitVector.numeral_to_string |> int_of_string
+    in
     let bid, updated = Memory.allocate size !mem in
     mem := updated;
 
@@ -412,7 +420,12 @@ module Value = struct
     let ldata = data_of lval in
     let rdata = data_of rval in
     let res = BitVec.andi (BitVec.addb ldata rdata) smimask |> cast_to_int32 in
-    let ovf = BitVec.ulti (BitVec.addb ldata rdata) smimax |> cast_to_bool in
+    let ovf =
+      Bool.ite
+        (BitVec.ulti (BitVec.addb ldata rdata) smimax)
+        (BitVecVal.tr ()) (BitVecVal.fl ())
+      |> cast_to_bool
+    in
 
     let assertion =
       Bool.ands
@@ -457,8 +470,7 @@ module Value = struct
     let value = BitVec.init ~len vid in
 
     let is_shift_out_zero =
-      if String.equal hint "ShfitOutZero" then BitVecVal.tr ()
-      else BitVecVal.fl ()
+      if String.equal hint "ShfitOutZero" then Bool.tr else Bool.fl
     in
 
     let ldata = data_of lval in
@@ -477,7 +489,7 @@ module Value = struct
           is_equal value res;
           Bool.ors
             [
-              Bool.not is_shift_out_zero;
+              is_shift_out_zero;
               (* TODO: undef *)
               is_weak_equal res (BitVecVal.zero len ());
             ];
@@ -486,12 +498,25 @@ module Value = struct
     (value, assertion)
 
   (* machine: comparison *)
-  let word32equal vid lval rval =
+  let word32and vid lval rval =
     let value = BitVec.init ~len vid in
-
     let ldata = data_of lval in
     let rdata = data_of rval in
-    let res = BitVec.eqb ldata rdata |> cast_to_bool in
+    let ty = ty_of lval in
+    let res = BitVec.andb ldata rdata |> cast_to_ty ty in
+    let assertion =
+      Bool.ands [ is_word32 lval; is_word32 rval; is_equal value res ]
+    in
+    (value, assertion)
+
+  let word32equal vid lval rval =
+    let value = BitVec.init ~len vid in
+    let ldata = data_of lval in
+    let rdata = data_of rval in
+    let res =
+      Bool.ite (BitVec.eqb ldata rdata) (BitVecVal.tr ()) (BitVecVal.fl ())
+      |> cast_to_bool
+    in
 
     let assertion =
       Bool.ands [ is_word32 lval; is_word32 rval; is_equal value res ]
@@ -504,7 +529,10 @@ module Value = struct
 
     let ldata = data_of lval in
     let rdata = data_of rval in
-    let res = BitVec.ultb ldata rdata |> cast_to_bool in
+    let res =
+      Bool.ite (BitVec.ultb ldata rdata) (BitVecVal.tr ()) (BitVecVal.fl ())
+      |> cast_to_bool
+    in
 
     let assertion =
       Bool.ands [ is_uint64 lval; is_uint64 rval; is_equal value res ]
@@ -601,7 +629,6 @@ module RegisterFile = struct
       err (IdNotFound (cause, reason))
 
   let empty = R.empty
-
   let iter = R.iter
 end
 
@@ -609,6 +636,7 @@ module State = struct
   type t = {
     pc : IR.Node.id;
     register_file : Value.t RegisterFile.R.t;
+    condition : Bool.t;
     memory : BitVec.t Memory.M.t;
     params : BitVec.t list;
     retvar : BitVec.t Option.t;
@@ -619,28 +647,24 @@ module State = struct
     {
       pc = 0;
       register_file = RegisterFile.empty;
+      condition = BitVecVal.tr ();
       params = Params.init nparams;
       retvar = None;
       assertion = Bool.tr;
       memory = Memory.empty;
     }
 
-  let update pc register_file assertion t =
-    { t with pc; register_file; assertion }
+  let update pc register_file condition assertion t =
+    { t with pc; register_file; condition; assertion }
 
   (* getter *)
   let pc t = t.pc
-
   let register_file t = t.register_file
-
+  let condition t = t.condition
   let memory t = t.memory
-
   let params t = t.params
-
   let retvar t = t.retvar
-
   let assertion t = t.assertion
-
   let is_final t = t.pc = -1
 end
 
@@ -669,12 +693,34 @@ let apply program state prefix =
     | NumberConstant ->
         Operands.const_of_nth operands 0 |> Value.number_constant vid
     (* common: control *)
-    | Branch -> failwith "Not implemented"
     | Projection ->
         let pidx = Operands.const_of_nth operands 0 |> int_of_string in
         let pid = prefix ^ Operands.id_of_nth operands 1 in
         let pval = RegisterFile.find pid rf in
         Value.projection vid pidx pval
+    | Branch ->
+        let cond_id = prefix ^ Operands.id_of_nth operands 0 in
+        let prev_id = prefix ^ Operands.id_of_nth operands 1 in
+        let cond_value = RegisterFile.find cond_id rf in
+        let precond_value = RegisterFile.find prev_id rf in
+        Value.branch vid cond_value precond_value
+    | IfFalse ->
+        let nid = prefix ^ Operands.id_of_nth operands 0 in
+        let cond_value = RegisterFile.find nid rf in
+        Value.if_false vid cond_value
+    | IfTrue ->
+        let nid = prefix ^ Operands.id_of_nth operands 0 in
+        let cond_value = RegisterFile.find nid rf in
+        Value.if_true vid cond_value
+    | Start -> (BitVecVal.tr () |> Value.cast_to_bool, Bool.tr)
+    | Merge ->
+        let nids =
+          List.map
+            (fun operand -> prefix ^ (operand |> Operands.Operand.id))
+            operands
+        in
+        let conds = List.map (fun nid -> RegisterFile.find nid rf) nids in
+        Value.merge vid conds
     (* common: procedure *)
     | Parameter ->
         let pidx = Operands.const_of_nth operands 0 |> int_of_string in
@@ -682,7 +728,12 @@ let apply program state prefix =
           let param = List.nth params (pidx - 1) in
           Value.parameter vid param
         else (Value.empty, Bool.tr)
-    | Return | Call | End -> (Value.empty, Bool.tr)
+    | Call -> (BitVecVal.tr () |> Value.cast_to_bool, Bool.tr)
+    | Return ->
+        let nid = prefix ^ Operands.id_of_nth operands 0 in
+        let return_value = RegisterFile.find nid rf in
+        Value.return vid return_value
+    | End -> (Value.empty, Bool.tr)
     (* simplified: arithmetic *)
     | SpeculativeSafeIntegerAdd ->
         let lpid = prefix ^ Operands.id_of_nth operands 0 in
@@ -692,8 +743,9 @@ let apply program state prefix =
         Value.speculative_safe_integer_add vid lval rval
     (* simplified: memory *)
     | AllocateRaw ->
-        let size = Operands.const_of_nth operands 0 |> int_of_string in
-        Value.allocate_raw vid size mem
+        let size_id = prefix ^ Operands.id_of_nth operands 0 in
+        let size_value = RegisterFile.find size_id rf in
+        Value.allocate_raw vid size_value mem
     | StoreField ->
         let nbid = prefix ^ Operands.id_of_nth operands 0 in
         let bid_val = RegisterFile.find nbid rf in
@@ -750,7 +802,13 @@ let apply program state prefix =
         let rval = RegisterFile.find rpid rf in
         Value.word32sar vid hint lval rval
     (* machine: comparison *)
-    | StackPointerGreaterThan -> (Value.empty, Bool.tr)
+    | StackPointerGreaterThan -> (BitVecVal.tr () |> Value.cast_to_bool, Bool.tr)
+    | Word32And ->
+        let lpid = prefix ^ Operands.id_of_nth operands 0 in
+        let rpid = prefix ^ Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        Value.word32and vid lval rval
     | Word32Equal ->
         let lpid = prefix ^ Operands.id_of_nth operands 0 in
         let rpid = prefix ^ Operands.id_of_nth operands 1 in
@@ -775,15 +833,15 @@ let apply program state prefix =
         let nvalue = prefix ^ Operands.id_of_nth operands 3 in
         let value_val = RegisterFile.find nvalue rf in
         Value.store bid_val pos_val repr value_val !mem
-    | Load ->
-        let nbid = prefix ^ Operands.id_of_nth operands 0 in
-        let bid_val = RegisterFile.find nbid rf in
-        let npos = prefix ^ Operands.id_of_nth operands 1 in
-        let pos_val = RegisterFile.find npos rf in
-        let repr =
-          Operands.const_of_nth operands 2 |> MachineType.Repr.of_string
-        in
-        Value.load vid bid_val pos_val repr !mem
+    | Load -> (Value.empty, Bool.tr)
+    (* let nbid = prefix ^ Operands.id_of_nth operands 1 in
+       let bid_val = RegisterFile.find nbid rf in
+       let npos = prefix ^ Operands.id_of_nth operands 2 in
+       let pos_val = RegisterFile.find npos rf in
+       let repr =
+         Operands.const_of_nth operands 0 |> MachineType.Repr.of_string
+       in
+       Value.load vid bid_val pos_val repr !mem *)
     (* machine: bitcast *)
     | BitcastTaggedToWord ->
         let pid = prefix ^ Operands.id_of_nth operands 0 in
@@ -802,12 +860,25 @@ let apply program state prefix =
         let pval = RegisterFile.find pid rf in
         Value.truncate_int64_to_int32 vid pval
     | Empty -> (Value.empty, Bool.tr)
-    | _ -> (Value.empty, Bool.tr)
+    | _ -> (BitVecVal.tr () |> Value.cast_to_bool, Bool.tr)
+  in
+
+  let exec_cond =
+    match opcode with
+    | IfTrue | IfFalse | Merge -> value
+    | _ -> State.condition state
   in
   let updated_rf = RegisterFile.add vid value rf in
-
-  let updated_asrt = Bool.and_ (State.assertion state) assertion in
-  let next_state = State.update next_pc updated_rf updated_asrt state in
+  let updated_asrt =
+    Bool.ands
+      [
+        State.assertion state;
+        Z3.Boolean.mk_iff ctx (BitVec.is_true exec_cond) assertion;
+      ]
+  in
+  let next_state =
+    State.update next_pc updated_rf exec_cond updated_asrt state
+  in
 
   if State.is_final next_state then
     { next_state with retvar = Option.some (BitVec.init ~len:Value.len vid) }

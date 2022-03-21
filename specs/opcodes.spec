@@ -20,7 +20,7 @@ BitcastWord32ToWord64,p1
 BitcastWordToTagged,p1
 BitcastWordToTaggedSigned,
 BooleanNot,
-Branch,p1
+Branch,p1,p2
 Call,b1
 ChangeBitToTagged,
 ChangeFloat32ToFloat64,
@@ -544,7 +544,7 @@ LoopExitValue,
 MapGuard,
 MaybeGrowFastElements,
 MemBarrier,
-Merge,
+Merge,vargs
 NewArgumentsElements,
 NewConsString,
 NewDoubleElements,

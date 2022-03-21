@@ -52,6 +52,7 @@ let create_from instr =
           "(?:\\[[^\\]]*\\]){0,1}\\([^,]*, [^,]*, #(\\d*)[^\\)]*\\)"
       in
 
+      let vargs_re = Re.Pcre.regexp "(?:\\[[^\\]]*\\]){0,1}\\((.*)[^\\)]*\\)" in
       match kinds with
       | k :: t -> (
           try
@@ -86,7 +87,17 @@ let create_from instr =
                   Re.Group.get (Re.exec p3_re instr) 1 |> Operand.of_id
                 in
                 parse_operand t instr (p3 :: operands)
-            | UNIMPL | VARGS -> parse_operand [] instr []
+            | VARGS ->
+                let vargs =
+                  Re.Group.get (Re.exec vargs_re instr) 1
+                  |> String.split_on_char ','
+                in
+                List.fold_left
+                  (fun res arg ->
+                    let re = Re.Pcre.regexp "#(\\d*)" in
+                    (Re.Group.get (Re.exec re arg) 1 |> Operand.of_id) :: res)
+                  [] vargs
+            | UNIMPL -> []
             | _ -> failwith "Unreachable"
           with Not_found ->
             let reason = "Cannot parse operands" in

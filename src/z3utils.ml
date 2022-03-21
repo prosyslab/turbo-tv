@@ -57,8 +57,7 @@ module Bool = struct
   let neq lexp rexp = B.mk_not ctx (B.mk_eq ctx lexp rexp)
 
   (* logic expression *)
-  let ite cond t f = 
-    B.mk_ite ctx cond t f
+  let ite cond t f = B.mk_ite ctx cond t f
 end
 
 module BitVecVal = struct
@@ -115,6 +114,10 @@ module BitVec = struct
   let shli bv off =
     let rbv = BitVecVal.of_int ~len:(len bv) off in
     BV.mk_shl ctx bv rbv
+
+  let xori lbv rval =
+    let rbv = BitVecVal.of_int ~len:(len lbv) rval in
+    BV.mk_xor ctx lbv rbv
 
   (* comparison *)
   let eqb lbv rbv = B.mk_eq ctx lbv rbv
