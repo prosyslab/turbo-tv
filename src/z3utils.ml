@@ -1,4 +1,5 @@
 open Err
+module A = Z3.Z3Array
 module B = Z3.Boolean
 module E = Z3.Expr
 module M = Z3.Model
@@ -40,6 +41,7 @@ module Bool = struct
 
   (* constructor *)
   let init name = B.mk_const_s ctx name
+  let mk_sort = B.mk_sort ctx
 
   (* constants *)
   let tr = B.mk_true ctx
@@ -57,6 +59,7 @@ module Bool = struct
   let neq lexp rexp = B.mk_not ctx (B.mk_eq ctx lexp rexp)
 
   (* logic expression *)
+  let implies cond t = B.mk_implies ctx cond t
   let ite cond t f = B.mk_ite ctx cond t f
 end
 
@@ -64,7 +67,7 @@ module BitVecVal = struct
   type t = E.expr
 
   (* numeral const *)
-  let zero (len : int) () : t = BV.mk_numeral ctx "0" len
+  let zero ?(len = !bvlen) () : t = BV.mk_numeral ctx "0" len
 
   (* constructor *)
   let of_int ?(len = !bvlen) value =
@@ -94,6 +97,7 @@ module BitVec = struct
 
   let init ?(len = !bvlen) name = BV.mk_const_s ctx name len
   let len bv = bv |> E.get_sort |> BV.get_size
+  let mk_sort sz = BV.mk_sort ctx sz
 
   (* logical operation *)
   let andb lbv rbv = BV.mk_and ctx lbv rbv
@@ -182,7 +186,16 @@ module BitVec = struct
 
   (* Un-BitVec Operation*)
   let extract high low bv = BV.mk_extract ctx high low bv
+  let zero_extend len bv = BV.mk_zero_ext ctx len bv
 
   (* Bi-BitVec operation *)
   let concat lbv rbv = BV.mk_concat ctx lbv rbv
+end
+
+module Array = struct
+  type t = E.expr
+
+  let init name domain range = A.mk_const_s ctx name domain range
+  let store value key arr = A.mk_store ctx arr key value
+  let select key arr = A.mk_select ctx arr key
 end

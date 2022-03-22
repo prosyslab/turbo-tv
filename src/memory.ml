@@ -1,44 +1,38 @@
-open Err
 open Z3utils
 
-module M = Map.Make (struct
-  type t = int
+type t = Array.t
 
-  let compare = compare
-end)
+let init name = Array.init name (BitVec.mk_sort Pointer.len) (BitVec.mk_sort 8)
+let allocate vid size = Pointer.init vid size
 
-type bid = int
-
-let bid = ref 0
-let add = M.add
-
-let allocate nbytes mem =
-  let nbid = !bid in
-  let block =
-    BitVec.init ~len:(nbytes * 8) ("block" ^ (nbid |> string_of_int))
+(* Load [value] at block of [ptr] with the size [sz]*)
+let load ptr sz mem =
+  let rec aux res loaded_sz ptr =
+    if loaded_sz = sz then res
+    else
+      let byte = Array.select ptr mem in
+      let res = if loaded_sz = 0 then byte else BitVec.concat res byte in
+      aux res (loaded_sz + 1) (Pointer.next ptr)
   in
-  let updated = M.add nbid block mem in
-  bid := nbid + 1;
-  (nbid, updated)
+  aux (BitVecVal.of_int ~len:1 0) 0 ptr
 
-let find bid mem =
-  try M.find bid mem
-  with Not_found ->
-    let cause = bid |> string_of_int in
-    let reason = Format.sprintf "Cannot find %s from RegisterFile" cause in
-    err (IdNotFound (cause, reason))
+let load_as ptr repr mem =
+  let load_size = MachineType.Repr.size_of repr in
+  let value = load ptr load_size mem in
+  value
 
-let size bid mem =
-  let block = find bid mem in
-  BitVec.len block
+(* Store [value] at block of [ptr] with the size [sz] *)
+let store ptr sz cond value mem =
+  let rec aux stored_sz value ptr mem =
+    if stored_sz = sz then mem
+    else
+      let byte = BitVec.extract ((stored_sz * 8) + 7) (stored_sz * 8) value in
+      let original = load ptr 1 mem in
+      let updated_mem = Array.store (Bool.ite cond byte original) ptr mem in
+      aux (stored_sz + 1) value (Pointer.next ptr) updated_mem
+  in
+  aux 0 value ptr mem
 
-let read bid pos size mem =
-  let block = find bid mem in
-  BitVec.extract (((pos + size) * 8) - 1) (pos * 8) block
-
-let write bid pos size value mem =
-  let target = read bid pos size mem in
-  Bool.eq value target
-
-let empty = M.empty
-let iter = M.iter
+let store_as ptr repr cond value mem =
+  let store_size = MachineType.Repr.size_of repr in
+  store ptr store_size cond value mem

@@ -1,680 +1,462 @@
-open Err
 open Z3utils
+open Value
+module Repr = MachineType.Repr
 
-module Params = struct
-  module Param = struct
-    type t = BitVec.t
+type id = string
+type t = BitVec.t
 
-    (* paramater id *)
-    let init pid = BitVec.init pid
-  end
+(* common: constants *)
+let int32_constant vid c =
+  let value = Value.init vid in
+  let cval = c |> Value.from_string |> Value.cast Type.int32 in
+  let assertion = Bool.ands [ Value.is_equal value cval ] in
+  (value, assertion)
 
-  type t = Param.t list
+let int64_constant vid c =
+  let value = Value.init vid in
+  let cval = c |> Value.from_string |> Value.cast Type.int64 in
+  let assertion = Bool.ands [ Value.is_equal value cval ] in
+  (value, assertion)
 
-  let init nparams =
-    let rec mk_param cnt params =
-      if cnt == nparams then params
-      else
-        mk_param (cnt + 1) (Param.init ("p" ^ (cnt |> string_of_int)) :: params)
-    in
-    mk_param 0 []
-end
+let external_constant vid c =
+  let value = Value.init vid in
+  let cval = c |> Value.from_string |> Value.cast Type.pointer in
+  let assertion = Bool.ands [ Value.is_equal value cval ] in
+  (value, assertion)
 
-module Value = struct
-  type id = string
-  type t = BitVec.t
+let heap_constant = external_constant
 
-  let empty = BitVecVal.zero 1 ()
-  let to_string t = str_of_exp t
+let number_constant vid c =
+  let value = Value.init vid in
+  let cbv = Value.from_string c in
 
-  (* constants *)
-  let tylen = 5
-  let datalen = 64
-  let len = tylen + datalen
-  let smilen = 31
-  let smimask = 0xfffffffe
-  let smimin = -1073741824
-  let smimax = 1073741823
+  let c_is_smi =
+    Bool.ands
+      [ can_be_smi cbv; is_equal value (cbv |> cast Type.tagged_signed) ]
+  in
 
-  (* type-constants *)
-  let int8_ty = BitVecVal.of_int ~len:tylen 0
-  let uint8_ty = BitVecVal.of_int ~len:tylen 1
-  let int16_ty = BitVecVal.of_int ~len:tylen 2
-  let uint16_ty = BitVecVal.of_int ~len:tylen 3
-  let int32_ty = BitVecVal.of_int ~len:tylen 4
-  let uint32_ty = BitVecVal.of_int ~len:tylen 5
-  let int64_ty = BitVecVal.of_int ~len:tylen 6
-  let uint64_ty = BitVecVal.of_int ~len:tylen 7
-  let float32_ty = BitVecVal.of_int ~len:tylen 8
-  let float64_ty = BitVecVal.of_int ~len:tylen 9
-  let simd128_ty = BitVecVal.of_int ~len:tylen 10
-  let pointer_ty = BitVecVal.of_int ~len:tylen 11
-  let tagged_pointer_ty = BitVecVal.of_int ~len:tylen 12
-  let map_in_header_ty = BitVecVal.of_int ~len:tylen 13
-  let tagged_signed_ty = BitVecVal.of_int ~len:tylen 14
-  let any_tagged_ty = BitVecVal.of_int ~len:tylen 15
-  let compressed_pointer_ty = BitVecVal.of_int ~len:tylen 16
-  let any_compressed_ty = BitVecVal.of_int ~len:tylen 17
-  let sandboxed_pointer_ty = BitVecVal.of_int ~len:tylen 18
-  let bool_ty = BitVecVal.of_int ~len:tylen 19
-  let none_ty = BitVecVal.of_int ~len:tylen 20
-
-  (* type-cast *)
-  let cast_to_int32 data = BitVec.concat int32_ty data
-  let cast_to_int64 data = BitVec.concat int64_ty data
-  let cast_to_uint64 data = BitVec.concat uint64_ty data
-  let cast_to_float64 data = BitVec.concat float64_ty data
-  let cast_to_pointer data = BitVec.concat pointer_ty data
-  let cast_to_tagged_signed data = BitVec.concat tagged_signed_ty data
-  let cast_to_any_tagged data = BitVec.concat any_tagged_ty data
-  let cast_to_bool data = BitVec.concat bool_ty data
-  let cast_to_ty ty data = BitVec.concat ty data
-
-  (* type vector of machine type *)
-  let ty_of_machine_type (mt : MachineType.t) =
-    match mt with
-    | Int8 -> int8_ty
-    | Uint8 -> uint8_ty
-    | Int16 -> int16_ty
-    | Uint16 -> uint16_ty
-    | Int32 -> int32_ty
-    | Uint32 -> uint32_ty
-    | Int64 -> int64_ty
-    | Uint64 -> uint64_ty
-    | Float32 -> float32_ty
-    | Float64 -> float64_ty
-    | Simd128 -> simd128_ty
-    | Pointer -> pointer_ty
-    | TaggedSigned -> tagged_signed_ty
-    | TaggedPointer -> tagged_pointer_ty
-    | MapInHeader -> map_in_header_ty
-    | AnyTagged -> any_tagged_ty
-    | CompressedPointer -> compressed_pointer_ty
-    | AnyCompressed -> any_compressed_ty
-    | SandboxedPointer -> sandboxed_pointer_ty
-    | Bool -> bool_ty
-    | None -> none_ty
-
-  (* getter *)
-  let ty_of t = BitVec.extract (tylen - 1) 0 t
-  let data_of t = BitVec.extract (len - 1) tylen t
-  let first_of t = BitVec.extract (len - 1) 0 t
-  let second_of t = BitVec.extract ((2 * len) - 1) len t
-
-  (* type check *)
-
-  let is_int8 value =
-    let value_ty = ty_of value in
-    BitVec.eqb value_ty int8_ty
-
-  let is_uint8 value =
-    let value_ty = ty_of value in
-    BitVec.eqb value_ty uint8_ty
-
-  let is_int16 value =
-    let value_ty = ty_of value in
-    BitVec.eqb value_ty int16_ty
-
-  let is_uint16 value =
-    let value_ty = ty_of value in
-    BitVec.eqb value_ty uint16_ty
-
-  let is_word8 value = Bool.ors [ is_int8 value; is_uint8 value ]
-  let is_word16 value = Bool.ors [ is_int16 value; is_uint16 value ]
-
-  let is_int32 value =
-    let value_ty = ty_of value in
-    BitVec.eqb value_ty int32_ty
-
-  let is_uint32 value =
-    let value_ty = ty_of value in
-    BitVec.eqb value_ty uint32_ty
-
-  let is_word32 value = Bool.ors [ is_int32 value; is_uint32 value ]
-
-  let is_int64 value =
-    let value_ty = ty_of value in
-    BitVec.eqb value_ty int64_ty
-
-  let is_uint64 value =
-    let value_ty = ty_of value in
-    BitVec.eqb value_ty uint64_ty
-
-  let is_pointer value =
-    let value_ty = ty_of value in
-    BitVec.eqb value_ty pointer_ty
-
-  let is_word64 value =
-    Bool.ors [ is_int64 value; is_uint64 value; is_pointer value ]
-
-  let is_float32 value =
-    let value_ty = ty_of value in
-    BitVec.eqb value_ty float32_ty
-
-  let is_float64 value =
-    let value_ty = ty_of value in
-    BitVec.eqb value_ty float64_ty
-
-  let is_word value =
-    Bool.ors
-      [ is_word8 value; is_word16 value; is_word32 value; is_word64 value ]
-
-  let is_any_tagged value =
-    let value_ty = ty_of value in
-    BitVec.eqb value_ty any_tagged_ty
-
-  let is_tagged_signed value =
-    let value_ty = ty_of value in
+  let c_is_not_smi =
     Bool.ands
       [
-        BitVec.eqb value_ty tagged_signed_ty; BitVec.eqi (BitVec.andi value 1) 1;
+        Bool.not (can_be_smi cbv); is_equal value (cbv |> cast Type.any_tagged);
       ]
-
-  let is_tagged_pointer value =
-    let value_ty = ty_of value in
-    BitVec.eqb value_ty tagged_pointer_ty
-
-  let is_number value = Bool.ors [ is_float32 value; is_float64 value ]
-
-  let is_type_of value ty =
-    let value_ty = ty_of value in
-    BitVec.eqb value_ty ty
-
-  let can_be_smi bv = Bool.ands [ BitVec.sgei bv smimin; BitVec.slti bv smimax ]
-
-  (* conversion *)
-  let smi_to_int31 data = BitVec.extract 31 1 data
-
-  (* comparison *)
-  (* lty = rty && ldata = rdata *)
-  let is_equal lval rval = BitVec.eqb lval rval
-
-  (* ldata = rdata *)
-  let is_weak_equal lval rval =
-    let ldata = data_of lval in
-    let rdata = data_of rval in
-    BitVec.eqb ldata rdata
-
-  (* common: constants *)
-  let int32_constant vid c =
-    let value = BitVec.init ~len vid in
-    let cval = cast_to_int32 (BitVecVal.of_str c) in
-    let assertion = Bool.ands [ is_equal value cval ] in
-    (value, assertion)
-
-  let int64_constant vid c =
-    let value = BitVec.init ~len vid in
-    let cval = cast_to_int64 (BitVecVal.of_str c) in
-    let assertion = Bool.ands [ is_equal value cval ] in
-    (value, assertion)
-
-  let external_constant vid c =
-    let value = BitVec.init ~len vid in
-    let cval = cast_to_pointer (BitVecVal.of_str c) in
-    let assertion = Bool.ands [ is_equal value cval ] in
-    (value, assertion)
-
-  let heap_constant = external_constant
-
-  let number_constant vid c =
-    let value = BitVec.init ~len vid in
-    let cbv = BitVecVal.of_str c in
-
-    let c_is_smi =
-      Bool.ands [ can_be_smi cbv; is_equal value (cast_to_tagged_signed cbv) ]
-    in
-
-    let c_is_not_smi =
-      Bool.ands
-        [ Bool.not (can_be_smi cbv); is_equal value (cast_to_any_tagged cbv) ]
-    in
-
-    let assertion = Bool.ors [ c_is_smi; c_is_not_smi ] in
-    (value, assertion)
-
-  (* common: control *)
-  let projection vid pidx pval =
-    let value = BitVec.init ~len vid in
-
-    let res =
-      if pidx = 0 then BitVec.extract (len - 1) 0 pval
-      else if pidx = 1 then BitVec.extract ((2 * len) - 1) len pval
-      else raise (Invalid_argument "Projection index out of range")
-    in
-
-    let assertion = is_equal value res in
-    (value, assertion)
-
-  (* | --- True Condition --- | --- False Condition --- | *)
-  (* True condition: precond ^ cond *)
-  (* False condition: precond ^ not cond *)
-  let branch vid cond precond =
-    let value = BitVec.init ~len:138 vid in
-    let cond_data = data_of cond in
-    let precond_data = data_of precond in
-    let if_true = cast_to_bool (BitVec.andb precond_data cond_data) in
-    let if_false =
-      cast_to_bool (BitVec.andb precond_data (BitVec.xori cond_data 1))
-    in
-    let cond = BitVec.concat if_true if_false in
-
-    let assertion = BitVec.eqb value cond in
-    (value, assertion)
-
-  let end_ vid values =
-    let value = BitVec.init ~len vid in
-    let assertion = BitVec.eqb value (Bool.ands values) in
-    (value, assertion)
-
-  let if_false vid cond =
-    let value = BitVec.init ~len vid in
-    let assertion = BitVec.eqb value (cond |> second_of) in
-    (value, assertion)
-
-  let if_true vid cond =
-    let value = BitVec.init ~len vid in
-    let assertion = BitVec.eqb value (cond |> first_of) in
-    (value, assertion)
-
-  let merge vid conds =
-    let value = BitVec.init ~len vid in
-    let assertion =
-      BitVec.eqb value
-        (cast_to_bool
-           (List.fold_left
-              (fun asrt cond -> BitVec.orb asrt (data_of cond))
-              (BitVecVal.tr ()) conds))
-    in
-    (value, assertion)
-
-  (* common: procedure *)
-  let parameter vid param =
-    let value = BitVec.init ~len vid in
-    let assertion = BitVec.eqb value (cast_to_tagged_signed param) in
-    (value, assertion)
-
-  let return vid return_value =
-    let value = BitVec.init ~len vid in
-    let assertion = BitVec.eqb value return_value in
-    (value, assertion)
-
-  (* simplified: arithmetic *)
-  let speculative_safe_integer_add vid lval rval =
-    let value = BitVec.init ~len vid in
-    let ldata = data_of lval in
-    let rdata = data_of rval in
-
-    let res =
-      BitVec.andi (BitVec.addb ldata rdata) smimask |> cast_to_tagged_signed
-    in
-
-    let assertion =
-      Bool.ands
-        [ is_tagged_signed lval; is_tagged_signed rval; is_equal value res ]
-    in
-
-    (value, assertion)
-
-  (* simplified: memory *)
-  let allocate_raw vid size_value mem =
-    let value = BitVec.init ~len vid in
-    let size =
-      Z3.Expr.simplify size_value None
-      |> Z3.BitVector.numeral_to_string |> int_of_string
-    in
-    let bid, updated = Memory.allocate size !mem in
-    mem := updated;
-
-    let bid = BitVecVal.of_int bid |> cast_to_pointer in
-    let assertion = Bool.ands [ is_equal value bid ] in
-
-    (value, assertion)
-
-  let store_field bid_val pos mt value_val mem =
-    let bid =
-      data_of bid_val |> Z3.BitVector.numeral_to_string |> int_of_string
-    in
-    let ty = ty_of_machine_type mt in
-    let size = MachineType.size_of mt in
-    let value = data_of value_val in
-
-    (if pos < 0 || pos + size >= Memory.size bid mem then
-     let cause = pos |> string_of_int in
-     let reason =
-       Format.sprintf "Out of bounds: 0 <= pos ^ pos+size <= %s"
-         (Memory.size bid mem |> string_of_int)
-     in
-     err (InvalidIndex (cause, reason)));
-
-    let assertion =
-      Bool.ands
-        [
-          is_pointer bid_val;
-          is_type_of value_val ty;
-          Memory.write bid pos size value mem;
-        ]
-    in
-
-    (empty, assertion)
-
-  (* simplified: type-conversion *)
-  let change_int32_to_tagged vid pval mem =
-    let value = BitVec.init ~len vid in
-    let pdata = data_of pval in
-    let ovf = BitVec.ugei (BitVec.addb pdata pdata) smimax in
-
-    let if_ovf =
-      let bid, updated = Memory.allocate 12 !mem in
-      (* TODO: Define map constants *)
-      let heap_number_map = BitVecVal.of_int ~len:32 1234 in
-      mem := updated;
-      Bool.ands
-        [
-          Memory.write bid 0 4 heap_number_map !mem;
-          Memory.write bid 4 8 pdata !mem;
-        ]
-    in
-    let if_not_ovf = is_equal value (cast_to_tagged_signed pdata) in
-
-    let assertion = Bool.ite ovf if_ovf if_not_ovf in
-    (value, assertion)
-
-  let change_int32_to_float64 vid pval =
-    let value = BitVec.init ~len vid in
-    let pdata = data_of pval in
-
-    let assertion =
-      Bool.ands [ is_int32 pval; is_equal value (cast_to_tagged_signed pdata) ]
-    in
-    (value, assertion)
-
-  let checked_tagged_signed_to_int32 vid pval =
-    let value = BitVec.init ~len vid in
-    let pdata = data_of pval in
-
-    (* TODO: handling deoptimization *)
-    (* let deopt = Bool.not (is_tagged_signed pval) in *)
-    let assertion =
-      Bool.ands [ is_tagged_signed pval; is_equal value (cast_to_int32 pdata) ]
-    in
-
-    (value, assertion)
-
-  (* machine: arithmetic *)
-  (* value = (lval + rval) mod 2^32 *)
-  let int32add vid lval rval =
-    let value = BitVec.init ~len vid in
-    let ldata = data_of lval in
-    let rdata = data_of rval in
-    let res = BitVec.andi (BitVec.addb ldata rdata) smimask |> cast_to_int32 in
-
-    let assertion =
-      Bool.ands [ is_int32 lval; is_int32 rval; is_equal value res ]
-    in
-
-    (value, assertion)
-
-  let int32add_with_overflow vid lval rval =
-    let value = BitVec.init ~len:(len * 2) vid in
-
-    let ldata = data_of lval in
-    let rdata = data_of rval in
-    let res = BitVec.andi (BitVec.addb ldata rdata) smimask |> cast_to_int32 in
-    let ovf =
-      Bool.ite
-        (BitVec.ulti (BitVec.addb ldata rdata) smimax)
-        (BitVecVal.tr ()) (BitVecVal.fl ())
-      |> cast_to_bool
-    in
-
-    let assertion =
-      Bool.ands
-        [
-          is_int32 lval;
-          is_int32 rval;
-          is_equal (second_of value) ovf;
-          is_equal (first_of value) res;
-        ]
-    in
-
-    (value, assertion)
-
-  (* var = (lval + rval) mod 2^64 *)
-  let int64add vid lval rval =
-    let value = BitVec.init ~len vid in
-
-    let ldata = data_of lval in
-    let rdata = data_of rval in
-    let res = BitVec.addb ldata rdata |> cast_to_int64 in
-
-    let assertion =
-      Bool.ands [ is_int64 lval; is_int64 rval; is_equal value res ]
-    in
-
-    (value, assertion)
-
-  let int64sub vid lval rval =
-    let value = BitVec.init ~len vid in
-
-    let ldata = data_of lval in
-    let rdata = data_of rval in
-    let res = BitVec.subb ldata rdata |> cast_to_int64 in
-
-    let assertion =
-      Bool.ands [ is_int64 lval; is_int64 rval; is_equal value res ]
-    in
-
-    (value, assertion)
-
-  let word32sar vid hint lval rval =
-    let value = BitVec.init ~len vid in
-
-    let is_shift_out_zero =
-      if String.equal hint "ShfitOutZero" then Bool.tr else Bool.fl
-    in
-
-    let ldata = data_of lval in
-    let rdata = data_of rval in
-    let lval_ty = ty_of lval in
-
-    let res =
-      BitVec.andi (BitVec.ashrb ldata rdata) smimask |> cast_to_ty lval_ty
-    in
-
-    let assertion =
-      Bool.ands
-        [
-          is_word32 lval;
-          is_word32 rval;
-          is_equal value res;
-          Bool.ors
-            [
-              is_shift_out_zero;
-              (* TODO: undef *)
-              is_weak_equal res (BitVecVal.zero len ());
-            ];
-        ]
-    in
-    (value, assertion)
-
-  (* machine: comparison *)
-  let word32and vid lval rval =
-    let value = BitVec.init ~len vid in
-    let ldata = data_of lval in
-    let rdata = data_of rval in
-    let ty = ty_of lval in
-    let res = BitVec.andb ldata rdata |> cast_to_ty ty in
-    let assertion =
-      Bool.ands [ is_word32 lval; is_word32 rval; is_equal value res ]
-    in
-    (value, assertion)
-
-  let word32equal vid lval rval =
-    let value = BitVec.init ~len vid in
-    let ldata = data_of lval in
-    let rdata = data_of rval in
-    let res =
-      Bool.ite (BitVec.eqb ldata rdata) (BitVecVal.tr ()) (BitVecVal.fl ())
-      |> cast_to_bool
-    in
-
-    let assertion =
-      Bool.ands [ is_word32 lval; is_word32 rval; is_equal value res ]
-    in
-
-    (value, assertion)
-
-  let uint64less_than vid lval rval =
-    let value = BitVec.init ~len vid in
-
-    let ldata = data_of lval in
-    let rdata = data_of rval in
-    let res =
-      Bool.ite (BitVec.ultb ldata rdata) (BitVecVal.tr ()) (BitVecVal.fl ())
-      |> cast_to_bool
-    in
-
-    let assertion =
-      Bool.ands [ is_uint64 lval; is_uint64 rval; is_equal value res ]
-    in
-
-    (value, assertion)
-
-  (* machine: memory *)
-  let store bid_val pos_val repr value_val mem =
-    let bid =
-      data_of bid_val |> Z3.BitVector.numeral_to_string |> int_of_string
-    in
-
-    (* at this point, pos must be able to be evaluated into numeral*)
-    let pos =
-      data_of pos_val |> simplify None |> Z3.BitVector.numeral_to_string
-      |> int_of_string
-    in
-    let size = repr |> MachineType.Repr.size_of in
-    let value = data_of value_val in
-
-    let assertion =
-      Bool.ands [ is_pointer bid_val; Memory.write bid pos size value mem ]
-    in
-
-    (empty, assertion)
-
-  let load vid bid_val pos_val repr mem =
-    let value = BitVec.init ~len vid in
-    let bid =
-      data_of bid_val |> Z3.BitVector.numeral_to_string |> int_of_string
-    in
-
-    (* at this point, pos must be able to be evaluated into numeral*)
-    let pos =
-      data_of pos_val |> simplify None |> Z3.BitVector.numeral_to_string
-      |> int_of_string
-    in
-    let size = repr |> MachineType.Repr.size_of in
-
-    let assertion =
-      Bool.ands
-        [ is_pointer bid_val; BitVec.eqb value (Memory.read bid pos size mem) ]
-    in
-
-    (value, assertion)
-
-  (* machine: type-conversion *)
-  let bitcast_tagged_to_word vid pval =
-    let value = BitVec.init ~len vid in
-    let pdata = data_of pval in
-    let assertion =
-      Bool.ands [ is_any_tagged pval; is_equal value (cast_to_uint64 pdata) ]
-    in
-
-    (value, assertion)
-
-  let bitcast_word32_to_word64 vid pval =
-    let value = BitVec.init ~len vid in
-    let pdata = data_of pval in
-    let assertion =
-      Bool.ands [ is_word32 pval; is_equal value (cast_to_uint64 pdata) ]
-    in
-
-    (value, assertion)
-
-  let bitcast_word_to_tagged vid pval =
-    let value = BitVec.init ~len vid in
-    let pdata = data_of pval in
-    let assertion =
-      Bool.ands [ is_word pval; is_equal value (cast_to_any_tagged pdata) ]
-    in
-    (value, assertion)
-
-  let truncate_int64_to_int32 vid pval =
-    let value = BitVec.init ~len vid in
-    let pdata = data_of pval in
-    let assertion =
-      Bool.ands [ is_int64 pval; is_equal value (cast_to_int32 pdata) ]
-    in
-    (value, assertion)
-end
-
-module RegisterFile = struct
-  module R = Map.Make (String)
-
-  let add = R.add
-
-  let find vid rf =
-    try R.find vid rf
-    with Not_found ->
-      let cause = vid in
-      let reason = Format.sprintf "Cannot find %s from RegisterFile" cause in
-      err (IdNotFound (cause, reason))
-
-  let empty = R.empty
-  let iter = R.iter
-end
-
-module State = struct
-  type t = {
-    pc : IR.Node.id;
-    register_file : Value.t RegisterFile.R.t;
-    condition : Bool.t;
-    memory : BitVec.t Memory.M.t;
-    params : BitVec.t list;
-    retvar : BitVec.t Option.t;
-    assertion : BitVec.t;
-  }
-
-  let init nparams : t =
-    {
-      pc = 0;
-      register_file = RegisterFile.empty;
-      condition = BitVecVal.tr ();
-      params = Params.init nparams;
-      retvar = None;
-      assertion = Bool.tr;
-      memory = Memory.empty;
-    }
-
-  let update pc register_file condition assertion t =
-    { t with pc; register_file; condition; assertion }
-
-  (* getter *)
-  let pc t = t.pc
-  let register_file t = t.register_file
-  let condition t = t.condition
-  let memory t = t.memory
-  let params t = t.params
-  let retvar t = t.retvar
-  let assertion t = t.assertion
-  let is_final t = t.pc = -1
-end
+  in
+
+  let assertion = Bool.ors [ c_is_smi; c_is_not_smi ] in
+  (value, assertion)
+
+(* common: control *)
+let projection vid pidx pval =
+  let value = Value.init vid in
+
+  let res =
+    if pidx = 0 then BitVec.extract (len - 1) 0 pval
+    else if pidx = 1 then BitVec.extract ((2 * len) - 1) len pval
+    else raise (Invalid_argument "Projection index out of range")
+  in
+
+  let assertion = is_equal value res in
+  (value, assertion)
+
+(* | --- True Condition --- | --- False Condition --- | *)
+(* True condition: precond ^ cond *)
+(* False condition: precond ^ not cond *)
+let branch vid cond precond =
+  let value = Value.Composed.init vid in
+  let cond_data = data_of cond in
+  let precond_data = data_of precond in
+  let if_true = entype Type.bool (BitVec.andb precond_data cond_data) in
+  let if_false =
+    entype Type.bool (BitVec.andb precond_data (BitVec.xori cond_data 1))
+  in
+  let cond = BitVec.concat if_true if_false in
+
+  let assertion = BitVec.eqb value cond in
+  (value, assertion)
+
+let end_ vid values =
+  let value = Value.init vid in
+  let assertion = BitVec.eqb value (Bool.ands values) in
+  (value, assertion)
+
+let if_false vid cond =
+  let value = Value.init vid in
+  let assertion = BitVec.eqb value (cond |> Composed.second_of) in
+  (value, assertion)
+
+let if_true vid cond =
+  let value = Value.init vid in
+  let assertion = BitVec.eqb value (cond |> Composed.first_of) in
+  (value, assertion)
+
+let merge vid conds =
+  let value = Value.init vid in
+  let assertion =
+    BitVec.eqb value
+      (entype Type.bool
+         (List.fold_left
+            (fun asrt cond -> BitVec.orb asrt (data_of cond))
+            (BitVecVal.tr ()) conds))
+  in
+  (value, assertion)
+
+(* common: procedure *)
+let parameter vid param =
+  let value = Value.init vid in
+  let assertion = BitVec.eqb value (param |> cast Type.tagged_signed) in
+  (value, assertion)
+
+let return vid return_value =
+  let value = Value.init vid in
+  let assertion = BitVec.eqb value return_value in
+  (value, assertion)
+
+(* simplified: arithmetic *)
+let speculative_safe_integer_add vid lval rval =
+  let value = Value.init vid in
+
+  let res =
+    Value.mask (Value.add lval rval) (Value.from_int Type.smi_mask)
+    |> cast Type.tagged_signed
+  in
+
+  let assertion =
+    Bool.ands
+      [
+        Value.has_type Type.tagged_signed lval;
+        Value.has_type Type.tagged_signed rval;
+        is_equal value res;
+      ]
+  in
+
+  (value, assertion)
+
+(* simplified: memory *)
+let allocate_raw vid size =
+  let ptr, assertion = Memory.allocate vid size in
+  (ptr, assertion)
+
+let store_field ptr pos mt value mem =
+  let repr = MachineType.repr mt in
+
+  (* ptr must be pointer type *)
+  let ty_check = Value.has_type Type.pointer ptr in
+
+  (* check index out-of-bounds *)
+  let can_access = Pointer.can_access_as pos repr ptr in
+  let condition = Bool.ands [ ty_check; can_access ] in
+
+  mem := Memory.store_as (Pointer.move ptr pos) repr condition value !mem;
+  (Value.empty, Bool.tr)
+
+(* simplified: type-conversion *)
+let change_int32_to_tagged vid pval mem =
+  let value = Value.init vid in
+  let data = data_of pval in
+
+  let tagged = BitVec.addb data data in
+
+  (* check if pval+pval >= smi max *)
+  let ovf_check = BitVec.ugei tagged Type.smi_max in
+
+  let size = Value.from_int 12 in
+  let ptr, assertion = Memory.allocate vid size in
+  (* TODO: Define map constants *)
+  let heap_number_map = BitVecVal.of_int ~len:32 1234 in
+  let would_be_stored = BitVec.concat heap_number_map data in
+
+  mem := Memory.store ptr 12 ovf_check would_be_stored !mem;
+
+  let if_ovf = Bool.ands [ Value.is_equal value ptr; assertion ] in
+  let if_not_ovf =
+    Value.is_equal value (Value.entype Type.tagged_signed tagged)
+  in
+
+  let assertion = Bool.ite ovf_check if_ovf if_not_ovf in
+  (value, assertion)
+
+let change_int32_to_float64 vid pval =
+  let value = Value.init vid in
+  let assertion =
+    Bool.ands
+      [
+        Value.has_type Type.int32 pval;
+        is_equal value (pval |> cast Type.tagged_signed);
+      ]
+  in
+  (value, assertion)
+
+let checked_tagged_signed_to_int32 vid pval =
+  let value = Value.init vid in
+
+  (* TODO: handling deoptimization *)
+  (* let deopt = Bool.not (is_tagged_signed pval) in *)
+  let assertion =
+    Bool.ands
+      [
+        Value.has_type Type.tagged_signed pval;
+        is_equal value (pval |> cast Type.int32);
+      ]
+  in
+
+  (value, assertion)
+
+(* machine: arithmetic *)
+(* value = (lval + rval) mod 2^32 *)
+let int32add vid lval rval =
+  let value = Value.init vid in
+  let res =
+    Value.mask (Value.add lval rval) (Type.smi_mask |> Value.from_int)
+    |> cast Type.int32
+  in
+
+  let assertion =
+    Bool.ands
+      [
+        Value.has_type Type.int32 lval;
+        Value.has_type Type.int32 rval;
+        is_equal value res;
+      ]
+  in
+
+  (value, assertion)
+
+let int32add_with_overflow vid lval rval =
+  let value = Composed.init vid in
+
+  let ldata = data_of lval in
+  let rdata = data_of rval in
+  let res =
+    BitVec.andi (BitVec.addb ldata rdata) Type.smi_mask |> entype Type.int32
+  in
+  let ovf =
+    Bool.ite
+      (BitVec.ulti (BitVec.addb ldata rdata) Type.smi_max)
+      (BitVecVal.tr ()) (BitVecVal.fl ())
+    |> entype Type.bool
+  in
+
+  let assertion =
+    Bool.ands
+      [
+        Value.has_type Type.int32 lval;
+        Value.has_type Type.int32 rval;
+        is_equal (Composed.second_of value) ovf;
+        is_equal (Composed.first_of value) res;
+      ]
+  in
+
+  (value, assertion)
+
+(* var = (lval + rval) mod 2^64 *)
+let int64add vid lval rval =
+  let value = Value.init vid in
+
+  let ldata = data_of lval in
+  let rdata = data_of rval in
+  let res = BitVec.addb ldata rdata |> entype Type.int64 in
+
+  let assertion =
+    Bool.ands
+      [
+        Value.has_type Type.int64 lval;
+        Value.has_type Type.int64 rval;
+        is_equal value res;
+      ]
+  in
+
+  (value, assertion)
+
+let int64sub vid lval rval =
+  let value = Value.init vid in
+
+  let ldata = data_of lval in
+  let rdata = data_of rval in
+  let res = BitVec.subb ldata rdata |> entype Type.int64 in
+
+  let assertion =
+    Bool.ands
+      [
+        Value.has_type Type.int64 lval;
+        Value.has_type Type.int64 rval;
+        is_equal value res;
+      ]
+  in
+
+  (value, assertion)
+
+let word32sar vid hint lval rval =
+  let value = Value.init vid in
+
+  let is_shift_out_zero =
+    if String.equal hint "ShfitOutZero" then Bool.tr else Bool.fl
+  in
+
+  let ldata = data_of lval in
+  let rdata = data_of rval in
+  let lval_ty = ty_of lval in
+
+  let res =
+    BitVec.andi (BitVec.ashrb ldata rdata) Type.smi_mask |> entype lval_ty
+  in
+
+  let assertion =
+    Bool.ands
+      [
+        Value.has_repr Repr.Word32 lval;
+        Value.has_repr Repr.Word32 rval;
+        is_equal value res;
+        Bool.ors
+          [ is_shift_out_zero; (* TODO: undef *) is_weak_equal res Value.empty ];
+      ]
+  in
+  (value, assertion)
+
+(* machine: comparison *)
+let word32and vid lval rval =
+  let value = Value.init vid in
+  let ldata = data_of lval in
+  let rdata = data_of rval in
+  let ty = ty_of lval in
+  let res = BitVec.andb ldata rdata |> entype ty in
+  let assertion =
+    Bool.ands
+      [
+        Value.has_repr Repr.Word32 lval;
+        Value.has_repr Repr.Word32 rval;
+        is_equal value res;
+      ]
+  in
+  (value, assertion)
+
+let word32equal vid lval rval =
+  let value = Value.init vid in
+  let ldata = data_of lval in
+  let rdata = data_of rval in
+  let res =
+    Bool.ite (BitVec.eqb ldata rdata) (BitVecVal.tr ()) (BitVecVal.fl ())
+    |> entype Type.bool
+  in
+
+  let assertion =
+    Bool.ands
+      [
+        Value.has_repr Repr.Word32 lval;
+        Value.has_repr Repr.Word32 rval;
+        is_equal value res;
+      ]
+  in
+
+  (value, assertion)
+
+let uint64less_than vid lval rval =
+  let value = Value.init vid in
+
+  let ldata = data_of lval in
+  let rdata = data_of rval in
+  let res =
+    Bool.ite (BitVec.ultb ldata rdata) (BitVecVal.tr ()) (BitVecVal.fl ())
+    |> cast Type.bool
+  in
+
+  let assertion =
+    Bool.ands
+      [
+        Value.has_type Type.uint64 lval;
+        Value.has_type Type.uint64 rval;
+        is_equal value res;
+      ]
+  in
+
+  (value, assertion)
+
+(* machine: memory *)
+let store ptr pos repr value mem =
+  (* ptr must be pointer type *)
+  let ty_check = Value.has_type Type.pointer ptr in
+
+  (* check index out-of-bounds *)
+  let struct_size = Pointer.size_of ptr in
+  let store_size = repr |> Repr.size_of in
+  let oob_check =
+    Bool.ands
+      [
+        BitVec.sgei pos 0; BitVec.uleb (BitVec.addi pos store_size) struct_size;
+      ]
+  in
+
+  let condition = Bool.ands [ ty_check; oob_check ] in
+  mem := Memory.store (Pointer.move ptr pos) store_size condition value !mem;
+
+  (Value.empty, Bool.tr)
+
+let load vid ptr pos repr mem =
+  (* ptr must be pointer type *)
+  let ty_check = Value.has_type Type.pointer ptr in
+
+  (* check index out-of-bounds *)
+  let can_read = Pointer.can_access_as pos repr ptr in
+
+  let value = Value.init vid in
+  let loaded = Memory.load_as (Pointer.move ptr pos) repr mem in
+
+  let assertion =
+    Bool.ands [ ty_check; can_read; Value.is_weak_equal value loaded ]
+  in
+  (value, assertion)
+
+(* machine: type-conversion *)
+let bitcast_tagged_to_word vid pval =
+  let value = Value.init vid in
+  let assertion =
+    Bool.ands
+      [
+        Value.has_type Type.any_tagged pval;
+        is_equal value (pval |> cast Type.uint64);
+      ]
+  in
+
+  (value, assertion)
+
+let bitcast_word32_to_word64 vid pval =
+  let value = Value.init vid in
+  let assertion =
+    Bool.ands
+      [
+        Value.has_repr Repr.Word32 pval;
+        is_equal value (pval |> cast Type.uint64);
+      ]
+  in
+
+  (value, assertion)
+
+let bitcast_word_to_tagged vid pval =
+  let value = Value.init vid in
+  let assertion =
+    Bool.ands
+      [
+        Value.has_repr Word32 pval; is_equal value (pval |> cast Type.any_tagged);
+      ]
+  in
+  (value, assertion)
+
+let truncate_int64_to_int32 vid pval =
+  let value = Value.init vid in
+  let assertion =
+    Bool.ands
+      [
+        Value.has_type Type.int64 pval; is_equal value (pval |> cast Type.int32);
+      ]
+  in
+  (value, assertion)
 
 (* apply semantics to create SMT query *)
-let apply program state prefix =
+let apply program state =
   let pc = State.pc state in
   let rf = State.register_file state in
   let mem = ref (State.memory state) in
   let params = State.params state in
-  let vid = prefix ^ string_of_int pc in
+  let vid = !RegisterFile.prefix ^ string_of_int pc in
 
   let opcode, operands = IR.instr_of pc program in
   let next_pc = match opcode with Return -> -1 | _ -> pc + 1 in
@@ -685,196 +467,188 @@ let apply program state prefix =
     | HeapConstant | ExternalConstant ->
         let addr_re = Re.Pcre.regexp "(0x[0-9a-f]*)" in
         let operand = Operands.const_of_nth operands 0 in
-        Re.Group.get (Re.exec addr_re operand) 1 |> Value.heap_constant vid
-    | Int32Constant ->
-        Operands.const_of_nth operands 0 |> Value.int32_constant vid
-    | Int64Constant ->
-        Operands.const_of_nth operands 0 |> Value.int64_constant vid
-    | NumberConstant ->
-        Operands.const_of_nth operands 0 |> Value.number_constant vid
+        Re.Group.get (Re.exec addr_re operand) 1 |> heap_constant vid
+    | Int32Constant -> Operands.const_of_nth operands 0 |> int32_constant vid
+    | Int64Constant -> Operands.const_of_nth operands 0 |> int64_constant vid
+    | NumberConstant -> Operands.const_of_nth operands 0 |> number_constant vid
     (* common: control *)
     | Projection ->
         let pidx = Operands.const_of_nth operands 0 |> int_of_string in
-        let pid = prefix ^ Operands.id_of_nth operands 1 in
+        let pid = Operands.id_of_nth operands 1 in
         let pval = RegisterFile.find pid rf in
-        Value.projection vid pidx pval
+        projection vid pidx pval
     | Branch ->
-        let cond_id = prefix ^ Operands.id_of_nth operands 0 in
-        let prev_id = prefix ^ Operands.id_of_nth operands 1 in
+        let cond_id = Operands.id_of_nth operands 0 in
+        let prev_id = Operands.id_of_nth operands 1 in
         let cond_value = RegisterFile.find cond_id rf in
         let precond_value = RegisterFile.find prev_id rf in
-        Value.branch vid cond_value precond_value
+        branch vid cond_value precond_value
     | IfFalse ->
-        let nid = prefix ^ Operands.id_of_nth operands 0 in
+        let nid = Operands.id_of_nth operands 0 in
         let cond_value = RegisterFile.find nid rf in
-        Value.if_false vid cond_value
+        if_false vid cond_value
     | IfTrue ->
-        let nid = prefix ^ Operands.id_of_nth operands 0 in
+        let nid = Operands.id_of_nth operands 0 in
         let cond_value = RegisterFile.find nid rf in
-        Value.if_true vid cond_value
-    | Start -> (BitVecVal.tr () |> Value.cast_to_bool, Bool.tr)
+        if_true vid cond_value
+    | Start -> (Value.empty, Bool.tr)
     | Merge ->
         let nids =
-          List.map
-            (fun operand -> prefix ^ (operand |> Operands.Operand.id))
-            operands
+          List.map (fun operand -> operand |> Operands.Operand.id) operands
         in
         let conds = List.map (fun nid -> RegisterFile.find nid rf) nids in
-        Value.merge vid conds
+        merge vid conds
     (* common: procedure *)
     | Parameter ->
         let pidx = Operands.const_of_nth operands 0 |> int_of_string in
         if 0 < pidx && pidx <= List.length params then
           let param = List.nth params (pidx - 1) in
-          Value.parameter vid param
+          parameter vid param
         else (Value.empty, Bool.tr)
-    | Call -> (BitVecVal.tr () |> Value.cast_to_bool, Bool.tr)
+    | Call -> (Value.empty, Bool.tr)
     | Return ->
-        let nid = prefix ^ Operands.id_of_nth operands 0 in
+        let nid = Operands.id_of_nth operands 0 in
         let return_value = RegisterFile.find nid rf in
-        Value.return vid return_value
+        return vid return_value
     | End -> (Value.empty, Bool.tr)
     (* simplified: arithmetic *)
     | SpeculativeSafeIntegerAdd ->
-        let lpid = prefix ^ Operands.id_of_nth operands 0 in
-        let rpid = prefix ^ Operands.id_of_nth operands 1 in
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        Value.speculative_safe_integer_add vid lval rval
+        speculative_safe_integer_add vid lval rval
     (* simplified: memory *)
     | AllocateRaw ->
-        let size_id = prefix ^ Operands.id_of_nth operands 0 in
+        let size_id = Operands.id_of_nth operands 0 in
         let size_value = RegisterFile.find size_id rf in
-        Value.allocate_raw vid size_value mem
+        allocate_raw vid size_value
     | StoreField ->
-        let nbid = prefix ^ Operands.id_of_nth operands 0 in
-        let bid_val = RegisterFile.find nbid rf in
-        let pos = Operands.const_of_nth operands 1 |> int_of_string in
+        let ptr_id = Operands.id_of_nth operands 0 in
+        let ptr = RegisterFile.find ptr_id rf in
+        let pos =
+          Operands.const_of_nth operands 1 |> BitVecVal.of_str ~len:Value.len
+        in
         let machine_type =
           Operands.const_of_nth operands 2 |> MachineType.of_rs_string
         in
-        let nvalue = prefix ^ Operands.id_of_nth operands 3 in
-        let value_val = RegisterFile.find nvalue rf in
-        Value.store_field bid_val pos machine_type value_val !mem
+        let value_id = Operands.id_of_nth operands 3 in
+        let value = RegisterFile.find value_id rf in
+        store_field ptr pos machine_type value mem
     (* simplified: type-conversion *)
     | ChangeInt32ToTagged ->
-        let pid = prefix ^ Operands.id_of_nth operands 0 in
+        let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
-        Value.change_int32_to_tagged vid pval mem
+        change_int32_to_tagged vid pval mem
     | ChangeInt32ToFloat64 ->
-        let pid = prefix ^ Operands.id_of_nth operands 0 in
+        let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
-        Value.change_int32_to_float64 vid pval
+        change_int32_to_float64 vid pval
     | CheckedTaggedSignedToInt32 ->
-        let pid = prefix ^ Operands.id_of_nth operands 0 in
+        let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
-        Value.checked_tagged_signed_to_int32 vid pval
+        checked_tagged_signed_to_int32 vid pval
     (* machine: arithmetic *)
     | Int32Add ->
-        let lpid = prefix ^ Operands.id_of_nth operands 0 in
-        let rpid = prefix ^ Operands.id_of_nth operands 1 in
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        Value.int32add vid lval rval
+        int32add vid lval rval
     | Int32AddWithOverflow ->
-        let lpid = prefix ^ Operands.id_of_nth operands 0 in
-        let rpid = prefix ^ Operands.id_of_nth operands 1 in
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        Value.int32add_with_overflow vid lval rval
+        int32add_with_overflow vid lval rval
     | Int64Add ->
-        let lpid = prefix ^ Operands.id_of_nth operands 0 in
-        let rpid = prefix ^ Operands.id_of_nth operands 1 in
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        Value.int64add vid lval rval
+        int64add vid lval rval
     | Int64Sub ->
-        let lpid = prefix ^ Operands.id_of_nth operands 0 in
-        let rpid = prefix ^ Operands.id_of_nth operands 1 in
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        Value.int64sub vid lval rval
+        int64sub vid lval rval
     | Word32Sar ->
         let hint = Operands.const_of_nth operands 0 in
-        let lpid = prefix ^ Operands.id_of_nth operands 1 in
-        let rpid = prefix ^ Operands.id_of_nth operands 2 in
+        let lpid = Operands.id_of_nth operands 1 in
+        let rpid = Operands.id_of_nth operands 2 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        Value.word32sar vid hint lval rval
+        word32sar vid hint lval rval
     (* machine: comparison *)
-    | StackPointerGreaterThan -> (BitVecVal.tr () |> Value.cast_to_bool, Bool.tr)
+    | StackPointerGreaterThan -> (Value.empty, Bool.tr)
     | Word32And ->
-        let lpid = prefix ^ Operands.id_of_nth operands 0 in
-        let rpid = prefix ^ Operands.id_of_nth operands 1 in
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        Value.word32and vid lval rval
+        word32and vid lval rval
     | Word32Equal ->
-        let lpid = prefix ^ Operands.id_of_nth operands 0 in
-        let rpid = prefix ^ Operands.id_of_nth operands 1 in
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        Value.word32equal vid lval rval
+        word32equal vid lval rval
     | Uint64LessThan ->
-        let lpid = prefix ^ Operands.id_of_nth operands 0 in
-        let rpid = prefix ^ Operands.id_of_nth operands 1 in
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        Value.uint64less_than vid lval rval
+        uint64less_than vid lval rval
     (* machine: memory *)
     | Store ->
-        let nbid = prefix ^ Operands.id_of_nth operands 0 in
-        let bid_val = RegisterFile.find nbid rf in
-        let npos = prefix ^ Operands.id_of_nth operands 1 in
-        let pos_val = RegisterFile.find npos rf in
-        let repr =
-          Operands.const_of_nth operands 2 |> MachineType.Repr.of_string
-        in
-        let nvalue = prefix ^ Operands.id_of_nth operands 3 in
-        let value_val = RegisterFile.find nvalue rf in
-        Value.store bid_val pos_val repr value_val !mem
-    | Load -> (Value.empty, Bool.tr)
-    (* let nbid = prefix ^ Operands.id_of_nth operands 1 in
-       let bid_val = RegisterFile.find nbid rf in
-       let npos = prefix ^ Operands.id_of_nth operands 2 in
-       let pos_val = RegisterFile.find npos rf in
-       let repr =
-         Operands.const_of_nth operands 0 |> MachineType.Repr.of_string
-       in
-       Value.load vid bid_val pos_val repr !mem *)
+        let ptr_id = Operands.id_of_nth operands 0 in
+        let ptr = RegisterFile.find ptr_id rf in
+
+        let pos_id = Operands.id_of_nth operands 1 in
+        let pos = RegisterFile.find pos_id rf in
+
+        let repr = Operands.const_of_nth operands 2 |> Repr.of_string in
+
+        let value_id = Operands.id_of_nth operands 3 in
+        let value = RegisterFile.find value_id rf in
+        store ptr pos repr value mem
+    | Load ->
+        let ptr_id = Operands.id_of_nth operands 1 in
+        let ptr = RegisterFile.find ptr_id rf in
+        let pos_id = Operands.id_of_nth operands 2 in
+        let pos = RegisterFile.find pos_id rf in
+        let repr = Operands.const_of_nth operands 0 |> Repr.of_string in
+        load vid ptr pos repr !mem
     (* machine: bitcast *)
     | BitcastTaggedToWord ->
-        let pid = prefix ^ Operands.id_of_nth operands 0 in
+        let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
-        Value.bitcast_tagged_to_word vid pval
+        bitcast_tagged_to_word vid pval
     | BitcastWord32ToWord64 ->
-        let pid = prefix ^ Operands.id_of_nth operands 0 in
+        let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
-        Value.bitcast_word32_to_word64 vid pval
+        bitcast_word32_to_word64 vid pval
     | BitcastWordToTagged ->
-        let pid = prefix ^ Operands.id_of_nth operands 0 in
+        let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
-        Value.bitcast_word_to_tagged vid pval
+        bitcast_word_to_tagged vid pval
     | TruncateInt64ToInt32 ->
-        let pid = prefix ^ Operands.id_of_nth operands 0 in
+        let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
-        Value.truncate_int64_to_int32 vid pval
+        truncate_int64_to_int32 vid pval
     | Empty -> (Value.empty, Bool.tr)
-    | _ -> (BitVecVal.tr () |> Value.cast_to_bool, Bool.tr)
+    | _ -> (Value.empty, Bool.tr)
   in
 
   let exec_cond =
     match opcode with
-    | IfTrue | IfFalse | Merge -> value
+    | IfTrue | IfFalse | Merge -> BitVec.is_true value
     | _ -> State.condition state
   in
   let updated_rf = RegisterFile.add vid value rf in
   let updated_asrt =
-    Bool.ands
-      [
-        State.assertion state;
-        Z3.Boolean.mk_iff ctx (BitVec.is_true exec_cond) assertion;
-      ]
+    Bool.ands [ State.assertion state; Bool.ite exec_cond assertion Bool.fl ]
   in
   let next_state =
     State.update next_pc updated_rf exec_cond updated_asrt state

@@ -9,9 +9,14 @@
   IR
   tv
   utils
+  pointer
   memory
   machineType
+  registerFile
+  state
   semantics
   err
+  type
+  value
   z3utils)
  (libraries core cmdliner ocamlgraph str re z3))
