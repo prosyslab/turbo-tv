@@ -53,8 +53,29 @@ let add lval rval =
   let lty = ty_of lval in
   BitVec.addb (data_of lval) (data_of rval) |> entype lty
 
+let addi value i =
+  let ty = ty_of value in
+  BitVec.addi (data_of value) i |> entype ty
+
+let and_ lval rval =
+  let lty = ty_of lval in
+  BitVec.andb (data_of lval) (data_of rval) |> entype lty
+
+let or_ lval rval =
+  let lty = ty_of lval in
+  BitVec.orb (data_of lval) (data_of rval) |> entype lty
+
 let slt lval rval = BitVec.sltb (data_of lval) (data_of rval)
 let uge lval rval = BitVec.ugeb (data_of lval) (data_of rval)
+let not_ value = BitVec.notb value
+
+let shl lval rval =
+  let lty = ty_of lval in
+  BitVec.shlb (data_of lval) (data_of rval) |> entype lty
+
+let shli value i =
+  let ty = ty_of value in
+  BitVec.shli (data_of value) i |> entype ty
 
 let lshr lval rval =
   let lty = ty_of lval in
@@ -68,14 +89,16 @@ let mask lval rval =
   let lty = ty_of lval in
   BitVec.andb (data_of lval) (data_of rval) |> entype lty
 
-(* constant values *)
-let empty = BitVecVal.zero ~len () |> cast Type.empty
-let tr = BitVecVal.tr ~len () |> cast Type.bool
-let fl = BitVecVal.fl ~len () |> cast Type.bool
 let undefined = BitVec.lshri (BitVecVal.of_int ~len 1) (ty_len + data_len)
-let is_undef t = BitVec.andb t undefined
-let set_undef value = BitVec.orb undefined value
-let clear_undef value = BitVec.andb (BitVec.notb undefined) value
+let is_undefined value = BitVec.eqb undefined (BitVec.andb undefined value)
+let is_defined value = Bool.not (is_undefined value)
+let set_undefined value = BitVec.orb undefined value
+let set_defined value = BitVec.andb (BitVec.notb undefined) value
+
+(* constant values *)
+let empty = from_int 0 |> cast Type.empty |> set_defined
+let tr = addi empty 1 |> cast Type.bool |> set_defined
+let fl = empty |> cast Type.bool |> set_defined
 
 module Composed = struct
   type t = BitVec.t

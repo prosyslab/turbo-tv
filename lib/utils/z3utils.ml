@@ -88,8 +88,8 @@ module BitVecVal = struct
     BV.mk_numeral ctx dec_str len
 
   (* boolean const *)
-  let tr ?(len = !bvlen) () = BV.mk_numeral ctx "1" len
-  let fl ?(len = !bvlen) () = BV.mk_numeral ctx "0" len
+  let tr ?(len = !bvlen) () = BV.mk_repeat ctx len (BV.mk_numeral ctx "1" 1)
+  let fl ?(len = !bvlen) () = BV.mk_repeat ctx len (BV.mk_numeral ctx "0" 1)
 end
 
 module BitVec = struct
