@@ -1,6 +1,6 @@
 all:
-	dune build src/main.exe
-	ln -sf _build/default/src/main.exe turbo-tv
+	dune build
+	ln -sf _build/default/bin/turbo-tv.exe turbo-tv
 clean:
 	dune clean
 	rm -rf ./out

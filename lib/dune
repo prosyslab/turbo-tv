@@ -1,22 +1,30 @@
-(executable
- (name main)
+(include_subdirs unqualified)
+
+(library
+ (name lib)
  (modules
-  main
+  ;parser
   reduction
   opcode
   operands
   instr
+  ;ir
   IR
-  tv
-  utils
   pointer
-  memory
-  machineType
   registerFile
   state
-  semantics
-  err
+  memory
   type
   value
+  ;tv
+  tv
+  ;v8
+  machineType
+  repr
+  ;semantics
+  semantics
+  ;utils
+  utils
+  err
   z3utils)
  (libraries core cmdliner ocamlgraph str re z3))

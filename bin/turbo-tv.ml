@@ -1,4 +1,5 @@
 open Cmdliner
+open Lib
 
 type conf = {
   target : string;

@@ -191,12 +191,10 @@ let checked_tagged_signed_to_int32 vid pval =
 
   (* TODO: handling deoptimization *)
   (* let deopt = Bool.not (is_tagged_signed pval) in *)
+  let result = BitVec.ashri (data_of pval) 1 |> Value.entype Type.int32 in
   let assertion =
     Bool.ands
-      [
-        Value.has_type Type.tagged_signed pval;
-        is_equal value (pval |> cast Type.int32);
-      ]
+      [ Value.has_type Type.tagged_signed pval; Value.is_equal value result ]
   in
 
   (value, assertion)
@@ -646,6 +644,13 @@ let apply program state =
     | IfTrue | IfFalse | Merge -> BitVec.is_true value
     | _ -> State.condition state
   in
+
+  Format.printf "\nInstruction %s\n" (IR.instr_of pc program |> Instr.to_string);
+  Format.printf "Execution Condition: %s\n" (exec_cond |> str_of_exp);
+  Format.printf "Assertion: %s\n" (assertion |> str_of_exp);
+  Format.printf "Combined assertion: %s\n"
+    (Bool.ite exec_cond assertion Bool.fl |> str_of_exp);
+
   let updated_rf = RegisterFile.add vid value rf in
   let updated_asrt =
     Bool.ands [ State.assertion state; Bool.ite exec_cond assertion Bool.fl ]

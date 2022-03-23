@@ -119,6 +119,12 @@ module BitVec = struct
     let rbv = BitVecVal.of_int ~len:(len bv) off in
     BV.mk_shl ctx bv rbv
 
+  let lshrb bv off = BV.mk_lshr ctx bv off
+
+  let lshri bv off =
+    let rbv = BitVecVal.of_int ~len:(len bv) off in
+    BV.mk_lshr ctx bv rbv
+
   let xori lbv rval =
     let rbv = BitVecVal.of_int ~len:(len lbv) rval in
     BV.mk_xor ctx lbv rbv

@@ -39,6 +39,14 @@ let add lval rval =
   let lty = ty_of lval in
   BitVec.addb (data_of lval) (data_of rval) |> entype lty
 
+let lshr lval rval =
+  let lty = ty_of lval in
+  BitVec.lshrb (data_of lval) (data_of rval) |> entype lty
+
+let ashr lval rval =
+  let lty = ty_of lval in
+  BitVec.ashrb (data_of lval) (data_of rval) |> entype lty
+
 let mask lval rval =
   let lty = ty_of lval in
   BitVec.andb (data_of lval) (data_of rval) |> entype lty

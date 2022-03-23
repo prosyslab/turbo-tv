@@ -1,0 +1,5 @@
+(executable
+ (name turbo-tv)
+ (libraries lib)
+ (flags
+  (:standard -w -24)))

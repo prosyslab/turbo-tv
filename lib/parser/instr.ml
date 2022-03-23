@@ -6,11 +6,14 @@ type t = Opcode.t * Operands.t
 
 let create opcode operands : t = (opcode, operands)
 
+let to_string t =
+  let opcode, operands = t in
+  (opcode |> Opcode.to_str) ^ "(" ^ (operands |> Operands.to_str) ^ ")"
+
 let empty : t = (Opcode.empty, [])
 
 (* getter *)
 let opcode (opcode, _) : Opcode.t = opcode
-
 let operands (_, operands) : Operands.t = operands
 
 let err instr reason =
