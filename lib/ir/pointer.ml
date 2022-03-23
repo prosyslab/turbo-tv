@@ -5,11 +5,13 @@ type t = Value.t
 let next_bid = ref 1
 
 (* const *)
-(* 0-16: offset
-   16-48: bid
-   48-64: size of struct
-   64-69: value type(Pointer) *)
-(* High |-ty-|--sz--|--bid--|-offset-| Low *)
+(* 0-15: offset
+   16-47: bid
+   48-63: size of struct
+   64-68: value type(Pointer)
+   69-70: undef
+*)
+(* High |u|-ty-|--sz--|--bid--|-offset-| Low *)
 let size_len = 16
 let bid_len = 32
 let off_len = 16
@@ -40,8 +42,8 @@ let move t pos = BitVec.addb t pos
 let can_access pos sz t =
   (* no out-of-bounds *)
   let struct_size = Value.from_bv (size_of t) in
-  let out_of_lb = BitVec.slti pos 0 in
-  let out_of_ub = BitVec.ugeb (BitVec.addi pos sz) struct_size in
+  let out_of_lb = Value.slt pos (0 |> Value.from_int) in
+  let out_of_ub = Value.uge (BitVec.addi pos sz) struct_size in
   Bool.ands [ Bool.not out_of_lb; Bool.not out_of_ub ]
 
 (* can read as [repr] *)

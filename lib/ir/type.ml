@@ -8,6 +8,7 @@ let smi_max = 1073741823
 let smi_mask = 0xffffffff
 
 (* type-constants *)
+(* v8 types *)
 let int8 = BitVecVal.of_int ~len 0
 let uint8 = BitVecVal.of_int ~len 1
 let int16 = BitVecVal.of_int ~len 2
@@ -29,7 +30,7 @@ let any_compressed = BitVecVal.of_int ~len 17
 let sandboxed_pointer = BitVecVal.of_int ~len 18
 let bool = BitVecVal.of_int ~len 19
 let none = BitVecVal.of_int ~len 20
-let undef = BitVecVal.of_int ~len 21
+let empty = BitVecVal.of_int ~len 21
 let const = BitVecVal.of_int ~len 22
 
 (* ty from MachineType *)

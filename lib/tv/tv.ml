@@ -22,18 +22,16 @@ let run nparams before after =
   let assertion =
     Bool.ands [ assertion_A; assertion_B; Bool.neq retvar_A retvar_B ]
   in
-  let _assertion_str = assertion |> str_of_simplified in
 
   let status = Solver.check validator assertion in
 
   match status with
   | SATISFIABLE ->
       let model = Option.get (Solver.get_model validator) in
-      let _model_str = model |> Model.to_str in
+      let model_str = model |> Model.to_str in
 
-      Printf.printf "X -> \n"
-      (* Printf.printf "Assertion: \n%s\n" assertion_str; *)
-      (* Printf.printf "Model: \n%s" model_str *)
-  | UNSATISFIABLE -> Printf.printf "O -> \n"
-  (* Printf.printf "Assertion: \n%s" assertion_str *)
+      Printf.printf "X -> \n";
+      Printf.printf "Assertion: \n%s\n" (assertion |> str_of_simplified);
+      Printf.printf "Model: \n%s" model_str
+  | UNSATISFIABLE -> Printf.printf "O\n"
   | _ -> failwith "unknown"

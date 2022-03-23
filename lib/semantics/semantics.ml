@@ -32,13 +32,17 @@ let number_constant vid c =
 
   let c_is_smi =
     Bool.ands
-      [ can_be_smi cbv; is_equal value (cbv |> cast Type.tagged_signed) ]
+      [
+        Value.can_be_smi cbv;
+        Value.is_equal value (cbv |> Value.cast Type.tagged_signed);
+      ]
   in
 
   let c_is_not_smi =
     Bool.ands
       [
-        Bool.not (can_be_smi cbv); is_equal value (cbv |> cast Type.any_tagged);
+        Bool.not (Value.can_be_smi cbv);
+        Value.is_equal value (cbv |> Value.cast Type.any_tagged);
       ]
   in
 
@@ -46,23 +50,24 @@ let number_constant vid c =
   (value, assertion)
 
 (* common: control *)
-let projection vid pidx pval =
+(* retrieve the value at [idx] from [incoming] *)
+(* incoming: | --- idx[0] ---| --- idx[1] --- | --- ... --- | *)
+let projection vid idx incoming =
+  (* currently, projection operator assumes index is lower then 2 *)
+  if idx >= 2 then print_endline "SB in projection: idx >= 2";
+  let undefined = idx >= Composed.size_of incoming in
   let value = Value.init vid in
-
   let res =
-    if pidx = 0 then BitVec.extract (len - 1) 0 pval
-    else if pidx = 1 then BitVec.extract ((2 * len) - 1) len pval
-    else raise (Invalid_argument "Projection index out of range")
+    if not undefined then Composed.select idx incoming else Value.undefined
   in
-
-  let assertion = is_equal value res in
+  let assertion = Value.is_equal value res in
   (value, assertion)
 
 (* | --- True Condition --- | --- False Condition --- | *)
 (* True condition: precond ^ cond *)
 (* False condition: precond ^ not cond *)
 let branch vid cond precond =
-  let value = Value.Composed.init vid in
+  let value = Composed.init vid 2 in
   let cond_data = data_of cond in
   let precond_data = data_of precond in
   let if_true = entype Type.bool (BitVec.andb precond_data cond_data) in
@@ -220,7 +225,7 @@ let int32add vid lval rval =
   (value, assertion)
 
 let int32add_with_overflow vid lval rval =
-  let value = Composed.init vid in
+  let value = Composed.init vid 2 in
 
   let ldata = data_of lval in
   let rdata = data_of rval in
@@ -471,10 +476,10 @@ let apply program state =
     | NumberConstant -> Operands.const_of_nth operands 0 |> number_constant vid
     (* common: control *)
     | Projection ->
-        let pidx = Operands.const_of_nth operands 0 |> int_of_string in
-        let pid = Operands.id_of_nth operands 1 in
-        let pval = RegisterFile.find pid rf in
-        projection vid pidx pval
+        let idx = Operands.const_of_nth operands 0 |> int_of_string in
+        let id = Operands.id_of_nth operands 1 in
+        let incoming = RegisterFile.find id rf in
+        projection vid idx incoming
     | Branch ->
         let cond_id = Operands.id_of_nth operands 0 in
         let prev_id = Operands.id_of_nth operands 1 in
@@ -644,12 +649,6 @@ let apply program state =
     | IfTrue | IfFalse | Merge -> BitVec.is_true value
     | _ -> State.condition state
   in
-
-  Format.printf "\nInstruction %s\n" (IR.instr_of pc program |> Instr.to_string);
-  Format.printf "Execution Condition: %s\n" (exec_cond |> str_of_exp);
-  Format.printf "Assertion: %s\n" (assertion |> str_of_exp);
-  Format.printf "Combined assertion: %s\n"
-    (Bool.ite exec_cond assertion Bool.fl |> str_of_exp);
 
   let updated_rf = RegisterFile.add vid value rf in
   let updated_asrt =
