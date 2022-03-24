@@ -192,6 +192,7 @@ module BitVec = struct
 
   (* Un-BitVec Operation*)
   let extract high low bv = BV.mk_extract ctx high low bv
+  let repeat cnt bv = BV.mk_repeat ctx cnt bv
   let zero_extend len bv = BV.mk_zero_ext ctx len bv
 
   (* Bi-BitVec operation *)

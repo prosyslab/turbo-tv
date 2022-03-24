@@ -8,13 +8,14 @@ type kind =
   | P2
   | B1
   | VARGS
-  | B1P1P2
+  | P1P2B1
   | B1P1
-  | B1P1P2P3
+  | P1P2B1P3
   | P3
   | P1B2B4P2
   | B2
   | B4
+  | B1P1P2
   | Empty
 
 type t =
@@ -846,16 +847,17 @@ type t =
   (* vargs *)
   | End
   | Merge
-  (* b1p1p2 *)
+  (* p1p2b1 *)
   | Load
-  | Word32Sar
   (* b1p1 *)
   | Projection
-  (* b1p1p2p3 *)
+  (* p1p2b1p3 *)
   | Store (* p3 *)
   (* p1b2b4p2 *)
   | StoreField (* b2 *)
   (* b4 *)
+  (* b1p1p2 *)
+  | Word32Sar
   | Empty
 [@@deriving equal]
 
@@ -1080,10 +1082,11 @@ let get_kind opcode =
   | JSStackCheck | NumberConstant | Parameter ->
       B1
   | End | Merge -> VARGS
-  | Load | Word32Sar -> B1P1P2
+  | Load -> P1P2B1
   | Projection -> B1P1
-  | Store -> B1P1P2P3
+  | Store -> P1P2B1P3
   | StoreField -> P1B2B4P2
+  | Word32Sar -> B1P1P2
   | Empty -> Empty
 
 let split_kind kind =
@@ -1094,13 +1097,14 @@ let split_kind kind =
   | P2 -> [ P2 ]
   | B1 -> [ B1 ]
   | VARGS -> [ VARGS ]
-  | B1P1P2 -> [ B1; P1; P2 ]
+  | P1P2B1 -> [ P1; P2; B1 ]
   | B1P1 -> [ B1; P1 ]
-  | B1P1P2P3 -> [ B1; P1; P2; P3 ]
+  | P1P2B1P3 -> [ P1; P2; B1; P3 ]
   | P3 -> [ P3 ]
   | P1B2B4P2 -> [ P1; B2; B4; P2 ]
   | B2 -> [ B2 ]
   | B4 -> [ B4 ]
+  | B1P1P2 -> [ B1; P1; P2 ]
   | Empty -> [ Empty ]
 
 let empty = Empty
@@ -1930,10 +1934,10 @@ let of_str str =
   | "End" -> End
   | "Merge" -> Merge
   | "Load" -> Load
-  | "Word32Sar" -> Word32Sar
   | "Projection" -> Projection
   | "Store" -> Store
   | "StoreField" -> StoreField
+  | "Word32Sar" -> Word32Sar
   | _ -> raise Invalid_opcode
 
 let to_str opcode =
@@ -2761,8 +2765,8 @@ let to_str opcode =
   | End -> "End"
   | Merge -> "Merge"
   | Load -> "Load"
-  | Word32Sar -> "Word32Sar"
   | Projection -> "Projection"
   | Store -> "Store"
   | StoreField -> "StoreField"
+  | Word32Sar -> "Word32Sar"
   | Empty -> failwith "Unreachable"

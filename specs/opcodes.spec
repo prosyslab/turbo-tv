@@ -521,7 +521,7 @@ JSToNumberConvertBigInt,
 JSToNumeric,
 JSToObject,
 JSToString,
-Load,b1,p1,p2
+Load,p1,p2,b1
 LoadDataViewElement,
 LoadElement,
 LoadField,
@@ -700,7 +700,7 @@ StackSlot,
 Start,
 StateValues,
 StaticAssert,
-Store,b1,p1,p2,p3
+Store,p1,p2,b1,p3
 StoreDataViewElement,
 StoreElement,
 StoreField,p1,b2,b4,p2

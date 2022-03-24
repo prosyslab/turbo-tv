@@ -66,5 +66,5 @@ let const_of_nth operands idx = nth operands idx |> Operand.const
 let int_of_nth operands idx =
   nth operands idx |> Operand.const |> Operand.c_as_int
 
-let addr_of_nth operands idx =
-  nth operands idx |> Operand.const |> Operand.c_as_addr
+let id_of_all operands =
+  List.map (fun operand -> operand |> Operand.id) operands

@@ -81,15 +81,8 @@ let branch vid cond precond =
     let ubool = Value.undefined |> Value.cast Type.bool in
     Value.is_equal value (BitVec.concat ubool ubool)
   in
-  let cond = BitVec.concat if_true if_false in
 
   let assertion = Bool.ite is_well_defined defined undefined in
-  (value, assertion)
-
-(* collect all return values *)
-let end_ vid values =
-  let value = Value.init vid in
-  let assertion = BitVec.eqb value (Bool.ands values) in
   (value, assertion)
 
 let if_false vid cond =
@@ -126,15 +119,22 @@ let if_true vid cond =
 
 (* merge every incoming execution condition *)
 let merge vid conds =
-  let value = Value.init vid in
-  let assertion =
-    BitVec.eqb value
-      (entype Type.bool
-         (List.fold_left
-            (fun asrt cond -> BitVec.orb asrt (data_of cond))
-            (BitVecVal.tr ()) conds))
-  in
-  (value, assertion)
+  let value = Composed.init vid (List.length conds) in
+
+  if List.length conds = 0 then (
+    print_endline "SB: merge: empty condition list";
+    (value, Value.is_equal value (Value.empty |> Value.cast Type.bool)))
+  else
+    let rec concat_conds res conds =
+      match conds with
+      | [] -> res
+      | cond :: rest -> concat_conds (BitVec.concat res cond) rest
+    in
+
+    let assertion =
+      Value.is_equal value (concat_conds (List.hd conds) (List.tl conds))
+    in
+    (value, assertion)
 
 (* common: procedure *)
 let parameter vid param =
@@ -385,13 +385,7 @@ let word32equal vid lval rval =
 
 let uint64less_than vid lval rval =
   let value = Value.init vid in
-
-  let ldata = data_of lval in
-  let rdata = data_of rval in
-  let res =
-    Bool.ite (BitVec.ultb ldata rdata) (BitVecVal.tr ()) (BitVecVal.fl ())
-    |> cast Type.bool
-  in
+  let res = Bool.ite (Value.ult lval rval) Value.tr Value.fl in
 
   let assertion =
     Bool.ands
@@ -405,38 +399,34 @@ let uint64less_than vid lval rval =
   (value, assertion)
 
 (* machine: memory *)
+(* wip: handling undef *)
 let store ptr pos repr value mem =
-  (* ptr must be pointer type *)
-  let ty_check = Value.has_type Type.pointer ptr in
+  (* ptr must be pointer type & well-defined *)
+  let ptr_is_pointer = Value.has_type Type.pointer ptr in
+  let ptr_is_defined = Value.is_defined ptr in
 
   (* check index out-of-bounds *)
-  let struct_size = Pointer.size_of ptr in
+  let can_write = Pointer.can_access_as pos repr ptr in
+  let condition = Bool.ands [ ptr_is_pointer; ptr_is_defined; can_write ] in
+
   let store_size = repr |> Repr.size_of in
-  let oob_check =
-    Bool.ands
-      [
-        BitVec.sgei pos 0; BitVec.uleb (BitVec.addi pos store_size) struct_size;
-      ]
-  in
-
-  let condition = Bool.ands [ ty_check; oob_check ] in
-  mem := Memory.store (Pointer.move ptr pos) store_size condition value !mem;
-
+  mem := Memory.store ptr store_size condition value !mem;
   (Value.empty, Bool.tr)
 
+(* wip: handling undef *)
 let load vid ptr pos repr mem =
-  (* ptr must be pointer type *)
-  let ty_check = Value.has_type Type.pointer ptr in
+  (* ptr must be pointer type & well-defined *)
+  let ptr_is_pointer = Value.has_type Type.pointer ptr in
+  let ptr_is_defined = Value.is_defined ptr in
 
   (* check index out-of-bounds *)
-  let can_read = Pointer.can_access_as pos repr ptr in
+  let can_write = Pointer.can_access_as pos repr ptr in
+  let condition = Bool.ands [ ptr_is_pointer; ptr_is_defined; can_write ] in
 
   let value = Value.init vid in
   let loaded = Memory.load_as (Pointer.move ptr pos) repr mem in
 
-  let assertion =
-    Bool.ands [ ty_check; can_read; Value.is_weak_equal value loaded ]
-  in
+  let assertion = Bool.ands [ condition; Value.is_weak_equal value loaded ] in
   (value, assertion)
 
 (* machine: type-conversion *)
@@ -493,7 +483,7 @@ let apply program state =
   let vid = !RegisterFile.prefix ^ string_of_int pc in
 
   let opcode, operands = IR.instr_of pc program in
-  let next_pc = match opcode with Return -> -1 | _ -> pc + 1 in
+  let next_pc = match opcode with End -> -1 | _ -> pc + 1 in
 
   let value, assertion =
     match opcode with
@@ -527,10 +517,7 @@ let apply program state =
         if_true vid cond_value
     | Start -> (Value.empty, Bool.tr)
     | Merge ->
-        let nids =
-          List.map (fun operand -> operand |> Operands.Operand.id) operands
-        in
-        let conds = List.map (fun nid -> RegisterFile.find nid rf) nids in
+        let conds = RegisterFile.find_all (operands |> Operands.id_of_all) rf in
         merge vid conds
     (* common: procedure *)
     | Parameter ->
@@ -544,7 +531,22 @@ let apply program state =
         let nid = Operands.id_of_nth operands 0 in
         let return_value = RegisterFile.find nid rf in
         return vid return_value
-    | End -> (Value.empty, Bool.tr)
+    | End ->
+        let return_values =
+          RegisterFile.find_all (operands |> Operands.id_of_all) rf
+        in
+        let value = Value.init vid in
+        let assertion =
+          Bool.ands
+            (List.map
+               (fun rv ->
+                 Bool.ite
+                   (Value.has_type Type.empty rv)
+                   Bool.tr (Value.is_equal value rv))
+               return_values)
+        in
+        print_simplified assertion;
+        (value, assertion)
     (* simplified: arithmetic *)
     | SpeculativeSafeIntegerAdd ->
         let lpid = Operands.id_of_nth operands 0 in
@@ -648,11 +650,11 @@ let apply program state =
         let value = RegisterFile.find value_id rf in
         store ptr pos repr value mem
     | Load ->
-        let ptr_id = Operands.id_of_nth operands 1 in
+        let ptr_id = Operands.id_of_nth operands 0 in
         let ptr = RegisterFile.find ptr_id rf in
-        let pos_id = Operands.id_of_nth operands 2 in
+        let pos_id = Operands.id_of_nth operands 1 in
         let pos = RegisterFile.find pos_id rf in
-        let repr = Operands.const_of_nth operands 0 |> Repr.of_string in
+        let repr = Operands.const_of_nth operands 2 |> Repr.of_string in
         load vid ptr pos repr !mem
     (* machine: bitcast *)
     | BitcastTaggedToWord ->
@@ -677,13 +679,27 @@ let apply program state =
 
   let exec_cond =
     match opcode with
-    | IfTrue | IfFalse | Merge -> BitVec.is_true value
+    | IfTrue | IfFalse -> Value.is_true value
+    | Merge ->
+        let size = Composed.size_of value in
+        let rec merge_conds res idx value =
+          if idx = size then res
+          else
+            let cond = Composed.select idx value in
+            merge_conds (Value.or_ cond res) (idx + 1) value
+        in
+        merge_conds Value.fl 0 value |> Value.is_true
+    | End -> Bool.tr
     | _ -> State.condition state
   in
 
   let updated_rf = RegisterFile.add vid value rf in
   let updated_asrt =
-    Bool.ands [ State.assertion state; Bool.ite exec_cond assertion Bool.fl ]
+    Bool.ands
+      [
+        State.assertion state;
+        Bool.ite exec_cond assertion (Value.is_empty value);
+      ]
   in
   let next_state =
     State.update next_pc updated_rf exec_cond updated_asrt state

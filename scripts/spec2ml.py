@@ -5,7 +5,7 @@ from pathlib import Path
 from argparse import ArgumentParser
 import tempfile
 
-SRC_PATH = Path.cwd() / "src"
+SRC_PATH = Path.cwd() / "lib/parser"
 TMPL_PATH = Path.cwd() / "tmpl"
 
 

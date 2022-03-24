@@ -20,5 +20,6 @@ let find vid rf =
     let reason = Format.sprintf "Cannot find %s from RegisterFile" cause in
     err (IdNotFound (cause, reason))
 
+let find_all vids rf = List.map (fun vid -> find vid rf) vids
 let empty = R.empty
 let iter = R.iter

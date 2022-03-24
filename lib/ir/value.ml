@@ -65,9 +65,10 @@ let or_ lval rval =
   let lty = ty_of lval in
   BitVec.orb (data_of lval) (data_of rval) |> entype lty
 
-let slt lval rval = BitVec.sltb (data_of lval) (data_of rval)
-let uge lval rval = BitVec.ugeb (data_of lval) (data_of rval)
 let not_ value = BitVec.notb value
+let slt lval rval = BitVec.sltb (data_of lval) (data_of rval)
+let ult lval rval = BitVec.ultb (data_of lval) (data_of rval)
+let uge lval rval = BitVec.ugeb (data_of lval) (data_of rval)
 
 let shl lval rval =
   let lty = ty_of lval in
@@ -98,7 +99,13 @@ let set_defined value = BitVec.andb (BitVec.notb undefined) value
 (* constant values *)
 let empty = from_int 0 |> cast Type.empty |> set_defined
 let tr = addi empty 1 |> cast Type.bool |> set_defined
+let is_true value = is_equal tr value
 let fl = empty |> cast Type.bool |> set_defined
+let is_false value = is_equal fl value
+
+let is_empty value =
+  let size = BitVec.len value / len in
+  is_equal value (BitVec.repeat size empty)
 
 module Composed = struct
   type t = BitVec.t
