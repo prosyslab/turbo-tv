@@ -5,6 +5,7 @@ open Machine
 open Z3utils
 
 let ctx = Z3utils.ctx
+
 let validator = Solver.init
 
 let rec next program state =
@@ -21,7 +22,7 @@ let rec next program state =
     match opcode with
     (* common: constants *)
     | HeapConstant | ExternalConstant ->
-        let addr_re = Re.Pcre.regexp "(0x[0-9a-f]*)" in
+        let addr_re = Re.Pcre.regexp "(0x[0-9a-f]+)" in
         let operand = Operands.const_of_nth operands 0 in
         Re.Group.get (Re.exec addr_re operand) 1 |> heap_constant vid
     | Int32Constant -> Operands.const_of_nth operands 0 |> int32_constant vid

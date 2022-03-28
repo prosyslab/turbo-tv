@@ -5,13 +5,27 @@ module Composed = Value.Composed
 let int32_constant vid c =
   let value = Value.init vid in
   let cval = c |> Value.from_string |> Value.cast Type.int32 in
-  let assertion = Bool.ands [ Value.is_equal value cval ] in
+  let assertion =
+    Bool.ands
+      [
+        BitVec.sgei cval (Int32.min_int |> Int32.to_int);
+        BitVec.slei cval (Int32.max_int |> Int32.to_int);
+        Value.is_equal value cval;
+      ]
+  in
   (value, assertion)
 
 let int64_constant vid c =
   let value = Value.init vid in
   let cval = c |> Value.from_string |> Value.cast Type.int64 in
-  let assertion = Bool.ands [ Value.is_equal value cval ] in
+  let assertion =
+    Bool.ands
+      [
+        BitVec.sgei cval (Int64.min_int |> Int64.to_int);
+        BitVec.slei cval (Int64.max_int |> Int64.to_int);
+        Value.is_equal value cval;
+      ]
+  in
   (value, assertion)
 
 let external_constant vid c =
