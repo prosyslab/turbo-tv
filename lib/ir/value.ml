@@ -102,6 +102,16 @@ let tr = addi empty 1 |> cast Type.bool |> set_defined
 let is_true value = is_equal tr value
 let fl = empty |> cast Type.bool |> set_defined
 let is_false value = is_equal fl value
+let zero = BitVecVal.zero ~len ()
+let inf = Float.inf Float.double_sort |> Float.to_ieee_bv |> entype Type.float64
+
+let ninf =
+  Float.ninf Float.double_sort |> Float.to_ieee_bv |> entype Type.float64
+
+let minus_zero =
+  Float.minus_zero Float.double_sort |> Float.to_ieee_bv |> entype Type.float64
+
+let nan = Float.nan Float.double_sort
 
 let is_empty value =
   let size = BitVec.len value / len in

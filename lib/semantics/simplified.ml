@@ -28,17 +28,41 @@ let number_expm1 vid pval =
       bitvec_sort
   in
 
-  let minus_zero =
-    Float.minus_zero Float.double_sort
-    |> Float.to_ieee_bv |> Value.entype Type.float64
+  let if_well_defined =
+    Bool.ands
+      [
+        Bool.not (Value.is_undefined pval);
+        Bool.ors
+          [
+            Value.has_type pval Type.float64;
+            Value.has_type pval Type.tagged_signed;
+          ];
+      ]
+  in
+
+  let well_defined =
+    Bool.ite
+      (Value.is_equal pval Value.minus_zero)
+      Value.minus_zero
+      (Bool.ite
+         (Value.is_equal pval Value.inf)
+         Value.inf
+         (Bool.ite
+            (Value.is_equal pval Value.ninf)
+            (Float.of_str "-1" Float.double_sort
+            |> Float.to_ieee_bv |> Value.entype Type.float64)
+            (Bool.ite
+               (Value.is_equal pval Value.nan)
+               Value.nan
+               (Bool.ite
+                  (Value.is_weak_equal pval Value.zero)
+                  (Float.of_str "0" Float.double_sort
+                  |> Float.to_ieee_bv |> Value.entype Type.float64)
+                  (Z3.FuncDecl.apply expm_decl [ pval ])))))
   in
 
   let assertion =
-    Value.is_equal value
-      (Bool.ite
-         (BitVec.eqb pval minus_zero)
-         minus_zero
-         (Z3.FuncDecl.apply expm_decl [ pval ]))
+    Value.is_equal value (Bool.ite if_well_defined well_defined Value.undefined)
   in
   (value, assertion)
 

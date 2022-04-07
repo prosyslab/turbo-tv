@@ -249,6 +249,12 @@ module Float = struct
 
   let minus_zero sort = Fl.mk_numeral_s ctx "-0" sort
 
+  let nan sort = Fl.mk_nan ctx sort
+
+  let inf sort = Fl.mk_inf ctx sort false
+
+  let ninf sort = Fl.mk_inf ctx sort true
+
   let of_str s sort = Fl.mk_numeral_s ctx s sort
 
   let to_ieee_bv t = Fl.mk_to_ieee_bv ctx t
