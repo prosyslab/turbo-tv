@@ -36,19 +36,24 @@ let external_constant vid c =
 
 let heap_constant = external_constant
 
-let number_constant vid n =
+let number_constant vid s =
   let value = Value.init vid in
-  let cval = Value.from_string n in
 
-  let can_be_smi = Value.can_be_smi cval in
-  let tr =
-    (* shift-left once  *)
-    let smi_value = Value.shli value 1 |> Value.cast Type.tagged_signed in
-    Value.is_equal value smi_value
+  let can_be_smi =
+    try
+      let n = int_of_string s in
+      Type.smi_min <= n && n <= Type.smi_max && not (String.equal s "-0")
+    with Failure _ -> false
   in
-  let fl = Value.is_equal value (cval |> Value.cast Type.any_tagged) in
 
-  let assertion = Bool.ite can_be_smi tr fl in
+  let cval =
+    if can_be_smi then
+      Value.shli (Value.from_string s) 1 |> Value.cast Type.tagged_signed
+    else
+      Float.of_str s Float.double_sort
+      |> Float.to_ieee_bv |> Value.entype Type.float64
+  in
+  let assertion = Value.is_equal value cval in
   (value, assertion)
 
 (* common: control *)

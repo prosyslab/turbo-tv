@@ -86,6 +86,10 @@ let rec next program state =
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
         speculative_safe_integer_add vid lval rval
+    | NumberExpm1 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        number_expm1 vid pval
     (* simplified: memory *)
     | AllocateRaw ->
         let size_id = Operands.id_of_nth operands 0 in
@@ -233,6 +237,7 @@ let rec next program state =
         Bool.ite exec_cond assertion (Value.is_empty value);
       ]
   in
+
   let next_state =
     State.update next_pc updated_rf exec_cond updated_asrt state
   in

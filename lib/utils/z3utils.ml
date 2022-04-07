@@ -5,6 +5,7 @@ module E = Z3.Expr
 module M = Z3.Model
 module S = Z3.Solver
 module BV = Z3.BitVector
+module Fl = Z3.FloatingPoint
 
 (* global context *)
 let ctx = Z3.mk_context [ ("model", "true"); ("unsat_core", "true") ]
@@ -239,4 +240,16 @@ module Array = struct
   let store value key arr = A.mk_store ctx arr key value
 
   let select key arr = A.mk_select ctx arr key
+end
+
+module Float = struct
+  type t = E.expr
+
+  let double_sort = Fl.mk_sort_double ctx
+
+  let minus_zero sort = Fl.mk_numeral_s ctx "-0" sort
+
+  let of_str s sort = Fl.mk_numeral_s ctx s sort
+
+  let to_ieee_bv t = Fl.mk_to_ieee_bv ctx t
 end

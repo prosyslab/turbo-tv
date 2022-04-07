@@ -20,6 +20,28 @@ let speculative_safe_integer_add vid lval rval =
 
   (value, assertion)
 
+let number_expm1 vid pval =
+  let value = Value.init vid in
+  let bitvec_sort = BV.mk_sort ctx Value.len in
+  let expm_decl =
+    Z3.FuncDecl.mk_func_decl_s ctx "unknown_number_expm1" [ bitvec_sort ]
+      bitvec_sort
+  in
+
+  let minus_zero =
+    Float.minus_zero Float.double_sort
+    |> Float.to_ieee_bv |> Value.entype Type.float64
+  in
+
+  let assertion =
+    Value.is_equal value
+      (Bool.ite
+         (BitVec.eqb pval minus_zero)
+         minus_zero
+         (Z3.FuncDecl.apply expm_decl [ pval ]))
+  in
+  (value, assertion)
+
 (* simplified: memory *)
 let allocate_raw vid size =
   let ptr, assertion = Memory.allocate vid size in
