@@ -198,7 +198,11 @@ let load vid ptr pos repr mem =
   let value = Value.init vid in
   let loaded = Memory.load_as (Pointer.move ptr pos) repr mem in
 
-  let assertion = Bool.ands [ condition; Value.is_weak_equal value loaded ] in
+  let assertion =
+    Bool.ite condition
+      (Value.is_weak_equal value loaded)
+      (Value.is_equal value Value.undefined)
+  in
   (value, assertion)
 
 (* machine: type-conversion *)

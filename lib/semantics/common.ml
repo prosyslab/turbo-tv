@@ -8,8 +8,8 @@ let int32_constant vid c =
   let assertion =
     Bool.ands
       [
-        BitVec.sgei cval (Int32.min_int |> Int32.to_int);
-        BitVec.slei cval (Int32.max_int |> Int32.to_int);
+        Value.sge cval Value.int32_min;
+        Value.sle cval Value.int32_max;
         Value.is_equal value cval;
       ]
   in
@@ -21,8 +21,8 @@ let int64_constant vid c =
   let assertion =
     Bool.ands
       [
-        BitVec.sgei cval (Int64.min_int |> Int64.to_int);
-        BitVec.slei cval (Int64.max_int |> Int64.to_int);
+        Value.sge cval Value.int64_min;
+        Value.sle cval Value.int64_max;
         Value.is_equal value cval;
       ]
   in
