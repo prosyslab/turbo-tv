@@ -45,21 +45,37 @@ let parse_command_line () =
   | Ok `Version | Ok `Help -> exit 0
   | Ok (`Ok conf) -> conf
 
+let jscall_exists graph =
+  let jscall = Opcode.JSCall in
+  try
+    IR.find_by_opcode jscall graph |> ignore;
+    true
+  with Err.NodeNotFound _ -> false
+
 let main () =
   Printexc.record_backtrace true;
   let { target; emit_reduction; emit_graph; outdir } = parse_command_line () in
 
   let nparams = Utils.get_nparams target in
   let lines = Utils.run_d8 target in
-  let reductions = Reduction.get_reductions lines in
   let idx = ref 1 in
 
+  let reductions =
+    Reduction.get_reductions lines
+    |> List.map (fun (before_rdc, after_rdc, desc) ->
+           let before_graph = IR.create_from before_rdc in
+           let after_graph = IR.create_from after_rdc in
+           ((before_rdc, before_graph), (after_rdc, after_graph), desc))
+    |> List.filter (fun ((_, before_graph), (_, after_graph), _) ->
+           (not (jscall_exists before_graph)) && not (jscall_exists after_graph))
+  in
+
   Printf.printf "Number of reductions: %d\n" (List.length reductions);
+
   List.iter
-    (fun (before_rdc, after_rdc, _desc) ->
+    (fun ((before_rdc, before_graph), (after_rdc, after_graph), _desc) ->
       Printf.printf "Reduction #%d: " !idx;
-      let before_graph = IR.create_from before_rdc in
-      let after_graph = IR.create_from after_rdc in
+
       if emit_reduction then (
         let parent = String.concat "/" [ outdir; string_of_int !idx; "" ] in
         Core.Unix.mkdir_p parent ~perm:0o775;

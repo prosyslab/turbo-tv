@@ -34,8 +34,8 @@ let number_expm1 vid pval =
         Bool.not (Value.is_undefined pval);
         Bool.ors
           [
-            Value.has_type pval Type.float64;
-            Value.has_type pval Type.tagged_signed;
+            Value.has_type Type.float64 pval;
+            Value.has_type Type.tagged_signed pval;
           ];
       ]
   in
@@ -52,8 +52,9 @@ let number_expm1 vid pval =
             (Float.of_str "-1" Float.double_sort
             |> Float.to_ieee_bv |> Value.entype Type.float64)
             (Bool.ite
-               (Value.is_equal pval Value.nan)
-               Value.nan
+               (Value.is_equal pval
+                  (Value.nan |> Float.to_ieee_bv |> Value.entype Type.float64))
+               (Value.nan |> Float.to_ieee_bv |> Value.entype Type.float64)
                (Bool.ite
                   (Value.is_weak_equal pval Value.zero)
                   (Float.of_str "0" Float.double_sort

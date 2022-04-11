@@ -2,14 +2,21 @@ open Err
 
 module Node = struct
   type id = int
+
   type t = id * Instr.t
 
   let compare = compare
+
   let hash = Hashtbl.hash
+
   let equal = ( = )
+
   let create id instr : t = (id, instr)
+
   let empty = (-1, Instr.empty)
+
   let id (id, _) : id = id
+
   let instr (_, instr) : Instr.t = instr
 
   let label node =
@@ -43,6 +50,20 @@ let find_in_succ cond id graph =
       Printf.sprintf "Cannot found node that satisfy your condition"
     in
     err (NodeNotFound ("", reason))
+
+let find_by_opcode opcode graph =
+  let node =
+    G.fold_vertex
+      (fun n found -> if Instr.opcode (Node.instr n) = opcode then n else found)
+      graph Node.empty
+  in
+
+  if node = Node.empty then
+    let reason =
+      Printf.sprintf "Cannot found node with opcode %s" (Opcode.to_str opcode)
+    in
+    raise (NodeNotFound (Opcode.to_str opcode, reason))
+  else node
 
 let true_br_of id graph =
   find_in_succ
@@ -151,11 +172,17 @@ module Dot = Graph.Graphviz.Dot (struct
   include G
 
   let graph_attributes _ = []
+
   let default_vertex_attributes _ = []
+
   let vertex_name v = "\"" ^ String.escaped (Node.label v) ^ "\""
+
   let vertex_attributes _ = [ `Shape `Box ]
+
   let get_subgraph _ = None
+
   let default_edge_attributes _ = []
+
   let edge_attributes _ = []
 end)
 
