@@ -4,13 +4,18 @@ type t = BitVec.t
 
 (* 1-bit for undef & 5-bit for type & 64-bit for data *)
 let undef_len = 1
+
 let ty_len = Type.len
+
 let data_len = 64
+
 let len = undef_len + ty_len + data_len
 
 (* getter *)
 let ty_of t = BitVec.extract (data_len + ty_len - 1) data_len t
+
 let data_of t = BitVec.extract (data_len - 1) 0 t
+
 let undef_of t = BitVec.extract (len - 1) (len - 1) t
 
 (* cast value [t] to type [ty] *)
@@ -30,8 +35,13 @@ let entype ty data =
 
 (* constructor *)
 let init name = BitVec.init ~len name
-let from_int i = BitVecVal.of_int ~len i |> cast Type.const
-let from_string s = BitVecVal.of_str ~len s |> cast Type.const
+
+let from_int i = BitVecVal.from_int ~len i |> cast Type.const
+
+let from_istring s = BitVecVal.from_istring ~len s |> cast Type.const
+
+let from_f64string s = BitVecVal.from_f64string s |> entype Type.const
+
 let from_bv bv = BitVec.zero_extend (len - BitVec.len bv) bv |> cast Type.const
 
 (* methods *)
@@ -42,11 +52,18 @@ let has_repr repr t =
   Bool.ors (List.map (fun ty_candid -> has_type ty_candid t) tys_of_repr)
 
 let is_equal lval rval = BitVec.eqb lval rval
+
 let is_weak_equal lval rval = BitVec.eqb (data_of lval) (data_of rval)
 
-let can_be_smi bv =
-  let data = data_of bv in
-  Bool.ands [ BitVec.sgei data Type.smi_min; BitVec.slti data Type.smi_max ]
+let can_be_float64 s =
+  String.contains s '.' || String.equal s "-0" || String.equal s "inf"
+  || String.equal s "-inf"
+
+let can_be_smi s =
+  try
+    let n = int_of_string s in
+    Type.smi_min <= n && n <= Type.smi_max && not (String.equal s "-0")
+  with Failure _ -> false
 
 (* type-preserving binary operation *)
 let add lval rval =
@@ -89,50 +106,69 @@ let mask lval rval =
 
 (* compare two values and return bool *)
 let slt lval rval = BitVec.sltb (data_of lval) (data_of rval)
-let sle lval rval = BitVec.sleb (data_of lval) (data_of rval)
+
 let ult lval rval = BitVec.ultb (data_of lval) (data_of rval)
+
+let sle lval rval = BitVec.sleb (data_of lval) (data_of rval)
+
+let ule lval rval = BitVec.uleb (data_of lval) (data_of rval)
+
 let sge lval rval = BitVec.sgeb (data_of lval) (data_of rval)
+
 let uge lval rval = BitVec.ugeb (data_of lval) (data_of rval)
 
 (* defined & undefined *)
-let undefined = BitVec.lshri (BitVecVal.of_int ~len 1) (ty_len + data_len)
+let undefined = BitVec.lshri (BitVecVal.from_int ~len 1) (ty_len + data_len)
+
 let is_undefined value = BitVec.eqb undefined (BitVec.andb undefined value)
+
 let is_defined value = Bool.not (is_undefined value)
+
 let set_undefined value = BitVec.orb undefined value
+
 let set_defined value = BitVec.andb (BitVec.notb undefined) value
 
 (* constant values *)
 let empty = from_int 0 |> cast Type.empty |> set_defined
+
 let tr = addi empty 1 |> cast Type.bool |> set_defined
+
 let is_true value = is_equal tr value
+
 let fl = empty |> cast Type.bool |> set_defined
+
 let is_false value = is_equal fl value
+
 let zero = BitVecVal.zero ~len ()
 
 (* IEEE-754 constant values *)
-let inf = Float.inf Float.double_sort |> Float.to_ieee_bv |> entype Type.float64
+let inf = BitVecVal.inf () |> entype Type.float64
 
-let ninf =
-  Float.ninf Float.double_sort |> Float.to_ieee_bv |> entype Type.float64
+let ninf = BitVecVal.ninf () |> entype Type.float64
 
-let minus_zero =
-  Float.minus_zero Float.double_sort |> Float.to_ieee_bv |> entype Type.float64
+let minus_zero = BitVecVal.minus_zero () |> entype Type.float64
 
-let nan = Float.nan Float.double_sort
+let nan = BitVecVal.nan () |> entype Type.float64
 
 (* Int32 constant values *)
 let int32_min =
-  Int32.min_int |> Int32.to_int |> BitVecVal.of_int |> entype Type.const
+  Int32.min_int |> Int32.to_int |> BitVecVal.from_int |> entype Type.const
 
 let int32_max =
-  Int32.max_int |> Int32.to_int |> BitVecVal.of_int |> entype Type.const
+  Int32.max_int |> Int32.to_int |> BitVecVal.from_int |> entype Type.const
 
 (* Int64 constant values *)
 let int64_min =
-  Int64.min_int |> Int64.to_string |> BitVecVal.of_str |> entype Type.const
+  Int64.min_int |> Int64.to_string |> BitVecVal.from_istring
+  |> entype Type.const
 
 let int64_max =
-  Int64.max_int |> Int64.to_string |> BitVecVal.of_str |> entype Type.const
+  Int64.max_int |> Int64.to_string |> BitVecVal.from_istring
+  |> entype Type.const
+
+let uint64_min = BitVecVal.from_int 0 |> entype Type.const
+
+let uint64_max = BitVec.addi (BitVec.shli int64_max 1) 1
 
 let is_empty value =
   let size = BitVec.len value / len in
@@ -142,6 +178,7 @@ module Composed = struct
   type t = BitVec.t
 
   let init name size = BitVec.init ~len:(len * size) name
+
   let size_of t = BitVec.len t / len
 
   let select idx t =
@@ -149,5 +186,6 @@ module Composed = struct
     BitVec.extract (((size - idx) * len) - 1) ((size - idx - 1) * len) t
 
   let first_of t = select 0 t
+
   let second_of t = select 1 t
 end

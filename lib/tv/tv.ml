@@ -24,10 +24,32 @@ let rec next program state =
     | HeapConstant | ExternalConstant ->
         let addr_re = Re.Pcre.regexp "(0x[0-9a-f]+)" in
         let operand = Operands.const_of_nth operands 0 in
-        Re.Group.get (Re.exec addr_re operand) 1 |> heap_constant vid
-    | Int32Constant -> Operands.const_of_nth operands 0 |> int32_constant vid
-    | Int64Constant -> Operands.const_of_nth operands 0 |> int64_constant vid
-    | NumberConstant -> Operands.const_of_nth operands 0 |> number_constant vid
+        let c_str = Re.Group.get (Re.exec addr_re operand) 1 in
+        let c = c_str |> Value.from_istring |> Value.cast Type.pointer in
+        heap_constant vid c
+    | Int32Constant ->
+        let c =
+          Operands.const_of_nth operands 0
+          |> Value.from_istring |> Value.cast Type.int32
+        in
+        int32_constant vid c
+    | Int64Constant ->
+        let c =
+          Operands.const_of_nth operands 0
+          |> Value.from_istring |> Value.cast Type.int64
+        in
+        int64_constant vid c
+    | NumberConstant ->
+        let c_str = Operands.const_of_nth operands 0 in
+        let c =
+          if Value.can_be_float64 c_str then c_str |> Value.from_f64string
+          else if Value.can_be_smi c_str then c_str |> Value.from_istring
+          else
+            failwith
+              "unreachable: [c] of number constant is always\n\
+              \              representable as double or int32"
+        in
+        number_constant vid c
     (* common: control *)
     | Projection ->
         let idx = Operands.const_of_nth operands 0 |> int_of_string in
@@ -99,7 +121,8 @@ let rec next program state =
         let ptr_id = Operands.id_of_nth operands 0 in
         let ptr = RegisterFile.find ptr_id rf in
         let pos =
-          Operands.const_of_nth operands 1 |> BitVecVal.of_str ~len:Value.len
+          Operands.const_of_nth operands 1
+          |> BitVecVal.from_istring ~len:Value.len
         in
         let machine_type =
           Operands.const_of_nth operands 2 |> MachineType.of_rs_string

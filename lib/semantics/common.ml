@@ -2,73 +2,66 @@ open Z3utils
 module Composed = Value.Composed
 
 (* common: constants *)
+(* well-defined condition: INT32_MIN <= [c] <= INT32_MAX
+ * behavior: ite well-defined value=c value=UB *)
 let int32_constant vid c =
   let value = Value.init vid in
-  let cval = c |> Value.from_string |> Value.cast Type.int32 in
-  let assertion =
-    Bool.ands
-      [
-        Value.sge cval Value.int32_min;
-        Value.sle cval Value.int32_max;
-        Value.is_equal value cval;
-      ]
+  let c_can_be_int32 =
+    Bool.ands [ Value.sge c Value.int32_min; Value.sle c Value.int32_max ]
   in
+  let wd_cond = c_can_be_int32 in
+  let assertion = Value.is_equal value (Bool.ite wd_cond c Value.undefined) in
   (value, assertion)
 
+(* well-defined condition: INT64_MIN <= c <= INT64_MAX
+ * behavior: ite well-defined value=c value=UB *)
 let int64_constant vid c =
   let value = Value.init vid in
-  let cval = c |> Value.from_string |> Value.cast Type.int64 in
-  let assertion =
-    Bool.ands
-      [
-        Value.sge cval Value.int64_min;
-        Value.sle cval Value.int64_max;
-        Value.is_equal value cval;
-      ]
+  let c_can_be_int64 =
+    Bool.ands [ Value.sge c Value.int64_min; Value.sle c Value.int64_max ]
   in
+  let wd_cond = c_can_be_int64 in
+  let assertion = Value.is_equal value (Bool.ite wd_cond c Value.undefined) in
   (value, assertion)
 
+(* well-defined condition: UINT64_MIN <= c <= UINT64_MAX
+ * behavior: ite well-defined value=c value=UB *)
 let external_constant vid c =
   let value = Value.init vid in
-  let cval = c |> Value.from_string |> Value.cast Type.pointer in
-  let assertion = Bool.ands [ Value.is_equal value cval ] in
+  let c_can_be_pointer =
+    Bool.ands [ Value.uge c Value.uint64_min; Value.ule c Value.uint64_max ]
+  in
+  let wd_cond = c_can_be_pointer in
+  let assertion = Value.is_equal value (Bool.ite wd_cond c Value.undefined) in
   (value, assertion)
 
 let heap_constant = external_constant
 
-let number_constant vid s =
+(* well-defined condition: true
+ * behavior: value=c *)
+
+let number_constant vid c =
   let value = Value.init vid in
-
-  let can_be_smi =
-    try
-      let n = int_of_string s in
-      Type.smi_min <= n && n <= Type.smi_max && not (String.equal s "-0")
-    with Failure _ -> false
-  in
-
-  let cval =
-    if can_be_smi then
-      Value.shli (Value.from_string s) 1 |> Value.cast Type.tagged_signed
-    else
-      Float.of_str s Float.double_sort
-      |> Float.to_ieee_bv |> Value.entype Type.float64
-  in
-  let assertion = Value.is_equal value cval in
+  let assertion = Value.is_equal value c in
   (value, assertion)
 
 (* common: control *)
-(* retrieve the value at [idx] from [incoming] *)
-(* incoming: | --- idx[0] ---| --- idx[1] --- | --- ... --- | *)
+(* retrieve the value at [idx] from [incoming]
+ * incoming: | --- idx[0] ---| --- idx[1] --- | --- ... --- | 
+ * well-defined condition: 
+ * - 0 <= idx <= 2 ^ idx <= ||incoming|| 
+ * behavior: ite well-defined value=incoming[idx] value=UB *)
 let projection vid idx incoming =
   (* currently, idx of projection is assumebed to be less than 2 *)
   let value = Value.init vid in
-  let undefined = idx >= Composed.size_of incoming || idx >= 2 in
-  let res =
-    if not undefined then Composed.select idx incoming else Value.undefined
+  let wd_cond = 0 <= idx && idx < 2 && idx <= Composed.size_of incoming in
+  let wd_value = incoming |> Composed.select idx in
+  let assertion =
+    Value.is_equal value (if wd_cond then wd_value else Value.undefined)
   in
-  let assertion = Value.is_equal value res in
   (value, assertion)
 
+(* [TODO] Improve BB related operators: Branch, IfTrue, IfFalse, Merge, ... *)
 (* | --- True Condition --- | --- False Condition --- | *)
 (* True condition: precond ^ cond *)
 (* False condition: precond ^ not cond *)
@@ -153,10 +146,12 @@ let merge vid conds =
 (* common: procedure *)
 let parameter vid param =
   let value = Value.init vid in
-  let assertion = BitVec.eqb value (param |> Value.cast Type.tagged_signed) in
+  let assertion =
+    Value.is_equal value (param |> Value.cast Type.tagged_signed)
+  in
   (value, assertion)
 
 let return vid return_value =
   let value = Value.init vid in
-  let assertion = BitVec.eqb value return_value in
+  let assertion = Value.is_equal value return_value in
   (value, assertion)

@@ -3,35 +3,60 @@ open Z3utils
 type t = BitVec.t
 
 let len = 5
+
 let smi_min = -1073741824
+
 let smi_max = 1073741823
+
 let smi_mask = 0xffffffff
 
 (* type-constants *)
 (* v8 types *)
-let int8 = BitVecVal.of_int ~len 0
-let uint8 = BitVecVal.of_int ~len 1
-let int16 = BitVecVal.of_int ~len 2
-let uint16 = BitVecVal.of_int ~len 3
-let int32 = BitVecVal.of_int ~len 4
-let uint32 = BitVecVal.of_int ~len 5
-let int64 = BitVecVal.of_int ~len 6
-let uint64 = BitVecVal.of_int ~len 7
-let float32 = BitVecVal.of_int ~len 8
-let float64 = BitVecVal.of_int ~len 9
-let simd128 = BitVecVal.of_int ~len 10
-let pointer = BitVecVal.of_int ~len 11
-let tagged_pointer = BitVecVal.of_int ~len 12
-let map_in_header = BitVecVal.of_int ~len 13
-let tagged_signed = BitVecVal.of_int ~len 14
-let any_tagged = BitVecVal.of_int ~len 15
-let compressed_pointer = BitVecVal.of_int ~len 16
-let any_compressed = BitVecVal.of_int ~len 17
-let sandboxed_pointer = BitVecVal.of_int ~len 18
-let bool = BitVecVal.of_int ~len 19
-let none = BitVecVal.of_int ~len 20
-let empty = BitVecVal.of_int ~len 21
-let const = BitVecVal.of_int ~len 22
+let int8 = BitVecVal.from_int ~len 0
+
+let uint8 = BitVecVal.from_int ~len 1
+
+let int16 = BitVecVal.from_int ~len 2
+
+let uint16 = BitVecVal.from_int ~len 3
+
+let int32 = BitVecVal.from_int ~len 4
+
+let uint32 = BitVecVal.from_int ~len 5
+
+let int64 = BitVecVal.from_int ~len 6
+
+let uint64 = BitVecVal.from_int ~len 7
+
+let float32 = BitVecVal.from_int ~len 8
+
+let float64 = BitVecVal.from_int ~len 9
+
+let simd128 = BitVecVal.from_int ~len 10
+
+let pointer = BitVecVal.from_int ~len 11
+
+let tagged_pointer = BitVecVal.from_int ~len 12
+
+let map_in_header = BitVecVal.from_int ~len 13
+
+let tagged_signed = BitVecVal.from_int ~len 14
+
+let any_tagged = BitVecVal.from_int ~len 15
+
+let compressed_pointer = BitVecVal.from_int ~len 16
+
+let any_compressed = BitVecVal.from_int ~len 17
+
+let sandboxed_pointer = BitVecVal.from_int ~len 18
+
+let bool = BitVecVal.from_int ~len 19
+
+let none = BitVecVal.from_int ~len 20
+
+let empty = BitVecVal.from_int ~len 21
+
+let const = BitVecVal.from_int ~len 22
 
 (* ty from MachineType *)
 let from_machine_type (mt : MachineType.t) =

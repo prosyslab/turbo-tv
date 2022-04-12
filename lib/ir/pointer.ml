@@ -13,8 +13,11 @@ let next_bid = ref 1
 *)
 (* High |u|-ty-|--sz--|--bid--|-offset-| Low *)
 let size_len = 16
+
 let bid_len = 32
+
 let off_len = 16
+
 let len = Value.len
 
 (* getter *)
@@ -22,12 +25,13 @@ let size_of t =
   BitVec.extract (size_len + bid_len + off_len - 1) (bid_len + off_len) t
 
 let bid_of t = BitVec.extract (bid_len + off_len - 1) off_len t
+
 let off_of t = BitVec.extract (off_len - 1) 0 t
 
 (* constructor *)
 let init vid sz =
   let ptr = Value.init vid in
-  let bid = BitVecVal.of_int ~len:64 !next_bid in
+  let bid = BitVecVal.from_int ~len:64 !next_bid in
   let sz = Value.data_of sz in
   let value =
     BitVec.orb (BitVec.shli sz (bid_len + off_len)) (BitVec.shli bid off_len)
@@ -37,6 +41,7 @@ let init vid sz =
 
 (* method *)
 let next t = BitVec.addi t 1
+
 let move t pos = BitVec.addb t pos
 
 let can_access pos sz t =

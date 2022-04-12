@@ -3,6 +3,7 @@ open Z3utils
 type t = Array.t
 
 let init name = Array.init name (BitVec.mk_sort Pointer.len) (BitVec.mk_sort 8)
+
 let allocate vid size = Pointer.init vid size
 
 (* Load [value] at block of [ptr] with the size [sz]*)
@@ -14,7 +15,7 @@ let load ptr sz mem =
       let res = if loaded_sz = 0 then byte else BitVec.concat res byte in
       aux res (loaded_sz + 1) (Pointer.next ptr)
   in
-  aux (BitVecVal.of_int ~len:1 0) 0 ptr
+  aux (BitVecVal.from_int ~len:1 0) 0 ptr
 
 let load_as ptr repr mem =
   let load_size = MachineType.Repr.size_of repr in
