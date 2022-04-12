@@ -15,7 +15,7 @@ let rec next program state =
   let params = State.params state in
   let vid = !RegisterFile.prefix ^ string_of_int pc in
 
-  let opcode, operands = IR.instr_of pc program in
+  let opcode, operands, _ = IR.instr_of pc program in
   let next_pc = match opcode with End -> -1 | _ -> pc + 1 in
 
   let value, assertion =

@@ -8,6 +8,7 @@
   opcode
   operands
   instr
+  types
   ;ir
   IR
   pointer

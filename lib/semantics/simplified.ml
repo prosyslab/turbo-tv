@@ -49,15 +49,14 @@ let number_expm1 vid pval =
          Value.inf
          (Bool.ite
             (Value.is_equal pval Value.ninf)
-            (Float.of_str "-1" Float.double_sort
+            (Float.from_string ~sort:Float.double_sort "-1"
             |> Float.to_ieee_bv |> Value.entype Type.float64)
             (Bool.ite
-               (Value.is_equal pval
-                  (Value.nan |> Float.to_ieee_bv |> Value.entype Type.float64))
-               (Value.nan |> Float.to_ieee_bv |> Value.entype Type.float64)
+               (Value.is_equal pval Value.nan)
+               Value.nan
                (Bool.ite
                   (Value.is_weak_equal pval Value.zero)
-                  (Float.of_str "0" Float.double_sort
+                  (Float.from_string ~sort:Float.double_sort "0"
                   |> Float.to_ieee_bv |> Value.entype Type.float64)
                   (Z3.FuncDecl.apply expm_decl [ pval ])))))
   in
@@ -98,7 +97,7 @@ let change_int32_to_tagged vid pval mem =
   let size = Value.from_int 12 in
   let ptr, assertion = Memory.allocate vid size in
   (* TODO: Define map constants *)
-  let heap_number_map = BitVecVal.of_int ~len:32 1234 in
+  let heap_number_map = BitVecVal.from_int ~len:32 1234 in
   let would_be_stored = BitVec.concat heap_number_map data in
 
   mem := Memory.store ptr 12 ovf_check would_be_stored !mem;

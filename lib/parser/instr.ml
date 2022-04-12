@@ -2,16 +2,19 @@ module Operand = Operands.Operand
 
 exception Invalid_instruction of string * string
 
-type t = Opcode.t * Operands.t
+type t = Opcode.t * Operands.t * Types.t
 
-let create opcode operands : t = (opcode, operands)
+let create ?types opcode operands : t =
+  match types with
+  | Some t -> (opcode, operands, t)
+  | None -> (opcode, operands, Types.none)
 
-let empty : t = (Opcode.empty, [])
+let empty : t = (Opcode.empty, [], Types.none)
 
 (* getter *)
-let opcode (opcode, _) : Opcode.t = opcode
+let opcode (opcode, _, _) : Opcode.t = opcode
 
-let operands (_, operands) : Operands.t = operands
+let operands (_, operands, _) : Operands.t = operands
 
 let err instr reason =
   Printf.fprintf stderr "Invalid Instruction: %s\n%s\n\n" instr reason;
@@ -109,8 +112,17 @@ let create_from instr =
     [] |> parse_operand kinds instr
   in
 
+  let parse_type instr =
+    let type_reg = Re.Pcre.regexp "\\[Type: ([^\\(\\[\\{]+)\\]$" in
+
+    try Some (Re.Group.get (Re.exec type_reg instr) 1) with Not_found -> None
+  in
+
   let opcode = parse_opcode instr in
   let kind = opcode |> Opcode.get_kind in
   let operands = parse_operands kind instr in
+  let types =
+    match parse_type instr with Some t -> Types.of_str t | None -> Types.none
+  in
 
-  create opcode operands
+  create ~types opcode operands
