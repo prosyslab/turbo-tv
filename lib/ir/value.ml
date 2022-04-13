@@ -86,7 +86,9 @@ let or_ lval rval =
   let lty = ty_of lval in
   BitVec.orb (data_of lval) (data_of rval) |> entype lty
 
-let not_ value = BitVec.notb value
+let not_ value =
+  let ty = ty_of value in
+  BitVec.notb (data_of value) |> entype ty
 
 let shl lval rval =
   let lty = ty_of lval in

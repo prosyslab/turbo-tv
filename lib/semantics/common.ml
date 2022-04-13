@@ -50,7 +50,8 @@ let number_constant vid c =
  * incoming: | --- idx[0] ---| --- idx[1] --- | --- ... --- | 
  * well-defined condition: 
  * - 0 <= idx <= 2 ^ idx <= ||incoming|| 
- * behavior: ite well-defined value=incoming[idx] value=UB *)
+ * assertion: 
+ *  value = ite well-defined value=incoming[idx] value=UB *)
 let projection vid idx incoming =
   (* currently, idx of projection is assumebed to be less than 2 *)
   let value = Value.init vid in
@@ -61,83 +62,78 @@ let projection vid idx incoming =
   in
   (value, assertion)
 
-(* [TODO] Improve BB related operators: Branch, IfTrue, IfFalse, Merge, ... *)
-(* | --- True Condition --- | --- False Condition --- | *)
-(* True condition: precond ^ cond *)
-(* False condition: precond ^ not cond *)
+(* well-defined condition:
+ * - Bool(cond) ^ Bool(precond)
+ * - WellDefined(cond) ^ WellDefined(precond)
+ * assertion:
+ *  value = ite well-defined (precond ^ cond :: precond ^ not cond) (UB::UB) *)
 let branch vid cond precond =
   let value = Composed.init vid 2 in
-
-  let conds_are_bool =
-    Bool.ands
-      [ Value.has_type Type.bool cond; Value.has_type Type.bool precond ]
-  in
-  let conds_are_defined =
-    Bool.ands [ Value.is_defined cond; Value.is_defined precond ]
-  in
-
-  let is_well_defined = Bool.ands [ conds_are_bool; conds_are_defined ] in
-  let defined =
-    let true_cond = Value.and_ precond cond |> Value.cast Type.bool in
-    let false_cond =
-      Value.and_ precond (Value.not_ cond) |> Value.cast Type.bool
+  let wd_cond =
+    let conds_are_bool =
+      Bool.ands
+        [ Value.has_type Type.bool cond; Value.has_type Type.bool precond ]
     in
-    Value.eq value (BitVec.concat true_cond false_cond)
+    let conds_are_defined =
+      Bool.ands [ Value.is_defined cond; Value.is_defined precond ]
+    in
+    Bool.ands [ conds_are_bool; conds_are_defined ]
   in
-  let undefined =
-    let ubool = Value.undefined |> Value.cast Type.bool in
-    Value.eq value (BitVec.concat ubool ubool)
+  let wd_value =
+    let tr_v = Value.and_ precond cond in
+    let fl_v = Value.and_ precond (Value.not_ cond) in
+    Composed.from_values [ tr_v; fl_v ]
   in
-
-  let assertion = Bool.ite is_well_defined defined undefined in
+  let ud_value = Composed.from_values [ Value.undefined; Value.undefined ] in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value ud_value) in
   (value, assertion)
 
+(* well-defined condition:
+ * - Bool(FalseCond(cond))
+ * - WellDefined(FalseCond(cond))
+ * assertion:
+ *  value = ite well-defined FalseCond(Cond) UB *)
 let if_false vid cond =
   let value = Value.init vid in
-
   let false_cond = cond |> Composed.second_of in
-  let cond_is_defined = Value.is_defined false_cond in
-  let cond_is_bool = false_cond |> Value.has_type Type.bool in
-
-  let is_well_defined = Bool.ands [ cond_is_defined; cond_is_bool ] in
-  let defined = Value.eq value false_cond in
-  let undefined = Value.eq value (Value.undefined |> Value.cast Type.bool) in
-
-  let assertion = Bool.ite is_well_defined defined undefined in
+  let wd_cond =
+    let cond_is_defined = Value.is_defined false_cond in
+    let cond_is_bool = false_cond |> Value.has_type Type.bool in
+    Bool.ands [ cond_is_bool; cond_is_defined ]
+  in
+  let assertion =
+    Value.eq value (Bool.ite wd_cond false_cond Value.undefined)
+  in
   (value, assertion)
 
+(* well-defined condition:
+ *  - Bool(TrueCond(cond))
+ *  - WellDefined(TrueCond(cond))
+ * assertion:
+ *  value = ite well-defined TrueCond(Cond) UB *)
 let if_true vid cond =
   let value = Value.init vid in
-
   let true_cond = cond |> Composed.first_of in
-  let is_cond_defined = Value.is_defined true_cond in
-  let is_cond_bool = cond |> Value.has_type Type.bool in
-
-  let is_well_defined = Bool.ands [ is_cond_defined; is_cond_bool ] in
-  let defined = Value.eq value (cond |> Composed.first_of) in
-  let undefined = Value.eq value (Value.undefined |> Value.cast Type.bool) in
-
-  let assertion = Bool.ite is_well_defined defined undefined in
+  let wd_cond =
+    let is_cond_defined = Value.is_defined true_cond in
+    let is_cond_bool = cond |> Value.has_type Type.bool in
+    Bool.ands [ is_cond_bool; is_cond_defined ]
+  in
+  let assertion = Value.eq value (Bool.ite wd_cond true_cond Value.undefined) in
   (value, assertion)
 
 (* merge every incoming execution condition *)
 let merge vid conds =
   let value = Composed.init vid (List.length conds) in
-
-  if List.length conds = 0 then (
-    print_endline "SB: merge: empty condition list";
-    (value, Value.eq value (Value.empty |> Value.cast Type.bool)))
-  else
-    let rec concat_conds res conds =
-      match conds with
-      | [] -> res
-      | cond :: rest -> concat_conds (BitVec.concat res cond) rest
-    in
-
-    let assertion =
-      Value.eq value (concat_conds (List.hd conds) (List.tl conds))
-    in
-    (value, assertion)
+  let rec concat_conds res conds =
+    match conds with
+    | [] -> res
+    | cond :: rest -> concat_conds (BitVec.concat res cond) rest
+  in
+  let assertion =
+    Value.eq value (concat_conds (List.hd conds) (List.tl conds))
+  in
+  (value, assertion)
 
 (* common: procedure *)
 let parameter vid param =
