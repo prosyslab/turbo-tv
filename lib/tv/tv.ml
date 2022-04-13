@@ -70,7 +70,7 @@ let rec next program state =
         let nid = Operands.id_of_nth operands 0 in
         let cond_value = RegisterFile.find nid rf in
         if_true vid cond_value
-    | Start -> (Value.empty, Bool.tr)
+    | Start -> (Value.tr, Bool.tr)
     | Merge ->
         let conds = RegisterFile.find_all (operands |> Operands.id_of_all) rf in
         merge vid conds
@@ -81,7 +81,7 @@ let rec next program state =
           let param = List.nth params (pidx - 1) in
           parameter vid param
         else (Value.empty, Bool.tr)
-    | Call -> (Value.empty, Bool.tr)
+    | Call -> (Value.tr, Bool.tr)
     | Return ->
         let nid = Operands.id_of_nth operands 0 in
         let return_value = RegisterFile.find nid rf in
@@ -176,7 +176,7 @@ let rec next program state =
         let rval = RegisterFile.find rpid rf in
         word32sar vid hint lval rval
     (* machine: comparison *)
-    | StackPointerGreaterThan -> (Value.empty, Bool.tr)
+    | StackPointerGreaterThan -> (Value.tr, Bool.tr)
     | Word32And ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -236,9 +236,20 @@ let rec next program state =
     | _ -> (Value.empty, Bool.tr)
   in
 
-  let exec_cond =
+  let precond =
     match opcode with
-    | IfTrue | IfFalse -> Value.is_true value
+    | Branch ->
+        let precond_id = Operands.id_of_nth operands 1 in
+        let precond = RegisterFile.find precond_id rf in
+        precond |> Value.is_true
+    | IfTrue | IfFalse ->
+        let nid = Operands.id_of_nth operands 0 in
+        let cond_value = RegisterFile.find nid rf in
+        Bool.ors
+          [
+            Composed.first_of cond_value |> Value.is_true;
+            Composed.second_of cond_value |> Value.is_true;
+          ]
     | Merge ->
         let size = Composed.size_of value in
         let rec merge_conds res idx value =
@@ -248,21 +259,27 @@ let rec next program state =
             merge_conds (Value.or_ cond res) (idx + 1) value
         in
         merge_conds Value.fl 0 value |> Value.is_true
-    | End -> Bool.tr
+    | Start -> Bool.tr
+    | _ -> State.condition state
+  in
+
+  let updated_asrt =
+    Bool.ands
+      [
+        State.assertion state; Bool.ite precond assertion (Value.is_empty value);
+      ]
+  in
+
+  let postcond =
+    match opcode with
+    | IfTrue | IfFalse -> Value.is_true value
+    | Branch | Merge | Start -> precond
     | _ -> State.condition state
   in
 
   let updated_rf = RegisterFile.add vid value rf in
-  let updated_asrt =
-    Bool.ands
-      [
-        State.assertion state;
-        Bool.ite exec_cond assertion (Value.is_empty value);
-      ]
-  in
-
   let next_state =
-    State.update next_pc updated_rf exec_cond updated_asrt state
+    State.update next_pc updated_rf postcond updated_asrt state
   in
 
   if State.is_final next_state then
@@ -289,7 +306,6 @@ let run nparams before after =
   | SATISFIABLE ->
       let model = Option.get (Solver.get_model validator) in
       let model_str = model |> Model.to_str in
-
       Printf.printf "X -> \n";
       Printf.printf "Assertion: \n%s\n" (assertion |> str_of_simplified);
       Printf.printf "Model: \n%s" model_str
