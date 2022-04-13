@@ -198,6 +198,10 @@ module BitVec = struct
 
   let neqi lbv rval = B.mk_not ctx (eqi lbv rval)
 
+  let ugtb lbv rbv = BV.mk_ugt ctx lbv rbv
+
+  let ugti lbv rval = BV.mk_ugt ctx lbv (BitVecVal.from_int ~len:(len lbv) rval)
+
   let sgeb lbv rbv = BV.mk_sge ctx lbv rbv
 
   let sgei lbv rval = BV.mk_sge ctx lbv (BitVecVal.from_int ~len:(len lbv) rval)
@@ -240,9 +244,13 @@ module BitVec = struct
   let subi lbv rval = BV.mk_sub ctx lbv (BitVecVal.from_int ~len:(len lbv) rval)
 
   (* rbv != 0 && lbv % rbv *)
-  let modb lbv rbv =
-    let zdiv_cond = neqi rbv 0 in
-    andb zdiv_cond (BV.mk_smod ctx lbv rbv)
+  let modb lbv rbv = BV.mk_smod ctx lbv rbv
+
+  let modi lbv rval =
+    if rval = 0 then failwith "modi: division by zero"
+    else
+      let rbv = BitVecVal.from_int ~len:(len lbv) rval in
+      modb lbv rbv
 
   let ashrb lbv rbv = BV.mk_ashr ctx lbv rbv
 

@@ -4,17 +4,14 @@ open Z3utils
 let speculative_safe_integer_add vid lval rval =
   let value = Value.init vid in
 
-  let res =
-    Value.mask (Value.add lval rval) (Value.from_int Type.smi_mask)
-    |> Value.cast Type.tagged_signed
-  in
+  let res = Value.andi (Value.add lval rval) Type.smi_mask in
 
   let assertion =
     Bool.ands
       [
         Value.has_type Type.tagged_signed lval;
         Value.has_type Type.tagged_signed rval;
-        Value.is_equal value res;
+        Value.eq value res;
       ]
   in
 
@@ -42,27 +39,25 @@ let number_expm1 vid pval =
 
   let well_defined =
     Bool.ite
-      (Value.is_equal pval Value.minus_zero)
+      (Value.eq pval Value.minus_zero)
       Value.minus_zero
-      (Bool.ite
-         (Value.is_equal pval Value.inf)
-         Value.inf
-         (Bool.ite
-            (Value.is_equal pval Value.ninf)
-            (Float.from_string ~sort:Float.double_sort "-1"
-            |> Float.to_ieee_bv |> Value.entype Type.float64)
+      (Bool.ite (Value.eq pval Value.inf) Value.inf
+         (Bool.ite (Value.eq pval Value.ninf)
+            (Float.from_string "-1" |> Float.to_ieee_bv
+           |> Value.entype Type.float64)
             (Bool.ite
-               (Value.is_equal pval Value.nan)
-               Value.nan
+               (Value.eq pval
+                  (Value.nan |> Float.to_ieee_bv |> Value.entype Type.float64))
+               (Value.nan |> Float.to_ieee_bv |> Value.entype Type.float64)
                (Bool.ite
-                  (Value.is_weak_equal pval Value.zero)
-                  (Float.from_string ~sort:Float.double_sort "0"
-                  |> Float.to_ieee_bv |> Value.entype Type.float64)
+                  (Value.weak_eq pval Value.zero)
+                  (Float.from_string "0" |> Float.to_ieee_bv
+                 |> Value.entype Type.float64)
                   (Z3.FuncDecl.apply expm_decl [ pval ])))))
   in
 
   let assertion =
-    Value.is_equal value (Bool.ite if_well_defined well_defined Value.undefined)
+    Value.eq value (Bool.ite if_well_defined well_defined Value.undefined)
   in
   (value, assertion)
 
@@ -102,10 +97,8 @@ let change_int32_to_tagged vid pval mem =
 
   mem := Memory.store ptr 12 ovf_check would_be_stored !mem;
 
-  let if_ovf = Bool.ands [ Value.is_equal value ptr; assertion ] in
-  let if_not_ovf =
-    Value.is_equal value (Value.entype Type.tagged_signed tagged)
-  in
+  let if_ovf = Bool.ands [ Value.eq value ptr; assertion ] in
+  let if_not_ovf = Value.eq value (Value.entype Type.tagged_signed tagged) in
 
   let assertion = Bool.ite ovf_check if_ovf if_not_ovf in
   (value, assertion)
@@ -116,7 +109,7 @@ let change_int32_to_float64 vid pval =
     Bool.ands
       [
         Value.has_type Type.int32 pval;
-        Value.is_equal value (pval |> Value.cast Type.tagged_signed);
+        Value.eq value (pval |> Value.cast Type.tagged_signed);
       ]
   in
   (value, assertion)
@@ -128,8 +121,7 @@ let checked_tagged_signed_to_int32 vid pval =
   (* let deopt = Bool.not (is_tagged_signed pval) in *)
   let result = BitVec.ashri (Value.data_of pval) 1 |> Value.entype Type.int32 in
   let assertion =
-    Bool.ands
-      [ Value.has_type Type.tagged_signed pval; Value.is_equal value result ]
+    Bool.ands [ Value.has_type Type.tagged_signed pval; Value.eq value result ]
   in
 
   (value, assertion)

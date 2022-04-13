@@ -10,7 +10,7 @@ let int32_constant vid c =
     Bool.ands [ Value.sge c Value.int32_min; Value.sle c Value.int32_max ]
   in
   let wd_cond = c_can_be_int32 in
-  let assertion = Value.is_equal value (Bool.ite wd_cond c Value.undefined) in
+  let assertion = Value.eq value (Bool.ite wd_cond c Value.undefined) in
   (value, assertion)
 
 (* well-defined condition: INT64_MIN <= c <= INT64_MAX
@@ -21,7 +21,7 @@ let int64_constant vid c =
     Bool.ands [ Value.sge c Value.int64_min; Value.sle c Value.int64_max ]
   in
   let wd_cond = c_can_be_int64 in
-  let assertion = Value.is_equal value (Bool.ite wd_cond c Value.undefined) in
+  let assertion = Value.eq value (Bool.ite wd_cond c Value.undefined) in
   (value, assertion)
 
 (* well-defined condition: UINT64_MIN <= c <= UINT64_MAX
@@ -32,7 +32,7 @@ let external_constant vid c =
     Bool.ands [ Value.uge c Value.uint64_min; Value.ule c Value.uint64_max ]
   in
   let wd_cond = c_can_be_pointer in
-  let assertion = Value.is_equal value (Bool.ite wd_cond c Value.undefined) in
+  let assertion = Value.eq value (Bool.ite wd_cond c Value.undefined) in
   (value, assertion)
 
 let heap_constant = external_constant
@@ -42,7 +42,7 @@ let heap_constant = external_constant
 
 let number_constant vid c =
   let value = Value.init vid in
-  let assertion = Value.is_equal value c in
+  let assertion = Value.eq value c in
   (value, assertion)
 
 (* common: control *)
@@ -57,7 +57,7 @@ let projection vid idx incoming =
   let wd_cond = 0 <= idx && idx < 2 && idx <= Composed.size_of incoming in
   let wd_value = incoming |> Composed.select idx in
   let assertion =
-    Value.is_equal value (if wd_cond then wd_value else Value.undefined)
+    Value.eq value (if wd_cond then wd_value else Value.undefined)
   in
   (value, assertion)
 
@@ -82,11 +82,11 @@ let branch vid cond precond =
     let false_cond =
       Value.and_ precond (Value.not_ cond) |> Value.cast Type.bool
     in
-    Value.is_equal value (BitVec.concat true_cond false_cond)
+    Value.eq value (BitVec.concat true_cond false_cond)
   in
   let undefined =
     let ubool = Value.undefined |> Value.cast Type.bool in
-    Value.is_equal value (BitVec.concat ubool ubool)
+    Value.eq value (BitVec.concat ubool ubool)
   in
 
   let assertion = Bool.ite is_well_defined defined undefined in
@@ -100,10 +100,8 @@ let if_false vid cond =
   let cond_is_bool = false_cond |> Value.has_type Type.bool in
 
   let is_well_defined = Bool.ands [ cond_is_defined; cond_is_bool ] in
-  let defined = Value.is_equal value false_cond in
-  let undefined =
-    Value.is_equal value (Value.undefined |> Value.cast Type.bool)
-  in
+  let defined = Value.eq value false_cond in
+  let undefined = Value.eq value (Value.undefined |> Value.cast Type.bool) in
 
   let assertion = Bool.ite is_well_defined defined undefined in
   (value, assertion)
@@ -116,10 +114,8 @@ let if_true vid cond =
   let is_cond_bool = cond |> Value.has_type Type.bool in
 
   let is_well_defined = Bool.ands [ is_cond_defined; is_cond_bool ] in
-  let defined = Value.is_equal value (cond |> Composed.first_of) in
-  let undefined =
-    Value.is_equal value (Value.undefined |> Value.cast Type.bool)
-  in
+  let defined = Value.eq value (cond |> Composed.first_of) in
+  let undefined = Value.eq value (Value.undefined |> Value.cast Type.bool) in
 
   let assertion = Bool.ite is_well_defined defined undefined in
   (value, assertion)
@@ -130,7 +126,7 @@ let merge vid conds =
 
   if List.length conds = 0 then (
     print_endline "SB: merge: empty condition list";
-    (value, Value.is_equal value (Value.empty |> Value.cast Type.bool)))
+    (value, Value.eq value (Value.empty |> Value.cast Type.bool)))
   else
     let rec concat_conds res conds =
       match conds with
@@ -139,19 +135,17 @@ let merge vid conds =
     in
 
     let assertion =
-      Value.is_equal value (concat_conds (List.hd conds) (List.tl conds))
+      Value.eq value (concat_conds (List.hd conds) (List.tl conds))
     in
     (value, assertion)
 
 (* common: procedure *)
 let parameter vid param =
   let value = Value.init vid in
-  let assertion =
-    Value.is_equal value (param |> Value.cast Type.tagged_signed)
-  in
+  let assertion = Value.eq value (param |> Value.cast Type.tagged_signed) in
   (value, assertion)
 
 let return vid return_value =
   let value = Value.init vid in
-  let assertion = Value.is_equal value return_value in
+  let assertion = Value.eq value return_value in
   (value, assertion)

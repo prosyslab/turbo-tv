@@ -3,251 +3,298 @@ module Composed = Value.Composed
 module Repr = MachineType.Repr
 
 (* machine: arithmetic *)
-(* value = (lval + rval) mod 2^32 *)
+(* well-defined condition: 
+ * - int32(lval) ^ int32(rval)
+ * - well_defined(lval) ^ well_defined(rval)
+ * assertion:
+ * value = ite well-defined ((lval+rval) mod 2**32) UB *)
 let int32add vid lval rval =
   let value = Value.init vid in
-  let res =
-    Value.mask (Value.add lval rval) (Type.smi_mask |> Value.from_int)
-    |> Value.cast Type.int32
+  let wd_cond =
+    let type_is_int32 =
+      Bool.ands
+        [ Value.has_type Type.int32 lval; Value.has_type Type.int32 rval ]
+    in
+    let is_well_defined =
+      Bool.ands [ Value.is_defined lval; Value.is_defined rval ]
+    in
+    Bool.ands [ type_is_int32; is_well_defined ]
   in
-
-  let assertion =
-    Bool.ands
-      [
-        Value.has_type Type.int32 lval;
-        Value.has_type Type.int32 rval;
-        Value.is_equal value res;
-      ]
-  in
-
+  let wd_value = Value.andi (Value.add lval rval) Type.smi_mask in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, assertion)
 
+(* well-defined condition:
+ * - int32(lval) ^ int32(rval)
+ * - well_defined(lval) ^ well_defined(rval)
+ * assertion: 
+ * value = ite well-defined ((lval+rval) mod 2**32)::(lval+rval > smi_max) UB *)
 let int32add_with_overflow vid lval rval =
   let value = Composed.init vid 2 in
-
-  let ldata = Value.data_of lval in
-  let rdata = Value.data_of rval in
-  let res =
-    BitVec.andi (BitVec.addb ldata rdata) Type.smi_mask
-    |> Value.entype Type.int32
+  let wd_cond =
+    let type_is_int32 =
+      Bool.ands
+        [ Value.has_type Type.int32 lval; Value.has_type Type.int32 rval ]
+    in
+    let is_well_defined =
+      Bool.ands [ Value.is_defined lval; Value.is_defined rval ]
+    in
+    Bool.ands [ type_is_int32; is_well_defined ]
   in
-  let ovf =
-    Bool.ite
-      (BitVec.ulti (BitVec.addb ldata rdata) Type.smi_max)
-      (BitVecVal.tr ()) (BitVecVal.fl ())
-    |> Value.entype Type.bool
+  let wd_value =
+    let added = Value.add lval rval in
+    let res = Value.andi added Type.smi_mask in
+    let ovf = Bool.ite (Value.ugti added Type.smi_max) Value.tr Value.fl in
+    Composed.from_values [ res; ovf ]
   in
+  let ud_value = Composed.from_values [ Value.undefined; Value.undefined ] in
 
-  let assertion =
-    Bool.ands
-      [
-        Value.has_type Type.int32 lval;
-        Value.has_type Type.int32 rval;
-        Value.is_equal (Composed.second_of value) ovf;
-        Value.is_equal (Composed.first_of value) res;
-      ]
-  in
-
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value ud_value) in
   (value, assertion)
 
-(* var = (lval + rval) mod 2^64 *)
+(* well-defined condition:
+ * - int64(lval) ^ int64(rval)
+ * - well_defined(lval) ^ well_defined(rval)
+ * assertion: 
+ * value = ite well-defined ((lval+rval) mod 2**64) UB *)
 let int64add vid lval rval =
   let value = Value.init vid in
-
-  let ldata = Value.data_of lval in
-  let rdata = Value.data_of rval in
-  let res = BitVec.addb ldata rdata |> Value.entype Type.int64 in
-
-  let assertion =
-    Bool.ands
-      [
-        Value.has_type Type.int64 lval;
-        Value.has_type Type.int64 rval;
-        Value.is_equal value res;
-      ]
+  let wd_cond =
+    let type_is_int64 =
+      Bool.ands
+        [ Value.has_type Type.int64 lval; Value.has_type Type.int64 rval ]
+    in
+    let is_well_defined =
+      Bool.ands [ Value.is_defined lval; Value.is_defined rval ]
+    in
+    Bool.ands [ type_is_int64; is_well_defined ]
   in
-
+  let wd_value = Value.add lval rval in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, assertion)
 
+(* Well-defined condition:
+ * - int64(lval) ^ int64(rval)
+ * - well_defined(lval) ^ well_defined(rval)
+ * assertion: 
+ * value = ite well-defined (lval-rval) UB *)
 let int64sub vid lval rval =
   let value = Value.init vid in
-
-  let ldata = Value.data_of lval in
-  let rdata = Value.data_of rval in
-  let res = BitVec.subb ldata rdata |> Value.entype Type.int64 in
-
-  let assertion =
-    Bool.ands
-      [
-        Value.has_type Type.int64 lval;
-        Value.has_type Type.int64 rval;
-        Value.is_equal value res;
-      ]
+  let wd_cond =
+    let type_is_int64 =
+      Bool.ands
+        [ Value.has_type Type.int64 lval; Value.has_type Type.int64 rval ]
+    in
+    let is_well_defined =
+      Bool.ands [ Value.is_defined lval; Value.is_defined rval ]
+    in
+    Bool.ands [ type_is_int64; is_well_defined ]
   in
-
+  let wd_value = Value.sub lval rval in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, assertion)
 
+(* well-defined conditions:
+ * - well_defined(lval) ^ well_defined(rval)
+ * - word32(lval) ^ word32(rval)
+ * - hint = "ShiftOutZero" ^ off = (rval mod 32) -> lval[-off:] = 0
+ * assertion:
+ * value = ite well-defined (lval >> ((rval mod 32)) UB 
+ *)
 let word32sar vid hint lval rval =
   let value = Value.init vid in
-
-  let is_shift_out_zero =
-    if String.equal hint "ShfitOutZero" then Bool.tr else Bool.fl
+  let off = Value.modi rval 32 in
+  let wd_cond =
+    let is_well_defined =
+      Bool.ands [ Value.is_defined lval; Value.is_defined rval ]
+    in
+    let repr_is_word32 =
+      Bool.ands
+        [ Value.has_repr Repr.Word32 lval; Value.has_repr Repr.Word32 lval ]
+    in
+    let hint_is_shift_out_zero = String.equal hint "ShfitOutZero" in
+    if hint_is_shift_out_zero then
+      let shift_out = Value.mask lval off in
+      let shift_out_is_zero = Value.eq shift_out Value.zero in
+      Bool.ands [ is_well_defined; repr_is_word32; shift_out_is_zero ]
+    else Bool.ands [ is_well_defined; repr_is_word32 ]
   in
+  let wd_value = Value.ashr lval off in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, assertion)
 
-  let ldata = Value.data_of lval in
-  let rdata = Value.data_of rval in
-  let lval_ty = Value.ty_of lval in
-
-  let res =
-    BitVec.andi (BitVec.ashrb ldata rdata) Type.smi_mask |> Value.entype lval_ty
+(* machine: logic *)
+(* well-defined condition:
+ * - well_defined(lval) ^ well_defined(rval)
+ * - word32(lval) ^ word32(rval)
+ * assertion:
+ * value = ite well-defined (lval & rval) UB *)
+let word32and vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    let is_well_defined =
+      Bool.ands [ Value.is_defined lval; Value.is_defined rval ]
+    in
+    let repr_is_word32 =
+      Bool.ands
+        [ Value.has_repr Repr.Word32 lval; Value.has_repr Repr.Word32 rval ]
+    in
+    Bool.ands [ is_well_defined; repr_is_word32 ]
   in
-
-  let assertion =
-    Bool.ands
-      [
-        Value.has_repr Repr.Word32 lval;
-        Value.has_repr Repr.Word32 rval;
-        Value.is_equal value res;
-        Bool.ors
-          [
-            is_shift_out_zero;
-            (* TODO: undef *)
-            Value.is_weak_equal res Value.empty;
-          ];
-      ]
-  in
+  let wd_value = Value.and_ lval rval in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, assertion)
 
 (* machine: comparison *)
-let word32and vid lval rval =
-  let value = Value.init vid in
-  let ldata = Value.data_of lval in
-  let rdata = Value.data_of rval in
-  let ty = Value.ty_of lval in
-  let res = BitVec.andb ldata rdata |> Value.entype ty in
-  let assertion =
-    Bool.ands
-      [
-        Value.has_repr Repr.Word32 lval;
-        Value.has_repr Repr.Word32 rval;
-        Value.is_equal value res;
-      ]
-  in
-  (value, assertion)
-
+(* well-defined condition:
+ * - well_defined(lval) ^ well_defined(rval)
+ * - word32(lval) ^ word32(rval)
+ * assertion: 
+ * value = ite well-defined (lval = rval) UB *)
 let word32equal vid lval rval =
   let value = Value.init vid in
-  let ldata = Value.data_of lval in
-  let rdata = Value.data_of rval in
-  let res =
-    Bool.ite (BitVec.eqb ldata rdata) (BitVecVal.tr ()) (BitVecVal.fl ())
-    |> Value.entype Type.bool
-  in
-
-  let assertion =
+  let wd_cond =
     Bool.ands
-      [
-        Value.has_repr Repr.Word32 lval;
-        Value.has_repr Repr.Word32 rval;
-        Value.is_equal value res;
-      ]
+      [ Value.has_repr Repr.Word32 lval; Value.has_repr Repr.Word32 rval ]
   in
-
+  let wd_value = Bool.ite (Value.weak_eq lval rval) Value.tr Value.fl in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, assertion)
 
+(* well-defined condition:
+ * - well_defined(lval) ^ well_defined(rval)
+ * - uint64(lval) ^ uint64(rval)
+ * assertion: 
+ * value = ite well-defined (lval < rval) UB *)
 let uint64less_than vid lval rval =
   let value = Value.init vid in
-  let res = Bool.ite (Value.ult lval rval) Value.tr Value.fl in
-
-  let assertion =
-    Bool.ands
-      [
-        Value.has_type Type.uint64 lval;
-        Value.has_type Type.uint64 rval;
-        Value.is_equal value res;
-      ]
+  let wd_cond =
+    let is_well_defined =
+      Bool.ands [ Value.is_defined lval; Value.is_defined rval ]
+    in
+    let type_is_uint64 =
+      Bool.ands
+        [ Value.has_type Type.uint64 lval; Value.has_type Type.uint64 rval ]
+    in
+    Bool.ands [ is_well_defined; type_is_uint64 ]
   in
-
+  let wd_value = Bool.ite (Value.ult lval rval) Value.tr Value.fl in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, assertion)
 
 (* machine: memory *)
-(* wip: handling undef *)
+(* condition:
+ * - well_defined(ptr) ^ well_defined(pos)
+ * - pointer(ptr)
+ * - can_access(ptr, pos, size)
+ * behavior:
+ * - not condition -> UB
+ * - condition -> Mem[pos+size] := value *)
 let store ptr pos repr value mem =
   (* ptr must be pointer type & well-defined *)
   let ptr_is_pointer = Value.has_type Type.pointer ptr in
   let ptr_is_defined = Value.is_defined ptr in
-
   (* check index out-of-bounds *)
-  let can_write = Pointer.can_access_as pos repr ptr in
-  let condition = Bool.ands [ ptr_is_pointer; ptr_is_defined; can_write ] in
+  let pos_is_defined = Value.is_defined pos in
+  let can_access = Pointer.can_access_as pos repr ptr in
+  let condition =
+    Bool.ands [ ptr_is_pointer; ptr_is_defined; pos_is_defined; can_access ]
+  in
 
   let store_size = repr |> Repr.size_of in
   mem := Memory.store ptr store_size condition value !mem;
-  (Value.empty, Bool.tr)
 
-(* wip: handling undef *)
+  (* if condition is not satisfied then UB would occur *)
+  let assertion = Bool.ite condition Bool.tr Bool.fl in
+  (Value.empty, assertion)
+
+(* well-defined condition:
+ * - well_defined(ptr) ^ well_defined(pos)
+ * - pointer(ptr) ^ repr(pos)
+ * - can_access(ptr, pos, size)
+ * assertion:
+ * value = ite well-defined (Mem[pos+size]) UB *)
 let load vid ptr pos repr mem =
-  (* ptr must be pointer type & well-defined *)
-  let ptr_is_pointer = Value.has_type Type.pointer ptr in
-  let ptr_is_defined = Value.is_defined ptr in
-
-  (* check index out-of-bounds *)
-  let can_write = Pointer.can_access_as pos repr ptr in
-  let condition = Bool.ands [ ptr_is_pointer; ptr_is_defined; can_write ] in
-
   let value = Value.init vid in
-  let loaded = Memory.load_as (Pointer.move ptr pos) repr mem in
+  let wd_cond =
+    (* ptr must be pointer type & well-defined *)
+    let ptr_is_pointer = Value.has_type Type.pointer ptr in
+    let ptr_is_defined = Value.is_defined ptr in
 
+    (* pos must be well-defined *)
+    let pos_is_defined = Value.is_defined pos in
+
+    (* check index out-of-bounds *)
+    let no_oob = Pointer.can_access_as pos repr ptr in
+    Bool.ands [ ptr_is_pointer; ptr_is_defined; pos_is_defined; no_oob ]
+  in
+
+  (* Some repr can be mapped to more than one type.
+     e.g. Repr.Word8-> [Type.int8; Type.uint8]
+     In this case, we pick the head of the type candidates.*)
+  let ty = Type.from_repr repr |> List.hd in
+  let wd_value =
+    Memory.load_as (Pointer.move ptr pos) repr mem |> Value.entype ty
+  in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, assertion)
+
+(* machine: type-conversion 
+ * well-defined condition:
+ * - well_defined(v) ^ tagged(v)
+ * assertion:
+ * value = ite well-defined word(v) UB *)
+let bitcast_tagged_to_word vid v =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands [ Value.is_defined v; Value.has_type Type.any_tagged v ]
+  in
+  let ty = Type.from_repr Repr.Word64 |> List.hd in
   let assertion =
-    Bool.ite condition
-      (Value.is_weak_equal value loaded)
-      (Value.is_equal value Value.undefined)
+    Value.eq value (Bool.ite wd_cond (v |> Value.cast ty) Value.undefined)
   in
   (value, assertion)
 
-(* machine: type-conversion *)
-let bitcast_tagged_to_word vid pval =
+(* machine: type-conversion
+   * well-defined condition:
+   * - well_defined(v) ^ word32(v)
+   * assertion:
+   * value = ite well-defined word64(v) UB *)
+let bitcast_word32_to_word64 vid v =
   let value = Value.init vid in
-  let assertion =
-    Bool.ands
-      [
-        Value.has_type Type.any_tagged pval;
-        Value.is_equal value (pval |> Value.cast Type.uint64);
-      ]
+  let wd_cond =
+    Bool.ands [ Value.is_defined v; Value.has_repr Repr.Word32 v ]
   in
-
-  (value, assertion)
-
-let bitcast_word32_to_word64 vid pval =
-  let value = Value.init vid in
+  let ty = Type.from_repr Repr.Word64 |> List.hd in
   let assertion =
-    Bool.ands
-      [
-        Value.has_repr Repr.Word32 pval;
-        Value.is_equal value (pval |> Value.cast Type.uint64);
-      ]
-  in
-
-  (value, assertion)
-
-let bitcast_word_to_tagged vid pval =
-  let value = Value.init vid in
-  let assertion =
-    Bool.ands
-      [
-        Value.has_repr Word32 pval;
-        Value.is_equal value (pval |> Value.cast Type.any_tagged);
-      ]
+    Value.eq value (Bool.ite wd_cond (v |> Value.cast ty) Value.undefined)
   in
   (value, assertion)
 
-let truncate_int64_to_int32 vid pval =
+(* machine: type-conversion
+ * well-defined condition:
+ * - well_defined(v) ^ any_tagged(v)
+ * assertion:
+ * value = ite well-defined tagged(v) UB *)
+let bitcast_word_to_tagged vid v =
   let value = Value.init vid in
-  let assertion =
-    Bool.ands
-      [
-        Value.has_type Type.int64 pval;
-        Value.is_equal value (pval |> Value.cast Type.int32);
-      ]
+  let wd_cond =
+    Bool.ands [ Value.is_defined v; Value.has_repr Repr.Word64 v ]
   in
+  let ty = Type.from_repr Repr.Tagged |> List.hd in
+  let assertion =
+    Value.eq value (Bool.ite wd_cond (v |> Value.cast ty) Value.undefined)
+  in
+  (value, assertion)
+
+(* machine: type-conversion
+   * well-defined condition:
+   * - well_defined(v) ^ int64(v)
+   * assertion:
+   * value = ite well-defined int32(v) UB *)
+let truncate_int64_to_int32 vid v =
+  let value = Value.init vid in
+  let wd_cond = Bool.ands [ Value.is_defined v; Value.has_type Type.int64 v ] in
+  let wd_value = Value.maski v 32 |> Value.cast Type.int32 in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, assertion)

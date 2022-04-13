@@ -9,7 +9,7 @@ let next_bid = ref 1
    16-47: bid
    48-63: size of struct
    64-68: value type(Pointer)
-   69-70: undef
+   69: undef
 *)
 (* High |u|-ty-|--sz--|--bid--|-offset-| Low *)
 let size_len = 16
@@ -48,8 +48,8 @@ let can_access pos sz t =
   (* no out-of-bounds *)
   let struct_size = Value.from_bv (size_of t) in
   let out_of_lb = Value.slt pos (0 |> Value.from_int) in
-  let out_of_ub = Value.uge (BitVec.addi pos sz) struct_size in
-  Bool.ands [ Bool.not out_of_lb; Bool.not out_of_ub ]
+  let out_of_ub = Value.uge (Value.addi pos sz) struct_size in
+  Bool.not (Bool.ors [ out_of_lb; out_of_ub ])
 
 (* can read as [repr] *)
 let can_access_as pos repr t =

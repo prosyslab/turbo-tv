@@ -97,7 +97,7 @@ let rec next program state =
                (fun rv ->
                  Bool.ite
                    (Value.has_type Type.empty rv)
-                   Bool.tr (Value.is_equal value rv))
+                   Bool.tr (Value.eq value rv))
                return_values)
         in
         (value, assertion)

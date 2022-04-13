@@ -51,10 +51,6 @@ let has_repr repr t =
   let tys_of_repr = Type.from_repr repr in
   Bool.ors (List.map (fun ty_candid -> has_type ty_candid t) tys_of_repr)
 
-let is_equal lval rval = BitVec.eqb lval rval
-
-let is_weak_equal lval rval = BitVec.eqb (data_of lval) (data_of rval)
-
 let can_be_float64 s =
   String.contains s '.' || String.equal s "-0" || String.equal s "inf"
   || String.equal s "-inf"
@@ -74,9 +70,17 @@ let addi value i =
   let ty = ty_of value in
   BitVec.addi (data_of value) i |> entype ty
 
+let sub lval rval =
+  let lty = ty_of lval in
+  BitVec.subb (data_of lval) (data_of rval) |> entype lty
+
 let and_ lval rval =
   let lty = ty_of lval in
   BitVec.andb (data_of lval) (data_of rval) |> entype lty
+
+let andi value mask =
+  let ty = ty_of value in
+  BitVec.andi (data_of value) mask |> entype ty
 
 let or_ lval rval =
   let lty = ty_of lval in
@@ -100,25 +104,41 @@ let ashr lval rval =
   let lty = ty_of lval in
   BitVec.ashrb (data_of lval) (data_of rval) |> entype lty
 
-let mask lval rval =
+let mod_ lval rval =
   let lty = ty_of lval in
-  BitVec.andb (data_of lval) (data_of rval) |> entype lty
+  BitVec.modb (data_of lval) (data_of rval) |> entype lty
+
+let modi value n = BitVec.modi (data_of value) n |> entype (ty_of value)
 
 (* compare two values and return bool *)
+let eq lval rval = BitVec.eqb lval rval
+
+let weak_eq lval rval = BitVec.eqb (data_of lval) (data_of rval)
+
 let slt lval rval = BitVec.sltb (data_of lval) (data_of rval)
 
 let ult lval rval = BitVec.ultb (data_of lval) (data_of rval)
+
+let ulti value i = BitVec.ulti (data_of value) i
 
 let sle lval rval = BitVec.sleb (data_of lval) (data_of rval)
 
 let ule lval rval = BitVec.uleb (data_of lval) (data_of rval)
 
+let ugt lval rval = BitVec.ugtb (data_of lval) (data_of rval)
+
+let ugti value i = BitVec.ugti (data_of value) i
+
 let sge lval rval = BitVec.sgeb (data_of lval) (data_of rval)
 
 let uge lval rval = BitVec.ugeb (data_of lval) (data_of rval)
 
+let mask value bitlen = mod_ value (shl (from_int 1) bitlen)
+
+let maski value bitlen = andi value (Int.shift_left 1 bitlen - 1)
+
 (* defined & undefined *)
-let undefined = BitVec.lshri (BitVecVal.from_int ~len 1) (ty_len + data_len)
+let undefined = BitVec.shli (BitVecVal.from_int ~len 1) (ty_len + data_len)
 
 let is_undefined value = BitVec.eqb undefined (BitVec.andb undefined value)
 
@@ -129,17 +149,17 @@ let set_undefined value = BitVec.orb undefined value
 let set_defined value = BitVec.andb (BitVec.notb undefined) value
 
 (* constant values *)
-let empty = from_int 0 |> cast Type.empty |> set_defined
+let empty = from_int 0 |> cast Type.empty
 
-let tr = addi empty 1 |> cast Type.bool |> set_defined
+let tr = addi empty 1 |> cast Type.bool
 
-let is_true value = is_equal tr value
+let is_true value = eq tr value
 
-let fl = empty |> cast Type.bool |> set_defined
+let fl = empty |> cast Type.bool
 
-let is_false value = is_equal fl value
+let is_false value = eq fl value
 
-let zero = BitVecVal.zero ~len ()
+let zero = BitVecVal.zero () |> entype Type.const
 
 (* IEEE-754 constant values *)
 let inf = BitVecVal.inf () |> entype Type.float64
@@ -172,12 +192,17 @@ let uint64_max = BitVec.addi (BitVec.shli int64_max 1) 1
 
 let is_empty value =
   let size = BitVec.len value / len in
-  is_equal value (BitVec.repeat size empty)
+  eq value (BitVec.repeat size empty)
 
 module Composed = struct
   type t = BitVec.t
 
   let init name size = BitVec.init ~len:(len * size) name
+
+  let from_values values =
+    List.fold_left
+      (fun res value -> BitVec.concat res value)
+      (List.hd values) (List.tl values)
 
   let size_of t = BitVec.len t / len
 
