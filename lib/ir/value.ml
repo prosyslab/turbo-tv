@@ -163,7 +163,7 @@ let is_false value = eq fl value
 
 let zero = BitVecVal.zero () |> entype Type.const
 
-(* IEEE-754 constant values *)
+(* IEEE-754 *)
 let inf = BitVecVal.inf () |> entype Type.float64
 
 let ninf = BitVecVal.ninf () |> entype Type.float64

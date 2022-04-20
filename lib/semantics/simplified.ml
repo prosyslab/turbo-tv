@@ -1,6 +1,11 @@
 open Z3utils
 
 (* simplified: arithmetic *)
+(* well-defined condition:
+ * - TaggedSigned(lval) ^ TaggedSigned(rval)
+ * - WellDefined(lval) ^ WellDefined(rval)
+ * assertion:
+ *  value = ite well-defined ((lval+rval) mod 2**64) UB *)
 let speculative_safe_integer_add vid lval rval =
   let value = Value.init vid in
 

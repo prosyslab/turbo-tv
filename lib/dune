@@ -8,7 +8,6 @@
   opcode
   operands
   instr
-  types
   ;ir
   IR
   pointer
@@ -21,10 +20,13 @@
   tv
   ;v8
   machineType
+  types
   ;semantics
   common
   machine
   simplified
+  ;typer
+  typer
   ;utils
   utils
   err

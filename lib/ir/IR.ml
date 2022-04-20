@@ -158,9 +158,9 @@ let create_from graph_lines =
        (fun g line ->
          let instr_id = line |> parse_iid in
          let node_id = instr_id |> find_nid in
-         let opcode, operands, types = line |> Instr.create_from in
+         let ty, opcode, operands = line |> Instr.create_from in
          let instr =
-           Instr.create ~types opcode (iid_operands_to_nid_operands operands [])
+           Instr.create ty opcode (iid_operands_to_nid_operands operands [])
          in
          let node = Node.create node_id instr in
          let in_nodes = line |> parse_innodes in
