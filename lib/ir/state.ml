@@ -27,6 +27,7 @@ type t = {
   params : BitVec.t list;
   retvar : BitVec.t Option.t;
   assertion : BitVec.t;
+  ub : Bool.t;
 }
 
 let init nparams stage : t =
@@ -38,17 +39,27 @@ let init nparams stage : t =
     retvar = None;
     assertion = Bool.tr;
     memory = Memory.init ("mem_" ^ stage);
+    ub = Bool.fl;
   }
 
-let update pc register_file condition assertion t =
-  { t with pc; register_file; condition; assertion }
+let update pc register_file condition assertion ub t =
+  { t with pc; register_file; condition; assertion; ub }
 
 (* getter *)
 let pc t = t.pc
+
 let register_file t = t.register_file
+
 let condition t = t.condition
+
 let memory t = t.memory
+
 let params t = t.params
+
 let retvar t = t.retvar
+
 let assertion t = t.assertion
-let is_final t = t.pc = -1
+
+let ub t = t.ub
+
+let is_end t = t.pc = -1

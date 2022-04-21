@@ -152,7 +152,7 @@ module BitVec = struct
 
   let init ?(len = !bvlen) name = BV.mk_const_s ctx name len
 
-  let len bv = bv |> E.get_sort |> BV.get_size
+  let length_of bv = bv |> E.get_sort |> BV.get_size
 
   let mk_sort sz = BV.mk_sort ctx sz
 
@@ -160,13 +160,13 @@ module BitVec = struct
   let andb lbv rbv = BV.mk_and ctx lbv rbv
 
   let andi lbv rval =
-    let rbv = BitVecVal.from_int ~len:(len lbv) rval in
+    let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
     BV.mk_and ctx lbv rbv
 
   let orb lbv rbv = BV.mk_or ctx lbv rbv
 
   let ori lbv rval =
-    let rbv = BitVecVal.from_int ~len:(len lbv) rval in
+    let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
     BV.mk_or ctx lbv rbv
 
   let notb bv = BV.mk_not ctx bv
@@ -174,24 +174,24 @@ module BitVec = struct
   let shlb bv off = BV.mk_shl ctx bv off
 
   let shli bv off =
-    let rbv = BitVecVal.from_int ~len:(len bv) off in
+    let rbv = BitVecVal.from_int ~len:(length_of bv) off in
     BV.mk_shl ctx bv rbv
 
   let lshrb bv off = BV.mk_lshr ctx bv off
 
   let lshri bv off =
-    let rbv = BitVecVal.from_int ~len:(len bv) off in
+    let rbv = BitVecVal.from_int ~len:(length_of bv) off in
     BV.mk_lshr ctx bv rbv
 
   let xori lbv rval =
-    let rbv = BitVecVal.from_int ~len:(len lbv) rval in
+    let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
     BV.mk_xor ctx lbv rbv
 
   (* comparison *)
   let eqb lbv rbv = B.mk_eq ctx lbv rbv
 
   let eqi lbv rval =
-    let rbv = BitVecVal.from_int ~len:(len lbv) rval in
+    let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
     B.mk_eq ctx lbv rbv
 
   let neqb lbv rbv = B.mk_not ctx (eqb lbv rbv)
@@ -200,48 +200,53 @@ module BitVec = struct
 
   let ugtb lbv rbv = BV.mk_ugt ctx lbv rbv
 
-  let ugti lbv rval = BV.mk_ugt ctx lbv (BitVecVal.from_int ~len:(len lbv) rval)
+  let ugti lbv rval =
+    BV.mk_ugt ctx lbv (BitVecVal.from_int ~len:(length_of lbv) rval)
 
   let sgeb lbv rbv = BV.mk_sge ctx lbv rbv
 
-  let sgei lbv rval = BV.mk_sge ctx lbv (BitVecVal.from_int ~len:(len lbv) rval)
+  let sgei lbv rval =
+    BV.mk_sge ctx lbv (BitVecVal.from_int ~len:(length_of lbv) rval)
 
   let ugeb lbv rbv = BV.mk_uge ctx lbv rbv
 
   let ugei lbv rval =
-    let rbv = BitVecVal.from_int ~len:(len lbv) rval in
+    let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
     BV.mk_uge ctx lbv rbv
 
   let sltb lbv rbv = BV.mk_slt ctx lbv rbv
 
-  let slti lbv rval = BV.mk_slt ctx lbv (BitVecVal.from_int ~len:(len lbv) rval)
+  let slti lbv rval =
+    BV.mk_slt ctx lbv (BitVecVal.from_int ~len:(length_of lbv) rval)
 
   let sleb lbv rbv = BV.mk_sle ctx lbv rbv
 
-  let slei lbv rval = BV.mk_sle ctx lbv (BitVecVal.from_int ~len:(len lbv) rval)
+  let slei lbv rval =
+    BV.mk_sle ctx lbv (BitVecVal.from_int ~len:(length_of lbv) rval)
 
   let ultb lbv rbv = BV.mk_ult ctx lbv rbv
 
   let ulti lbv rval =
-    let rbv = BitVecVal.from_int ~len:(len lbv) rval in
+    let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
     BV.mk_ult ctx lbv rbv
 
   let uleb lbv rbv = BV.mk_ule ctx lbv rbv
 
   let ulei lbv rval =
-    let rbv = BitVecVal.from_int ~len:(len lbv) rval in
+    let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
     BV.mk_ule ctx lbv rbv
 
   (* arithmetic operation *)
   let addb lbv rbv = BV.mk_add ctx lbv rbv
 
   let addi lbv rval =
-    let rbv = BitVecVal.from_int ~len:(len lbv) rval in
+    let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
     BV.mk_add ctx lbv rbv
 
   let subb lbv rbv = BV.mk_sub ctx lbv rbv
 
-  let subi lbv rval = BV.mk_sub ctx lbv (BitVecVal.from_int ~len:(len lbv) rval)
+  let subi lbv rval =
+    BV.mk_sub ctx lbv (BitVecVal.from_int ~len:(length_of lbv) rval)
 
   (* rbv != 0 && lbv % rbv *)
   let modb lbv rbv = BV.mk_smod ctx lbv rbv
@@ -249,22 +254,22 @@ module BitVec = struct
   let modi lbv rval =
     if rval = 0 then failwith "modi: division by zero"
     else
-      let rbv = BitVecVal.from_int ~len:(len lbv) rval in
+      let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
       modb lbv rbv
 
   let ashrb lbv rbv = BV.mk_ashr ctx lbv rbv
 
   let ashri lbv rval =
-    let rbv = BitVecVal.from_int ~len:(len lbv) rval in
+    let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
     BV.mk_ashr ctx lbv rbv
 
   (* boolean operation *)
   let is_true bv =
-    let fbv = BitVecVal.fl ~len:(len bv) () in
+    let fbv = BitVecVal.fl ~len:(length_of bv) () in
     neqb bv fbv
 
   let is_false bv =
-    let fbv = BitVecVal.fl ~len:(len bv) () in
+    let fbv = BitVecVal.fl ~len:(length_of bv) () in
     eqb bv fbv
 
   (* Un-BitVec Operation*)

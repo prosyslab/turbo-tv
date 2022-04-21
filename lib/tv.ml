@@ -15,7 +15,7 @@ let rec next program state =
   let params = State.params state in
   let vid = !RegisterFile.prefix ^ string_of_int pc in
 
-  let _ty, opcode, operands = IR.instr_of pc program in
+  let ty, opcode, operands = IR.instr_of pc program in
   let next_pc = match opcode with End -> -1 | _ -> pc + 1 in
 
   let value, assertion =
@@ -236,8 +236,6 @@ let rec next program state =
     | _ -> (Value.empty, Bool.tr)
   in
 
-  if Option.is_some _ty then Option.get _ty |> Types.to_string |> print_endline;
-
   let precond =
     match opcode with
     | Branch ->
@@ -279,13 +277,16 @@ let rec next program state =
     | _ -> State.condition state
   in
 
+  let ty_check =
+    if Option.is_some ty then Typer.verify value (ty |> Option.get) else Bool.tr
+  in
   let updated_rf = RegisterFile.add vid value rf in
+  let updated_ub = Bool.ors [ State.ub state; ty_check ] in
   let next_state =
-    State.update next_pc updated_rf postcond updated_asrt state
+    State.update next_pc updated_rf postcond updated_asrt updated_ub state
   in
 
-  if State.is_final next_state then
-    (BitVec.init ~len:Value.len vid, State.assertion next_state)
+  if State.is_end next_state then { next_state with retvar = Some value }
   else next program next_state
 
 (* execute the program and retrieve a final state *)
@@ -295,15 +296,23 @@ let execute program nparams stage =
   next program init_state
 
 let run nparams before after =
-  let retvar_A, assertion_A = execute before nparams "before" in
-  let retvar_B, assertion_B = execute after nparams "after" in
+  let src_state = execute before nparams "before" in
+  let tgt_state = execute after nparams "after" in
+
+  let retvar_is_eq =
+    Bool.eq
+      (State.retvar src_state |> Option.get)
+      (State.retvar tgt_state |> Option.get)
+  in
+  let ub_is_eq = Bool.eq (State.ub src_state) (State.ub tgt_state) in
+  let not_refined = Bool.not (Bool.ands [ retvar_is_eq; ub_is_eq ]) in
 
   let assertion =
-    Bool.ands [ assertion_A; assertion_B; Bool.neq retvar_A retvar_B ]
+    Bool.ands
+      [ State.assertion src_state; State.assertion tgt_state; not_refined ]
   in
 
   let status = Solver.check validator assertion in
-
   match status with
   | SATISFIABLE ->
       let model = Option.get (Solver.get_model validator) in

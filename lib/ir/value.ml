@@ -134,6 +134,8 @@ let ugti value i = BitVec.ugti (data_of value) i
 
 let sge lval rval = BitVec.sgeb (data_of lval) (data_of rval)
 
+let sgei lval i = BitVec.sgei (data_of lval) i
+
 let uge lval rval = BitVec.ugeb (data_of lval) (data_of rval)
 
 let mask value bitlen = mod_ value (shl (from_int 1) bitlen)
@@ -216,4 +218,11 @@ module Composed = struct
   let first_of t = select 0 t
 
   let second_of t = select 1 t
+
+  let to_list t =
+    let size = size_of t in
+    let rec aux res idx t =
+      match idx with 0 -> res | _ -> aux (select idx t :: res) (idx - 1) t
+    in
+    t |> aux [] (size - 1)
 end

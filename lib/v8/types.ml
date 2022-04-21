@@ -395,11 +395,16 @@ let lb_of range_ty = fst range_ty
 
 let ub_of range_ty = snd range_ty
 
-let is t1 t2 = List.mem t1 t2
-
 (* decompose types into its atomic type unit *)
+
+module Decomposed = Set.Make (struct
+  type nonrec t = t
+
+  let compare = Stdlib.compare
+end)
+
 let decompose t =
-  match t with
+  (match t with
   | Unsigned30 -> [ Unsigned30 ]
   | Negative31 -> [ Negative31 ]
   | Signed31 -> [ Unsigned30; Negative31 ]
@@ -965,4 +970,14 @@ let decompose t =
         Negative31;
         OtherNumber;
       ]
-  | _ -> [ t ]
+  | _ -> [ t ])
+  |> Decomposed.of_list
+
+let boundary_of t =
+  match t with
+  | OtherSigned32 -> (-Utils.pow 2 31, -Utils.pow 2 30 - 1)
+  | Negative31 -> (-Utils.pow 2 30, 0 - 1)
+  | Unsigned30 -> (0, Utils.pow 2 30 - 1)
+  | OtherUnsigned31 -> (Utils.pow 2 30, Utils.pow 2 31 - 1)
+  | OtherUnsigned32 -> (Utils.pow 2 31, Utils.pow 2 32 - 1)
+  | _ -> failwith "Unimplemented"
