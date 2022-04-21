@@ -236,6 +236,8 @@ let rec next program state =
     | _ -> (Value.empty, Bool.tr)
   in
 
+  if Option.is_some _ty then Option.get _ty |> Types.to_string |> print_endline;
+
   let precond =
     match opcode with
     | Branch ->
