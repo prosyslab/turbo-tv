@@ -20,8 +20,8 @@ let undef_of t = BitVec.extract (len - 1) (len - 1) t
 
 (* cast value [t] to type [ty] *)
 let cast ty t =
-  if BitVec.len t <> len then (
-    BitVec.len t |> string_of_int |> print_endline;
+  if BitVec.length_of t <> len then (
+    BitVec.length_of t |> string_of_int |> print_endline;
     failwith "invalid value length")
   else
     let undef = undef_of t in
@@ -29,7 +29,7 @@ let cast ty t =
 
 (* entype [data] to type [ty] *)
 let entype ty data =
-  if BitVec.len data <> data_len then failwith "invalid data length"
+  if BitVec.length_of data <> data_len then failwith "invalid data length"
     (* TODO handling undef of data *)
   else BitVec.concat (BitVecVal.zero ~len:1 ()) (BitVec.concat ty data)
 
@@ -42,7 +42,8 @@ let from_istring s = BitVecVal.from_istring ~len s |> cast Type.const
 
 let from_f64string s = BitVecVal.from_f64string s |> entype Type.const
 
-let from_bv bv = BitVec.zero_extend (len - BitVec.len bv) bv |> cast Type.const
+let from_bv bv =
+  BitVec.zero_extend (len - BitVec.length_of bv) bv |> cast Type.const
 
 (* methods *)
 let has_type ty t = BitVec.eqb (ty_of t) ty
@@ -193,7 +194,7 @@ let uint64_min = BitVecVal.from_int 0 |> entype Type.const
 let uint64_max = BitVec.addi (BitVec.shli int64_max 1) 1
 
 let is_empty value =
-  let size = BitVec.len value / len in
+  let size = BitVec.length_of value / len in
   eq value (BitVec.repeat size empty)
 
 module Composed = struct
@@ -206,7 +207,7 @@ module Composed = struct
       (fun res value -> BitVec.concat res value)
       (List.hd values) (List.tl values)
 
-  let size_of t = BitVec.len t / len
+  let size_of t = BitVec.length_of t / len
 
   let select idx t =
     let size = size_of t in

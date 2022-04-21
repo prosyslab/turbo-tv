@@ -124,7 +124,11 @@ let if_true vid cond =
 
 (* merge every incoming execution condition *)
 let merge vid conds =
-  let value = Composed.init vid (List.length conds) in
+  (* cond could be composed value *)
+  let value =
+    Composed.init vid
+      (List.fold_left (fun res cond -> res + Composed.size_of cond) 0 conds)
+  in
   let rec concat_conds res conds =
     match conds with
     | [] -> res
