@@ -116,84 +116,12 @@ let create_from instr =
     try Some (Re.Group.get (Re.exec type_reg instr) 1) with Not_found -> None
   in
 
-  let rec parse_type ty_str : Types.t =
-    let is_union ty_str = String.starts_with ~prefix:"Union" ty_str in
-    let is_range ty_str = String.starts_with ~prefix:"Range" ty_str in
-    let is_tuple ty_str = String.starts_with ~prefix:"<" ty_str in
-    let is_heap_constant ty_str =
-      String.starts_with ~prefix:"HeapConstant" ty_str
-    in
-    let is_other_number_constant ty_str =
-      String.starts_with ~prefix:"OtherNumberConstant" ty_str
-    in
-
-    let parse_structural kind s_ty_str =
-      let tys_reg = Re.Pcre.regexp "Union\\(([^\\)]*)\\)" in
-      let elems_ty_str =
-        try
-          Re.Group.get (Re.exec tys_reg s_ty_str) 1 |> String.split_on_char ','
-        with Not_found ->
-          let reason = "Cannot parse '" ^ kind ^ "' from the " ^ s_ty_str in
-          err instr reason
-      in
-      let elems_ty = List.map parse_type elems_ty_str in
-
-      match kind with
-      | "Union" -> Types.Union elems_ty
-      | "Tuple" -> Tuple elems_ty
-      | _ -> failwith "Unreachable"
-    in
-
-    let parse_constant kind c_ty_str =
-      let value_reg = Re.Pcre.regexp (kind ^ "\\((0x[0-9a-f]*).*") in
-      let value_str =
-        try Re.Group.get (Re.exec value_reg c_ty_str) 1
-        with Not_found ->
-          let reason = "Cannot parse '" ^ kind ^ "' from the " ^ c_ty_str in
-          err instr reason
-      in
-      let value = value_str |> int_of_string in
-      match kind with
-      | "HeapConstant" -> Types.HeapConstant value
-      | "OtherNumberConstant" -> OtherNumberConstant value
-      | _ -> failwith "Unreachable"
-    in
-
-    let parse_range range_ty_str =
-      let limits_reg =
-        Re.Pcre.regexp "Range\\((-?[\\.0-9]*),\\s*(-?[\\.0-9]*)\\)"
-      in
-      let limits =
-        try
-          let lb =
-            Re.Group.get (Re.exec limits_reg range_ty_str) 1 |> float_of_string
-          in
-          let ub =
-            Re.Group.get (Re.exec limits_reg range_ty_str) 2 |> float_of_string
-          in
-          (lb, ub)
-        with Not_found ->
-          let reason = "Cannot parse 'Range' from the " ^ range_ty_str in
-          err instr reason
-      in
-      Types.Range limits
-    in
-
-    if ty_str |> is_union then parse_structural "Union" ty_str
-    else if ty_str |> is_tuple then parse_structural "Tuple" ty_str
-    else if ty_str |> is_range then parse_range ty_str
-    else if ty_str |> is_heap_constant then parse_constant "HeapConstant" ty_str
-    else if ty_str |> is_other_number_constant then
-      parse_constant "OtherNumberConstant" ty_str
-    else ty_str |> Types.of_string
-  in
-
   let opcode = parse_opcode instr in
   let kind = opcode |> Opcode.get_kind in
   let operands = parse_operands kind instr in
   let ty =
     match ty_str_of instr with
-    | Some ty_str -> Some (parse_type ty_str)
+    | Some ty_str -> Some (ty_str |> Types.of_string)
     | None -> None
   in
 
