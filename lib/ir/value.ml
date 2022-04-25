@@ -126,6 +126,8 @@ let ulti value i = BitVec.ulti (data_of value) i
 
 let sle lval rval = BitVec.sleb (data_of lval) (data_of rval)
 
+let slei lval i = BitVec.slei (data_of lval) i
+
 let ule lval rval = BitVec.uleb (data_of lval) (data_of rval)
 
 let ugt lval rval = BitVec.ugtb (data_of lval) (data_of rval)
@@ -141,6 +143,13 @@ let uge lval rval = BitVec.ugeb (data_of lval) (data_of rval)
 let mask value bitlen = mod_ value (shl (from_int 1) bitlen)
 
 let maski value bitlen = andi value (Int.shift_left 1 bitlen - 1)
+
+(* Floating Point *)
+let geqf lval f =
+  Float.geq (Float.from_ieee_bv (data_of lval)) (Float.from_float f)
+
+let leqf lval f =
+  Float.leq (Float.from_ieee_bv (data_of lval)) (Float.from_float f)
 
 (* defined & undefined *)
 let undefined = BitVec.shli (BitVecVal.from_int ~len 1) (ty_len + data_len)

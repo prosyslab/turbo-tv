@@ -396,15 +396,8 @@ let lb_of range_ty = fst range_ty
 let ub_of range_ty = snd range_ty
 
 (* decompose types into its atomic type unit *)
-
-module Decomposed = Set.Make (struct
-  type nonrec t = t
-
-  let compare = Stdlib.compare
-end)
-
 let decompose t =
-  (match t with
+  match t with
   | Unsigned30 -> [ Unsigned30 ]
   | Negative31 -> [ Negative31 ]
   | Signed31 -> [ Unsigned30; Negative31 ]
@@ -970,14 +963,123 @@ let decompose t =
         Negative31;
         OtherNumber;
       ]
-  | _ -> [ t ])
-  |> Decomposed.of_list
+  | _ -> [ t ]
 
-let boundary_of t =
-  match t with
-  | OtherSigned32 -> (-Utils.pow 2 31, -Utils.pow 2 30 - 1)
-  | Negative31 -> (-Utils.pow 2 30, 0 - 1)
-  | Unsigned30 -> (0, Utils.pow 2 30 - 1)
-  | OtherUnsigned31 -> (Utils.pow 2 30, Utils.pow 2 31 - 1)
-  | OtherUnsigned32 -> (Utils.pow 2 31, Utils.pow 2 32 - 1)
-  | _ -> failwith "Unimplemented"
+module Region = struct
+  module Boundary = struct
+    type t = IntBoundary of int * int | FloatBoundary of float * float
+
+    let contains b1 b2 =
+      (* lb1 --- lb2 --- ub2 --- ub1 ||
+         lb2 --- lb1 --- ub1 --- ub2 *)
+      match (b1, b2) with
+      | IntBoundary (lb1, ub1), IntBoundary (lb2, ub2) ->
+          lb1 <= lb2 && ub1 >= ub2
+      | IntBoundary (lb1, ub1), FloatBoundary (lb2, ub2) ->
+          float_of_int lb1 <= lb2 && float_of_int ub1 >= ub2
+      | FloatBoundary (lb1, ub1), IntBoundary (lb2, ub2) ->
+          lb1 <= float_of_int lb2 && ub1 >= float_of_int ub2
+      | FloatBoundary (lb1, ub1), FloatBoundary (lb2, ub2) ->
+          lb1 <= lb2 && ub1 >= ub2
+
+    let overlapped b1 b2 =
+      (* lb1 --- lb2 --- ub1 --- ub2 ||
+         lb2 --- lb1 --- ub2 --- ub1 *)
+      match (b1, b2) with
+      | IntBoundary (lb1, ub1), IntBoundary (lb2, ub2) ->
+          (lb1 <= lb2 && ub1 <= ub2 && lb2 <= ub1)
+          || (lb2 <= lb1 && ub2 <= ub1 && lb1 <= ub2)
+      | IntBoundary (lb1, ub1), FloatBoundary (lb2, ub2) ->
+          let lb1_f = lb1 |> float_of_int in
+          let ub1_f = ub1 |> float_of_int in
+          (lb1_f <= lb2 && ub1_f <= ub2 && lb2 <= ub1_f)
+          || (lb2 <= lb1_f && ub2 <= ub1_f && lb1_f <= ub2)
+      | FloatBoundary (lb1, ub1), IntBoundary (lb2, ub2) ->
+          let lb2_f = lb2 |> float_of_int in
+          let ub2_f = ub2 |> float_of_int in
+          (lb1 <= lb2_f && ub1 <= ub2_f && lb2_f <= ub1)
+          || (lb2_f <= lb1 && ub2_f <= ub1 && lb1 <= ub2_f)
+      | FloatBoundary (lb1, ub1), FloatBoundary (lb2, ub2) ->
+          (lb1 <= lb2 && ub1 <= ub2 && lb2 <= ub1)
+          || (lb2 <= lb1 && ub2 <= ub1 && lb1 <= ub2)
+
+    let union b1 b2 =
+      match (b1, b2) with
+      | IntBoundary (lb1, ub1), IntBoundary (lb2, ub2) ->
+          if ub1 = lb2 - 1 then [ IntBoundary (lb1, ub2) ]
+          else if ub2 = lb1 - 1 then [ IntBoundary (lb2, ub1) ]
+          else if contains b1 b2 then [ b1 ]
+          else if contains b2 b1 then [ b2 ]
+          else if overlapped b1 b2 then
+            [ IntBoundary (min lb1 lb2, max ub1 ub2) ]
+          else [ b1; b2 ]
+      | FloatBoundary (lb1, lb2), FloatBoundary (ub1, ub2) ->
+          if contains b1 b2 then [ b1 ]
+          else if contains b2 b1 then [ b2 ]
+          else if overlapped b1 b2 then
+            [ FloatBoundary (min lb1 lb2, max ub1 ub2) ]
+          else [ b1; b2 ]
+      (* MAY BUG IN FUTURE: for now, don't merge int boundary with float one *)
+      | _ -> [ b1; b2 ]
+
+    let from_type ty =
+      match ty with
+      | OtherSigned32 -> IntBoundary (-Utils.pow 2 31, -Utils.pow 2 30 - 1)
+      | Negative31 -> IntBoundary (-Utils.pow 2 30, 0 - 1)
+      | Unsigned30 -> IntBoundary (0, Utils.pow 2 30 - 1)
+      | OtherUnsigned31 -> IntBoundary (Utils.pow 2 30, Utils.pow 2 31 - 1)
+      | OtherUnsigned32 -> IntBoundary (Utils.pow 2 31, Utils.pow 2 32 - 1)
+      | MinusZero -> FloatBoundary (-0.0, -0.0)
+      | NaN -> FloatBoundary (nan, nan)
+      | Range (lb, ub) -> FloatBoundary (lb, ub)
+      | _ -> failwith "unimplemented"
+
+    let int_range_of t =
+      match t with
+      | IntBoundary (lb, ub) -> (lb, ub)
+      | FloatBoundary _ -> failwith "not an integer boundary"
+
+    let float_range_of t =
+      match t with
+      | FloatBoundary (lb, ub) -> (lb, ub)
+      | IntBoundary _ -> failwith "not a float boundary"
+
+    let print t =
+      match t with
+      | FloatBoundary (lb, ub) -> Format.printf "(%f, %f)" lb ub
+      | IntBoundary (lb, ub) -> Format.printf "(%d, %d)" lb ub
+  end
+
+  type t = Boundary.t list
+
+  let from_types types =
+    let rec aux res boundaries =
+      match boundaries with
+      | h1 :: h2 :: t ->
+          let merged = Boundary.union h1 h2 in
+          if List.length merged = 1 then aux res (List.hd merged :: t)
+          else aux (h1 :: res) (h2 :: t)
+      | [ h ] -> h :: res
+      | [] -> res
+    in
+    let boundaries =
+      types
+      |> List.map Boundary.from_type
+      |> List.fast_sort (fun b1 b2 ->
+             match (b1, b2) with
+             | Boundary.IntBoundary (lb1, ub1), IntBoundary (lb2, ub2) ->
+                 if lb1 < lb2 then -1
+                 else if lb1 = lb2 then
+                   if ub1 < ub2 then -1 else if ub1 = ub2 then 0 else 1
+                 else 1
+             | FloatBoundary (lb1, ub1), FloatBoundary (lb2, ub2) ->
+                 if lb1 < lb2 then -1
+                 else if lb1 = lb2 then
+                   if ub1 < ub2 then -1 else if ub1 = ub2 then 0 else 1
+                 else 1
+             (* if both IB and FB exist in region, locate IB in front *)
+             | IntBoundary _, FloatBoundary _ -> -1
+             | FloatBoundary _, IntBoundary _ -> 1)
+    in
+    aux [] boundaries
+end

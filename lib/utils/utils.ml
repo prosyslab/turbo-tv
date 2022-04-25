@@ -33,3 +33,5 @@ let get_nparams target =
   in
   let params = Re.Group.get (String.concat "\n" lines |> Re.exec re) 1 in
   params |> StringLabels.split_on_char ~sep:',' |> List.length
+
+let pow b e = float_of_int b ** float_of_int e |> int_of_float

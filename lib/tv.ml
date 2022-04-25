@@ -277,11 +277,11 @@ let rec next program state =
     | _ -> State.condition state
   in
 
-  let ty_check =
-    if Option.is_some ty then Typer.verify value (ty |> Option.get) else Bool.tr
+  let type_is_verified =
+    match ty with Some ty -> Typer.verify value ty | None -> Bool.tr
   in
   let updated_rf = RegisterFile.add vid value rf in
-  let updated_ub = Bool.ors [ State.ub state; ty_check ] in
+  let updated_ub = Bool.ors [ State.ub state; Bool.not type_is_verified ] in
   let next_state =
     State.update next_pc updated_rf postcond updated_asrt updated_ub state
   in
@@ -299,17 +299,21 @@ let run nparams before after =
   let src_state = execute before nparams "before" in
   let tgt_state = execute after nparams "after" in
 
-  let retvar_is_eq =
+  let retvar_is_same =
     Bool.eq
       (State.retvar src_state |> Option.get)
       (State.retvar tgt_state |> Option.get)
   in
-  let ub_is_eq = Bool.eq (State.ub src_state) (State.ub tgt_state) in
-  let not_refined = Bool.not (Bool.ands [ retvar_is_eq; ub_is_eq ]) in
+  let ub_is_same = Bool.eq (State.ub src_state) (State.ub tgt_state) in
+  let is_refined = Bool.ands [ retvar_is_same; ub_is_same ] in
 
   let assertion =
     Bool.ands
-      [ State.assertion src_state; State.assertion tgt_state; not_refined ]
+      [
+        State.assertion src_state;
+        State.assertion tgt_state;
+        Bool.not is_refined;
+      ]
   in
 
   let status = Solver.check validator assertion in

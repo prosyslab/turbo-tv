@@ -100,9 +100,17 @@ module Float = struct
 
   let ninf ?(sort = !float_sort) () = Fl.mk_inf ctx sort true
 
+  let from_float ?(sort = !float_sort) f = Fl.mk_numeral_f ctx f sort
+
   let from_string ?(sort = !float_sort) s = Fl.mk_numeral_s ctx s sort
 
   let to_ieee_bv t = Fl.mk_to_ieee_bv ctx t
+
+  let from_ieee_bv ?(sort = !float_sort) bv = Fl.mk_to_fp_bv ctx bv sort
+
+  let geq lexp rexp = Fl.mk_geq ctx lexp rexp
+
+  let leq lexp rexp = Fl.mk_leq ctx lexp rexp
 end
 
 module BitVecVal = struct
