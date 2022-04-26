@@ -10,7 +10,10 @@ let int32_constant vid c =
     Bool.ands [ Value.sge c Value.int32_min; Value.sle c Value.int32_max ]
   in
   let wd_cond = c_can_be_int32 in
-  let assertion = Value.eq value (Bool.ite wd_cond c Value.undefined) in
+  let assertion =
+    Value.eq value
+      (Bool.ite wd_cond (c |> Value.cast Type.int32) Value.undefined)
+  in
   (value, assertion)
 
 (* well-defined condition: INT64_MIN <= c <= INT64_MAX
@@ -21,7 +24,10 @@ let int64_constant vid c =
     Bool.ands [ Value.sge c Value.int64_min; Value.sle c Value.int64_max ]
   in
   let wd_cond = c_can_be_int64 in
-  let assertion = Value.eq value (Bool.ite wd_cond c Value.undefined) in
+  let assertion =
+    Value.eq value
+      (Bool.ite wd_cond (c |> Value.cast Type.int64) Value.undefined)
+  in
   (value, assertion)
 
 (* well-defined condition: UINT64_MIN <= c <= UINT64_MAX
@@ -32,17 +38,19 @@ let external_constant vid c =
     Bool.ands [ Value.uge c Value.uint64_min; Value.ule c Value.uint64_max ]
   in
   let wd_cond = c_can_be_pointer in
-  let assertion = Value.eq value (Bool.ite wd_cond c Value.undefined) in
+  let assertion =
+    Value.eq value
+      (Bool.ite wd_cond (c |> Value.cast Type.pointer) Value.undefined)
+  in
   (value, assertion)
 
 let heap_constant = external_constant
 
 (* well-defined condition: true
  * behavior: value=c *)
-
 let number_constant vid c =
   let value = Value.init vid in
-  let assertion = Value.eq value c in
+  let assertion = Value.eq value (c |> Value.cast Type.float64) in
   (value, assertion)
 
 (* common: control *)

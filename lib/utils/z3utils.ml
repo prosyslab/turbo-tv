@@ -106,6 +106,12 @@ module Float = struct
 
   let to_ieee_bv t = Fl.mk_to_ieee_bv ctx t
 
+  let from_signed_bv ?(sort = !float_sort) bv =
+    Fl.mk_to_fp_signed ctx (Fl.RoundingMode.mk_rne ctx) bv sort
+
+  let from_unsigned_bv ?(sort = !float_sort) bv =
+    Fl.mk_to_fp_unsigned ctx (Fl.RoundingMode.mk_rne ctx) bv sort
+
   let from_ieee_bv ?(sort = !float_sort) bv = Fl.mk_to_fp_bv ctx bv sort
 
   let geq lexp rexp = Fl.mk_geq ctx lexp rexp

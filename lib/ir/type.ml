@@ -58,6 +58,12 @@ let empty = BitVecVal.from_int ~len 21
 
 let const = BitVecVal.from_int ~len 22
 
+let int_types = [ int8; int16; int32; int64 ]
+
+let uint_types = [ uint8; uint16; uint32; uint64 ]
+
+let float_types = [ float32; float64 ]
+
 (* ty from MachineType *)
 let from_machine_type (mt : MachineType.t) =
   match mt with

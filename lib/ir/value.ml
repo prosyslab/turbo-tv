@@ -45,9 +45,20 @@ let from_f64string s = BitVecVal.from_f64string s |> entype Type.const
 let from_bv bv =
   BitVec.zero_extend (len - BitVec.length_of bv) bv |> cast Type.const
 
-(* methods *)
+let empty = from_int 0 |> cast Type.empty
+
+(* type *)
 let has_type ty t = BitVec.eqb (ty_of t) ty
 
+let is_signed_integer t =
+  Bool.ors (List.map (fun ty -> has_type ty t) Type.int_types)
+
+let is_unsigned_integer t =
+  Bool.ors (List.map (fun ty -> has_type ty t) Type.uint_types)
+
+let is_float t = Bool.ors (List.map (fun ty -> has_type ty t) Type.float_types)
+
+(* representation *)
 let has_repr repr t =
   let tys_of_repr = Type.from_repr repr in
   Bool.ors (List.map (fun ty_candid -> has_type ty_candid t) tys_of_repr)
@@ -113,6 +124,10 @@ let mod_ lval rval =
 
 let modi value n = BitVec.modi (data_of value) n |> entype (ty_of value)
 
+let mask value bitlen = mod_ value (shl (from_int 1) bitlen)
+
+let maski value bitlen = andi value (Int.shift_left 1 bitlen - 1)
+
 (* compare two values and return bool *)
 let eq lval rval = BitVec.eqb lval rval
 
@@ -126,7 +141,8 @@ let ulti value i = BitVec.ulti (data_of value) i
 
 let sle lval rval = BitVec.sleb (data_of lval) (data_of rval)
 
-let slei lval i = BitVec.slei (data_of lval) i
+let slei ?(width = len) lval i =
+  BitVec.slei (BitVec.extract (width - 1) 0 (data_of lval)) i
 
 let ule lval rval = BitVec.uleb (data_of lval) (data_of rval)
 
@@ -136,20 +152,33 @@ let ugti value i = BitVec.ugti (data_of value) i
 
 let sge lval rval = BitVec.sgeb (data_of lval) (data_of rval)
 
-let sgei lval i = BitVec.sgei (data_of lval) i
+let sgei ?(width = len) lval i =
+  BitVec.sgei (BitVec.extract (width - 1) 0 (data_of lval)) i
 
 let uge lval rval = BitVec.ugeb (data_of lval) (data_of rval)
 
-let mask value bitlen = mod_ value (shl (from_int 1) bitlen)
-
-let maski value bitlen = andi value (Int.shift_left 1 bitlen - 1)
-
 (* Floating Point *)
 let geqf lval f =
-  Float.geq (Float.from_ieee_bv (data_of lval)) (Float.from_float f)
+  (* assmue that lval is integer or float *)
+  let lval_f =
+    Bool.ite (is_signed_integer lval)
+      (Float.from_signed_bv (data_of lval))
+      (Bool.ite (is_unsigned_integer lval)
+         (Float.from_unsigned_bv (data_of lval))
+         (Float.from_ieee_bv (data_of lval)))
+  in
+  Float.geq lval_f (Float.from_float f)
 
 let leqf lval f =
-  Float.leq (Float.from_ieee_bv (data_of lval)) (Float.from_float f)
+  (* assmue that lval is integer or float *)
+  let lval_f =
+    Bool.ite (is_signed_integer lval)
+      (Float.from_signed_bv (data_of lval))
+      (Bool.ite (is_unsigned_integer lval)
+         (Float.from_unsigned_bv (data_of lval))
+         (Float.from_ieee_bv (data_of lval)))
+  in
+  Float.leq lval_f (Float.from_float f)
 
 (* defined & undefined *)
 let undefined = BitVec.shli (BitVecVal.from_int ~len 1) (ty_len + data_len)
@@ -163,7 +192,6 @@ let set_undefined value = BitVec.orb undefined value
 let set_defined value = BitVec.andb (BitVec.notb undefined) value
 
 (* constant values *)
-let empty = from_int 0 |> cast Type.empty
 
 let tr = addi empty 1 |> cast Type.bool
 

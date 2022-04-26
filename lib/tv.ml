@@ -25,19 +25,13 @@ let rec next program state =
         let addr_re = Re.Pcre.regexp "(0x[0-9a-f]+)" in
         let operand = Operands.const_of_nth operands 0 in
         let c_str = Re.Group.get (Re.exec addr_re operand) 1 in
-        let c = c_str |> Value.from_istring |> Value.cast Type.pointer in
+        let c = c_str |> Value.from_istring in
         heap_constant vid c
     | Int32Constant ->
-        let c =
-          Operands.const_of_nth operands 0
-          |> Value.from_istring |> Value.cast Type.int32
-        in
+        let c = Operands.const_of_nth operands 0 |> Value.from_istring in
         int32_constant vid c
     | Int64Constant ->
-        let c =
-          Operands.const_of_nth operands 0
-          |> Value.from_istring |> Value.cast Type.int64
-        in
+        let c = Operands.const_of_nth operands 0 |> Value.from_istring in
         int64_constant vid c
     | NumberConstant ->
         let c_str = Operands.const_of_nth operands 0 in
@@ -46,7 +40,7 @@ let rec next program state =
           else if Value.can_be_smi c_str then c_str |> Value.from_istring
           else
             failwith
-              "unreachable: [c] of number constant is always\n\
+              "unreachable: [c] of number constant should be\n\
               \              representable as double or int32"
         in
         number_constant vid c

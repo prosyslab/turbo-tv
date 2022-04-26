@@ -1,6 +1,5 @@
 open Z3utils
-module Region = Types.Region
-module Boundary = Region.Boundary
+module Boundary = Types.Boundary
 
 let rec verify (value : Value.t) (ty : Types.t) =
   match ty with
@@ -9,12 +8,19 @@ let rec verify (value : Value.t) (ty : Types.t) =
   | Signed32OrMinusZeroOrNaN | Negative32 | Unsigned31 | Unsigned32
   | Unsigned32OrMinusZero | Unsigned32OrMinusZeroOrNaN | Integral32
   | Integral32OrMinusZero | Integral32OrMinusZeroOrNaN | MinusZeroOrNaN ->
-      let region = ty |> Types.decompose |> Region.from_types in
+      (* if there exists a boundary B of the region R that satisfy T <= B, then T <= R *)
+      let region = Types.decompose ty |> List.map Boundary.from_type in
       List.fold_left
         (fun verified boundary ->
-          let lb, ub = Boundary.int_range_of boundary in
           let in_bound =
-            Bool.ands [ Value.sgei value lb; Value.slei value ub ]
+            match boundary with
+            | Boundary.Int32Boundary (lb, ub) ->
+                Bool.ands
+                  [
+                    Value.sgei ~width:32 value lb; Value.slei ~width:32 value ub;
+                  ]
+            | FloatBoundary (lb, ub) ->
+                Bool.ands [ Value.geqf value lb; Value.leqf value ub ]
           in
           Bool.ors [ verified; in_bound ])
         Bool.fl region
@@ -28,6 +34,9 @@ let rec verify (value : Value.t) (ty : Types.t) =
       if size_of_composed = List.length fields then
         Bool.ands (List.rev_map2 (fun v f -> verify v f) decomposed fields)
       else failwith "is: wrong number of fields"
+  | Range (lb, ub) ->
+      (* MinusZero and Range is orthogonal *)
+      let value_is_not_mz = Bool.not (Value.eq value Value.minus_zero) in
+      Bool.ands [ value_is_not_mz; Value.geqf value lb; Value.leqf value ub ]
   (* for now, handle only numeric types *)
-  | Range (_lb, _ub) -> failwith "not implemented"
   | _ -> Bool.tr
