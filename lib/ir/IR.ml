@@ -167,6 +167,9 @@ let create_from graph_lines =
          G.add_vertex g node |> connect_inedges node_id in_nodes)
        G.empty
 
+let create_from_ir_file ir_file =
+  ir_file |> Core.In_channel.read_lines |> create_from
+
 (** Graph Visualization *)
 module Dot = Graph.Graphviz.Dot (struct
   include G

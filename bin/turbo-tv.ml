@@ -2,7 +2,8 @@ open Cmdliner
 open Lib
 
 type conf = {
-  target : string;
+  target : string option;
+  test_unit : (string * string) option;
   emit_graph : bool;
   emit_reduction : bool;
   outdir : string;
@@ -11,8 +12,13 @@ type conf = {
 let jstv_args =
   (* Arguments *)
   let target_arg =
-    let doc = "Target for translation validation." in
-    Arg.(required & pos 0 (some string) None & info [] ~docv:"TARGET" ~doc)
+    let doc = "Target JS for translation validation." in
+    Arg.(value & opt (some string) None & info [ "js" ] ~docv:"JS" ~doc)
+  in
+
+  let test_unit_arg =
+    let doc = "Test on unit (src IR & target IR)" in
+    Arg.(value & opt (list file) [] & info [ "test" ] ~docv:"TEST" ~doc)
   in
 
   let emit_graph_arg =
@@ -30,12 +36,18 @@ let jstv_args =
     Arg.(value & opt string "./out" & info [ "o"; "out" ] ~docv:"OUTDIR" ~doc)
   in
 
-  let mk_conf target emit_graph emit_reduction outdir =
-    { target; emit_graph; emit_reduction; outdir }
+  let mk_conf target test_unit emit_graph emit_reduction outdir =
+    let test_unit =
+      if List.length test_unit = 2 then
+        Some (List.nth test_unit 0, List.nth test_unit 1)
+      else None
+    in
+    { target; test_unit; emit_graph; emit_reduction; outdir }
   in
+
   Term.(
-    const mk_conf $ target_arg $ emit_graph_arg $ emit_reduction_arg
-    $ outdir_arg)
+    const mk_conf $ target_arg $ test_unit_arg $ emit_graph_arg
+    $ emit_reduction_arg $ outdir_arg)
 
 let parse_command_line () =
   let doc = "Translation validation for TurboFan IR" in
@@ -54,46 +66,60 @@ let jscall_exists graph =
 
 let main () =
   Printexc.record_backtrace true;
-  let { target; emit_reduction; emit_graph; outdir } = parse_command_line () in
-
-  let nparams = Utils.get_nparams target in
-  let lines = Utils.run_d8 target in
-  let idx = ref 1 in
-
-  let reductions =
-    Reduction.get_reductions lines
-    |> List.map (fun (before_rdc, after_rdc, desc) ->
-           let before_graph = IR.create_from before_rdc in
-           let after_graph = IR.create_from after_rdc in
-           ((before_rdc, before_graph), (after_rdc, after_graph), desc))
-    |> List.filter (fun ((_, before_graph), (_, after_graph), _) ->
-           (not (jscall_exists before_graph)) && not (jscall_exists after_graph))
+  let { target; test_unit; emit_reduction; emit_graph; outdir } =
+    parse_command_line ()
   in
 
-  Printf.printf "Number of reductions: %d\n" (List.length reductions);
+  if Option.is_some test_unit then
+    let src_ir_f, tgt_ir_f = test_unit |> Option.get in
+    let src_grp = IR.create_from_ir_file src_ir_f in
+    let tgt_grp = IR.create_from_ir_file tgt_ir_f in
+    (* for now, set number of parameters for testing 100 *)
+    let nparams = 100 in
+    Tv.run nparams src_grp tgt_grp
+  else
+    let target =
+      try Option.get target
+      with Invalid_argument _ -> failwith "No target specified"
+    in
+    let nparams = Utils.get_nparams target in
+    let lines = Utils.run_d8 target in
+    let idx = ref 1 in
+    let reductions =
+      Reduction.get_reductions lines
+      |> List.map (fun (src_ir, tgt_ir, desc) ->
+             let src_grp = IR.create_from src_ir in
+             let tgt_grp = IR.create_from tgt_ir in
+             ((src_ir, src_grp), (tgt_ir, tgt_grp), desc))
+      |> List.filter (fun ((_, before_graph), (_, after_graph), _) ->
+             (not (jscall_exists before_graph))
+             && not (jscall_exists after_graph))
+    in
+    Printf.printf "Number of reductions: %d\n" (List.length reductions);
+    List.iter
+      (fun rdc ->
+        let (src_ir, src_grp), (tgt_ir, tgt_grp), desc = rdc in
+        Printf.printf "Reduction #%d: " !idx;
+        Printf.printf "%s\n" desc;
 
-  List.iter
-    (fun ((before_rdc, before_graph), (after_rdc, after_graph), _desc) ->
-      Printf.printf "Reduction #%d: " !idx;
+        if emit_reduction then (
+          let parent = String.concat "/" [ outdir; string_of_int !idx; "" ] in
+          Core.Unix.mkdir_p parent ~perm:0o775;
+          let src_out_chan = open_out (parent ^ "before.txt") in
+          let tgt_out_chan = open_out (parent ^ "after.txt") in
 
-      if emit_reduction then (
-        let parent = String.concat "/" [ outdir; string_of_int !idx; "" ] in
-        Core.Unix.mkdir_p parent ~perm:0o775;
-        let before_out_chan = open_out (parent ^ "before.txt") in
-        let after_out_chan = open_out (parent ^ "after.txt") in
+          src_ir |> Utils.write_lines src_out_chan;
+          tgt_ir |> Utils.write_lines tgt_out_chan);
 
-        before_rdc |> Utils.write_lines before_out_chan;
-        after_rdc |> Utils.write_lines after_out_chan);
+        if emit_graph then (
+          let parent = String.concat "/" [ outdir; string_of_int !idx; "" ] in
+          Core.Unix.mkdir_p parent ~perm:0o775;
 
-      if emit_graph then (
-        let parent = String.concat "/" [ outdir; string_of_int !idx; "" ] in
-        Core.Unix.mkdir_p parent ~perm:0o775;
-
-        IR.generate_graph_output (parent ^ "before.dot") before_graph;
-        IR.generate_graph_output (parent ^ "after.dot") after_graph);
-      Tv.run nparams before_graph after_graph;
-      idx := !idx + 1;
-      print_newline ())
-    reductions
+          IR.generate_graph_output (parent ^ "before.dot") src_grp;
+          IR.generate_graph_output (parent ^ "after.dot") tgt_grp);
+        Tv.run nparams src_grp tgt_grp;
+        idx := !idx + 1;
+        print_newline ())
+      reductions
 
 let () = main ()

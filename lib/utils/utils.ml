@@ -15,7 +15,7 @@ let write_lines chan lines =
   List.iter (fun line -> output_string chan (line ^ "\n")) lines
 
 let run_d8 target =
-  let d8_path = Filename.concat (Filename.concat project_root "d8") "d8" in
+  let d8_path = Filename.concat project_root "d8" in
   if not (Sys.file_exists d8_path) then failwith "d8 is not exist";
 
   let cmd =
