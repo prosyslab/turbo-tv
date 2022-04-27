@@ -1,0 +1,7 @@
+#0:Start()
+#1:Int32Constant[0]()
+#2:Parameter[1]()
+#3:CheckedTaggedSignedToInt32(#2:Parameter)
+#4:Int32Add(#3:CheckedTaggedSignedToInt32, #1:Int32Constant)
+#5:Return(#1:Int32Constant, #4:Int32Add)
+#6:End(#5:Return)
