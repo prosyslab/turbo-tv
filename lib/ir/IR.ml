@@ -44,9 +44,12 @@ module Edge = struct
 
   let to_str t =
     match t with Value -> "Value" | Effect -> "Effect" | Control -> "Control"
+
+  let is_control t = match t with Control -> true | _ -> false
 end
 
 module G = Graph.Persistent.Digraph.ConcreteBidirectionalLabeled (Node) (Edge)
+module Dom = Graph.Dominator.Make (G)
 
 let find_by_id id graph =
   let node =
@@ -207,6 +210,21 @@ let create_from graph_lines =
 
 let create_from_ir_file ir_file =
   ir_file |> Core.In_channel.read_lines |> create_from
+
+let get_control_flow_graph t =
+  G.fold_vertex
+    (fun node cfg ->
+      G.fold_succ_e
+        (fun edge cfg ->
+          let _, e, _ = edge in
+          if Edge.is_control e then G.add_edge_e cfg edge else cfg)
+        t node cfg)
+    t G.empty
+
+let dominators t =
+  let start_node = find_by_opcode Opcode.Start t in
+  let idom = Dom.compute_idom t start_node in
+  Dom.idom_to_dominators idom
 
 (** Graph Visualization *)
 module Dot = Graph.Graphviz.Dot (struct

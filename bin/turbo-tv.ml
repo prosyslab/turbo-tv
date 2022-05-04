@@ -74,9 +74,11 @@ let main () =
     let src_ir_f, tgt_ir_f = test_unit |> Option.get in
     let src_grp = IR.create_from_ir_file src_ir_f in
     let tgt_grp = IR.create_from_ir_file tgt_ir_f in
+    let src_cfg = IR.get_control_flow_graph src_grp in
+    let tgt_cfg = IR.get_control_flow_graph tgt_grp in
     (* for now, set number of parameters for testing 100 *)
     let nparams = 100 in
-    Tv.run nparams src_grp tgt_grp
+    Tv.run nparams src_grp tgt_grp src_cfg tgt_cfg
   else
     let target =
       try Option.get target
@@ -102,6 +104,9 @@ let main () =
         Printf.printf "Reduction #%d: " !idx;
         Printf.printf "%s\n" desc;
 
+        let src_cfg = IR.get_control_flow_graph src_grp in
+        let tgt_cfg = IR.get_control_flow_graph tgt_grp in
+
         if emit_reduction then (
           let parent = String.concat "/" [ outdir; string_of_int !idx; "" ] in
           Core.Unix.mkdir_p parent ~perm:0o775;
@@ -115,9 +120,12 @@ let main () =
           let parent = String.concat "/" [ outdir; string_of_int !idx; "" ] in
           Core.Unix.mkdir_p parent ~perm:0o775;
 
+          IR.generate_graph_output (parent ^ "before_cfg.dot") src_cfg;
+          IR.generate_graph_output (parent ^ "after_cfg.dot") tgt_cfg;
+
           IR.generate_graph_output (parent ^ "before.dot") src_grp;
           IR.generate_graph_output (parent ^ "after.dot") tgt_grp);
-        Tv.run nparams src_grp tgt_grp;
+        Tv.run nparams src_grp tgt_grp src_cfg tgt_cfg;
         idx := !idx + 1;
         print_newline ())
       reductions

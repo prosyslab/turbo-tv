@@ -8,7 +8,9 @@ let ctx = Z3utils.ctx
 
 let validator = Solver.init
 
-let rec next program state =
+module Id_set = Set.Make (Int)
+
+let rec next program state cfg =
   let pc = State.pc state in
   let rf = State.register_file state in
   let mem = ref (State.memory state) in
@@ -281,17 +283,17 @@ let rec next program state =
   in
 
   if State.is_end next_state then { next_state with retvar = Some value }
-  else next program next_state
+  else next program next_state cfg
 
 (* execute the program and retrieve a final state *)
-let execute program nparams stage =
+let execute program nparams stage cfg =
   (* symbols for parameters *)
   let init_state = State.init nparams stage in
-  next program init_state
+  next program init_state cfg
 
-let run nparams before after =
-  let src_state = execute before nparams "before" in
-  let tgt_state = execute after nparams "after" in
+let run nparams before after before_cfg after_cfg =
+  let src_state = execute before nparams "before" before_cfg in
+  let tgt_state = execute after nparams "after" after_cfg in
 
   let retvar_is_same =
     Bool.eq
