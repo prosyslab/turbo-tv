@@ -45,16 +45,24 @@ let create_from instr =
         Re.Pcre.regexp
           "(?:\\[[^,]*, [^,]*, [^,]*, ([^,]*)[^\\]]*\\])\\([^\\)]*\\)"
       in
-      let p1_re = Re.Pcre.regexp "(?:\\[[^\\]]*\\]){0,1}\\(#(\\d*)[^\\)]*\\)" in
-      let p2_re =
+      let c1_re =
+        Re.Pcre.regexp
+          "(?:\\[[^\\]]*\\]){0,1}\\([^\\)]*\\)\\([^\\)]*\\)\\(#(\\d*)[^\\)]*\\)"
+      in
+      let cv_re = Re.Pcre.regexp "(?:\\[[^\\]]*\\]){0,1}\\((.*)[^\\)]*\\)" in
+
+      let e1_re =
+        Re.Pcre.regexp "(?:\\[[^\\]]*\\]){0,1}\\([^\\)]*\\)\\(#(\\d*)[^\\)]*\\)"
+      in
+
+      let v1_re = Re.Pcre.regexp "(?:\\[[^\\]]*\\]){0,1}\\(#(\\d*)[^\\)]*\\)" in
+      let v2_re =
         Re.Pcre.regexp "(?:\\[[^\\]]*\\]){0,1}\\([^,]*, #(\\d*)[^\\)]*\\)"
       in
-      let p3_re =
+      let v3_re =
         Re.Pcre.regexp
           "(?:\\[[^\\]]*\\]){0,1}\\([^,]*, [^,]*, #(\\d*)[^\\)]*\\)"
       in
-
-      let vargs_re = Re.Pcre.regexp "(?:\\[[^\\]]*\\]){0,1}\\((.*)[^\\)]*\\)" in
       match kinds with
       | k :: t -> (
           try
@@ -74,24 +82,34 @@ let create_from instr =
                   Re.Group.get (Re.exec b4_re instr) 1 |> Operand.of_const
                 in
                 parse_operand t instr (b4 :: operands)
-            | P1 ->
-                let p1 =
-                  Re.Group.get (Re.exec p1_re instr) 1 |> Operand.of_id
+            | C1 ->
+                let c1 =
+                  Re.Group.get (Re.exec c1_re instr) 1 |> Operand.of_id
                 in
-                parse_operand t instr (p1 :: operands)
-            | P2 ->
-                let p2 =
-                  Re.Group.get (Re.exec p2_re instr) 1 |> Operand.of_id
+                parse_operand t instr (c1 :: operands)
+            | E1 ->
+                let e1 =
+                  Re.Group.get (Re.exec e1_re instr) 1 |> Operand.of_id
                 in
-                parse_operand t instr (p2 :: operands)
-            | P3 ->
-                let p3 =
-                  Re.Group.get (Re.exec p3_re instr) 1 |> Operand.of_id
+                parse_operand t instr (e1 :: operands)
+            | V1 ->
+                let v1 =
+                  Re.Group.get (Re.exec v1_re instr) 1 |> Operand.of_id
                 in
-                parse_operand t instr (p3 :: operands)
-            | VARGS ->
+                parse_operand t instr (v1 :: operands)
+            | V2 ->
+                let v2 =
+                  Re.Group.get (Re.exec v2_re instr) 1 |> Operand.of_id
+                in
+                parse_operand t instr (v2 :: operands)
+            | V3 ->
+                let v3 =
+                  Re.Group.get (Re.exec v3_re instr) 1 |> Operand.of_id
+                in
+                parse_operand t instr (v3 :: operands)
+            | CV ->
                 let vargs =
-                  Re.Group.get (Re.exec vargs_re instr) 1
+                  Re.Group.get (Re.exec cv_re instr) 1
                   |> String.split_on_char ','
                 in
                 List.fold_left

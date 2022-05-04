@@ -3,19 +3,22 @@ exception Invalid_opcode
 
 type kind =
   | UNIMPL
-  | P1
-  | P1P2
-  | P2
+  | V1
+  | V1E1
+  | E1
   | B1
-  | VARGS
-  | P1P2B1
-  | B1P1
-  | P1P2B1P3
-  | P3
-  | P1B2B4P2
+  | CV
+  | C1
+  | V1V2
+  | V2
+  | V1V2B1
+  | B1V1
+  | V1V2B1V3
+  | V3
+  | V1B2B4V2
   | B2
   | B4
-  | B1P1P2
+  | B1V1V2
   | Empty
 
 type t =
@@ -849,7 +852,7 @@ type t =
   | Word64Shl
   | Word64Shr
   | Word64Xor
-  (* p1 *)
+  (* v1 *)
   | AllocateRaw
   | BitcastTaggedToWord
   | BitcastWord32ToWord64
@@ -858,23 +861,11 @@ type t =
   | ChangeInt32ToTagged
   | ChangeTaggedSignedToInt32
   | CheckedTaggedSignedToInt32
-  | IfFalse
-  | IfTrue
   | NumberExpm1
   | StackPointerGreaterThan
   | TruncateInt64ToInt32
-  (* p1p2 *)
+  (* v1e1 *)
   | Branch
-  | Int32Add
-  | Int32AddWithOverflow
-  | Int64Add
-  | Int64Sub
-  | SpeculativeSafeIntegerAdd
-  | Uint64LessThan
-  | Word32And
-  | Word32Equal
-  (* p2 *)
-  | Return
   (* b1 *)
   | Call
   | ExternalConstant
@@ -884,19 +875,32 @@ type t =
   | JSStackCheck
   | NumberConstant
   | Parameter
-  (* vargs *)
+  (* cv *)
   | End
   | Merge
-  (* p1p2b1 *)
+  (* c1 *)
+  | IfFalse
+  | IfTrue
+  (* v1v2 *)
+  | Int32Add
+  | Int32AddWithOverflow
+  | Int64Add
+  | Int64Sub
+  | SpeculativeSafeIntegerAdd
+  | Uint64LessThan
+  | Word32And
+  | Word32Equal
+  (* v2 *)
+  | Return
+  (* v1v2b1 *)
   | Load
-  (* b1p1 *)
+  (* b1v1 *)
   | Projection
-  (* p1p2b1p3 *)
-  | Store (* p3 *)
-  (* p1b2b4p2 *)
-  | StoreField (* b2 *)
-  (* b4 *)
-  (* b1p1p2 *)
+  (* v1v2b1v3 *)
+  | Store
+  (* v1b2b4v2 *)
+  | StoreField
+  (* b1v1v2 *)
   | Word32Sar
   | Empty
 [@@deriving equal]
@@ -1122,40 +1126,45 @@ let get_kind opcode =
       UNIMPL
   | AllocateRaw | BitcastTaggedToWord | BitcastWord32ToWord64
   | BitcastWordToTagged | ChangeInt32ToFloat64 | ChangeInt32ToTagged
-  | ChangeTaggedSignedToInt32 | CheckedTaggedSignedToInt32 | IfFalse | IfTrue
-  | NumberExpm1 | StackPointerGreaterThan | TruncateInt64ToInt32 ->
-      P1
-  | Branch | Int32Add | Int32AddWithOverflow | Int64Add | Int64Sub
-  | SpeculativeSafeIntegerAdd | Uint64LessThan | Word32And | Word32Equal ->
-      P1P2
-  | Return -> P2
+  | ChangeTaggedSignedToInt32 | CheckedTaggedSignedToInt32 | NumberExpm1
+  | StackPointerGreaterThan | TruncateInt64ToInt32 ->
+      V1
+  | Branch -> V1E1
   | Call | ExternalConstant | HeapConstant | Int32Constant | Int64Constant
   | JSStackCheck | NumberConstant | Parameter ->
       B1
-  | End | Merge -> VARGS
-  | Load -> P1P2B1
-  | Projection -> B1P1
-  | Store -> P1P2B1P3
-  | StoreField -> P1B2B4P2
-  | Word32Sar -> B1P1P2
+  | End | Merge -> CV
+  | IfFalse | IfTrue -> C1
+  | Int32Add | Int32AddWithOverflow | Int64Add | Int64Sub
+  | SpeculativeSafeIntegerAdd | Uint64LessThan | Word32And | Word32Equal ->
+      V1V2
+  | Return -> V2
+  | Load -> V1V2B1
+  | Projection -> B1V1
+  | Store -> V1V2B1V3
+  | StoreField -> V1B2B4V2
+  | Word32Sar -> B1V1V2
   | Empty -> Empty
 
 let split_kind kind =
   match kind with
   | UNIMPL -> [ UNIMPL ]
-  | P1 -> [ P1 ]
-  | P1P2 -> [ P1; P2 ]
-  | P2 -> [ P2 ]
+  | V1 -> [ V1 ]
+  | V1E1 -> [ V1; E1 ]
+  | E1 -> [ E1 ]
   | B1 -> [ B1 ]
-  | VARGS -> [ VARGS ]
-  | P1P2B1 -> [ P1; P2; B1 ]
-  | B1P1 -> [ B1; P1 ]
-  | P1P2B1P3 -> [ P1; P2; B1; P3 ]
-  | P3 -> [ P3 ]
-  | P1B2B4P2 -> [ P1; B2; B4; P2 ]
+  | CV -> [ CV ]
+  | C1 -> [ C1 ]
+  | V1V2 -> [ V1; V2 ]
+  | V2 -> [ V2 ]
+  | V1V2B1 -> [ V1; V2; B1 ]
+  | B1V1 -> [ B1; V1 ]
+  | V1V2B1V3 -> [ V1; V2; B1; V3 ]
+  | V3 -> [ V3 ]
+  | V1B2B4V2 -> [ V1; B2; B4; V2 ]
   | B2 -> [ B2 ]
   | B4 -> [ B4 ]
-  | B1P1P2 -> [ B1; P1; P2 ]
+  | B1V1V2 -> [ B1; V1; V2 ]
   | Empty -> [ Empty ]
 
 let empty = Empty
@@ -1999,21 +2008,10 @@ let of_str str =
   | "ChangeInt32ToTagged" -> ChangeInt32ToTagged
   | "ChangeTaggedSignedToInt32" -> ChangeTaggedSignedToInt32
   | "CheckedTaggedSignedToInt32" -> CheckedTaggedSignedToInt32
-  | "IfFalse" -> IfFalse
-  | "IfTrue" -> IfTrue
   | "NumberExpm1" -> NumberExpm1
   | "StackPointerGreaterThan" -> StackPointerGreaterThan
   | "TruncateInt64ToInt32" -> TruncateInt64ToInt32
   | "Branch" -> Branch
-  | "Int32Add" -> Int32Add
-  | "Int32AddWithOverflow" -> Int32AddWithOverflow
-  | "Int64Add" -> Int64Add
-  | "Int64Sub" -> Int64Sub
-  | "SpeculativeSafeIntegerAdd" -> SpeculativeSafeIntegerAdd
-  | "Uint64LessThan" -> Uint64LessThan
-  | "Word32And" -> Word32And
-  | "Word32Equal" -> Word32Equal
-  | "Return" -> Return
   | "Call" -> Call
   | "ExternalConstant" -> ExternalConstant
   | "HeapConstant" -> HeapConstant
@@ -2024,6 +2022,17 @@ let of_str str =
   | "Parameter" -> Parameter
   | "End" -> End
   | "Merge" -> Merge
+  | "IfFalse" -> IfFalse
+  | "IfTrue" -> IfTrue
+  | "Int32Add" -> Int32Add
+  | "Int32AddWithOverflow" -> Int32AddWithOverflow
+  | "Int64Add" -> Int64Add
+  | "Int64Sub" -> Int64Sub
+  | "SpeculativeSafeIntegerAdd" -> SpeculativeSafeIntegerAdd
+  | "Uint64LessThan" -> Uint64LessThan
+  | "Word32And" -> Word32And
+  | "Word32Equal" -> Word32Equal
+  | "Return" -> Return
   | "Load" -> Load
   | "Projection" -> Projection
   | "Store" -> Store
@@ -2870,21 +2879,10 @@ let to_str opcode =
   | ChangeInt32ToTagged -> "ChangeInt32ToTagged"
   | ChangeTaggedSignedToInt32 -> "ChangeTaggedSignedToInt32"
   | CheckedTaggedSignedToInt32 -> "CheckedTaggedSignedToInt32"
-  | IfFalse -> "IfFalse"
-  | IfTrue -> "IfTrue"
   | NumberExpm1 -> "NumberExpm1"
   | StackPointerGreaterThan -> "StackPointerGreaterThan"
   | TruncateInt64ToInt32 -> "TruncateInt64ToInt32"
   | Branch -> "Branch"
-  | Int32Add -> "Int32Add"
-  | Int32AddWithOverflow -> "Int32AddWithOverflow"
-  | Int64Add -> "Int64Add"
-  | Int64Sub -> "Int64Sub"
-  | SpeculativeSafeIntegerAdd -> "SpeculativeSafeIntegerAdd"
-  | Uint64LessThan -> "Uint64LessThan"
-  | Word32And -> "Word32And"
-  | Word32Equal -> "Word32Equal"
-  | Return -> "Return"
   | Call -> "Call"
   | ExternalConstant -> "ExternalConstant"
   | HeapConstant -> "HeapConstant"
@@ -2895,6 +2893,17 @@ let to_str opcode =
   | Parameter -> "Parameter"
   | End -> "End"
   | Merge -> "Merge"
+  | IfFalse -> "IfFalse"
+  | IfTrue -> "IfTrue"
+  | Int32Add -> "Int32Add"
+  | Int32AddWithOverflow -> "Int32AddWithOverflow"
+  | Int64Add -> "Int64Add"
+  | Int64Sub -> "Int64Sub"
+  | SpeculativeSafeIntegerAdd -> "SpeculativeSafeIntegerAdd"
+  | Uint64LessThan -> "Uint64LessThan"
+  | Word32And -> "Word32And"
+  | Word32Equal -> "Word32Equal"
+  | Return -> "Return"
   | Load -> "Load"
   | Projection -> "Projection"
   | Store -> "Store"

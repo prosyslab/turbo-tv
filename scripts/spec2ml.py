@@ -46,7 +46,7 @@ def print_in_format(src):
 def save_in_format(src, dst_p):
     with open(dst_p, "w") as out:
         out.write(src)
-        
+
     subprocess.run(f"ocamlformat -i {dst_p}", shell=True)
 
 
@@ -69,15 +69,16 @@ def gen_opcode(opcodes, replace=False):
                   "match kind with \n")
 
     for k, opcode_group in opcodes.items():
-        t += f"  (* {k.lower()} *)\n"
+        if len(opcode_group) > 0:
+            t += f"  (* {k.lower()} *)\n"
 
         for opcode in opcode_group:
             t += f"  | {opcode}"
             of_str += f"  | \"{opcode}\" ->  {opcode}\n"
             to_str += f"  |  {opcode} -> \"{opcode}\"\n"
             get_kind += f"  | {opcode}"
-        
-        if opcode_group != []: 
+
+        if opcode_group != []:
             get_kind += f" -> {k}\n"
         split_kind += f"| {k} -> [{k if (k == 'UNIMPL' or k == 'VARGS') else ';'.join([k[2*i:2*i+2] for i in range(len(k)//2)])}]\n"
         t += "\n"
@@ -122,8 +123,8 @@ def gen_re_from_kind(kind):
     b_re_prefix = "(?:\\\\["
     b_re_suffix = "[^\\\\]]*\\\\])"
 
-    if kind == "VARGS":
-        return f"let {kind.lower()}_re = Re.Pcre.regexp \"{b_re_prefix}{b_re_suffix}{{0,1}}{p_re_prefix}(.*){p_re_suffix}\" in\n"
+    if kind == "CV":
+        return f"let {kind.lower()}_re = Re.Pcre.regexp \"{b_re_prefix}{b_re_suffix}{{0,1}}{p_re_prefix}{p_re_suffix}{p_re_prefix}{p_re_suffix}{p_re_prefix}(.*){p_re_suffix}\" in\n"
 
     operand_kind = kind[0].upper()
     operand_pos = int(kind[1])
@@ -132,8 +133,12 @@ def gen_re_from_kind(kind):
 
     if operand_kind == "B":
         re = f"let {kind.lower()}_re = Re.Pcre.regexp \"{b_re_prefix}{skips_re}{b_operand_re}{b_re_suffix}{p_re_prefix}{p_re_suffix}\" in"
-    elif operand_kind == "P":
+    elif operand_kind == "V":
         re = f"let {kind.lower()}_re = Re.Pcre.regexp \"{b_re_prefix}{b_re_suffix}{{0,1}}{p_re_prefix}{skips_re}{p_operand_re}{p_re_suffix}\" in"
+    elif operand_kind == "E":
+        re = f"let {kind.lower()}_re = Re.Pcre.regexp \"{b_re_prefix}{b_re_suffix}{{0,1}}{p_re_prefix}{p_re_suffix}{p_re_prefix}{skips_re}{p_operand_re}{p_re_suffix}\" in"
+    elif operand_kind == "C":
+        re = f"let {kind.lower()}_re = Re.Pcre.regexp \"{b_re_prefix}{b_re_suffix}{{0,1}}{p_re_prefix}{p_re_suffix}{p_re_prefix}{p_re_suffix}{p_re_prefix}{skips_re}{p_operand_re}{p_re_suffix}\" in"
 
     return re
 
@@ -141,20 +146,20 @@ def gen_re_from_kind(kind):
 def gen_match_from_kind(kind):
     if kind == "UNIMPL":
         return ""
-    elif kind == "VARGS":
+    elif kind.endswith("V"):
         return (
             f"| {kind} ->\n"
             f"  let vargs= \n"
             f"    Re.Group.get(Re.exec {kind.lower()}_re instr) 1 |> String.split_on_char ','"
             f"  in \n"
             f"  List.fold_left\n"
-             "     (fun res arg ->"
-             "       let re = Re.Pcre.regexp \"#(\\\\d*)\" in"
-             "       (Re.Group.get (Re.exec re arg) 1 |> Operand.of_id) :: res)"
-             "     [] vargs"
-        )
+            "     (fun res arg ->"
+            "       let re = Re.Pcre.regexp \"#(\\\\d*)\" in"
+            "       (Re.Group.get (Re.exec re arg) 1 |> Operand.of_id) :: res)"
+            "     [] vargs")
     else:
-        operand_type = "id" if kind.startswith("P") else "const"
+        operand_type = "id" if kind.startswith("V") or kind.startswith(
+            "E") or kind.startswith("C") else "const"
         return (
             f"| {kind} ->\n"
             f"  let {kind.lower()}= \n"
@@ -176,13 +181,13 @@ def gen_instr(opcodes, replace=False):
     kinds_re = "\n".join([
         v["re"] if (k != "UNIMPL") else ""
         for k, v in sorted(unique_kinds.items())
-    ])
+    ]) + "\n"
 
     kinds_match = "\n".join([
-        v["match"] if (k != "UNIMPL" and k!= "VARGS") else ""
+        v["match"] if (k != "UNIMPL" and k[-1] != 'V') else ""
         for k, v in sorted(unique_kinds.items())
     ])
-    kinds_match += f"{unique_kinds['VARGS']['match']}\n"
+    kinds_match += f"{unique_kinds['CV']['match']}\n"
     kinds_match += ("| UNIMPL -> []\n"
                     "|_ -> failwith \"Unreachable\"\n")
 
