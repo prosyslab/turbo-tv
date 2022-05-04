@@ -27,7 +27,26 @@ module Node = struct
       (Operands.to_str operands)
 end
 
-module G = Graph.Persistent.Digraph.ConcreteBidirectional (Node)
+module Edge = struct
+  type t = Value | Effect | Control
+
+  let default = Value
+
+  let to_int t = match t with Value -> 0 | Effect -> 1 | Control -> 2
+
+  let compare t1 t2 = compare (to_int t1) (to_int t2)
+
+  let value = Value
+
+  let effect = Effect
+
+  let control = Control
+
+  let to_str t =
+    match t with Value -> "Value" | Effect -> "Effect" | Control -> "Control"
+end
+
+module G = Graph.Persistent.Digraph.ConcreteBidirectionalLabeled (Node) (Edge)
 
 let find_by_id id graph =
   let node =
@@ -79,8 +98,8 @@ let false_br_of id graph =
 
 let instr_of id graph = find_by_id id graph |> Node.instr
 
-let connect_n1_n2 n1 n2 graph =
-  G.add_edge graph (find_by_id n1 graph) (find_by_id n2 graph)
+let connect_n1_n2 edge n1 n2 graph =
+  G.add_edge_e graph (find_by_id n1 graph, edge, find_by_id n2 graph)
 
 (* parse instrction id from  *)
 let parse_iid line =
@@ -114,30 +133,37 @@ let create_from graph_lines =
       | '(', ')' | '[', ']' | '<', '>' -> true
       | _ -> false
     in
-    let s = Stack.create () in
-    let result =
-      String.fold_left
-        (fun result ch ->
-          if ch = '(' || ch = '[' || ch = '<' then Stack.push ch s
-          else if ch = ')' || ch = ']' || ch = '>' then
-            if check_bracket_match (Stack.top s) ch then Stack.pop s |> ignore
-            else failwith "File has weird bracket";
-          if Stack.length s = 1 && Stack.top s = '(' then
-            String.cat result (String.make 1 ch)
-          else result)
-        "" line
+    let grep_innodes line =
+      let s = Stack.create () in
+      let result, len, _ =
+        String.fold_left
+          (fun (result, i, finished) ch ->
+            if ch = '(' || ch = '[' || ch = '<' then Stack.push ch s
+            else if ch = ')' || ch = ']' || ch = '>' then
+              if check_bracket_match (Stack.top s) ch then Stack.pop s |> ignore
+              else failwith "File has weird bracket";
+            if Stack.length s = 1 && Stack.top s = '(' && not finished then
+              (String.cat result (String.make 1 ch), i + 1, finished)
+            else if String.length result > 0 then (result, i, true)
+            else (result, i + 1, false))
+          ("", 0, false) line
+      in
+      (result, len)
     in
+
+    let result, len = grep_innodes line in
     let result_len = String.length result in
 
-    String.sub result 1 (result_len - 1)
-    |> StringLabels.split_on_char ~sep:' '
-    |> List.filter (fun s -> String.length s > 0)
-    |> List.map (fun n -> n |> parse_iid |> find_nid)
+    ( String.sub result 1 (result_len - 1)
+      |> StringLabels.split_on_char ~sep:' '
+      |> List.filter (fun s -> String.length s > 0)
+      |> List.map (fun n -> n |> parse_iid |> find_nid),
+      len + 1 )
   in
 
-  let connect_inedges node in_nodes graph =
+  let connect_inedges edge node in_nodes graph =
     List.fold_right
-      (fun in_node graph -> connect_n1_n2 in_node node graph)
+      (fun in_node graph -> connect_n1_n2 edge in_node node graph)
       in_nodes graph
   in
 
@@ -163,8 +189,20 @@ let create_from graph_lines =
            Instr.create ty opcode (iid_operands_to_nid_operands operands [])
          in
          let node = Node.create node_id instr in
-         let in_nodes = line |> parse_innodes in
-         G.add_vertex g node |> connect_inedges node_id in_nodes)
+         let value_innodes, value_end = line |> parse_innodes in
+         let effect_innodes, effect_end =
+           String.sub line value_end (String.length line - value_end)
+           |> parse_innodes
+         in
+         let control_start = value_end + effect_end in
+         let control_innodes, _ =
+           String.sub line control_start (String.length line - control_start)
+           |> parse_innodes
+         in
+         G.add_vertex g node
+         |> connect_inedges Edge.value node_id value_innodes
+         |> connect_inedges Edge.effect node_id effect_innodes
+         |> connect_inedges Edge.control node_id control_innodes)
        G.empty
 
 let create_from_ir_file ir_file =
@@ -186,7 +224,7 @@ module Dot = Graph.Graphviz.Dot (struct
 
   let default_edge_attributes _ = []
 
-  let edge_attributes _ = []
+  let edge_attributes (_, e, _) = [ `Label (String.sub (Edge.to_str e) 0 1) ]
 end)
 
 let generate_graph_output name g =
