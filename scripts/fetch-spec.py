@@ -14,12 +14,15 @@ def fetch_spec(gc: gspread.Client) -> dict[str:str]:
     spec = {}
 
     for sht in wkshts:
-        opcodes = sht.get_values()[1:]
+        values = sht.get_values()
+        head = values[0]
+        opcodes = values[1:]
+        max_nargs = ["Arg" in cname for cname in head].count(True)
 
         for opcode in opcodes:
-            name, args = opcode[0], opcode[1:]
+            name, args = opcode[0], opcode[1:max_nargs+1]
 
-            #remove empty cell
+            # remove empty cell
             args = filter(lambda c: c, args)
             args = ",".join(list(args))
 

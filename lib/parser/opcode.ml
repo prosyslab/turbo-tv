@@ -13,9 +13,7 @@ type kind =
   | V2
   | V1V2B1
   | B1V1
-  | V1V2B1V3
-  | V3
-  | V1B2B4V2
+  | V1B2B4
   | B2
   | B4
   | B1V1V2
@@ -49,10 +47,7 @@ type t =
   | ChangeFloat64ToUint32
   | ChangeFloat64ToUint64
   | ChangeInt31ToTaggedSigned
-  | ChangeInt32ToInt64
   | ChangeInt64ToBigInt
-  | ChangeInt64ToFloat64
-  | ChangeInt64ToTagged
   | ChangeTaggedSignedToInt64
   | ChangeTaggedToBit
   | ChangeTaggedToFloat64
@@ -62,7 +57,6 @@ type t =
   | ChangeTaggedToUint32
   | ChangeUint32ToFloat64
   | ChangeUint32ToTagged
-  | ChangeUint32ToUint64
   | ChangeUint64ToBigInt
   | ChangeUint64ToTagged
   | CheckBigInt
@@ -858,8 +852,12 @@ type t =
   | BitcastWord32ToWord64
   | BitcastWordToTagged
   | ChangeInt32ToFloat64
+  | ChangeInt32ToInt64
   | ChangeInt32ToTagged
+  | ChangeInt64ToFloat64
+  | ChangeInt64ToTagged
   | ChangeTaggedSignedToInt32
+  | ChangeUint32ToUint64
   | CheckedTaggedSignedToInt32
   | NumberExpm1
   | StackPointerGreaterThan
@@ -894,11 +892,10 @@ type t =
   | Return
   (* v1v2b1 *)
   | Load
+  | Store
   (* b1v1 *)
   | Projection
-  (* v1v2b1v3 *)
-  | Store
-  (* v1b2b4v2 *)
+  (* v1b2b4 *)
   | StoreField
   (* b1v1v2 *)
   | Word32Sar
@@ -915,19 +912,17 @@ let get_kind opcode =
   | ChangeBitToTagged | ChangeFloat32ToFloat64 | ChangeFloat64ToInt32
   | ChangeFloat64ToInt64 | ChangeFloat64ToTagged | ChangeFloat64ToTaggedPointer
   | ChangeFloat64ToUint32 | ChangeFloat64ToUint64 | ChangeInt31ToTaggedSigned
-  | ChangeInt32ToInt64 | ChangeInt64ToBigInt | ChangeInt64ToFloat64
-  | ChangeInt64ToTagged | ChangeTaggedSignedToInt64 | ChangeTaggedToBit
+  | ChangeInt64ToBigInt | ChangeTaggedSignedToInt64 | ChangeTaggedToBit
   | ChangeTaggedToFloat64 | ChangeTaggedToInt32 | ChangeTaggedToInt64
   | ChangeTaggedToTaggedSigned | ChangeTaggedToUint32 | ChangeUint32ToFloat64
-  | ChangeUint32ToTagged | ChangeUint32ToUint64 | ChangeUint64ToBigInt
-  | ChangeUint64ToTagged | CheckBigInt | CheckBounds | CheckClosure
-  | CheckEqualsInternalizedString | CheckEqualsSymbol | CheckFloat64Hole
-  | CheckHeapObject | CheckIf | CheckInternalizedString | CheckMaps
-  | CheckNotTaggedHole | CheckNumber | CheckReceiver
-  | CheckReceiverOrNullOrUndefined | CheckSmi | CheckString | CheckSymbol
-  | CheckedFloat64ToInt32 | CheckedFloat64ToInt64 | CheckedInt32Add
-  | CheckedInt32Div | CheckedInt32Mod | CheckedInt32Mul | CheckedInt32Sub
-  | CheckedInt32ToTaggedSigned | CheckedInt64ToInt32
+  | ChangeUint32ToTagged | ChangeUint64ToBigInt | ChangeUint64ToTagged
+  | CheckBigInt | CheckBounds | CheckClosure | CheckEqualsInternalizedString
+  | CheckEqualsSymbol | CheckFloat64Hole | CheckHeapObject | CheckIf
+  | CheckInternalizedString | CheckMaps | CheckNotTaggedHole | CheckNumber
+  | CheckReceiver | CheckReceiverOrNullOrUndefined | CheckSmi | CheckString
+  | CheckSymbol | CheckedFloat64ToInt32 | CheckedFloat64ToInt64
+  | CheckedInt32Add | CheckedInt32Div | CheckedInt32Mod | CheckedInt32Mul
+  | CheckedInt32Sub | CheckedInt32ToTaggedSigned | CheckedInt64ToInt32
   | CheckedInt64ToTaggedSigned | CheckedTaggedToArrayIndex
   | CheckedTaggedToFloat64 | CheckedTaggedToInt32 | CheckedTaggedToInt64
   | CheckedTaggedToTaggedPointer | CheckedTaggedToTaggedSigned
@@ -1125,9 +1120,11 @@ let get_kind opcode =
   | Word64Shr | Word64Xor ->
       UNIMPL
   | AllocateRaw | BitcastTaggedToWord | BitcastWord32ToWord64
-  | BitcastWordToTagged | ChangeInt32ToFloat64 | ChangeInt32ToTagged
-  | ChangeTaggedSignedToInt32 | CheckedTaggedSignedToInt32 | NumberExpm1
-  | StackPointerGreaterThan | TruncateInt64ToInt32 ->
+  | BitcastWordToTagged | ChangeInt32ToFloat64 | ChangeInt32ToInt64
+  | ChangeInt32ToTagged | ChangeInt64ToFloat64 | ChangeInt64ToTagged
+  | ChangeTaggedSignedToInt32 | ChangeUint32ToUint64
+  | CheckedTaggedSignedToInt32 | NumberExpm1 | StackPointerGreaterThan
+  | TruncateInt64ToInt32 ->
       V1
   | Branch -> V1E1
   | Call | ExternalConstant | HeapConstant | Int32Constant | Int64Constant
@@ -1139,10 +1136,9 @@ let get_kind opcode =
   | SpeculativeSafeIntegerAdd | Uint64LessThan | Word32And | Word32Equal ->
       V1V2
   | Return -> V2
-  | Load -> V1V2B1
+  | Load | Store -> V1V2B1
   | Projection -> B1V1
-  | Store -> V1V2B1V3
-  | StoreField -> V1B2B4V2
+  | StoreField -> V1B2B4
   | Word32Sar -> B1V1V2
   | Empty -> Empty
 
@@ -1159,9 +1155,7 @@ let split_kind kind =
   | V2 -> [ V2 ]
   | V1V2B1 -> [ V1; V2; B1 ]
   | B1V1 -> [ B1; V1 ]
-  | V1V2B1V3 -> [ V1; V2; B1; V3 ]
-  | V3 -> [ V3 ]
-  | V1B2B4V2 -> [ V1; B2; B4; V2 ]
+  | V1B2B4 -> [ V1; B2; B4 ]
   | B2 -> [ B2 ]
   | B4 -> [ B4 ]
   | B1V1V2 -> [ B1; V1; V2 ]
@@ -1197,10 +1191,7 @@ let of_str str =
   | "ChangeFloat64ToUint32" -> ChangeFloat64ToUint32
   | "ChangeFloat64ToUint64" -> ChangeFloat64ToUint64
   | "ChangeInt31ToTaggedSigned" -> ChangeInt31ToTaggedSigned
-  | "ChangeInt32ToInt64" -> ChangeInt32ToInt64
   | "ChangeInt64ToBigInt" -> ChangeInt64ToBigInt
-  | "ChangeInt64ToFloat64" -> ChangeInt64ToFloat64
-  | "ChangeInt64ToTagged" -> ChangeInt64ToTagged
   | "ChangeTaggedSignedToInt64" -> ChangeTaggedSignedToInt64
   | "ChangeTaggedToBit" -> ChangeTaggedToBit
   | "ChangeTaggedToFloat64" -> ChangeTaggedToFloat64
@@ -1210,7 +1201,6 @@ let of_str str =
   | "ChangeTaggedToUint32" -> ChangeTaggedToUint32
   | "ChangeUint32ToFloat64" -> ChangeUint32ToFloat64
   | "ChangeUint32ToTagged" -> ChangeUint32ToTagged
-  | "ChangeUint32ToUint64" -> ChangeUint32ToUint64
   | "ChangeUint64ToBigInt" -> ChangeUint64ToBigInt
   | "ChangeUint64ToTagged" -> ChangeUint64ToTagged
   | "CheckBigInt" -> CheckBigInt
@@ -2005,8 +1995,12 @@ let of_str str =
   | "BitcastWord32ToWord64" -> BitcastWord32ToWord64
   | "BitcastWordToTagged" -> BitcastWordToTagged
   | "ChangeInt32ToFloat64" -> ChangeInt32ToFloat64
+  | "ChangeInt32ToInt64" -> ChangeInt32ToInt64
   | "ChangeInt32ToTagged" -> ChangeInt32ToTagged
+  | "ChangeInt64ToFloat64" -> ChangeInt64ToFloat64
+  | "ChangeInt64ToTagged" -> ChangeInt64ToTagged
   | "ChangeTaggedSignedToInt32" -> ChangeTaggedSignedToInt32
+  | "ChangeUint32ToUint64" -> ChangeUint32ToUint64
   | "CheckedTaggedSignedToInt32" -> CheckedTaggedSignedToInt32
   | "NumberExpm1" -> NumberExpm1
   | "StackPointerGreaterThan" -> StackPointerGreaterThan
@@ -2034,8 +2028,8 @@ let of_str str =
   | "Word32Equal" -> Word32Equal
   | "Return" -> Return
   | "Load" -> Load
-  | "Projection" -> Projection
   | "Store" -> Store
+  | "Projection" -> Projection
   | "StoreField" -> StoreField
   | "Word32Sar" -> Word32Sar
   | _ -> raise Invalid_opcode
@@ -2068,10 +2062,7 @@ let to_str opcode =
   | ChangeFloat64ToUint32 -> "ChangeFloat64ToUint32"
   | ChangeFloat64ToUint64 -> "ChangeFloat64ToUint64"
   | ChangeInt31ToTaggedSigned -> "ChangeInt31ToTaggedSigned"
-  | ChangeInt32ToInt64 -> "ChangeInt32ToInt64"
   | ChangeInt64ToBigInt -> "ChangeInt64ToBigInt"
-  | ChangeInt64ToFloat64 -> "ChangeInt64ToFloat64"
-  | ChangeInt64ToTagged -> "ChangeInt64ToTagged"
   | ChangeTaggedSignedToInt64 -> "ChangeTaggedSignedToInt64"
   | ChangeTaggedToBit -> "ChangeTaggedToBit"
   | ChangeTaggedToFloat64 -> "ChangeTaggedToFloat64"
@@ -2081,7 +2072,6 @@ let to_str opcode =
   | ChangeTaggedToUint32 -> "ChangeTaggedToUint32"
   | ChangeUint32ToFloat64 -> "ChangeUint32ToFloat64"
   | ChangeUint32ToTagged -> "ChangeUint32ToTagged"
-  | ChangeUint32ToUint64 -> "ChangeUint32ToUint64"
   | ChangeUint64ToBigInt -> "ChangeUint64ToBigInt"
   | ChangeUint64ToTagged -> "ChangeUint64ToTagged"
   | CheckBigInt -> "CheckBigInt"
@@ -2876,8 +2866,12 @@ let to_str opcode =
   | BitcastWord32ToWord64 -> "BitcastWord32ToWord64"
   | BitcastWordToTagged -> "BitcastWordToTagged"
   | ChangeInt32ToFloat64 -> "ChangeInt32ToFloat64"
+  | ChangeInt32ToInt64 -> "ChangeInt32ToInt64"
   | ChangeInt32ToTagged -> "ChangeInt32ToTagged"
+  | ChangeInt64ToFloat64 -> "ChangeInt64ToFloat64"
+  | ChangeInt64ToTagged -> "ChangeInt64ToTagged"
   | ChangeTaggedSignedToInt32 -> "ChangeTaggedSignedToInt32"
+  | ChangeUint32ToUint64 -> "ChangeUint32ToUint64"
   | CheckedTaggedSignedToInt32 -> "CheckedTaggedSignedToInt32"
   | NumberExpm1 -> "NumberExpm1"
   | StackPointerGreaterThan -> "StackPointerGreaterThan"
@@ -2905,8 +2899,8 @@ let to_str opcode =
   | Word32Equal -> "Word32Equal"
   | Return -> "Return"
   | Load -> "Load"
-  | Projection -> "Projection"
   | Store -> "Store"
+  | Projection -> "Projection"
   | StoreField -> "StoreField"
   | Word32Sar -> "Word32Sar"
   | Empty -> failwith "Unreachable"
