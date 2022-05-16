@@ -10,31 +10,27 @@ let rec verify (value : Value.t) (ty : Types.t) =
   | Integral32OrMinusZero | Integral32OrMinusZeroOrNaN | MinusZeroOrNaN ->
       (* if there exists a boundary B of the region R that satisfy T <= B, then T <= R *)
       let region = Types.decompose ty |> List.map Boundary.from_type in
-      let v =
-        List.fold_left
-          (fun verified boundary ->
-            let in_bound =
-              match boundary with
-              | Boundary.Int32Boundary (lb, ub) ->
-                  Bool.ands
-                    [
-                      Bool.not (Value.is_float value);
-                      Value.ugei ~width:32 value lb;
-                      Value.ulei ~width:32 value ub;
-                    ]
-              | FloatBoundary (lb, ub) ->
-                  Bool.ands
-                    [
-                      Value.is_float value;
-                      Value.geqf value lb;
-                      Value.leqf value ub;
-                    ]
-            in
-            Bool.ors [ verified; in_bound ])
-          Bool.fl region
-      in
-      v |> print_exp;
-      v
+      List.fold_left
+        (fun verified boundary ->
+          let in_bound =
+            match boundary with
+            | Boundary.Int32Boundary (lb, ub) ->
+                Bool.ands
+                  [
+                    Bool.not (Value.is_float value);
+                    Value.ugei ~width:32 value lb;
+                    Value.ulei ~width:32 value ub;
+                  ]
+            | FloatBoundary (lb, ub) ->
+                Bool.ands
+                  [
+                    Value.is_float value;
+                    Value.geqf value lb;
+                    Value.leqf value ub;
+                  ]
+          in
+          Bool.ors [ verified; in_bound ])
+        Bool.fl region
   (* T <= (T1 \/ ... \/ Tn)  if  (T <= T1) \/ ... \/ (T <= Tn) *)
   | Union fields ->
       Bool.ors (List.rev_map (fun field_ty -> verify value field_ty) fields)
