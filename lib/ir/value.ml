@@ -146,6 +146,9 @@ let slei ?(width = len) lval i =
 
 let ule lval rval = BitVec.uleb (data_of lval) (data_of rval)
 
+let ulei ?(width = len) lval i =
+  BitVec.ulei (BitVec.extract (width - 1) 0 (data_of lval)) i
+
 let ugt lval rval = BitVec.ugtb (data_of lval) (data_of rval)
 
 let ugti value i = BitVec.ugti (data_of value) i
@@ -156,6 +159,9 @@ let sgei ?(width = len) lval i =
   BitVec.sgei (BitVec.extract (width - 1) 0 (data_of lval)) i
 
 let uge lval rval = BitVec.ugeb (data_of lval) (data_of rval)
+
+let ugei ?(width = len) lval i =
+  BitVec.ugei (BitVec.extract (width - 1) 0 (data_of lval)) i
 
 (* Floating Point *)
 let geqf lval f =

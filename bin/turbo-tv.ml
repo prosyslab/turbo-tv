@@ -13,12 +13,13 @@ let jstv_args =
   (* Arguments *)
   let target_arg =
     let doc = "Target JS for translation validation." in
-    Arg.(value & opt (some string) None & info [ "js" ] ~docv:"JS" ~doc)
+    Arg.(value & pos 0 (some string) None & info [] ~docv:"JS" ~doc)
   in
 
   let test_unit_arg =
     let doc = "Test on unit (src IR & target IR)" in
-    Arg.(value & opt (list file) [] & info [ "test" ] ~docv:"TEST" ~doc)
+    Arg.(
+      value & opt (list ~sep:',' file) [] & info [ "test" ] ~docv:"TEST" ~doc)
   in
 
   let emit_graph_arg =
