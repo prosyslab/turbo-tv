@@ -46,18 +46,6 @@ let rec verify (value : Value.t) (ty : Types.t) =
         Bool.ands (List.rev_map2 (fun v f -> verify v f) decomposed fields)
       else failwith "is: wrong number of fields"
   | Range (lb, ub) ->
-      (* MinusZero and Range is orthogonal *)
-      let value_is_not_mz = Bool.not (Value.eq value Value.minus_zero) in
-      (* let value_is_mz = Value.eq value Value.minus_zero in *)
-      Bool.ors
-        [
-          Bool.ands
-            [ value_is_not_mz; Value.geqf value lb; Value.leqf value ub ]
-          (* Bool.ands
-             [
-               value_is_mz;
-               Bool.ors [ Value.eqf Value.minus_zero Value lb; Value.minus_zero ub ];
-             ]; *);
-        ]
+      Bool.ors [ Bool.ands [ Value.geqf value lb; Value.leqf value ub ] ]
   (* for now, handle only numeric types *)
   | _ -> Bool.tr
