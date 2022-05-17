@@ -152,7 +152,7 @@ let change_int32_to_tagged vid pval mem =
     Bool.ands [ Value.is_defined pval; Value.has_type Type.int32 pval ]
   in
 
-  (* check if pval+pval >= smi max *)
+  (* if pval is in smi range, value - (pval + pval) *)
   let is_in_smi_range = Value.is_in_smi_range pval in
   let smi = BitVec.addb data data |> Value.entype Type.tagged_signed in
 
