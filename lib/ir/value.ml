@@ -62,6 +62,16 @@ let is_integer t = Bool.ors [ is_signed_integer t; is_unsigned_integer t ]
 
 let is_float t = Bool.ors (List.map (fun ty -> has_type ty t) Type.float_types)
 
+(* type casting operations *)
+let int32_to_int64 t =
+  let x = t |> BitVec.extract 31 0 |> BitVec.sign_extend 32 in
+  x |> entype Type.int64
+
+let int64_to_float64 t =
+  data_of t |> Float.from_signed_bv |> Float.to_ieee_bv |> entype Type.float64
+
+let int32_to_float64 t = t |> int32_to_int64 |> int64_to_float64
+
 (* representation *)
 let has_repr repr t =
   let tys_of_repr = Type.from_repr repr in

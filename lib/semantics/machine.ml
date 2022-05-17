@@ -285,16 +285,17 @@ let bitcast_word_to_tagged vid v =
   in
   (value, assertion, Bool.fl)
 
-(* TODO: Fix it *)
+(* well-defined condition:
+ * - well_defined(v) ^ int32(v)
+ * assertion:
+ *  value = ite well-defined float64(v) UB *)
 let change_int32_to_float64 vid pval =
   let value = Value.init vid in
-  let assertion =
-    Bool.ands
-      [
-        Value.has_type Type.int32 pval;
-        Value.eq value (pval |> Value.cast Type.tagged_signed);
-      ]
+  let wd_cond =
+    Bool.ands [ Value.is_defined pval; Value.has_type Type.int32 pval ]
   in
+  let wd_value = value |> Value.int32_to_float64 in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, assertion, Bool.fl)
 
 (* well-defined condition:
@@ -307,11 +308,7 @@ let change_int32_to_int64 vid pval =
     Bool.ands [ Value.is_defined pval; Value.has_type Type.int32 pval ]
   in
   (* extend sign bit *)
-  let wd_value =
-    BitVec.extract 31 0 value
-    |> BitVec.sign_extend Value.len
-    |> Value.entype Type.int64
-  in
+  let wd_value = value |> Value.int32_to_int64 in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, assertion, Bool.fl)
 

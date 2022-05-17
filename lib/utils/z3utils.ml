@@ -303,6 +303,8 @@ module BitVec = struct
 
   let repeat cnt bv = BV.mk_repeat ctx cnt bv
 
+  let sign_extend len bv = BV.mk_sign_ext ctx len bv
+
   let zero_extend len bv = BV.mk_zero_ext ctx len bv
 
   (* Bi-BitVec operation *)
