@@ -26,14 +26,16 @@ let rec next program state cfg =
     | HeapConstant | ExternalConstant ->
         let addr_re = Re.Pcre.regexp "(0x[0-9a-f]+)" in
         let operand = Operands.const_of_nth operands 0 in
-        let c = Re.Group.get (Re.exec addr_re operand) 1 |> Int64.of_string in
-        heap_constant vid (c |> Int64.to_string) mem
+        let c =
+          Re.Group.get (Re.exec addr_re operand) 1 |> Value.from_istring
+        in
+        heap_constant vid c
     | Int32Constant ->
         let c = Operands.const_of_nth operands 0 |> Value.from_istring in
         int32_constant vid c
     | Int64Constant ->
-        let c = Operands.const_of_nth operands 0 in
-        int64_constant vid c mem
+        let c = Operands.const_of_nth operands 0 |> Value.from_istring in
+        int64_constant vid c
     | NumberConstant ->
         let c_str = Operands.const_of_nth operands 0 in
         number_constant vid c_str mem
@@ -224,7 +226,14 @@ let rec next program state cfg =
         let pval = RegisterFile.find pid rf in
         truncate_int64_to_int32 vid pval
     | Empty -> (Value.empty, Bool.tr, Bool.fl)
-    | _ -> (Value.empty, Bool.tr, Bool.fl)
+    | _ ->
+        let msg =
+          Format.sprintf "unsupported instruction: %s%s"
+            (opcode |> Opcode.to_str)
+            (operands |> Operands.to_str)
+        in
+        print_endline msg;
+        (Value.empty, Bool.tr, Bool.fl)
   in
 
   let precond =
@@ -312,8 +321,8 @@ let run nparams before after before_cfg after_cfg =
   | SATISFIABLE ->
       let model = Option.get (Solver.get_model validator) in
       let model_str = model |> Model.to_str in
-      Printf.printf "X -> \n";
-      Printf.printf "Assertion: \n%s\n" (assertion |> str_of_simplified);
+      Printf.printf "Result: Not Verified \n";
+      Printf.printf "Assertion: \n%s\n\n" (assertion |> str_of_simplified);
       Printf.printf "Model: \n%s" model_str
-  | UNSATISFIABLE -> Printf.printf "O\n"
+  | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
   | _ -> failwith "unknown"

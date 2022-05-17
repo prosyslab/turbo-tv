@@ -7,10 +7,9 @@ module HeapNumber = Objects.HeapNumber
  * behavior: ite well-defined value=c value=UB *)
 let int32_constant vid c =
   let value = Value.init vid in
-  let c_can_be_int32 =
+  let wd_cond =
     Bool.ands [ Value.sge c Value.int32_min; Value.sle c Value.int32_max ]
   in
-  let wd_cond = c_can_be_int32 in
   let assertion =
     Value.eq value
       (Bool.ite wd_cond (c |> Value.cast Type.int32) Value.undefined)
@@ -18,21 +17,27 @@ let int32_constant vid c =
   (value, assertion, Bool.fl)
 
 (* behavior: value=c *)
-let int64_constant vid c mem =
+let int64_constant vid c =
+  let value = Value.init vid in
+  let assertion = Value.eq value (c |> Value.cast Type.int64) in
+  (value, assertion, Bool.fl)
+
+(* behavior: value=c *)
+let external_constant vid c =
+  let value = Value.init vid in
+  let assertion = Value.eq value (c |> Value.cast Type.pointer) in
+  (value, assertion, Bool.fl)
+
+(* behavior: value=c *)
+let heap_constant = external_constant
+
+(* behavior: value=c *)
+let number_constant vid c mem =
   let value = Value.init vid in
   let wd_value = HeapNumber.allocate in
   HeapNumber.store wd_value (HeapNumber.from_number_string c) Bool.tr mem;
   let assertion = Value.eq value wd_value in
   (value, assertion, Bool.fl)
-
-(* behavior: value=c *)
-let external_constant = int64_constant
-
-(* behavior: value=c *)
-let heap_constant = int64_constant
-
-(* behavior: value=c *)
-let number_constant = int64_constant
 
 (* common: control *)
 (* retrieve the value at [idx] from [incoming]
