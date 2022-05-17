@@ -1,4 +1,5 @@
 open Z3utils
+module HeapNumber = Objects.HeapNumber
 
 (* simplified: arithmetic *)
 (* well-defined condition:
@@ -9,7 +10,7 @@ open Z3utils
 let speculative_safe_integer_add vid lval rval =
   let value = Value.init vid in
 
-  let res = Value.andi (Value.add lval rval) Type.smi_mask in
+  let res = Value.andi (Value.add lval rval) Constants.smi_mask in
 
   let assertion =
     Bool.ands
@@ -20,56 +21,51 @@ let speculative_safe_integer_add vid lval rval =
       ]
   in
 
-  (value, assertion)
+  (value, assertion, Bool.fl)
 
-let number_expm1 vid pval =
+let number_expm1 vid nptr mem =
   let value = Value.init vid in
-  let bitvec_sort = BV.mk_sort ctx Value.len in
-  let expm_decl =
-    Z3.FuncDecl.mk_func_decl_s ctx "unknown_number_expm1" [ bitvec_sort ]
-      bitvec_sort
-  in
-
-  let if_well_defined =
+  let wd_cond =
     Bool.ands
       [
-        Bool.not (Value.is_undefined pval);
-        Bool.ors
-          [
-            Value.has_type Type.float64 pval;
-            Value.has_type Type.tagged_signed pval;
-          ];
+        Value.is_defined nptr;
+        nptr |> Value.has_type Type.tagged_pointer;
+        Objects.is_heap_number nptr !mem;
       ]
   in
+  let ub_cond = Bool.not wd_cond in
 
-  let well_defined =
+  (* expm1 = e^{n}-1 *)
+  let res_ptr = HeapNumber.allocate in
+  let expm1 =
+    let n = HeapNumber.load nptr !mem in
+    let bv_sort = BV.mk_sort ctx 64 in
+    let expm_decl =
+      Z3.FuncDecl.mk_func_decl_s ctx "unknown_number_expm1" [ bv_sort ] bv_sort
+    in
     Bool.ite
-      (Value.eq pval Value.minus_zero)
-      Value.minus_zero
-      (Bool.ite (Value.eq pval Value.inf) Value.inf
-         (Bool.ite (Value.eq pval Value.ninf)
-            (Float.from_string "-1" |> Float.to_ieee_bv
-           |> Value.entype Type.float64)
-            (Bool.ite
-               (Value.eq pval
-                  (Value.nan |> Float.to_ieee_bv |> Value.entype Type.float64))
-               (Value.nan |> Float.to_ieee_bv |> Value.entype Type.float64)
-               (Bool.ite
-                  (Value.weak_eq pval Value.zero)
-                  (Float.from_string "0" |> Float.to_ieee_bv
-                 |> Value.entype Type.float64)
-                  (Z3.FuncDecl.apply expm_decl [ pval ])))))
+      (HeapNumber.is_minus_zero n)
+      (BitVecVal.minus_zero ())
+      (Bool.ite (HeapNumber.is_inf n) (BitVecVal.inf ())
+         (Bool.ite (HeapNumber.is_ninf n)
+            (BitVecVal.from_f64string "-1.0")
+            (Bool.ite (HeapNumber.is_nan n) (BitVecVal.nan ())
+               (Bool.ite (HeapNumber.is_zero n)
+                  (BitVecVal.from_f64string "0.0")
+                  (Z3.FuncDecl.apply expm_decl [ n.value ])))))
+    |> HeapNumber.from_ieee_bv
   in
+  HeapNumber.store res_ptr expm1 wd_cond mem;
+  let wd_value = res_ptr in
 
-  let assertion =
-    Value.eq value (Bool.ite if_well_defined well_defined Value.undefined)
-  in
-  (value, assertion)
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, assertion, ub_cond)
 
 (* simplified: memory *)
 let allocate_raw vid size =
-  let ptr, assertion = Memory.allocate vid size in
-  (ptr, assertion)
+  let vid = Value.init vid in
+  let ptr = Memory.allocate size in
+  (ptr, Value.eq vid ptr, Bool.fl)
 
 let store_field ptr pos mt value mem =
   let repr = MachineType.repr mt in
@@ -79,45 +75,64 @@ let store_field ptr pos mt value mem =
 
   (* check index out-of-bounds *)
   let can_access = Pointer.can_access_as pos repr ptr in
-  let condition = Bool.ands [ ty_check; can_access ] in
+  let ub_cond = Bool.not (Bool.ands [ ty_check; can_access ]) in
+  let store_cond = Bool.not ub_cond in
 
-  mem := Memory.store_as (Pointer.move ptr pos) repr condition value !mem;
-  (Value.empty, Bool.tr)
+  mem := Memory.store_as (Pointer.move ptr pos) repr store_cond value !mem;
+  (Value.empty, Bool.tr, ub_cond)
 
 (* simplified: type-conversion *)
+(* well-defined condition:
+ * - int32(pval)
+ * - WellDefined(pval)
+ * assertion:
+ *  value = ite well-defined (tagged(pval)) UB *)
 let change_int32_to_tagged vid pval mem =
   let value = Value.init vid in
   let data = Value.data_of pval in
 
-  let tagged = BitVec.addb data data in
+  let wd_cond =
+    Bool.ands [ Value.is_defined pval; Value.has_type Type.int32 pval ]
+  in
 
   (* check if pval+pval >= smi max *)
-  let ovf_check = BitVec.ugei tagged Type.smi_max in
+  let is_in_smi_range = Value.is_in_smi_range pval in
+  let smi = BitVec.addb data data |> Value.entype Type.tagged_signed in
 
-  let size = Value.from_int 12 in
-  let ptr, assertion = Memory.allocate vid size in
-  (* TODO: Define map constants *)
-  let heap_number_map = BitVecVal.from_int ~len:32 1234 in
-  let would_be_stored = BitVec.concat heap_number_map data in
+  let ptr = HeapNumber.allocate in
+  let number_value = data |> Float.from_signed_bv |> Float.to_ieee_bv in
+  let obj = HeapNumber.from_ieee_bv number_value in
+  HeapNumber.store ptr obj is_in_smi_range mem;
 
-  mem := Memory.store ptr 12 ovf_check would_be_stored !mem;
+  let wd_value = Bool.ite is_in_smi_range smi ptr in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, assertion, Bool.fl)
 
-  let if_ovf = Bool.ands [ Value.eq value ptr; assertion ] in
-  let if_not_ovf = Value.eq value (Value.entype Type.tagged_signed tagged) in
-
-  let assertion = Bool.ite ovf_check if_ovf if_not_ovf in
-  (value, assertion)
-
-let change_int32_to_float64 vid pval =
+(* well-defined condition:
+ * - int64(pval) 
+ * - WellDefined(lval)
+ * assertion:
+ *  value = ite well-defined (tagged(pval)) UB *)
+let change_int64_to_tagged vid pval mem =
   let value = Value.init vid in
-  let assertion =
-    Bool.ands
-      [
-        Value.has_type Type.int32 pval;
-        Value.eq value (pval |> Value.cast Type.tagged_signed);
-      ]
+  let data = Value.data_of value in
+
+  let wd_cond =
+    Bool.ands [ Value.is_defined pval; Value.has_type Type.int64 pval ]
   in
-  (value, assertion)
+
+  (* if pval is in smi range, value = (pval + pval) *)
+  let is_in_smi_range = Value.is_in_smi_range pval in
+  let smi = BitVec.addb data data |> Value.entype Type.tagged_signed in
+
+  let ptr = HeapNumber.allocate in
+  let number_value = data |> Float.from_signed_bv |> Float.to_ieee_bv in
+  let obj = HeapNumber.from_ieee_bv number_value in
+  HeapNumber.store ptr obj (Bool.not is_in_smi_range) mem;
+
+  let wd_value = Bool.ite is_in_smi_range smi ptr in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, assertion, Bool.fl)
 
 let checked_tagged_signed_to_int32 vid pval =
   let value = Value.init vid in
@@ -129,4 +144,4 @@ let checked_tagged_signed_to_int32 vid pval =
     Bool.ands [ Value.has_type Type.tagged_signed pval; Value.eq value result ]
   in
 
-  (value, assertion)
+  (value, assertion, Bool.fl)
