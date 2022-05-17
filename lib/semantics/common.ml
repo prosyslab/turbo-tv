@@ -1,5 +1,6 @@
 open Z3utils
 module Composed = Value.Composed
+module HeapNumber = Objects.HeapNumber
 
 (* common: constants *)
 (* well-defined condition: INT32_MIN <= [c] <= INT32_MAX
@@ -14,44 +15,24 @@ let int32_constant vid c =
     Value.eq value
       (Bool.ite wd_cond (c |> Value.cast Type.int32) Value.undefined)
   in
-  (value, assertion)
+  (value, assertion, Bool.fl)
 
-(* well-defined condition: INT64_MIN <= c <= INT64_MAX
- * behavior: ite well-defined value=c value=UB *)
-let int64_constant vid c =
+(* behavior: value=c *)
+let int64_constant vid c mem =
   let value = Value.init vid in
-  let c_can_be_int64 =
-    Bool.ands [ Value.sge c Value.int64_min; Value.sle c Value.int64_max ]
-  in
-  let wd_cond = c_can_be_int64 in
-  let assertion =
-    Value.eq value
-      (Bool.ite wd_cond (c |> Value.cast Type.int64) Value.undefined)
-  in
-  (value, assertion)
+  let wd_value = HeapNumber.allocate in
+  HeapNumber.store wd_value (HeapNumber.from_number_string c) Bool.tr mem;
+  let assertion = Value.eq value wd_value in
+  (value, assertion, Bool.fl)
 
-(* well-defined condition: UINT64_MIN <= c <= UINT64_MAX
- * behavior: ite well-defined value=c value=UB *)
-let external_constant vid c =
-  let value = Value.init vid in
-  let c_can_be_pointer =
-    Bool.ands [ Value.uge c Value.uint64_min; Value.ule c Value.uint64_max ]
-  in
-  let wd_cond = c_can_be_pointer in
-  let assertion =
-    Value.eq value
-      (Bool.ite wd_cond (c |> Value.cast Type.pointer) Value.undefined)
-  in
-  (value, assertion)
+(* behavior: value=c *)
+let external_constant = int64_constant
 
-let heap_constant = external_constant
+(* behavior: value=c *)
+let heap_constant = int64_constant
 
-(* well-defined condition: true
- * behavior: value=c *)
-let number_constant vid c =
-  let value = Value.init vid in
-  let assertion = Value.eq value (c |> Value.cast Type.float64) in
-  (value, assertion)
+(* behavior: value=c *)
+let number_constant = int64_constant
 
 (* common: control *)
 (* retrieve the value at [idx] from [incoming]
@@ -68,7 +49,7 @@ let projection vid idx incoming =
   let assertion =
     Value.eq value (if wd_cond then wd_value else Value.undefined)
   in
-  (value, assertion)
+  (value, assertion, Bool.fl)
 
 (* well-defined condition:
  * - Bool(cond) ^ Bool(precond)
@@ -94,7 +75,7 @@ let branch vid cond precond =
   in
   let ud_value = Composed.from_values [ Value.undefined; Value.undefined ] in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value ud_value) in
-  (value, assertion)
+  (value, assertion, Bool.fl)
 
 (* well-defined condition:
  * - Bool(FalseCond(cond))
@@ -112,7 +93,7 @@ let if_false vid cond =
   let assertion =
     Value.eq value (Bool.ite wd_cond false_cond Value.undefined)
   in
-  (value, assertion)
+  (value, assertion, Bool.fl)
 
 (* well-defined condition:
  *  - Bool(TrueCond(cond))
@@ -128,7 +109,7 @@ let if_true vid cond =
     Bool.ands [ is_cond_bool; is_cond_defined ]
   in
   let assertion = Value.eq value (Bool.ite wd_cond true_cond Value.undefined) in
-  (value, assertion)
+  (value, assertion, Bool.fl)
 
 (* merge every incoming execution condition *)
 let merge vid conds =
@@ -145,15 +126,15 @@ let merge vid conds =
   let assertion =
     Value.eq value (concat_conds (List.hd conds) (List.tl conds))
   in
-  (value, assertion)
+  (value, assertion, Bool.fl)
 
 (* common: procedure *)
 let parameter vid param =
   let value = Value.init vid in
   let assertion = Value.eq value (param |> Value.cast Type.tagged_signed) in
-  (value, assertion)
+  (value, assertion, Bool.fl)
 
 let return vid return_value =
   let value = Value.init vid in
   let assertion = Value.eq value return_value in
-  (value, assertion)
+  (value, assertion, Bool.fl)

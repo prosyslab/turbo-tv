@@ -31,11 +31,11 @@ ChangeFloat64ToUint32,
 ChangeFloat64ToUint64,
 ChangeInt31ToTaggedSigned,
 ChangeInt32ToFloat64,v1
-ChangeInt32ToInt64,
+ChangeInt32ToInt64,v1
 ChangeInt32ToTagged,v1
 ChangeInt64ToBigInt,
-ChangeInt64ToFloat64,
-ChangeInt64ToTagged,
+ChangeInt64ToFloat64,v1
+ChangeInt64ToTagged,v1
 ChangeTaggedSignedToInt32,v1
 ChangeTaggedSignedToInt64,
 ChangeTaggedToBit,
@@ -46,7 +46,7 @@ ChangeTaggedToTaggedSigned,
 ChangeTaggedToUint32,
 ChangeUint32ToFloat64,
 ChangeUint32ToTagged,
-ChangeUint32ToUint64,
+ChangeUint32ToUint64,v1
 ChangeUint64ToBigInt,
 ChangeUint64ToTagged,
 CheckBigInt,
@@ -670,7 +670,7 @@ PointerConstant,
 Projection,b1,v1
 ProtectedLoad,
 ProtectedStore,
-ReferenceEqual,
+ReferenceEqual,v1,v2
 RelocatableInt32Constant,
 RelocatableInt64Constant,
 RestLength,
@@ -710,7 +710,7 @@ SpeculativeBigIntSubtract,
 SpeculativeNumberAdd,
 SpeculativeNumberBitwiseAnd,
 SpeculativeNumberBitwiseOr,
-SpeculativeNumberBitwiseXor,
+SpeculativeNumberBitwiseXor,v1,v2
 SpeculativeNumberDivide,
 SpeculativeNumberEqual,
 SpeculativeNumberLessThan,
@@ -851,7 +851,7 @@ Word64Clz,
 Word64ClzLowerable,
 Word64Ctz,
 Word64CtzLowerable,
-Word64Equal,
+Word64Equal,v1,v2
 Word64Or,
 Word64Popcnt,
 Word64ReverseBits,
@@ -862,6 +862,6 @@ Word64Ror,
 Word64RorLowerable,
 Word64Sar,
 Word64Select,
-Word64Shl,
+Word64Shl,v1,v2
 Word64Shr,
 Word64Xor,

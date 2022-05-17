@@ -4,7 +4,7 @@ type t = Array.t
 
 let init name = Array.init name (BitVec.mk_sort Pointer.len) (BitVec.mk_sort 8)
 
-let allocate vid size = Pointer.init vid size
+let allocate size = Pointer.init size
 
 (* Load [value] at block of [ptr] with the size [sz]*)
 let load ptr sz mem =
@@ -12,7 +12,7 @@ let load ptr sz mem =
     if loaded_sz = sz then res
     else
       let byte = Array.select ptr mem in
-      let res = if loaded_sz = 0 then byte else BitVec.concat res byte in
+      let res = if loaded_sz = 0 then byte else BitVec.concat byte res in
       aux res (loaded_sz + 1) (Pointer.next ptr)
   in
   aux (BitVecVal.from_int ~len:1 0) 0 ptr

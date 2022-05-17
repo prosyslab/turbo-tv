@@ -107,6 +107,17 @@ type t =
   | Union of t list
   | Range of (float * float)
 
+let can_be_float64 s =
+  String.contains s '.' || String.equal s "-0" || String.equal s "inf"
+  || String.equal s "-inf"
+
+let can_be_smi s =
+  try
+    let n = int_of_string s in
+    Constants.smi_min <= n && n <= Constants.smi_max
+    && not (String.equal s "-0")
+  with Failure _ -> false
+
 let rec of_string str =
   let parse_union union_ty_str =
     let elems_reg = Re.Pcre.regexp "\\(([^\\)]*)\\)" in

@@ -4,12 +4,6 @@ type t = BitVec.t
 
 let len = 5
 
-let smi_min = -1073741824
-
-let smi_max = 1073741823
-
-let smi_mask = 0xffffffff
-
 (* type-constants *)
 (* v8 types *)
 let int8 = BitVecVal.from_int ~len 0

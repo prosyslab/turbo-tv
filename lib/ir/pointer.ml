@@ -5,11 +5,11 @@ type t = Value.t
 let next_bid = ref 1
 
 (* const *)
-(* 0-15: offset
-   16-47: bid
-   48-63: size of struct
-   64-68: value type(Pointer)
-   69: undef
+(* 0-11: offset
+   12-19: bid
+   20-33: size of struct
+   33-37: value type(Pointer)
+   38: undef
 *)
 (* High |u|-ty-|--sz--|--bid--|-offset-| Low *)
 let size_len = 16
@@ -20,6 +20,8 @@ let off_len = 16
 
 let len = Value.len
 
+let size = Value.size
+
 (* getter *)
 let size_of t =
   BitVec.extract (size_len + bid_len + off_len - 1) (bid_len + off_len) t
@@ -29,20 +31,21 @@ let bid_of t = BitVec.extract (bid_len + off_len - 1) off_len t
 let off_of t = BitVec.extract (off_len - 1) 0 t
 
 (* constructor *)
-let init vid sz =
-  let ptr = Value.init vid in
+let init sz =
   let bid = BitVecVal.from_int ~len:64 !next_bid in
   let sz = Value.data_of sz in
   let value =
     BitVec.orb (BitVec.shli sz (bid_len + off_len)) (BitVec.shli bid off_len)
-    |> Value.entype Type.pointer
+    |> Value.entype Type.tagged_pointer
   in
-  (ptr, BitVec.eqb ptr value)
+  value
 
 (* method *)
 let next t = BitVec.addi t 1
 
 let move t pos = BitVec.addb t pos
+
+let movei t pos = BitVec.addi t pos
 
 let can_access pos sz t =
   (* no out-of-bounds *)

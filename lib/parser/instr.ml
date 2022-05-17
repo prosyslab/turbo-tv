@@ -49,7 +49,10 @@ let create_from instr =
         Re.Pcre.regexp
           "(?:\\[[^\\]]*\\]){0,1}\\([^\\)]*\\)\\([^\\)]*\\)\\(#(\\d*)[^\\)]*\\)"
       in
-      let cv_re = Re.Pcre.regexp "(?:\\[[^\\]]*\\]){0,1}\\((.*)[^\\)]*\\)" in
+      let cv_re =
+        Re.Pcre.regexp
+          "(?:\\[[^\\]]*\\]){0,1}\\([^\\)]*\\)\\([^\\)]*\\)\\((.*)[^\\)]*\\)"
+      in
 
       let e1_re =
         Re.Pcre.regexp "(?:\\[[^\\]]*\\]){0,1}\\([^\\)]*\\)\\(#(\\d*)[^\\)]*\\)"
@@ -59,7 +62,10 @@ let create_from instr =
       let v2_re =
         Re.Pcre.regexp "(?:\\[[^\\]]*\\]){0,1}\\([^,]*, #(\\d*)[^\\)]*\\)"
       in
-
+      let v3_re =
+        Re.Pcre.regexp
+          "(?:\\[[^\\]]*\\]){0,1}\\([^,]*, [^,]*, #(\\d*)[^\\)]*\\)"
+      in
       match kinds with
       | k :: t -> (
           try
@@ -99,6 +105,11 @@ let create_from instr =
                   Re.Group.get (Re.exec v2_re instr) 1 |> Operand.of_id
                 in
                 parse_operand t instr (v2 :: operands)
+            | V3 ->
+                let v3 =
+                  Re.Group.get (Re.exec v3_re instr) 1 |> Operand.of_id
+                in
+                parse_operand t instr (v3 :: operands)
             | CV ->
                 let vargs =
                   Re.Group.get (Re.exec cv_re instr) 1

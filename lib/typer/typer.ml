@@ -1,7 +1,8 @@
 open Z3utils
 module Boundary = Types.Boundary
+module HeapNumber = Objects.HeapNumber
 
-let rec verify (value : Value.t) (ty : Types.t) =
+let rec verify (value : Value.t) (ty : Types.t) mem =
   match ty with
   | MinusZero | NaN | OtherUnsigned31 | OtherUnsigned32 | OtherSigned32
   | Negative31 | Unsigned30 | Signed31 | Signed32 | Signed32OrMinusZero
@@ -17,31 +18,38 @@ let rec verify (value : Value.t) (ty : Types.t) =
             | Boundary.Int32Boundary (lb, ub) ->
                 Bool.ands
                   [
-                    Bool.not (Value.is_float value);
+                    Value.is_integer value;
                     Value.ugei ~width:32 value lb;
                     Value.ulei ~width:32 value ub;
                   ]
             | FloatBoundary (lb, ub) ->
+                let number = HeapNumber.load value !mem in
                 Bool.ands
                   [
-                    Value.is_float value;
-                    Value.geqf value lb;
-                    Value.leqf value ub;
+                    Objects.is_heap_number value !mem;
+                    Float.geqf (Float.from_ieee_bv number.value) lb;
+                    Float.leqf (Float.from_ieee_bv number.value) ub;
                   ]
           in
           Bool.ors [ verified; in_bound ])
         Bool.fl region
   (* T <= (T1 \/ ... \/ Tn)  if  (T <= T1) \/ ... \/ (T <= Tn) *)
   | Union fields ->
-      Bool.ors (List.rev_map (fun field_ty -> verify value field_ty) fields)
+      Bool.ors (List.rev_map (fun field_ty -> verify value field_ty mem) fields)
   (* (T1, T2, ..., Tn) <= (T1', T2', ... Tn') if T1 <= T1' /\ T2 <= T2' /\ ... Tn <= Tn' *)
   | Tuple fields ->
       let size_of_composed = value |> Value.Composed.size_of in
       let decomposed = value |> Value.Composed.to_list in
       if size_of_composed = List.length fields then
-        Bool.ands (List.rev_map2 (fun v f -> verify v f) decomposed fields)
+        Bool.ands (List.rev_map2 (fun v f -> verify v f mem) decomposed fields)
       else failwith "is: wrong number of fields"
   | Range (lb, ub) ->
-      Bool.ors [ Bool.ands [ Value.geqf value lb; Value.leqf value ub ] ]
+      let number = HeapNumber.load value !mem in
+      Bool.ands
+        [
+          Objects.is_heap_number value !mem;
+          BitVec.geqf number.value lb;
+          BitVec.leqf number.value ub;
+        ]
   (* for now, handle only numeric types *)
   | _ -> Bool.tr

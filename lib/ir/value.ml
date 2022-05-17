@@ -11,6 +11,8 @@ let data_len = 64
 
 let len = undef_len + ty_len + data_len
 
+let size = len / 8
+
 (* getter *)
 let ty_of t = BitVec.extract (data_len + ty_len - 1) data_len t
 
@@ -56,6 +58,8 @@ let is_signed_integer t =
 let is_unsigned_integer t =
   Bool.ors (List.map (fun ty -> has_type ty t) Type.uint_types)
 
+let is_integer t = Bool.ors [ is_signed_integer t; is_unsigned_integer t ]
+
 let is_float t = Bool.ors (List.map (fun ty -> has_type ty t) Type.float_types)
 
 (* representation *)
@@ -70,7 +74,8 @@ let can_be_float64 s =
 let can_be_smi s =
   try
     let n = int_of_string s in
-    Type.smi_min <= n && n <= Type.smi_max && not (String.equal s "-0")
+    Constants.smi_min <= n && n <= Constants.smi_max
+    && not (String.equal s "-0")
   with Failure _ -> false
 
 (* type-preserving binary operation *)
@@ -218,6 +223,11 @@ let minus_zero = BitVecVal.minus_zero () |> entype Type.float64
 
 let nan = BitVecVal.nan () |> entype Type.float64
 
+(* smi constant values *)
+let smi_min = Constants.smi_min |> BitVecVal.from_int |> entype Type.const
+
+let smi_max = Constants.smi_max |> BitVecVal.from_int |> entype Type.const
+
 (* Int32 constant values *)
 let int32_min =
   Int32.min_int |> Int32.to_int |> BitVecVal.from_int |> entype Type.const
@@ -237,6 +247,9 @@ let int64_max =
 let uint64_min = BitVecVal.from_int 0 |> entype Type.const
 
 let uint64_max = BitVec.addi (BitVec.shli int64_max 1) 1
+
+(* range check *)
+let is_in_smi_range t = Bool.ands [ sge t smi_min; sle t smi_max ]
 
 let is_empty value =
   let size = BitVec.length_of value / len in

@@ -116,7 +116,11 @@ module Float = struct
 
   let geq lexp rexp = Fl.mk_geq ctx lexp rexp
 
+  let geqf lexp rexp = Fl.mk_geq ctx lexp (rexp |> from_float)
+
   let leq lexp rexp = Fl.mk_leq ctx lexp rexp
+
+  let leqf lexp rexp = Fl.mk_leq ctx lexp (rexp |> from_float)
 end
 
 module BitVecVal = struct
@@ -249,6 +253,14 @@ module BitVec = struct
   let ulei lbv rval =
     let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
     BV.mk_ule ctx lbv rbv
+
+  let geqf lbv rval =
+    let lval = Float.from_ieee_bv lbv in
+    Float.geqf lval rval
+
+  let leqf lbv rval =
+    let lval = Float.from_ieee_bv lbv in
+    Float.leqf lval rval
 
   (* arithmetic operation *)
   let addb lbv rbv = BV.mk_add ctx lbv rbv

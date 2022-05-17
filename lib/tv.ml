@@ -20,32 +20,23 @@ let rec next program state cfg =
   let ty, opcode, operands = IR.instr_of pc program in
   let next_pc = match opcode with End -> -1 | _ -> pc + 1 in
 
-  let value, assertion =
+  let value, assertion, ub =
     match opcode with
     (* common: constants *)
     | HeapConstant | ExternalConstant ->
         let addr_re = Re.Pcre.regexp "(0x[0-9a-f]+)" in
         let operand = Operands.const_of_nth operands 0 in
-        let c_str = Re.Group.get (Re.exec addr_re operand) 1 in
-        let c = c_str |> Value.from_istring in
-        heap_constant vid c
+        let c = Re.Group.get (Re.exec addr_re operand) 1 |> Int64.of_string in
+        heap_constant vid (c |> Int64.to_string) mem
     | Int32Constant ->
         let c = Operands.const_of_nth operands 0 |> Value.from_istring in
         int32_constant vid c
     | Int64Constant ->
-        let c = Operands.const_of_nth operands 0 |> Value.from_istring in
-        int64_constant vid c
+        let c = Operands.const_of_nth operands 0 in
+        int64_constant vid c mem
     | NumberConstant ->
         let c_str = Operands.const_of_nth operands 0 in
-        let c =
-          if Value.can_be_float64 c_str then c_str |> Value.from_f64string
-          else if Value.can_be_smi c_str then c_str |> Value.from_istring
-          else
-            failwith
-              "unreachable: [c] of number constant should be\n\
-              \              representable as double or int32"
-        in
-        number_constant vid c
+        number_constant vid c_str mem
     (* common: control *)
     | Projection ->
         let idx = Operands.const_of_nth operands 0 |> int_of_string in
@@ -66,7 +57,7 @@ let rec next program state cfg =
         let nid = Operands.id_of_nth operands 0 in
         let cond_value = RegisterFile.find nid rf in
         if_true vid cond_value
-    | Start -> (Value.tr, Bool.tr)
+    | Start -> (Value.tr, Bool.tr, Bool.fl)
     | Merge ->
         let conds = RegisterFile.find_all (operands |> Operands.id_of_all) rf in
         merge vid conds
@@ -76,8 +67,8 @@ let rec next program state cfg =
         if 0 < pidx && pidx <= List.length params then
           let param = List.nth params (pidx - 1) in
           parameter vid param
-        else (Value.empty, Bool.tr)
-    | Call -> (Value.tr, Bool.tr)
+        else (Value.empty, Bool.tr, Bool.fl)
+    | Call -> (Value.tr, Bool.tr, Bool.fl)
     | Return ->
         let nid = Operands.id_of_nth operands 0 in
         let return_value = RegisterFile.find nid rf in
@@ -96,7 +87,7 @@ let rec next program state cfg =
                    Bool.tr (Value.eq value rv))
                return_values)
         in
-        (value, assertion)
+        (value, assertion, Bool.fl)
     (* simplified: arithmetic *)
     | SpeculativeSafeIntegerAdd ->
         let lpid = Operands.id_of_nth operands 0 in
@@ -107,7 +98,7 @@ let rec next program state cfg =
     | NumberExpm1 ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
-        number_expm1 vid pval
+        number_expm1 vid pval mem
     (* simplified: memory *)
     | AllocateRaw ->
         let size_id = Operands.id_of_nth operands 0 in
@@ -131,6 +122,10 @@ let rec next program state cfg =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         change_int32_to_tagged vid pval mem
+    | ChangeInt64ToTagged ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        change_int64_to_tagged vid pval mem
     | ChangeInt32ToFloat64 ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
@@ -172,7 +167,7 @@ let rec next program state cfg =
         let rval = RegisterFile.find rpid rf in
         word32sar vid hint lval rval
     (* machine: comparison *)
-    | StackPointerGreaterThan -> (Value.tr, Bool.tr)
+    | StackPointerGreaterThan -> (Value.tr, Bool.tr, Bool.fl)
     | Word32And ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -228,8 +223,8 @@ let rec next program state cfg =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         truncate_int64_to_int32 vid pval
-    | Empty -> (Value.empty, Bool.tr)
-    | _ -> (Value.empty, Bool.tr)
+    | Empty -> (Value.empty, Bool.tr, Bool.fl)
+    | _ -> (Value.empty, Bool.tr, Bool.fl)
   in
 
   let precond =
@@ -274,10 +269,10 @@ let rec next program state cfg =
   in
 
   let type_is_verified =
-    match ty with Some ty -> Typer.verify value ty | None -> Bool.tr
+    match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
   in
   let updated_rf = RegisterFile.add vid value rf in
-  let updated_ub = Bool.ors [ State.ub state; Bool.not type_is_verified ] in
+  let updated_ub = Bool.ors [ State.ub state; ub; Bool.not type_is_verified ] in
   let next_state =
     State.update next_pc updated_rf postcond updated_asrt updated_ub state
   in

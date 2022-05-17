@@ -10,6 +10,8 @@
   instr
   ;ir
   IR
+  objects
+  constants
   pointer
   registerFile
   state

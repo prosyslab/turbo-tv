@@ -37,6 +37,25 @@ module Repr = struct
     | "kNone" -> None
     | _ -> failwith "Invalid repr"
 
+  let to_string t =
+    match t with
+    | Word8 -> "kRepWord8"
+    | Word16 -> "kRepWord16"
+    | Word32 -> "kRepWord32"
+    | Word64 -> "kRepWord64"
+    | Float32 -> "kRepFloat32"
+    | Float64 -> "kRepFloat64"
+    | Simd128 -> "kRepSimd128"
+    | TaggedPointer -> "kRepTaggedPointer"
+    | MapWord -> "kRepMapWord"
+    | TaggedSigned -> "kRepTaggedSigned"
+    | Tagged -> "kRepTagged"
+    | CompressedPointer -> "kRepCompressedPointer"
+    | Compressed -> "kRepCompressed"
+    | SandboxedPointer -> "kRepSandboxedPointer"
+    | Bit -> "kRepBit"
+    | None -> "kNone"
+
   let size_of t =
     match t with
     | Word8 -> 1

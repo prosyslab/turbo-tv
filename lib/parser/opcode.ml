@@ -13,7 +13,9 @@ type kind =
   | V2
   | V1V2B1
   | B1V1
-  | V1B2B4
+  | V1V2B1V3
+  | V3
+  | V1B2B4V2
   | B2
   | B4
   | B1V1V2
@@ -661,7 +663,6 @@ type t =
   | PointerConstant
   | ProtectedLoad
   | ProtectedStore
-  | ReferenceEqual
   | RelocatableInt32Constant
   | RelocatableInt64Constant
   | RestLength
@@ -700,7 +701,6 @@ type t =
   | SpeculativeNumberAdd
   | SpeculativeNumberBitwiseAnd
   | SpeculativeNumberBitwiseOr
-  | SpeculativeNumberBitwiseXor
   | SpeculativeNumberDivide
   | SpeculativeNumberEqual
   | SpeculativeNumberLessThan
@@ -832,7 +832,6 @@ type t =
   | Word64ClzLowerable
   | Word64Ctz
   | Word64CtzLowerable
-  | Word64Equal
   | Word64Or
   | Word64Popcnt
   | Word64ReverseBits
@@ -843,7 +842,6 @@ type t =
   | Word64RorLowerable
   | Word64Sar
   | Word64Select
-  | Word64Shl
   | Word64Shr
   | Word64Xor
   (* v1 *)
@@ -884,18 +882,23 @@ type t =
   | Int32AddWithOverflow
   | Int64Add
   | Int64Sub
+  | ReferenceEqual
+  | SpeculativeNumberBitwiseXor
   | SpeculativeSafeIntegerAdd
   | Uint64LessThan
   | Word32And
   | Word32Equal
+  | Word64Equal
+  | Word64Shl
   (* v2 *)
   | Return
   (* v1v2b1 *)
   | Load
-  | Store
   (* b1v1 *)
   | Projection
-  (* v1b2b4 *)
+  (* v1v2b1v3 *)
+  | Store
+  (* v1b2b4v2 *)
   | StoreField
   (* b1v1v2 *)
   | Word32Sar
@@ -1063,20 +1066,18 @@ let get_kind opcode =
   | ObjectIsString | ObjectIsSymbol | ObjectIsUndetectable | ObjectState
   | OsrValue | Phi | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber
   | PlainPrimitiveToWord32 | Plug | PointerConstant | ProtectedLoad
-  | ProtectedStore | ReferenceEqual | RelocatableInt32Constant
-  | RelocatableInt64Constant | RestLength | Retain | RoundFloat64ToInt32
-  | RoundInt32ToFloat32 | RoundInt64ToFloat32 | RoundInt64ToFloat64
-  | RoundUint32ToFloat32 | RoundUint64ToFloat32 | RoundUint64ToFloat64
-  | RuntimeAbort | S128And | S128AndNot | S128Const | S128Not | S128Or
-  | S128Select | S128Xor | S128Zero | SLVerifierHint | SameValue
-  | SameValueNumbersOnly | Select | SignExtendWord16ToInt32
-  | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
-  | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
-  | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
-  | SpeculativeBigIntSubtract | SpeculativeNumberAdd
+  | ProtectedStore | RelocatableInt32Constant | RelocatableInt64Constant
+  | RestLength | Retain | RoundFloat64ToInt32 | RoundInt32ToFloat32
+  | RoundInt64ToFloat32 | RoundInt64ToFloat64 | RoundUint32ToFloat32
+  | RoundUint64ToFloat32 | RoundUint64ToFloat64 | RuntimeAbort | S128And
+  | S128AndNot | S128Const | S128Not | S128Or | S128Select | S128Xor | S128Zero
+  | SLVerifierHint | SameValue | SameValueNumbersOnly | Select
+  | SignExtendWord16ToInt32 | SignExtendWord16ToInt64 | SignExtendWord32ToInt64
+  | SignExtendWord8ToInt32 | SignExtendWord8ToInt64 | Simd128ReverseBytes
+  | SpeculativeBigIntAdd | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN
+  | SpeculativeBigIntNegate | SpeculativeBigIntSubtract | SpeculativeNumberAdd
   | SpeculativeNumberBitwiseAnd | SpeculativeNumberBitwiseOr
-  | SpeculativeNumberBitwiseXor | SpeculativeNumberDivide
-  | SpeculativeNumberEqual | SpeculativeNumberLessThan
+  | SpeculativeNumberDivide | SpeculativeNumberEqual | SpeculativeNumberLessThan
   | SpeculativeNumberLessThanOrEqual | SpeculativeNumberModulus
   | SpeculativeNumberMultiply | SpeculativeNumberPow
   | SpeculativeNumberShiftLeft | SpeculativeNumberShiftRight
@@ -1114,10 +1115,9 @@ let get_kind opcode =
   | Word64AtomicAdd | Word64AtomicAnd | Word64AtomicCompareExchange
   | Word64AtomicExchange | Word64AtomicLoad | Word64AtomicOr | Word64AtomicStore
   | Word64AtomicSub | Word64AtomicXor | Word64Clz | Word64ClzLowerable
-  | Word64Ctz | Word64CtzLowerable | Word64Equal | Word64Or | Word64Popcnt
-  | Word64ReverseBits | Word64ReverseBytes | Word64Rol | Word64RolLowerable
-  | Word64Ror | Word64RorLowerable | Word64Sar | Word64Select | Word64Shl
-  | Word64Shr | Word64Xor ->
+  | Word64Ctz | Word64CtzLowerable | Word64Or | Word64Popcnt | Word64ReverseBits
+  | Word64ReverseBytes | Word64Rol | Word64RolLowerable | Word64Ror
+  | Word64RorLowerable | Word64Sar | Word64Select | Word64Shr | Word64Xor ->
       UNIMPL
   | AllocateRaw | BitcastTaggedToWord | BitcastWord32ToWord64
   | BitcastWordToTagged | ChangeInt32ToFloat64 | ChangeInt32ToInt64
@@ -1132,13 +1132,15 @@ let get_kind opcode =
       B1
   | End | Merge -> CV
   | IfFalse | IfTrue -> C1
-  | Int32Add | Int32AddWithOverflow | Int64Add | Int64Sub
-  | SpeculativeSafeIntegerAdd | Uint64LessThan | Word32And | Word32Equal ->
+  | Int32Add | Int32AddWithOverflow | Int64Add | Int64Sub | ReferenceEqual
+  | SpeculativeNumberBitwiseXor | SpeculativeSafeIntegerAdd | Uint64LessThan
+  | Word32And | Word32Equal | Word64Equal | Word64Shl ->
       V1V2
   | Return -> V2
-  | Load | Store -> V1V2B1
+  | Load -> V1V2B1
   | Projection -> B1V1
-  | StoreField -> V1B2B4
+  | Store -> V1V2B1V3
+  | StoreField -> V1B2B4V2
   | Word32Sar -> B1V1V2
   | Empty -> Empty
 
@@ -1155,7 +1157,9 @@ let split_kind kind =
   | V2 -> [ V2 ]
   | V1V2B1 -> [ V1; V2; B1 ]
   | B1V1 -> [ B1; V1 ]
-  | V1B2B4 -> [ V1; B2; B4 ]
+  | V1V2B1V3 -> [ V1; V2; B1; V3 ]
+  | V3 -> [ V3 ]
+  | V1B2B4V2 -> [ V1; B2; B4; V2 ]
   | B2 -> [ B2 ]
   | B4 -> [ B4 ]
   | B1V1V2 -> [ B1; V1; V2 ]
@@ -1805,7 +1809,6 @@ let of_str str =
   | "PointerConstant" -> PointerConstant
   | "ProtectedLoad" -> ProtectedLoad
   | "ProtectedStore" -> ProtectedStore
-  | "ReferenceEqual" -> ReferenceEqual
   | "RelocatableInt32Constant" -> RelocatableInt32Constant
   | "RelocatableInt64Constant" -> RelocatableInt64Constant
   | "RestLength" -> RestLength
@@ -1844,7 +1847,6 @@ let of_str str =
   | "SpeculativeNumberAdd" -> SpeculativeNumberAdd
   | "SpeculativeNumberBitwiseAnd" -> SpeculativeNumberBitwiseAnd
   | "SpeculativeNumberBitwiseOr" -> SpeculativeNumberBitwiseOr
-  | "SpeculativeNumberBitwiseXor" -> SpeculativeNumberBitwiseXor
   | "SpeculativeNumberDivide" -> SpeculativeNumberDivide
   | "SpeculativeNumberEqual" -> SpeculativeNumberEqual
   | "SpeculativeNumberLessThan" -> SpeculativeNumberLessThan
@@ -1976,7 +1978,6 @@ let of_str str =
   | "Word64ClzLowerable" -> Word64ClzLowerable
   | "Word64Ctz" -> Word64Ctz
   | "Word64CtzLowerable" -> Word64CtzLowerable
-  | "Word64Equal" -> Word64Equal
   | "Word64Or" -> Word64Or
   | "Word64Popcnt" -> Word64Popcnt
   | "Word64ReverseBits" -> Word64ReverseBits
@@ -1987,7 +1988,6 @@ let of_str str =
   | "Word64RorLowerable" -> Word64RorLowerable
   | "Word64Sar" -> Word64Sar
   | "Word64Select" -> Word64Select
-  | "Word64Shl" -> Word64Shl
   | "Word64Shr" -> Word64Shr
   | "Word64Xor" -> Word64Xor
   | "AllocateRaw" -> AllocateRaw
@@ -2022,14 +2022,18 @@ let of_str str =
   | "Int32AddWithOverflow" -> Int32AddWithOverflow
   | "Int64Add" -> Int64Add
   | "Int64Sub" -> Int64Sub
+  | "ReferenceEqual" -> ReferenceEqual
+  | "SpeculativeNumberBitwiseXor" -> SpeculativeNumberBitwiseXor
   | "SpeculativeSafeIntegerAdd" -> SpeculativeSafeIntegerAdd
   | "Uint64LessThan" -> Uint64LessThan
   | "Word32And" -> Word32And
   | "Word32Equal" -> Word32Equal
+  | "Word64Equal" -> Word64Equal
+  | "Word64Shl" -> Word64Shl
   | "Return" -> Return
   | "Load" -> Load
-  | "Store" -> Store
   | "Projection" -> Projection
+  | "Store" -> Store
   | "StoreField" -> StoreField
   | "Word32Sar" -> Word32Sar
   | _ -> raise Invalid_opcode
@@ -2676,7 +2680,6 @@ let to_str opcode =
   | PointerConstant -> "PointerConstant"
   | ProtectedLoad -> "ProtectedLoad"
   | ProtectedStore -> "ProtectedStore"
-  | ReferenceEqual -> "ReferenceEqual"
   | RelocatableInt32Constant -> "RelocatableInt32Constant"
   | RelocatableInt64Constant -> "RelocatableInt64Constant"
   | RestLength -> "RestLength"
@@ -2715,7 +2718,6 @@ let to_str opcode =
   | SpeculativeNumberAdd -> "SpeculativeNumberAdd"
   | SpeculativeNumberBitwiseAnd -> "SpeculativeNumberBitwiseAnd"
   | SpeculativeNumberBitwiseOr -> "SpeculativeNumberBitwiseOr"
-  | SpeculativeNumberBitwiseXor -> "SpeculativeNumberBitwiseXor"
   | SpeculativeNumberDivide -> "SpeculativeNumberDivide"
   | SpeculativeNumberEqual -> "SpeculativeNumberEqual"
   | SpeculativeNumberLessThan -> "SpeculativeNumberLessThan"
@@ -2847,7 +2849,6 @@ let to_str opcode =
   | Word64ClzLowerable -> "Word64ClzLowerable"
   | Word64Ctz -> "Word64Ctz"
   | Word64CtzLowerable -> "Word64CtzLowerable"
-  | Word64Equal -> "Word64Equal"
   | Word64Or -> "Word64Or"
   | Word64Popcnt -> "Word64Popcnt"
   | Word64ReverseBits -> "Word64ReverseBits"
@@ -2858,7 +2859,6 @@ let to_str opcode =
   | Word64RorLowerable -> "Word64RorLowerable"
   | Word64Sar -> "Word64Sar"
   | Word64Select -> "Word64Select"
-  | Word64Shl -> "Word64Shl"
   | Word64Shr -> "Word64Shr"
   | Word64Xor -> "Word64Xor"
   | AllocateRaw -> "AllocateRaw"
@@ -2893,14 +2893,18 @@ let to_str opcode =
   | Int32AddWithOverflow -> "Int32AddWithOverflow"
   | Int64Add -> "Int64Add"
   | Int64Sub -> "Int64Sub"
+  | ReferenceEqual -> "ReferenceEqual"
+  | SpeculativeNumberBitwiseXor -> "SpeculativeNumberBitwiseXor"
   | SpeculativeSafeIntegerAdd -> "SpeculativeSafeIntegerAdd"
   | Uint64LessThan -> "Uint64LessThan"
   | Word32And -> "Word32And"
   | Word32Equal -> "Word32Equal"
+  | Word64Equal -> "Word64Equal"
+  | Word64Shl -> "Word64Shl"
   | Return -> "Return"
   | Load -> "Load"
-  | Store -> "Store"
   | Projection -> "Projection"
+  | Store -> "Store"
   | StoreField -> "StoreField"
   | Word32Sar -> "Word32Sar"
   | Empty -> failwith "Unreachable"
