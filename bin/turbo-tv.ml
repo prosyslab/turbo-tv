@@ -110,7 +110,7 @@ let main () =
 
         if emit_reduction then (
           let parent = String.concat "/" [ outdir; string_of_int !idx; "" ] in
-          Core.Unix.mkdir_p parent ~perm:0o775;
+          Core_unix.mkdir_p parent ~perm:0o775;
           let src_out_chan = open_out (parent ^ "before.txt") in
           let tgt_out_chan = open_out (parent ^ "after.txt") in
 
@@ -119,7 +119,7 @@ let main () =
 
         if emit_graph then (
           let parent = String.concat "/" [ outdir; string_of_int !idx; "" ] in
-          Core.Unix.mkdir_p parent ~perm:0o775;
+          Core_unix.mkdir_p parent ~perm:0o775;
 
           IR.generate_graph_output (parent ^ "before_cfg.dot") src_cfg;
           IR.generate_graph_output (parent ^ "after_cfg.dot") tgt_cfg;

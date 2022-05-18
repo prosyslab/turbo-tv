@@ -33,4 +33,4 @@
   utils
   err
   z3utils)
- (libraries core cmdliner ocamlgraph str re z3))
+ (libraries core_unix cmdliner ocamlgraph str re z3))
