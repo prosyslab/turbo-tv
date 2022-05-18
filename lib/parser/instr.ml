@@ -66,6 +66,11 @@ let create_from instr =
         Re.Pcre.regexp
           "(?:\\[[^\\]]*\\]){0,1}\\([^,]*, [^,]*, #(\\d*)[^\\)]*\\)"
       in
+      let vv_re =
+        Re.Pcre.regexp
+          "(?:\\[[^\\]]*\\]){0,1}\\((.*)[^\\)]*\\)\\([^\\)]*\\)\\([^\\)]*\\)"
+      in
+
       match kinds with
       | k :: t -> (
           try
@@ -110,16 +115,34 @@ let create_from instr =
                   Re.Group.get (Re.exec v3_re instr) 1 |> Operand.of_id
                 in
                 parse_operand t instr (v3 :: operands)
+            | VV ->
+                let vargs =
+                  Re.Group.get (Re.exec vv_re instr) 1
+                  |> String.split_on_char ','
+                in
+                let parsed =
+                  List.fold_left
+                    (fun res arg ->
+                      let re = Re.Pcre.regexp "#(\\d*)" in
+                      (Re.Group.get (Re.exec re arg) 1 |> Operand.of_id) :: res)
+                    [] vargs
+                  |> List.rev
+                in
+                parse_operand t instr (parsed @ operands)
             | CV ->
                 let vargs =
                   Re.Group.get (Re.exec cv_re instr) 1
                   |> String.split_on_char ','
                 in
-                List.fold_left
-                  (fun res arg ->
-                    let re = Re.Pcre.regexp "#(\\d*)" in
-                    (Re.Group.get (Re.exec re arg) 1 |> Operand.of_id) :: res)
-                  [] vargs
+                let parsed =
+                  List.fold_left
+                    (fun res arg ->
+                      let re = Re.Pcre.regexp "#(\\d*)" in
+                      (Re.Group.get (Re.exec re arg) 1 |> Operand.of_id) :: res)
+                    [] vargs
+                  |> List.rev
+                in
+                parse_operand t instr (parsed @ operands)
             | UNIMPL -> []
             | _ -> failwith "Unreachable"
           with Not_found ->

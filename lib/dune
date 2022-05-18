@@ -13,6 +13,7 @@
   objects
   constants
   pointer
+  control
   registerFile
   state
   memory

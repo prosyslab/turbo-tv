@@ -4,9 +4,13 @@ module Operand = struct
   type t = Id of string | Const of string
 
   let of_id id = Id id
+
   let of_const v = Const v
+
   let is_id operand = match operand with Id _ -> true | _ -> false
+
   let is_const operand = match operand with Const _ -> true | _ -> false
+
   let to_str operand = match operand with Id id -> "#" ^ id | Const v -> v
 
   let id operand =
@@ -60,7 +64,16 @@ let nth operands idx =
     in
     err (InvalidIndex (idx |> string_of_int, reason))
 
+let rev_nth operands idx =
+  try List.nth (operands |> List.rev) idx
+  with Failure _ | Invalid_argument _ ->
+    let reason =
+      Printf.sprintf "%d points outside operands: %s" idx (operands |> to_str)
+    in
+    err (InvalidIndex (idx |> string_of_int, reason))
+
 let id_of_nth operands idx = nth operands idx |> Operand.id
+
 let const_of_nth operands idx = nth operands idx |> Operand.const
 
 let int_of_nth operands idx =

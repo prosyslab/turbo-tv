@@ -5,8 +5,8 @@ let prefix = ref ""
 
 let init stage =
   prefix :=
-    if stage = "before" then "b"
-    else if stage = "after" then "a"
+    if stage = "before" then "bv"
+    else if stage = "after" then "av"
     else failwith "Invalid stage";
   R.empty
 
@@ -21,5 +21,7 @@ let find vid rf =
     err (IdNotFound (cause, reason))
 
 let find_all vids rf = List.map (fun vid -> find vid rf) vids
+
 let empty = R.empty
+
 let iter = R.iter

@@ -3,15 +3,18 @@ exception Invalid_opcode
 
 type kind =
   | UNIMPL
+  | V1C1
   | V1
+  | C1
   | V1E1
   | E1
   | B1
   | CV
-  | C1
   | V1V2
   | V2
   | V1V2B1
+  | VVB1C1
+  | VV
   | B1V1
   | V1V2B1V3
   | V3
@@ -654,7 +657,6 @@ type t =
   | ObjectIsUndetectable
   | ObjectState
   | OsrValue
-  | Phi
   | PlainPrimitiveToFloat64
   | PlainPrimitiveToNumber
   | PlainPrimitiveToWord32
@@ -843,8 +845,9 @@ type t =
   | Word64Select
   | Word64Shr
   | Word64Xor
-  (* v1 *)
+  (* v1c1 *)
   | AllocateRaw
+  (* v1 *)
   | BitcastTaggedToWord
   | BitcastWord32ToWord64
   | BitcastWordToTagged
@@ -859,6 +862,9 @@ type t =
   | NumberExpm1
   | StackPointerGreaterThan
   | TruncateInt64ToInt32
+  (* c1 *)
+  | IfFalse
+  | IfTrue
   (* v1e1 *)
   | Branch
   (* b1 *)
@@ -873,9 +879,6 @@ type t =
   (* cv *)
   | End
   | Merge
-  (* c1 *)
-  | IfFalse
-  | IfTrue
   (* v1v2 *)
   | Int32Add
   | Int32AddWithOverflow
@@ -894,6 +897,8 @@ type t =
   | Return
   (* v1v2b1 *)
   | Load
+  (* vvb1c1 *)
+  | Phi
   (* b1v1 *)
   | Projection
   (* v1v2b1v3 *)
@@ -1063,7 +1068,7 @@ let get_kind opcode =
   | ObjectIsDetectableCallable | ObjectIsFiniteNumber | ObjectIsInteger
   | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable | ObjectIsNumber
   | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi | ObjectIsString
-  | ObjectIsSymbol | ObjectIsUndetectable | ObjectState | OsrValue | Phi
+  | ObjectIsSymbol | ObjectIsUndetectable | ObjectState | OsrValue
   | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber | PlainPrimitiveToWord32
   | Plug | PointerConstant | ProtectedLoad | ProtectedStore
   | RelocatableInt32Constant | RelocatableInt64Constant | RestLength | Retain
@@ -1119,25 +1124,26 @@ let get_kind opcode =
   | Word64ReverseBytes | Word64Rol | Word64RolLowerable | Word64Ror
   | Word64RorLowerable | Word64Sar | Word64Select | Word64Shr | Word64Xor ->
       UNIMPL
-  | AllocateRaw | BitcastTaggedToWord | BitcastWord32ToWord64
-  | BitcastWordToTagged | ChangeInt32ToFloat64 | ChangeInt32ToInt64
-  | ChangeInt32ToTagged | ChangeInt64ToFloat64 | ChangeInt64ToTagged
-  | ChangeTaggedSignedToInt32 | ChangeUint32ToUint64
-  | CheckedTaggedSignedToInt32 | NumberExpm1 | StackPointerGreaterThan
-  | TruncateInt64ToInt32 ->
+  | AllocateRaw -> V1C1
+  | BitcastTaggedToWord | BitcastWord32ToWord64 | BitcastWordToTagged
+  | ChangeInt32ToFloat64 | ChangeInt32ToInt64 | ChangeInt32ToTagged
+  | ChangeInt64ToFloat64 | ChangeInt64ToTagged | ChangeTaggedSignedToInt32
+  | ChangeUint32ToUint64 | CheckedTaggedSignedToInt32 | NumberExpm1
+  | StackPointerGreaterThan | TruncateInt64ToInt32 ->
       V1
+  | IfFalse | IfTrue -> C1
   | Branch -> V1E1
   | Call | ExternalConstant | HeapConstant | Int32Constant | Int64Constant
   | JSStackCheck | NumberConstant | Parameter ->
       B1
   | End | Merge -> CV
-  | IfFalse | IfTrue -> C1
   | Int32Add | Int32AddWithOverflow | Int64Add | Int64Sub | NumberAdd
   | ReferenceEqual | SpeculativeNumberBitwiseXor | SpeculativeSafeIntegerAdd
   | Uint64LessThan | Word32And | Word32Equal | Word64Equal | Word64Shl ->
       V1V2
   | Return -> V2
   | Load -> V1V2B1
+  | Phi -> VVB1C1
   | Projection -> B1V1
   | Store -> V1V2B1V3
   | StoreField -> V1B2B4V2
@@ -1147,15 +1153,18 @@ let get_kind opcode =
 let split_kind kind =
   match kind with
   | UNIMPL -> [ UNIMPL ]
+  | V1C1 -> [ V1; C1 ]
   | V1 -> [ V1 ]
+  | C1 -> [ C1 ]
   | V1E1 -> [ V1; E1 ]
   | E1 -> [ E1 ]
   | B1 -> [ B1 ]
   | CV -> [ CV ]
-  | C1 -> [ C1 ]
   | V1V2 -> [ V1; V2 ]
   | V2 -> [ V2 ]
   | V1V2B1 -> [ V1; V2; B1 ]
+  | VVB1C1 -> [ VV; B1; C1 ]
+  | VV -> [ VV ]
   | B1V1 -> [ B1; V1 ]
   | V1V2B1V3 -> [ V1; V2; B1; V3 ]
   | V3 -> [ V3 ]
@@ -1800,7 +1809,6 @@ let of_str str =
   | "ObjectIsUndetectable" -> ObjectIsUndetectable
   | "ObjectState" -> ObjectState
   | "OsrValue" -> OsrValue
-  | "Phi" -> Phi
   | "PlainPrimitiveToFloat64" -> PlainPrimitiveToFloat64
   | "PlainPrimitiveToNumber" -> PlainPrimitiveToNumber
   | "PlainPrimitiveToWord32" -> PlainPrimitiveToWord32
@@ -2004,6 +2012,8 @@ let of_str str =
   | "NumberExpm1" -> NumberExpm1
   | "StackPointerGreaterThan" -> StackPointerGreaterThan
   | "TruncateInt64ToInt32" -> TruncateInt64ToInt32
+  | "IfFalse" -> IfFalse
+  | "IfTrue" -> IfTrue
   | "Branch" -> Branch
   | "Call" -> Call
   | "ExternalConstant" -> ExternalConstant
@@ -2015,8 +2025,6 @@ let of_str str =
   | "Parameter" -> Parameter
   | "End" -> End
   | "Merge" -> Merge
-  | "IfFalse" -> IfFalse
-  | "IfTrue" -> IfTrue
   | "Int32Add" -> Int32Add
   | "Int32AddWithOverflow" -> Int32AddWithOverflow
   | "Int64Add" -> Int64Add
@@ -2032,6 +2040,7 @@ let of_str str =
   | "Word64Shl" -> Word64Shl
   | "Return" -> Return
   | "Load" -> Load
+  | "Phi" -> Phi
   | "Projection" -> Projection
   | "Store" -> Store
   | "StoreField" -> StoreField
@@ -2671,7 +2680,6 @@ let to_str opcode =
   | ObjectIsUndetectable -> "ObjectIsUndetectable"
   | ObjectState -> "ObjectState"
   | OsrValue -> "OsrValue"
-  | Phi -> "Phi"
   | PlainPrimitiveToFloat64 -> "PlainPrimitiveToFloat64"
   | PlainPrimitiveToNumber -> "PlainPrimitiveToNumber"
   | PlainPrimitiveToWord32 -> "PlainPrimitiveToWord32"
@@ -2875,6 +2883,8 @@ let to_str opcode =
   | NumberExpm1 -> "NumberExpm1"
   | StackPointerGreaterThan -> "StackPointerGreaterThan"
   | TruncateInt64ToInt32 -> "TruncateInt64ToInt32"
+  | IfFalse -> "IfFalse"
+  | IfTrue -> "IfTrue"
   | Branch -> "Branch"
   | Call -> "Call"
   | ExternalConstant -> "ExternalConstant"
@@ -2886,8 +2896,6 @@ let to_str opcode =
   | Parameter -> "Parameter"
   | End -> "End"
   | Merge -> "Merge"
-  | IfFalse -> "IfFalse"
-  | IfTrue -> "IfTrue"
   | Int32Add -> "Int32Add"
   | Int32AddWithOverflow -> "Int32AddWithOverflow"
   | Int64Add -> "Int64Add"
@@ -2903,6 +2911,7 @@ let to_str opcode =
   | Word64Shl -> "Word64Shl"
   | Return -> "Return"
   | Load -> "Load"
+  | Phi -> "Phi"
   | Projection -> "Projection"
   | Store -> "Store"
   | StoreField -> "StoreField"

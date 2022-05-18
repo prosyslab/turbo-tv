@@ -1,4 +1,5 @@
 open Z3utils
+module ControlFile = Control.ControlFile
 
 module Params = struct
   module Param = struct
@@ -21,8 +22,8 @@ end
 
 type t = {
   pc : IR.Node.id;
+  control_file : Control.t ControlFile.C.t;
   register_file : Value.t RegisterFile.R.t;
-  condition : Bool.t;
   memory : Memory.t;
   params : BitVec.t list;
   retvar : BitVec.t Option.t;
@@ -33,8 +34,8 @@ type t = {
 let init nparams stage : t =
   {
     pc = 0;
+    control_file = ControlFile.init stage;
     register_file = RegisterFile.init stage;
-    condition = Bool.tr;
     params = Params.init nparams;
     retvar = None;
     assertion = Bool.tr;
@@ -42,15 +43,15 @@ let init nparams stage : t =
     ub = Bool.fl;
   }
 
-let update pc register_file condition assertion ub t =
-  { t with pc; register_file; condition; assertion; ub }
+let update pc control_file register_file assertion ub t =
+  { t with pc; control_file; register_file; assertion; ub }
 
 (* getter *)
 let pc t = t.pc
 
-let register_file t = t.register_file
+let control_file t = t.control_file
 
-let condition t = t.condition
+let register_file t = t.register_file
 
 let memory t = t.memory
 

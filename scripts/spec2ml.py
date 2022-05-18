@@ -123,7 +123,9 @@ def gen_re_from_kind(kind):
     b_re_prefix = "(?:\\\\["
     b_re_suffix = "[^\\\\]]*\\\\])"
 
-    if kind == "CV":
+    if kind == "VV":
+        return f"let {kind.lower()}_re = Re.Pcre.regexp \"{b_re_prefix}{b_re_suffix}{{0,1}}{p_re_prefix}(.*){p_re_suffix}{p_re_prefix}{p_re_suffix}{p_re_prefix}{p_re_suffix}\" in\n"
+    elif kind == "CV":
         return f"let {kind.lower()}_re = Re.Pcre.regexp \"{b_re_prefix}{b_re_suffix}{{0,1}}{p_re_prefix}{p_re_suffix}{p_re_prefix}{p_re_suffix}{p_re_prefix}(.*){p_re_suffix}\" in\n"
 
     operand_kind = kind[0].upper()
@@ -152,11 +154,14 @@ def gen_match_from_kind(kind):
             f"  let vargs= \n"
             f"    Re.Group.get(Re.exec {kind.lower()}_re instr) 1 |> String.split_on_char ','"
             f"  in \n"
-            f"  List.fold_left\n"
+            "  let parsed = "
+            "   List.fold_left\n"
             "     (fun res arg ->"
             "       let re = Re.Pcre.regexp \"#(\\\\d*)\" in"
             "       (Re.Group.get (Re.exec re arg) 1 |> Operand.of_id) :: res)"
-            "     [] vargs")
+            "     [] vargs |> List.rev in\n"
+            "  parse_operand t instr (parsed @ operands)"
+        )
     else:
         operand_type = "id" if kind.startswith("V") or kind.startswith(
             "E") or kind.startswith("C") else "const"
@@ -187,6 +192,7 @@ def gen_instr(opcodes, replace=False):
         v["match"] if (k != "UNIMPL" and k[-1] != 'V') else ""
         for k, v in sorted(unique_kinds.items())
     ])
+    kinds_match += f"{unique_kinds['VV']['match']}\n"
     kinds_match += f"{unique_kinds['CV']['match']}\n"
     kinds_match += ("| UNIMPL -> []\n"
                     "|_ -> failwith \"Unreachable\"\n")

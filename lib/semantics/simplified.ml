@@ -66,9 +66,7 @@ let speculative_number_bitwise_xor vid lval rval =
  *  value = ite well-defined ((lval+rval) mod 2**64) UB *)
 let speculative_safe_integer_add vid lval rval =
   let value = Value.init vid in
-
   let res = Value.andi (Value.add lval rval) Constants.smi_mask in
-
   let assertion =
     Bool.ands
       [
@@ -78,7 +76,7 @@ let speculative_safe_integer_add vid lval rval =
       ]
   in
 
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 let number_expm1 vid nptr mem =
   let value = Value.init vid in
@@ -116,13 +114,15 @@ let number_expm1 vid nptr mem =
   let wd_value = res_ptr in
 
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, ub_cond)
+  (value, Control.empty, assertion, ub_cond)
 
 (* simplified: memory *)
-let allocate_raw vid size =
-  let vid = Value.init vid in
-  let ptr = Memory.allocate size in
-  (ptr, Value.eq vid ptr, Bool.fl)
+let allocate_raw vid cid size ct =
+  let value = Value.init vid in
+  let control = Control.init cid in
+  let pointer = Memory.allocate size in
+  let assertion = Bool.ands [ Value.eq value pointer; Bool.eq control ct ] in
+  (value, control, assertion, Bool.fl)
 
 let store_field ptr pos mt value mem =
   let repr = MachineType.repr mt in
@@ -136,7 +136,7 @@ let store_field ptr pos mt value mem =
   let store_cond = Bool.not ub_cond in
 
   mem := Memory.store_as (Pointer.move ptr pos) repr store_cond value !mem;
-  (Value.empty, Bool.tr, ub_cond)
+  (Value.empty, Control.empty, Bool.tr, ub_cond)
 
 (* simplified: type-conversion *)
 (* well-defined condition:
@@ -163,7 +163,7 @@ let change_int32_to_tagged vid pval mem =
 
   let wd_value = Bool.ite is_in_smi_range smi ptr in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
  * - int64(pval) 
@@ -189,7 +189,7 @@ let change_int64_to_tagged vid pval mem =
 
   let wd_value = Bool.ite is_in_smi_range smi ptr in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 let checked_tagged_signed_to_int32 vid pval =
   let value = Value.init vid in
@@ -201,4 +201,4 @@ let checked_tagged_signed_to_int32 vid pval =
     Bool.ands [ Value.has_type Type.tagged_signed pval; Value.eq value result ]
   in
 
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)

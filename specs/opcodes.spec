@@ -1,6 +1,6 @@
 AbortCSADcheck,
 Allocate,
-AllocateRaw,v1
+AllocateRaw,v1,c1
 ArgumentsElementsState,
 ArgumentsLength,
 ArgumentsLengthState,
@@ -661,7 +661,7 @@ ObjectIsUndetectable,
 ObjectState,
 OsrValue,
 Parameter,b1
-Phi,
+Phi,vv,b1,c1
 PlainPrimitiveToFloat64,
 PlainPrimitiveToNumber,
 PlainPrimitiveToWord32,

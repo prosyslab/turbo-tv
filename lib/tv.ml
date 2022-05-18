@@ -1,4 +1,5 @@
 module Params = State.Params
+module ControlFile = Control.ControlFile
 open Common
 open Simplified
 open Machine
@@ -12,15 +13,16 @@ module Id_set = Set.Make (Int)
 
 let rec next program state cfg =
   let pc = State.pc state in
+  let cf = State.control_file state in
   let rf = State.register_file state in
   let mem = ref (State.memory state) in
   let params = State.params state in
   let vid = !RegisterFile.prefix ^ string_of_int pc in
+  let cid = !ControlFile.prefix ^ string_of_int pc in
 
   let ty, opcode, operands = IR.instr_of pc program in
   let next_pc = match opcode with End -> -1 | _ -> pc + 1 in
-
-  let value, assertion, ub =
+  let value, control, assertion, ub =
     match opcode with
     (* common: constants *)
     | HeapConstant | ExternalConstant ->
@@ -49,28 +51,43 @@ let rec next program state cfg =
         let cond_id = Operands.id_of_nth operands 0 in
         let prev_id = Operands.id_of_nth operands 1 in
         let cond_value = RegisterFile.find cond_id rf in
-        let precond_value = RegisterFile.find prev_id rf in
-        branch vid cond_value precond_value
+        let precond_token = ControlFile.find prev_id cf in
+        branch cid cond_value precond_token
     | IfFalse ->
         let nid = Operands.id_of_nth operands 0 in
-        let cond_value = RegisterFile.find nid rf in
-        if_false vid cond_value
+        let cond_token = ControlFile.find nid cf in
+        if_false cid cond_token
     | IfTrue ->
         let nid = Operands.id_of_nth operands 0 in
-        let cond_value = RegisterFile.find nid rf in
-        if_true vid cond_value
-    | Start -> (Value.tr, Bool.tr, Bool.fl)
+        let cond_token = ControlFile.find nid cf in
+        if_true cid cond_token
+    | Phi ->
+        let rev = operands |> List.rev in
+        let cond_id = Operands.id_of_nth rev 0 in
+        let cond_tokens =
+          IR.instr_of (cond_id |> int_of_string) program
+          |> fun (_, _, conds_id) ->
+          ControlFile.find_all (conds_id |> Operands.id_of_all) cf
+        in
+        let repr = Operands.const_of_nth rev 1 |> MachineType.Repr.of_string in
+        let incoming_values =
+          RegisterFile.find_all
+            (rev |> List.tl |> List.tl |> List.rev |> Operands.id_of_all)
+            rf
+        in
+        phi vid incoming_values repr cond_tokens
+    | Start -> start cid
     | Merge ->
-        let conds = RegisterFile.find_all (operands |> Operands.id_of_all) rf in
-        merge vid conds
+        let conds = ControlFile.find_all (operands |> Operands.id_of_all) cf in
+        merge cid conds
     (* common: procedure *)
     | Parameter ->
         let pidx = Operands.const_of_nth operands 0 |> int_of_string in
         if 0 < pidx && pidx <= List.length params then
           let param = List.nth params (pidx - 1) in
           parameter vid param
-        else (Value.empty, Bool.tr, Bool.fl)
-    | Call -> (Value.tr, Bool.tr, Bool.fl)
+        else (Value.empty, Control.empty, Bool.tr, Bool.fl)
+    | Call -> (Value.tr, Control.empty, Bool.tr, Bool.fl)
     | Return ->
         let nid = Operands.id_of_nth operands 0 in
         let return_value = RegisterFile.find nid rf in
@@ -89,7 +106,7 @@ let rec next program state cfg =
                    Bool.tr (Value.eq value rv))
                return_values)
         in
-        (value, assertion, Bool.fl)
+        (value, Control.empty, assertion, Bool.fl)
     (* simplified: arithmetic *)
     | NumberAdd ->
         let lpid = Operands.id_of_nth operands 0 in
@@ -124,7 +141,9 @@ let rec next program state cfg =
     | AllocateRaw ->
         let size_id = Operands.id_of_nth operands 0 in
         let size_value = RegisterFile.find size_id rf in
-        allocate_raw vid size_value
+        let ct_id = Operands.id_of_nth operands 1 in
+        let ct = ControlFile.find ct_id cf in
+        allocate_raw vid cid size_value ct
     | StoreField ->
         let ptr_id = Operands.id_of_nth operands 0 in
         let ptr = RegisterFile.find ptr_id rf in
@@ -194,7 +213,7 @@ let rec next program state cfg =
         let rval = RegisterFile.find rpid rf in
         word64shl vid lval rval
     (* machine: comparison *)
-    | StackPointerGreaterThan -> (Value.tr, Bool.tr, Bool.fl)
+    | StackPointerGreaterThan -> (Value.tr, Control.empty, Bool.tr, Bool.fl)
     | Word32And ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -256,65 +275,32 @@ let rec next program state cfg =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         truncate_int64_to_int32 vid pval
-    | Empty -> (Value.empty, Bool.tr, Bool.fl)
+    | Empty -> (Value.empty, Control.empty, Bool.tr, Bool.fl)
     | _ ->
-        let msg =
-          Format.sprintf "unsupported instruction: %s%s"
-            (opcode |> Opcode.to_str)
-            (operands |> Operands.to_str)
-        in
-        print_endline msg;
-        (Value.empty, Bool.tr, Bool.fl)
+        (* let msg =
+             Format.sprintf "unsupported instruction: %s%s"
+               (opcode |> Opcode.to_str)
+               (operands |> Operands.to_str)
+           in
+           print_endline msg; *)
+        (Value.empty, Control.empty, Bool.tr, Bool.fl)
   in
 
-  let precond =
-    match opcode with
-    | Branch ->
-        let precond_id = Operands.id_of_nth operands 1 in
-        let precond = RegisterFile.find precond_id rf in
-        precond |> Value.is_true
-    | IfTrue | IfFalse ->
-        let nid = Operands.id_of_nth operands 0 in
-        let cond_value = RegisterFile.find nid rf in
-        Bool.ors
-          [
-            Composed.first_of cond_value |> Value.is_true;
-            Composed.second_of cond_value |> Value.is_true;
-          ]
-    | Merge ->
-        let size = Composed.size_of value in
-        let rec merge_conds res idx value =
-          if idx = size then res
-          else
-            let cond = Composed.select idx value in
-            merge_conds (Value.or_ cond res) (idx + 1) value
-        in
-        merge_conds Value.fl 0 value |> Value.is_true
-    | Start -> Bool.tr
-    | _ -> State.condition state
-  in
-
-  let updated_asrt =
-    Bool.ands
-      [
-        State.assertion state; Bool.ite precond assertion (Value.is_empty value);
-      ]
-  in
-
-  let postcond =
-    match opcode with
-    | IfTrue | IfFalse -> Value.is_true value
-    | Branch | Merge | Start -> precond
-    | _ -> State.condition state
-  in
-
+  let updated_asrt = Bool.ands [ State.assertion state; assertion ] in
   let type_is_verified =
     match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
   in
-  let updated_rf = RegisterFile.add vid value rf in
+  let updated_rf =
+    RegisterFile.add vid value rf
+    (* if value != Value.empty then RegisterFile.add vid value rf else rf *)
+  in
+  let updated_cf =
+    ControlFile.add cid control cf
+    (* if control != Control.empty then ControlFile.add cid control cf else cf *)
+  in
   let updated_ub = Bool.ors [ State.ub state; ub; Bool.not type_is_verified ] in
   let next_state =
-    State.update next_pc updated_rf postcond updated_asrt updated_ub state
+    State.update next_pc updated_cf updated_rf updated_asrt updated_ub state
   in
 
   if State.is_end next_state then { next_state with retvar = Some value }

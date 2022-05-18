@@ -23,7 +23,7 @@ let int32add vid lval rval =
   in
   let wd_value = Value.andi (Value.add lval rval) Constants.smi_mask in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
  * - int32(lval) ^ int32(rval)
@@ -51,7 +51,7 @@ let int32add_with_overflow vid lval rval =
   let ud_value = Composed.from_values [ Value.undefined; Value.undefined ] in
 
   let assertion = Value.eq value (Bool.ite wd_cond wd_value ud_value) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
  * - int64(lval) ^ int64(rval)
@@ -72,7 +72,7 @@ let int64add vid lval rval =
   in
   let wd_value = Value.add lval rval in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* Well-defined condition:
  * - int64(lval) ^ int64(rval)
@@ -93,7 +93,7 @@ let int64sub vid lval rval =
   in
   let wd_value = Value.sub lval rval in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined conditions:
  * - well_defined(lval) ^ well_defined(rval)
@@ -122,7 +122,7 @@ let word32sar vid hint lval rval =
   in
   let wd_value = Value.ashr lval off in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined conditions:
  * - well_defined(lval) ^ well_defined(rval)
@@ -165,7 +165,7 @@ let word32and vid lval rval =
   in
   let wd_value = Value.and_ lval rval in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* machine: comparison *)
 (* well-defined condition:
@@ -181,7 +181,7 @@ let word32equal vid lval rval =
   in
   let wd_value = Bool.ite (Value.weak_eq lval rval) Value.tr Value.fl in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
    * - well_defined(lval) ^ well_defined(rval)
@@ -217,7 +217,7 @@ let uint64less_than vid lval rval =
   in
   let wd_value = Bool.ite (Value.ult lval rval) Value.tr Value.fl in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* machine: memory *)
 (* defined condition:
@@ -242,7 +242,7 @@ let store ptr pos repr value mem =
   let store_size = repr |> Repr.size_of in
   mem := Memory.store ptr store_size store_cond value !mem;
 
-  (Value.empty, Bool.tr, ub_cond)
+  (Value.empty, Control.empty, Bool.tr, ub_cond)
 
 (* well-defined condition:
  * - well_defined(ptr) ^ well_defined(pos)
@@ -273,7 +273,7 @@ let load vid ptr pos repr mem =
     Memory.load_as (Pointer.move ptr pos) repr mem |> Value.entype ty
   in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* machine: type-conversion 
  * well-defined condition:
@@ -289,7 +289,7 @@ let bitcast_tagged_to_word vid v =
   let assertion =
     Value.eq value (Bool.ite wd_cond (v |> Value.cast ty) Value.undefined)
   in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
  * - well_defined(v) ^ word32(v)
@@ -304,7 +304,7 @@ let bitcast_word32_to_word64 vid v =
   let assertion =
     Value.eq value (Bool.ite wd_cond (v |> Value.cast ty) Value.undefined)
   in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
  * - well_defined(v) ^ any_tagged(v)
@@ -319,7 +319,7 @@ let bitcast_word_to_tagged vid v =
   let assertion =
     Value.eq value (Bool.ite wd_cond (v |> Value.cast ty) Value.undefined)
   in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
  * - well_defined(v) ^ int32(v)
@@ -332,7 +332,7 @@ let change_int32_to_float64 vid pval =
   in
   let wd_value = value |> Value.int32_to_float64 in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
  * - well_defined(v) ^ int32(v)
@@ -346,7 +346,7 @@ let change_int32_to_int64 vid pval =
   (* extend sign bit *)
   let wd_value = value |> Value.int32_to_int64 in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
  * - well_defined(v) ^ int64(v)
@@ -372,7 +372,7 @@ let change_uint32_to_uint64 vid pval =
   in
   let wd_value = value |> Value.cast Type.uint64 in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
  * - well_defined(v) ^ int64(v)
@@ -383,4 +383,4 @@ let truncate_int64_to_int32 vid v =
   let wd_cond = Bool.ands [ Value.is_defined v; Value.has_type Type.int64 v ] in
   let wd_value = Value.maski v 32 |> Value.cast Type.int32 in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
