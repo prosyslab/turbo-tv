@@ -124,6 +124,27 @@ let word32sar vid hint lval rval =
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, assertion, Bool.fl)
 
+(* well-defined conditions:
+ * - well_defined(lval) ^ well_defined(rval)
+ * - word64(lval) ^ word64(rval)
+ * assertion:
+ * value = ite well-defined (lval >> rval) UB *)
+let word64shl vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    let is_well_defined =
+      Bool.ands [ Value.is_defined lval; Value.is_defined rval ]
+    in
+    let repr_is_word64 =
+      Bool.ands
+        [ Value.has_repr Repr.Word64 lval; Value.has_repr Repr.Word64 lval ]
+    in
+    Bool.ands [ is_well_defined; repr_is_word64 ]
+  in
+  let wd_value = Value.shl lval rval in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, assertion, Bool.fl)
+
 (* machine: logic *)
 (* well-defined condition:
  * - well_defined(lval) ^ well_defined(rval)
@@ -157,6 +178,21 @@ let word32equal vid lval rval =
   let wd_cond =
     Bool.ands
       [ Value.has_repr Repr.Word32 lval; Value.has_repr Repr.Word32 rval ]
+  in
+  let wd_value = Bool.ite (Value.weak_eq lval rval) Value.tr Value.fl in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, assertion, Bool.fl)
+
+(* well-defined condition:
+   * - well_defined(lval) ^ well_defined(rval)
+   * - word64(lval) ^ word64(rval)
+   * assertion:
+   * value = ite well-defined (lval = rval) UB *)
+let word64equal vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [ Value.has_repr Repr.Word64 lval; Value.has_repr Repr.Word64 rval ]
   in
   let wd_value = Bool.ite (Value.weak_eq lval rval) Value.tr Value.fl in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in

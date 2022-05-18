@@ -133,6 +133,10 @@ let ashr lval rval =
   let lty = ty_of lval in
   BitVec.ashrb (data_of lval) (data_of rval) |> entype lty
 
+let xor lval rval =
+  let lty = ty_of lval in
+  BitVec.xor (data_of lval) (data_of rval) |> entype lty
+
 let mod_ lval rval =
   let lty = ty_of lval in
   BitVec.modb (data_of lval) (data_of rval) |> entype lty
@@ -200,6 +204,9 @@ let leqf lval f =
          (Float.from_ieee_bv (data_of lval)))
   in
   Float.leq lval_f (Float.from_float f)
+
+let add_f lval rval =
+  Float.add (data_of lval) (data_of rval) |> entype Type.float64
 
 (* defined & undefined *)
 let undefined = BitVec.shli (BitVecVal.from_int ~len 1) (ty_len + data_len)

@@ -1,7 +1,64 @@
 open Z3utils
 module HeapNumber = Objects.HeapNumber
+module Repr = MachineType.Repr
 
 (* simplified: arithmetic *)
+(* well-defined condition:
+ * - WellDefined(lval) ^ WellDefined(rval)
+ * - IsInt32(lval) ^ IsInt32(rval)
+ * | IsInt64(lval) ^ IsInt64(rval)
+ * | IsFloat64(lval) ^ IsFloat64(rval)
+ * assertion:
+ *  value = ite well-defined (lval + rval) UB *)
+let number_add vid lval rval =
+  let value = Value.init vid in
+  let lval_int32 = Value.has_type Type.int32 lval in
+  let rval_int32 = Value.has_type Type.int32 rval in
+  let lval_int64 = Value.has_type Type.int64 lval in
+  let rval_int64 = Value.has_type Type.int64 rval in
+  let lval_float64 = Value.has_type Type.float64 lval in
+  let rval_float64 = Value.has_type Type.float64 rval in
+  let wd_cond =
+    Bool.ands
+      [
+        Value.is_defined lval;
+        Value.is_defined rval;
+        Bool.ors
+          [
+            Bool.ands [ lval_int32; rval_int32 ];
+            Bool.ands [ lval_int64; rval_int64 ];
+            Bool.ands [ lval_float64; rval_float64 ];
+          ];
+      ]
+  in
+  let wd_value =
+    Bool.ite
+      (Bool.ors [ lval_int32; lval_int64 ])
+      (Value.add lval rval) (Value.add_f lval rval)
+  in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, assertion, Bool.fl)
+
+(* well-defined condition:
+ * - WellDefined(lval) ^ WellDefined(rval)
+ * - IsWord32(lval) ^ IsWord32(rval)
+ * assertion:
+ *  value = ite well-defined (lval xor rval) UB *)
+let speculative_number_bitwise_xor vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [
+        Value.is_defined lval;
+        Value.is_defined rval;
+        Value.has_repr Repr.Word32 lval;
+        Value.has_repr Repr.Word32 rval;
+      ]
+  in
+  let wd_value = Value.xor lval rval in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, assertion, Bool.fl)
+
 (* well-defined condition:
  * - TaggedSigned(lval) ^ TaggedSigned(rval)
  * - WellDefined(lval) ^ WellDefined(rval)
