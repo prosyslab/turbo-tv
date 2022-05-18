@@ -582,7 +582,7 @@ NewSmiOrObjectElements,
 NumberAbs,
 NumberAcos,
 NumberAcosh,
-NumberAdd,
+NumberAdd,v1,v2
 NumberAsin,
 NumberAsinh,
 NumberAtan,

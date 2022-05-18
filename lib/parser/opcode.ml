@@ -579,7 +579,6 @@ type t =
   | NumberAbs
   | NumberAcos
   | NumberAcosh
-  | NumberAdd
   | NumberAsin
   | NumberAsinh
   | NumberAtan
@@ -882,6 +881,7 @@ type t =
   | Int32AddWithOverflow
   | Int64Add
   | Int64Sub
+  | NumberAdd
   | ReferenceEqual
   | SpeculativeNumberBitwiseXor
   | SpeculativeSafeIntegerAdd
@@ -1046,36 +1046,36 @@ let get_kind opcode =
   | Loop | LoopExit | LoopExitEffect | LoopExitValue | MapGuard
   | MaybeGrowFastElements | MemoryBarrier | NewArgumentsElements | NewConsString
   | NewDoubleElements | NewSmiOrObjectElements | NumberAbs | NumberAcos
-  | NumberAcosh | NumberAdd | NumberAsin | NumberAsinh | NumberAtan
-  | NumberAtan2 | NumberAtanh | NumberBitwiseAnd | NumberBitwiseOr
-  | NumberBitwiseXor | NumberCbrt | NumberCeil | NumberClz32 | NumberCos
-  | NumberCosh | NumberDivide | NumberEqual | NumberExp | NumberFloor
-  | NumberFround | NumberImul | NumberIsFinite | NumberIsFloat64Hole
-  | NumberIsInteger | NumberIsMinusZero | NumberIsNaN | NumberIsSafeInteger
-  | NumberLessThan | NumberLessThanOrEqual | NumberLog | NumberLog10
-  | NumberLog1p | NumberLog2 | NumberMax | NumberMin | NumberModulus
-  | NumberMultiply | NumberPow | NumberRound | NumberSameValue | NumberShiftLeft
-  | NumberShiftRight | NumberShiftRightLogical | NumberSign | NumberSilenceNaN
-  | NumberSin | NumberSinh | NumberSqrt | NumberSubtract | NumberTan
-  | NumberTanh | NumberToBoolean | NumberToInt32 | NumberToString
-  | NumberToUint32 | NumberToUint8Clamped | NumberTrunc | ObjectId
-  | ObjectIsArrayBufferView | ObjectIsBigInt | ObjectIsCallable
-  | ObjectIsConstructor | ObjectIsDetectableCallable | ObjectIsFiniteNumber
-  | ObjectIsInteger | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable
-  | ObjectIsNumber | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi
-  | ObjectIsString | ObjectIsSymbol | ObjectIsUndetectable | ObjectState
-  | OsrValue | Phi | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber
-  | PlainPrimitiveToWord32 | Plug | PointerConstant | ProtectedLoad
-  | ProtectedStore | RelocatableInt32Constant | RelocatableInt64Constant
-  | RestLength | Retain | RoundFloat64ToInt32 | RoundInt32ToFloat32
-  | RoundInt64ToFloat32 | RoundInt64ToFloat64 | RoundUint32ToFloat32
-  | RoundUint64ToFloat32 | RoundUint64ToFloat64 | RuntimeAbort | S128And
-  | S128AndNot | S128Const | S128Not | S128Or | S128Select | S128Xor | S128Zero
-  | SLVerifierHint | SameValue | SameValueNumbersOnly | Select
-  | SignExtendWord16ToInt32 | SignExtendWord16ToInt64 | SignExtendWord32ToInt64
-  | SignExtendWord8ToInt32 | SignExtendWord8ToInt64 | Simd128ReverseBytes
-  | SpeculativeBigIntAdd | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN
-  | SpeculativeBigIntNegate | SpeculativeBigIntSubtract | SpeculativeNumberAdd
+  | NumberAcosh | NumberAsin | NumberAsinh | NumberAtan | NumberAtan2
+  | NumberAtanh | NumberBitwiseAnd | NumberBitwiseOr | NumberBitwiseXor
+  | NumberCbrt | NumberCeil | NumberClz32 | NumberCos | NumberCosh
+  | NumberDivide | NumberEqual | NumberExp | NumberFloor | NumberFround
+  | NumberImul | NumberIsFinite | NumberIsFloat64Hole | NumberIsInteger
+  | NumberIsMinusZero | NumberIsNaN | NumberIsSafeInteger | NumberLessThan
+  | NumberLessThanOrEqual | NumberLog | NumberLog10 | NumberLog1p | NumberLog2
+  | NumberMax | NumberMin | NumberModulus | NumberMultiply | NumberPow
+  | NumberRound | NumberSameValue | NumberShiftLeft | NumberShiftRight
+  | NumberShiftRightLogical | NumberSign | NumberSilenceNaN | NumberSin
+  | NumberSinh | NumberSqrt | NumberSubtract | NumberTan | NumberTanh
+  | NumberToBoolean | NumberToInt32 | NumberToString | NumberToUint32
+  | NumberToUint8Clamped | NumberTrunc | ObjectId | ObjectIsArrayBufferView
+  | ObjectIsBigInt | ObjectIsCallable | ObjectIsConstructor
+  | ObjectIsDetectableCallable | ObjectIsFiniteNumber | ObjectIsInteger
+  | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable | ObjectIsNumber
+  | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi | ObjectIsString
+  | ObjectIsSymbol | ObjectIsUndetectable | ObjectState | OsrValue | Phi
+  | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber | PlainPrimitiveToWord32
+  | Plug | PointerConstant | ProtectedLoad | ProtectedStore
+  | RelocatableInt32Constant | RelocatableInt64Constant | RestLength | Retain
+  | RoundFloat64ToInt32 | RoundInt32ToFloat32 | RoundInt64ToFloat32
+  | RoundInt64ToFloat64 | RoundUint32ToFloat32 | RoundUint64ToFloat32
+  | RoundUint64ToFloat64 | RuntimeAbort | S128And | S128AndNot | S128Const
+  | S128Not | S128Or | S128Select | S128Xor | S128Zero | SLVerifierHint
+  | SameValue | SameValueNumbersOnly | Select | SignExtendWord16ToInt32
+  | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
+  | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
+  | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
+  | SpeculativeBigIntSubtract | SpeculativeNumberAdd
   | SpeculativeNumberBitwiseAnd | SpeculativeNumberBitwiseOr
   | SpeculativeNumberDivide | SpeculativeNumberEqual | SpeculativeNumberLessThan
   | SpeculativeNumberLessThanOrEqual | SpeculativeNumberModulus
@@ -1132,9 +1132,9 @@ let get_kind opcode =
       B1
   | End | Merge -> CV
   | IfFalse | IfTrue -> C1
-  | Int32Add | Int32AddWithOverflow | Int64Add | Int64Sub | ReferenceEqual
-  | SpeculativeNumberBitwiseXor | SpeculativeSafeIntegerAdd | Uint64LessThan
-  | Word32And | Word32Equal | Word64Equal | Word64Shl ->
+  | Int32Add | Int32AddWithOverflow | Int64Add | Int64Sub | NumberAdd
+  | ReferenceEqual | SpeculativeNumberBitwiseXor | SpeculativeSafeIntegerAdd
+  | Uint64LessThan | Word32And | Word32Equal | Word64Equal | Word64Shl ->
       V1V2
   | Return -> V2
   | Load -> V1V2B1
@@ -1725,7 +1725,6 @@ let of_str str =
   | "NumberAbs" -> NumberAbs
   | "NumberAcos" -> NumberAcos
   | "NumberAcosh" -> NumberAcosh
-  | "NumberAdd" -> NumberAdd
   | "NumberAsin" -> NumberAsin
   | "NumberAsinh" -> NumberAsinh
   | "NumberAtan" -> NumberAtan
@@ -2022,6 +2021,7 @@ let of_str str =
   | "Int32AddWithOverflow" -> Int32AddWithOverflow
   | "Int64Add" -> Int64Add
   | "Int64Sub" -> Int64Sub
+  | "NumberAdd" -> NumberAdd
   | "ReferenceEqual" -> ReferenceEqual
   | "SpeculativeNumberBitwiseXor" -> SpeculativeNumberBitwiseXor
   | "SpeculativeSafeIntegerAdd" -> SpeculativeSafeIntegerAdd
@@ -2596,7 +2596,6 @@ let to_str opcode =
   | NumberAbs -> "NumberAbs"
   | NumberAcos -> "NumberAcos"
   | NumberAcosh -> "NumberAcosh"
-  | NumberAdd -> "NumberAdd"
   | NumberAsin -> "NumberAsin"
   | NumberAsinh -> "NumberAsinh"
   | NumberAtan -> "NumberAtan"
@@ -2893,6 +2892,7 @@ let to_str opcode =
   | Int32AddWithOverflow -> "Int32AddWithOverflow"
   | Int64Add -> "Int64Add"
   | Int64Sub -> "Int64Sub"
+  | NumberAdd -> "NumberAdd"
   | ReferenceEqual -> "ReferenceEqual"
   | SpeculativeNumberBitwiseXor -> "SpeculativeNumberBitwiseXor"
   | SpeculativeSafeIntegerAdd -> "SpeculativeSafeIntegerAdd"
