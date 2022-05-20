@@ -37,7 +37,7 @@ let number_add vid lval rval =
       (Value.add lval rval) (Value.add_f lval rval)
   in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
  * - WellDefined(lval) ^ WellDefined(rval)
@@ -57,7 +57,7 @@ let speculative_number_bitwise_xor vid lval rval =
   in
   let wd_value = Value.xor lval rval in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
  * - TaggedSigned(lval) ^ TaggedSigned(rval)

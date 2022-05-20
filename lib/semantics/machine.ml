@@ -143,7 +143,7 @@ let word64shl vid lval rval =
   in
   let wd_value = Value.shl lval rval in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* machine: logic *)
 (* well-defined condition:
@@ -196,7 +196,7 @@ let word64equal vid lval rval =
   in
   let wd_value = Bool.ite (Value.weak_eq lval rval) Value.tr Value.fl in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
  * - well_defined(lval) ^ well_defined(rval)
