@@ -43,8 +43,8 @@ let init nparams stage : t =
     ub = Bool.fl;
   }
 
-let update pc control_file register_file assertion ub t =
-  { t with pc; control_file; register_file; assertion; ub }
+let update pc control_file register_file memory assertion ub t =
+  { t with pc; control_file; register_file; memory; assertion; ub }
 
 (* getter *)
 let pc t = t.pc

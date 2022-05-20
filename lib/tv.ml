@@ -300,7 +300,8 @@ let rec next program state cfg =
   in
   let updated_ub = Bool.ors [ State.ub state; ub; Bool.not type_is_verified ] in
   let next_state =
-    State.update next_pc updated_cf updated_rf updated_asrt updated_ub state
+    State.update next_pc updated_cf updated_rf !mem updated_asrt updated_ub
+      state
   in
 
   if State.is_end next_state then { next_state with retvar = Some value }
