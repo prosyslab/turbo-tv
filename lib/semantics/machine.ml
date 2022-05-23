@@ -104,7 +104,7 @@ let round_float64_to_int32 vid pval =
   let wd_cond =
     Bool.ands [ Value.is_defined pval; Value.has_type Type.float64 pval ]
   in
-  let wd_value = value |> Value.float64_to_int32 in
+  let wd_value = value |> Value.round_float64_to_int32 in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, Control.empty, assertion, Bool.fl)
 
