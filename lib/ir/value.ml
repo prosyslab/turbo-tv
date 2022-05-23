@@ -272,6 +272,15 @@ let is_empty value =
   let size = BitVec.length_of value / len in
   eq value (BitVec.repeat size empty)
 
+module Float64 = struct
+  type t = BitVec.t
+
+  let lt lval rval =
+    let lf = lval |> data_of |> Z3utils.Float.from_ieee_bv in
+    let rf = rval |> data_of |> Z3utils.Float.from_ieee_bv in
+    Z3utils.Float.leq lf rf
+end
+
 module Composed = struct
   type t = BitVec.t
 

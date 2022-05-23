@@ -118,6 +118,8 @@ module Float = struct
 
   let geqf lexp rexp = Fl.mk_geq ctx lexp (rexp |> from_float)
 
+  let lt lexp rexp = Fl.mk_lt ctx lexp rexp
+
   let leq lexp rexp = Fl.mk_leq ctx lexp rexp
 
   let leqf lexp rexp = Fl.mk_leq ctx lexp (rexp |> from_float)

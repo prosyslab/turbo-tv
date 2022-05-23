@@ -25,6 +25,12 @@ let rec next program state cfg =
   let value, control, assertion, ub =
     match opcode with
     (* common: constants *)
+    | Float64Constant ->
+        let c =
+          Operands.const_of_nth operands 0
+          |> Value.from_f64string |> Value.cast Type.float64
+        in
+        float64_constant vid c
     | HeapConstant | ExternalConstant ->
         let addr_re = Re.Pcre.regexp "(0x[0-9a-f]+)" in
         let operand = Operands.const_of_nth operands 0 in
@@ -212,14 +218,27 @@ let rec next program state cfg =
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
         word64shl vid lval rval
-    (* machine: comparison *)
-    | StackPointerGreaterThan -> (Value.tr, Control.empty, Bool.tr, Bool.fl)
+    (* machine: logic *)
+    | Float64Equal ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        float64equal vid lval rval
+    | Float64LessThan ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        float64equal vid lval rval
     | Word32And ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
         word32and vid lval rval
+    (* machine: comparison *)
+    | StackPointerGreaterThan -> (Value.tr, Control.empty, Bool.tr, Bool.fl)
     | Word32Equal ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in

@@ -4,7 +4,13 @@ module ControlTuple = Control.ControlTuple
 module HeapNumber = Objects.HeapNumber
 
 (* common: constants *)
-(* well-defined condition: INT32_MIN <= [c] <= INT32_MAX
+(* assertion: value = c *)
+let float64_constant vid c =
+  let value = Value.init vid in
+  let assertion = Value.eq value c in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition: INT32_MIN <= c <= INT32_MAX
  * behavior: ite well-defined value=c value=UB *)
 let int32_constant vid c =
   let value = Value.init vid in

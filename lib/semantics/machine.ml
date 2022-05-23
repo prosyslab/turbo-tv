@@ -169,10 +169,38 @@ let word32and vid lval rval =
 
 (* machine: comparison *)
 (* well-defined condition:
- * - well_defined(lval) ^ well_defined(rval)
- * - word32(lval) ^ word32(rval)
+ * - has_repr(lval, float64) ^ has_repr(rval, float64)
  * assertion: 
- * value = ite well-defined (lval = rval) UB *)
+ *  value = ite well-defined (lval = rval) UB *)
+let float64equal vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [ Value.has_repr Repr.Float64 lval; Value.has_repr Repr.Float64 rval ]
+  in
+  (* use strong equal since only Float64 type is defined for Float64 Repr. *)
+  let wd_value = Bool.ite (Value.eq lval rval) Value.tr Value.fl in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition:
+ * - has_repr(lval, float64) ^ has_repr(rval, float64)
+ * assertion: 
+ *  value = ite well-defined (lval < rval) UB *)
+let float64_less_than vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [ Value.has_repr Repr.Float64 lval; Value.has_repr Repr.Float64 rval ]
+  in
+  let wd_value = Bool.ite (Value.Float64.lt lval rval) Value.tr Value.fl in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition:
+ * - has_repr(lval, word32) ^ has_repr(rval, word32)
+ * assertion: 
+ *  value = ite well-defined (lval = rval) UB *)
 let word32equal vid lval rval =
   let value = Value.init vid in
   let wd_cond =
@@ -184,10 +212,9 @@ let word32equal vid lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
-   * - well_defined(lval) ^ well_defined(rval)
-   * - word64(lval) ^ word64(rval)
-   * assertion:
-   * value = ite well-defined (lval = rval) UB *)
+ * - has_repr(lval, word64) ^ has_repr(rval, word64)
+ * assertion:
+ *  value = ite well-defined (lval = rval) UB *)
 let word64equal vid lval rval =
   let value = Value.init vid in
   let wd_cond =
