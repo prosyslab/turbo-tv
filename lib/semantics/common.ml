@@ -7,7 +7,7 @@ module HeapNumber = Objects.HeapNumber
 (* assertion: value = c *)
 let float64_constant vid c =
   let value = Value.init vid in
-  let assertion = Value.eq value c in
+  let assertion = Value.eq value (c |> Value.cast Type.float64) in
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition: INT32_MIN <= c <= INT32_MAX
