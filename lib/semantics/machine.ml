@@ -95,6 +95,19 @@ let int64sub vid lval rval =
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, Control.empty, assertion, Bool.fl)
 
+(* - Well-defined condition = 
+ *    WellDefined(lval) /\ IsFloat64(lval)
+ * - Assertion:
+ *     value = ite well-defined (Round(lval, rtz)) undefined *)
+let round_float64_to_int32 vid pval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands [ Value.is_defined pval; Value.has_type Type.float64 pval ]
+  in
+  let wd_value = value |> Value.float64_to_int32 in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
 (* well-defined conditions:
  * - well_defined(lval) ^ well_defined(rval)
  * - word32(lval) ^ word32(rval)

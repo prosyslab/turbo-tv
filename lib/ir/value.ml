@@ -63,6 +63,11 @@ let is_integer t = Bool.ors [ is_signed_integer t; is_unsigned_integer t ]
 let is_float t = Bool.ors (List.map (fun ty -> has_type ty t) Type.float_types)
 
 (* type casting operations *)
+let round_float64_to_int32 t =
+  data_of t |> Float.from_ieee_bv
+  |> Float.to_sbv (Z3.FloatingPoint.RoundingMode.mk_round_toward_zero ctx)
+  |> entype Type.int32
+
 let int32_to_int64 t =
   let x = t |> BitVec.extract 31 0 |> BitVec.sign_extend 32 in
   x |> entype Type.int64
