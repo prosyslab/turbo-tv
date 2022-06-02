@@ -4,6 +4,44 @@ module Composed = Value.Composed
 module Repr = MachineType.Repr
 
 (* machine: arithmetic *)
+(* well-defined condition:
+ * - IsFloat64Type(pval) 
+ * - WellDefined(pval) 
+ * assertion:
+ * value = ite well-defined pval[0:32] UB *)
+let float64_extract_high_word32 vid pval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands [ Value.has_type Type.float64 pval; Value.is_defined pval ]
+  in
+  let wd_value =
+    let hword32 = pval |> Value.data_of |> BitVec.extract 63 32 in
+    Value.cast (Type.from_repr Repr.Word32 |> List.hd) hword32
+  in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition:
+ * - IsFloat64Type(lval) /\ IsFloat64Type(rval)
+ * - WellDefined(lval) /\ WellDefined(rval)
+ * assertion:
+ * value = ite well-defined (lval-rval) UB *)
+let float64sub vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    let type_is_float64 =
+      Bool.ands
+        [ Value.has_type Type.float64 lval; Value.has_type Type.float64 rval ]
+    in
+    let is_well_defined =
+      Bool.ands [ Value.is_defined lval; Value.is_defined rval ]
+    in
+    Bool.ands [ type_is_float64; is_well_defined ]
+  in
+  let wd_value = Value.subf lval rval in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
 (* well-defined condition: 
  * - int32(lval) ^ int32(rval)
  * - well_defined(lval) ^ well_defined(rval)

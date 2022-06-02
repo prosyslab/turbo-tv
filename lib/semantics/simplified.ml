@@ -34,7 +34,7 @@ let number_add vid lval rval =
   let wd_value =
     Bool.ite
       (Bool.ors [ lval_int32; lval_int64 ])
-      (Value.add lval rval) (Value.add_f lval rval)
+      (Value.add lval rval) (Value.addf lval rval)
   in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, Control.empty, assertion, Bool.fl)

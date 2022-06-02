@@ -6,6 +6,7 @@ open Machine
 open Z3utils
 
 let ctx = Z3utils.ctx
+
 let validator = Solver.init
 
 module Id_set = Set.Make (Int)
@@ -176,6 +177,16 @@ let rec next program state cfg =
         let pval = RegisterFile.find pid rf in
         checked_tagged_signed_to_int32 vid pval
     (* machine: arithmetic *)
+    | Float64ExtractHighWord32 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        float64_extract_high_word32 vid pval
+    | Float64Sub ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        float64sub vid lval rval
     | Int32Add ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -385,7 +396,6 @@ let run nparams before after before_cfg after_cfg =
       Printf.printf "Result: Not Verified \n";
       Printf.printf "Assertion: \n%s\n\n" (assertion |> str_of_simplified);
       Printf.printf "Model: \n%s" model_str
-  | UNSATISFIABLE ->
-      Printf.printf "Result: Verified\n";
-      Printf.printf "Assertion: \n%s\n\n" (assertion |> str_of_simplified)
+  | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
+  (* Printf.printf "Assertion: \n%s\n\n" (assertion |> str_of_simplified) *)
   | _ -> failwith "unknown"

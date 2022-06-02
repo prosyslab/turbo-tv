@@ -133,10 +133,12 @@ module Float = struct
   let leqf lexp rexp = Fl.mk_leq ctx lexp (rexp |> from_float)
 
   let add lexp rexp =
-    let lval = lexp |> from_ieee_bv in
-    let rval = rexp |> from_ieee_bv in
     let rne = Fl.RoundingMode.mk_rne ctx in
-    Fl.mk_add ctx rne lval rval |> to_ieee_bv
+    Fl.mk_add ctx rne lexp rexp
+
+  let sub lexp rexp =
+    let rne = Fl.RoundingMode.mk_rne ctx in
+    Fl.mk_sub ctx rne lexp rexp
 end
 
 module BitVecVal = struct
