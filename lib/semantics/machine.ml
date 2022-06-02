@@ -315,8 +315,34 @@ let load vid ptr pos repr mem =
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, Control.empty, assertion, Bool.fl)
 
-(* machine: type-conversion 
- * well-defined condition:
+(* machine: type-conversion *)
+(* well-defined condition:
+ * - well_defined(v) ^ float32(v)
+ * assertion:
+ * value = ite well-defined int32(v) UB *)
+let bitcast_float32_to_int32 vid v =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands [ Value.is_defined v; Value.has_type Type.float32 v ]
+  in
+  let wd_value = v |> Value.cast Type.int32 in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition:
+ * - well_defined(v) ^ float64(v)
+ * assertion:
+ * value = ite well-defined int64(v) UB *)
+let bitcast_float64_to_int64 vid v =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands [ Value.is_defined v; Value.has_type Type.float64 v ]
+  in
+  let wd_value = v |> Value.cast Type.int64 in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition:
  * - well_defined(v) ^ tagged(v)
  * assertion:
  * value = ite well-defined word(v) UB *)
@@ -362,6 +388,19 @@ let bitcast_word_to_tagged vid v =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
+ * - well_defined(v) ^ float64(v)
+ * assertion:
+ *  value = ite well-defined int64(v) UB *)
+let change_float64_to_int64 vid pval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands [ Value.is_defined pval; Value.has_type Type.float64 pval ]
+  in
+  let wd_value = value |> Value.float64_to_int64 in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition:
  * - well_defined(v) ^ int32(v)
  * assertion:
  *  value = ite well-defined float64(v) UB *)
@@ -399,12 +438,25 @@ let change_int64_to_float64 vid pval =
   in
   let wd_value = value |> Value.int64_to_float64 in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
- * - well_defined(v) ^ int64(v)
+ * - well_defined(v) ^ uint32(v)
  * assertion:
  *  value = ite well-defined float64(v) UB *)
+let change_uint32_to_float64 vid pval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands [ Value.is_defined pval; Value.has_type Type.uint32 pval ]
+  in
+  let wd_value = value |> Value.cast Type.float64 in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition:
+ * - well_defined(v) ^ uint32(v)
+ * assertion:
+ *  value = ite well-defined uint64(v) UB *)
 let change_uint32_to_uint64 vid pval =
   let value = Value.init vid in
   let wd_cond =

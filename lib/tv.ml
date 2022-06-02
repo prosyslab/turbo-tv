@@ -6,7 +6,6 @@ open Machine
 open Z3utils
 
 let ctx = Z3utils.ctx
-
 let validator = Solver.init
 
 module Id_set = Set.Make (Int)
@@ -172,10 +171,6 @@ let rec next program state cfg =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         change_int64_to_tagged vid pval mem
-    | ChangeInt32ToFloat64 ->
-        let pid = Operands.id_of_nth operands 0 in
-        let pval = RegisterFile.find pid rf in
-        change_int32_to_float64 vid pval
     | CheckedTaggedSignedToInt32 ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
@@ -278,6 +273,14 @@ let rec next program state cfg =
         let repr = Operands.const_of_nth operands 2 |> Repr.of_string in
         load vid ptr pos repr !mem
     (* machine: bitcast *)
+    | BitcastFloat32ToInt32 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        bitcast_float64_to_int64 vid pval
+    | BitcastFloat64ToInt64 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        bitcast_float64_to_int64 vid pval
     | BitcastTaggedToWord ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
@@ -294,6 +297,27 @@ let rec next program state cfg =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         truncate_int64_to_int32 vid pval
+        (* machine: type-conversion *)
+    | ChangeInt32ToFloat64 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        change_int32_to_float64 vid pval
+    | ChangeFloat64ToInt64 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        change_float64_to_int64 vid pval
+    | ChangeInt64ToFloat64 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        change_int64_to_float64 vid pval
+    | ChangeUint32ToUint64 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        change_uint32_to_uint64 vid pval
+    | ChangeUint32ToFloat64 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        change_uint32_to_float64 vid pval
     | Empty -> (Value.empty, Control.empty, Bool.tr, Bool.fl)
     | _ ->
         (* let msg =
@@ -361,5 +385,7 @@ let run nparams before after before_cfg after_cfg =
       Printf.printf "Result: Not Verified \n";
       Printf.printf "Assertion: \n%s\n\n" (assertion |> str_of_simplified);
       Printf.printf "Model: \n%s" model_str
-  | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
+  | UNSATISFIABLE ->
+      Printf.printf "Result: Verified\n";
+      Printf.printf "Assertion: \n%s\n\n" (assertion |> str_of_simplified)
   | _ -> failwith "unknown"
