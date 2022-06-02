@@ -26,7 +26,7 @@ let float64_extract_high_word32 vid pval =
  * - WellDefined(lval) /\ WellDefined(rval)
  * assertion:
  * value = ite well-defined (lval-rval) UB *)
-let float64sub vid lval rval =
+let float64_sub vid lval rval =
   let value = Value.init vid in
   let wd_cond =
     let type_is_float64 =
@@ -47,7 +47,7 @@ let float64sub vid lval rval =
  * - well_defined(lval) ^ well_defined(rval)
  * assertion:
  * value = ite well-defined ((lval+rval) mod 2**32) UB *)
-let int32add vid lval rval =
+let int32_add vid lval rval =
   let value = Value.init vid in
   let wd_cond =
     let type_is_int32 =
@@ -68,7 +68,7 @@ let int32add vid lval rval =
  * - well_defined(lval) ^ well_defined(rval)
  * assertion: 
  * value = ite well-defined ((lval+rval) mod 2**32)::(lval+rval > smi_max) UB *)
-let int32add_with_overflow vid lval rval =
+let int32_add_with_overflow vid lval rval =
   let value = Composed.init vid 2 in
   let wd_cond =
     let type_is_int32 =
@@ -92,11 +92,53 @@ let int32add_with_overflow vid lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
+ * - is_defined(lval) /\ is_defined(rval)
+ * - has_type(lval, int32) ^ has_repr(rval, int32)
+ * assertion:
+ *  value = ite well-defined (lval < rval) UB *)
+let int32_mul vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    let are_int32 =
+      Bool.ands
+        [ Value.has_type Type.int32 lval; Value.has_type Type.int32 rval ]
+    in
+    let are_defined =
+      Bool.ands [ Value.is_defined lval; Value.is_defined rval ]
+    in
+    Bool.ands [ are_int32; are_defined ]
+  in
+  let wd_value = Value.Int32.mul lval rval in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition:
+ * - int32(lval) ^ int32(rval)
+ * - well_defined(lval) ^ well_defined(rval)
+ * assertion:
+ * value = ite well-defined ((lval-rval) mod 2**32) UB *)
+let int32_sub vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    let type_is_int32 =
+      Bool.ands
+        [ Value.has_type Type.int32 lval; Value.has_type Type.int32 rval ]
+    in
+    let is_well_defined =
+      Bool.ands [ Value.is_defined lval; Value.is_defined rval ]
+    in
+    Bool.ands [ type_is_int32; is_well_defined ]
+  in
+  let wd_value = Value.andi (Value.sub lval rval) Constants.smi_mask in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition:
  * - int64(lval) ^ int64(rval)
  * - well_defined(lval) ^ well_defined(rval)
  * assertion: 
  * value = ite well-defined ((lval+rval) mod 2**64) UB *)
-let int64add vid lval rval =
+let int64_add vid lval rval =
   let value = Value.init vid in
   let wd_cond =
     let type_is_int64 =
@@ -117,7 +159,7 @@ let int64add vid lval rval =
  * - well_defined(lval) ^ well_defined(rval)
  * assertion: 
  * value = ite well-defined (lval-rval) UB *)
-let int64sub vid lval rval =
+let int64_sub vid lval rval =
   let value = Value.init vid in
   let wd_cond =
     let type_is_int64 =
@@ -153,7 +195,7 @@ let round_float64_to_int32 vid pval =
  * assertion:
  * value = ite well-defined (lval >> ((rval mod 32)) UB 
  *)
-let word32sar vid hint lval rval =
+let word32_sar vid hint lval rval =
   let value = Value.init vid in
   let off = Value.modi rval 32 in
   let wd_cond =
@@ -180,7 +222,7 @@ let word32sar vid hint lval rval =
  * - word64(lval) ^ word64(rval)
  * assertion:
  * value = ite well-defined (lval >> rval) UB *)
-let word64shl vid lval rval =
+let word64_shl vid lval rval =
   let value = Value.init vid in
   let wd_cond =
     let is_well_defined =
@@ -202,7 +244,7 @@ let word64shl vid lval rval =
  * - word32(lval) ^ word32(rval)
  * assertion:
  * value = ite well-defined (lval & rval) UB *)
-let word32and vid lval rval =
+let word32_and vid lval rval =
   let value = Value.init vid in
   let wd_cond =
     let is_well_defined =
@@ -223,7 +265,7 @@ let word32and vid lval rval =
  * - has_repr(lval, float64) ^ has_repr(rval, float64)
  * assertion: 
  *  value = ite well-defined (lval = rval) UB *)
-let float64equal vid lval rval =
+let float64_equal vid lval rval =
   let value = Value.init vid in
   let wd_cond =
     Bool.ands
@@ -256,10 +298,52 @@ let float64_less_than vid lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
+ * - is_defined(lval) /\ is_defined(rval)
+ * - has_type(lval, int32) /\ has_repr(rval, int32)
+ * assertion:
+ *  value = ite well-defined (lval < rval) UB *)
+let int32_less_than vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    let are_int32 =
+      Bool.ands
+        [ Value.has_type Type.int32 lval; Value.has_type Type.int32 rval ]
+    in
+    let are_defined =
+      Bool.ands [ Value.is_defined lval; Value.is_defined rval ]
+    in
+    Bool.ands [ are_int32; are_defined ]
+  in
+  let wd_value = Bool.ite (Value.Int32.lt lval rval) Value.tr Value.fl in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition:
+ * - is_defined(lval) /\ is_defined(rval)
+ * - has_type(lval, int64) /\ has_repr(rval, int64)
+ * assertion:
+ *  value = ite well-defined (lval < rval) UB *)
+let int64_less_than vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    let are_int64 =
+      Bool.ands
+        [ Value.has_type Type.int64 lval; Value.has_type Type.int64 rval ]
+    in
+    let are_defined =
+      Bool.ands [ Value.is_defined lval; Value.is_defined rval ]
+    in
+    Bool.ands [ are_int64; are_defined ]
+  in
+  let wd_value = Bool.ite (Value.Int64.lt lval rval) Value.tr Value.fl in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition:
  * - has_repr(lval, word32) ^ has_repr(rval, word32)
  * assertion: 
  *  value = ite well-defined (lval = rval) UB *)
-let word32equal vid lval rval =
+let word32_equal vid lval rval =
   let value = Value.init vid in
   let wd_cond =
     Bool.ands
@@ -273,7 +357,7 @@ let word32equal vid lval rval =
  * - has_repr(lval, word64) ^ has_repr(rval, word64)
  * assertion:
  *  value = ite well-defined (lval = rval) UB *)
-let word64equal vid lval rval =
+let word64_equal vid lval rval =
   let value = Value.init vid in
   let wd_cond =
     Bool.ands
@@ -288,7 +372,7 @@ let word64equal vid lval rval =
  * - uint64(lval) ^ uint64(rval)
  * assertion: 
  * value = ite well-defined (lval < rval) UB *)
-let uint64less_than vid lval rval =
+let uint64_less_than vid lval rval =
   let value = Value.init vid in
   let wd_cond =
     let is_well_defined =

@@ -142,7 +142,7 @@ let rec next program state cfg =
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        word32equal vid lval rval
+        word32_equal vid lval rval
     (* simplified: memory *)
     | AllocateRaw ->
         let size_id = Operands.id_of_nth operands 0 in
@@ -186,83 +186,107 @@ let rec next program state cfg =
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        float64sub vid lval rval
+        float64_sub vid lval rval
     | Int32Add ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        int32add vid lval rval
+        int32_add vid lval rval
     | Int32AddWithOverflow ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        int32add_with_overflow vid lval rval
+        int32_add_with_overflow vid lval rval
+    | Int32Mul ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        int32_mul vid lval rval
+    | Int32Sub ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        int32_sub vid lval rval
     | Int64Add ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        int64add vid lval rval
+        int64_add vid lval rval
     | Int64Sub ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        int64sub vid lval rval
+        int64_sub vid lval rval
     | Word32Sar ->
         let hint = Operands.const_of_nth operands 0 in
         let lpid = Operands.id_of_nth operands 1 in
         let rpid = Operands.id_of_nth operands 2 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        word32sar vid hint lval rval
+        word32_sar vid hint lval rval
     | Word64Shl ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        word64shl vid lval rval
+        word64_shl vid lval rval
     (* machine: logic *)
     | Float64Equal ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        float64equal vid lval rval
+        float64_equal vid lval rval
     | Float64LessThan ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        float64equal vid lval rval
+        float64_equal vid lval rval
     | Word32And ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        word32and vid lval rval
+        word32_and vid lval rval
     (* machine: comparison *)
     | StackPointerGreaterThan -> (Value.tr, Control.empty, Bool.tr, Bool.fl)
-    | Word32Equal ->
+    | Int32LessThan ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        word32equal vid lval rval
-    | Word64Equal ->
+        int32_less_than vid lval rval
+    | Int64LessThan ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        word64equal vid lval rval
+        int32_less_than vid lval rval
     | Uint64LessThan ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        uint64less_than vid lval rval
+        uint64_less_than vid lval rval
+    | Word32Equal ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        word32_equal vid lval rval
+    | Word64Equal ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        word64_equal vid lval rval
     (* machine: memory *)
     | Store ->
         let ptr_id = Operands.id_of_nth operands 0 in

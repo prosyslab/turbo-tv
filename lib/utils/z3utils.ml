@@ -303,6 +303,12 @@ module BitVec = struct
       let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
       modb lbv rbv
 
+  let mulb lbv rbv = BV.mk_mul ctx lbv rbv
+
+  let muli lbv rval =
+    let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
+    BV.mk_mul ctx lbv rbv
+
   let ashrb lbv rbv = BV.mk_ashr ctx lbv rbv
 
   let ashri lbv rval =

@@ -161,6 +161,10 @@ let mod_ lval rval =
 
 let modi value n = BitVec.modi (data_of value) n |> entype (ty_of value)
 
+let mul lval rval =
+  let lty = ty_of lval in
+  BitVec.mulb (data_of lval) (data_of rval) |> entype lty
+
 let mask value bitlen = mod_ value (shl (from_int 1) bitlen)
 
 let maski value bitlen = andi value (Int.shift_left 1 bitlen - 1)
@@ -297,13 +301,36 @@ let is_empty value =
   let size = BitVec.length_of value / len in
   eq value (BitVec.repeat size empty)
 
+module Int32 = struct
+  type t = BitVec.t
+
+  let from_value value =
+    BitVec.andi (value |> data_of) Constants.smi_mask |> entype Type.int32
+
+  let lt lval rval =
+    let li = lval |> from_value in
+    let ri = rval |> from_value in
+    slt li ri
+
+  let mul lval rval =
+    let li = lval |> from_value in
+    let ri = rval |> from_value in
+    andi (mul li ri) Constants.smi_mask
+end
+
+module Int64 = struct
+  type t = BitVec.t
+
+  let lt lval rval = slt lval rval
+end
+
 module Float64 = struct
   type t = BitVec.t
 
   let lt lval rval =
     let lf = lval |> data_of |> Z3utils.Float.from_ieee_bv in
     let rf = rval |> data_of |> Z3utils.Float.from_ieee_bv in
-    Z3utils.Float.leq lf rf
+    Z3utils.Float.lt lf rf
 end
 
 module Composed = struct
