@@ -235,14 +235,21 @@ let float64equal vid lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
- * - has_repr(lval, float64) ^ has_repr(rval, float64)
+ * - is_defined(lval) /\ is_defined(rval)
+ * - has_type(lval, float64) ^ has_type(rval, float64)
  * assertion: 
  *  value = ite well-defined (lval < rval) UB *)
 let float64_less_than vid lval rval =
   let value = Value.init vid in
   let wd_cond =
-    Bool.ands
-      [ Value.has_repr Repr.Float64 lval; Value.has_repr Repr.Float64 rval ]
+    let are_float64 =
+      Bool.ands
+        [ Value.has_type Type.float64 lval; Value.has_type Type.float64 rval ]
+    in
+    let are_defined =
+      Bool.ands [ Value.is_defined lval; Value.is_defined rval ]
+    in
+    Bool.ands [ are_float64; are_defined ]
   in
   let wd_value = Bool.ite (Value.Float64.lt lval rval) Value.tr Value.fl in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
