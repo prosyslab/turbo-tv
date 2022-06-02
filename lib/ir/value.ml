@@ -237,6 +237,10 @@ let subf lval rval =
   let rf = rval |> data_of |> Float.from_ieee_bv in
   Float.sub lf rf |> Float.to_ieee_bv |> entype Type.float64
 
+let absf value =
+  value |> data_of |> Float.from_ieee_bv |> Float.abs |> Float.to_ieee_bv
+  |> entype Type.float64
+
 (* defined & undefined *)
 let undefined = BitVec.shli (BitVecVal.from_int ~len 1) (ty_len + data_len)
 

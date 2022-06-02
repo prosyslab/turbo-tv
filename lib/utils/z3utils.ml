@@ -139,6 +139,8 @@ module Float = struct
   let sub lexp rexp =
     let rne = Fl.RoundingMode.mk_rne ctx in
     Fl.mk_sub ctx rne lexp rexp
+
+  let abs exp = Fl.mk_abs ctx exp
 end
 
 module BitVecVal = struct

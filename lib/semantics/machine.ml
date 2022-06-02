@@ -4,6 +4,21 @@ module Composed = Value.Composed
 module Repr = MachineType.Repr
 
 (* machine: arithmetic *)
+
+(* well-defined condition:
+ * - IsFloat64Type(pval)
+ * - WellDefined(pval)
+ * assertion:
+ * value = ite well-defined FloatAbs(pval) UB *)
+let float64_abs vid pval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands [ Value.is_defined pval; Value.has_type Type.float64 pval ]
+  in
+  let wd_value = Value.absf pval in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
 (* well-defined condition:
  * - IsFloat64Type(pval) 
  * - WellDefined(pval) 
@@ -218,21 +233,60 @@ let word32_sar vid hint lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined conditions:
- * - well_defined(lval) ^ well_defined(rval)
- * - word64(lval) ^ word64(rval)
+ * - WellDefined(lval) ^ WellDefined(rval)
+ * - HasRepr(lval, Word32) ^ HasRepr(rval, Word32)
  * assertion:
- * value = ite well-defined (lval >> rval) UB *)
+ * value = ite well-defined (lval << rval) UB *)
+let word32_shl vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [
+        Value.is_defined lval;
+        Value.is_defined rval;
+        Value.has_repr Repr.Word32 lval;
+        Value.has_repr Repr.Word32 rval;
+      ]
+  in
+  let wd_value = Value.shl lval rval in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined conditions:
+ * - WellDefined(lval) ^ WellDefined(rval)
+ * - HasRepr(lval, Word32) ^ HasRepr(rval, Word32)
+ * assertion:
+ * value = ite well-defined (lval xor rval) UB *)
+let word32_xor vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [
+        Value.is_defined lval;
+        Value.is_defined rval;
+        Value.has_repr Repr.Word32 lval;
+        Value.has_repr Repr.Word32 rval;
+      ]
+  in
+  let wd_value = Value.xor lval rval in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined conditions:
+ * - WellDefined(lval) ^ WellDefined(rval)
+ * - HasRepr(lval, Word64) ^ HasRepr(rval, Word64)
+ * assertion:
+ * value = ite well-defined (lval << rval) UB *)
 let word64_shl vid lval rval =
   let value = Value.init vid in
   let wd_cond =
-    let is_well_defined =
-      Bool.ands [ Value.is_defined lval; Value.is_defined rval ]
-    in
-    let repr_is_word64 =
-      Bool.ands
-        [ Value.has_repr Repr.Word64 lval; Value.has_repr Repr.Word64 lval ]
-    in
-    Bool.ands [ is_well_defined; repr_is_word64 ]
+    Bool.ands
+      [
+        Value.is_defined lval;
+        Value.is_defined rval;
+        Value.has_repr Repr.Word64 lval;
+        Value.has_repr Repr.Word64 rval;
+      ]
   in
   let wd_value = Value.shl lval rval in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
@@ -257,6 +311,26 @@ let word32_and vid lval rval =
     Bool.ands [ is_well_defined; repr_is_word32 ]
   in
   let wd_value = Value.and_ lval rval in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition:
+ * - WellDefined(lval) ^ WellDefined(rval)
+ * - HasRepr(lval, Word32) ^ HasRepr(rval, Word32)
+ * assertion:
+ * value = ite well-defined (lval | rval) UB *)
+let word32_or vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [
+        Value.is_defined lval;
+        Value.is_defined rval;
+        Value.has_repr Repr.Word32 lval;
+        Value.has_repr Repr.Word32 rval;
+      ]
+  in
+  let wd_value = Value.or_ lval rval in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, Control.empty, assertion, Bool.fl)
 
@@ -368,6 +442,46 @@ let word64_equal vid lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
+ * - WellDefined(lval) ^ WellDefined(rval)
+ * - IsUint32(lval) ^ IsUint32(rval)
+ * assertion:
+ * value = ite well-defined (lval < rval) UB *)
+let uint32_less_than vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [
+        Value.is_defined lval;
+        Value.is_defined rval;
+        Value.has_type Type.uint32 lval;
+        Value.has_type Type.uint32 rval;
+      ]
+  in
+  let wd_value = Bool.ite (Value.ult lval rval) Value.tr Value.fl in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition:
+ * - WellDefined(lval) ^ WellDefined(rval)
+ * - IsUint32(lval) ^ IsUint32(rval)
+ * assertion:
+ * value = ite well-defined (lval <= rval) UB *)
+let uint32_less_than_or_equal vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [
+        Value.is_defined lval;
+        Value.is_defined rval;
+        Value.has_type Type.uint32 lval;
+        Value.has_type Type.uint32 rval;
+      ]
+  in
+  let wd_value = Bool.ite (Value.ule lval rval) Value.tr Value.fl in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition:
  * - well_defined(lval) ^ well_defined(rval)
  * - uint64(lval) ^ uint64(rval)
  * assertion: 
@@ -385,6 +499,26 @@ let uint64_less_than vid lval rval =
     Bool.ands [ is_well_defined; type_is_uint64 ]
   in
   let wd_value = Bool.ite (Value.ult lval rval) Value.tr Value.fl in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* well-defined condition:
+ * - WellDefined(lval) ^ WellDefined(rval)
+ * - IsUint64(lval) ^ IsUint64(rval)
+ * assertion:
+ * value = ite well-defined (lval <= rval) UB *)
+let uint64_less_than_or_equal vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [
+        Value.is_defined lval;
+        Value.is_defined rval;
+        Value.has_type Type.uint64 lval;
+        Value.has_type Type.uint64 rval;
+      ]
+  in
+  let wd_value = Bool.ite (Value.ule lval rval) Value.tr Value.fl in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, Control.empty, assertion, Bool.fl)
 
