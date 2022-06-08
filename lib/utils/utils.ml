@@ -27,11 +27,12 @@ let run_d8 target =
 
 let get_nparams target =
   let lines = open_in target |> read_lines in
-  let re =
-    Re.Pcre.regexp
-      "[\\s\\S]*%OptimizeFunctionOnNextCall\\(.*\\);\n.*\\((.*)\\);"
-  in
-  let params = Re.Group.get (String.concat "\n" lines |> Re.exec re) 1 in
+  let js = String.concat "\n" lines in
+  let fname_re = Re.Pcre.regexp "%OptimizeFunctionOnNextCall\\((.*)\\);" in
+  let fname = Re.Group.get (js |> Re.exec fname_re) 1 in
+
+  let params_re = Re.Pcre.regexp (fname ^ "\\((.*)\\)") in
+  let params = Re.Group.get (String.concat "\n" lines |> Re.exec params_re) 1 in
   params |> StringLabels.split_on_char ~sep:',' |> List.length
 
 let pow b e = float_of_int b ** float_of_int e |> int_of_float
