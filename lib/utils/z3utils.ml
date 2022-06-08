@@ -122,15 +122,15 @@ module Float = struct
 
   let round rm exp = Fl.mk_round_to_integral ctx rm exp
 
-  let geq lexp rexp = Fl.mk_geq ctx lexp rexp
+  let ge lexp rexp = Fl.mk_geq ctx lexp rexp
 
-  let geqf lexp rexp = Fl.mk_geq ctx lexp (rexp |> from_float)
+  let gef lexp rexp = Fl.mk_geq ctx lexp (rexp |> from_float)
 
   let lt lexp rexp = Fl.mk_lt ctx lexp rexp
 
-  let leq lexp rexp = Fl.mk_leq ctx lexp rexp
+  let le lexp rexp = Fl.mk_leq ctx lexp rexp
 
-  let leqf lexp rexp = Fl.mk_leq ctx lexp (rexp |> from_float)
+  let lef lexp rexp = Fl.mk_leq ctx lexp (rexp |> from_float)
 
   let add lexp rexp =
     let rne = Fl.RoundingMode.mk_rne ctx in
@@ -276,13 +276,13 @@ module BitVec = struct
     let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
     BV.mk_ule ctx lbv rbv
 
-  let geqf lbv rval =
+  let gef lbv rval =
     let lval = Float.from_ieee_bv lbv in
-    Float.geqf lval rval
+    Float.gef lval rval
 
-  let leqf lbv rval =
+  let lef lbv rval =
     let lval = Float.from_ieee_bv lbv in
-    Float.leqf lval rval
+    Float.lef lval rval
 
   (* arithmetic operation *)
   let addb lbv rbv = BV.mk_add ctx lbv rbv

@@ -210,7 +210,7 @@ let ugei ?(width = len) lval i =
   BitVec.ugei (BitVec.extract (width - 1) 0 (data_of lval)) i
 
 (* Floating Point *)
-let geqf lval f =
+let gef lval f =
   (* assmue that lval is integer or float *)
   let lval_f =
     Bool.ite (is_signed_integer lval)
@@ -219,9 +219,9 @@ let geqf lval f =
          (Float.from_unsigned_bv (data_of lval))
          (Float.from_ieee_bv (data_of lval)))
   in
-  Float.geq lval_f (Float.from_float f)
+  Float.ge lval_f (Float.from_float f)
 
-let leqf lval f =
+let lef lval f =
   (* assmue that lval is integer or float *)
   let lval_f =
     Bool.ite (is_signed_integer lval)
@@ -230,7 +230,7 @@ let leqf lval f =
          (Float.from_unsigned_bv (data_of lval))
          (Float.from_ieee_bv (data_of lval)))
   in
-  Float.leq lval_f (Float.from_float f)
+  Float.le lval_f (Float.from_float f)
 
 let addf lval rval =
   let lf = lval |> data_of |> Float.from_ieee_bv in
@@ -340,6 +340,11 @@ module Float64 = struct
     let lf = lval |> data_of |> Z3utils.Float.from_ieee_bv in
     let rf = rval |> data_of |> Z3utils.Float.from_ieee_bv in
     Z3utils.Float.lt lf rf
+
+  let le lval rval =
+    let lf = lval |> data_of |> Z3utils.Float.from_ieee_bv in
+    let rf = rval |> data_of |> Z3utils.Float.from_ieee_bv in
+    Z3utils.Float.le lf rf
 end
 
 module Composed = struct
