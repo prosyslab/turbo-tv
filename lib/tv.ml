@@ -137,7 +137,13 @@ let rec next program state cfg =
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        speculative_safe_integer_add vid lval rval
+        speculative_safe_integer_add vid lval rval mem
+    | SpeculativeSafeIntegerSubtract ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        speculative_safe_integer_subtract vid lval rval mem
     | NumberExpm1 ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
@@ -185,6 +191,10 @@ let rec next program state cfg =
         let value = RegisterFile.find value_id rf in
         store_field ptr pos machine_type value mem
     (* simplified: type-conversion *)
+    | ChangeInt31ToTaggedSigned ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        change_int31_to_taggedsigned vid pval
     | ChangeInt32ToTagged ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
@@ -193,6 +203,10 @@ let rec next program state cfg =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         change_int64_to_tagged vid pval mem
+    | CheckedFloat64ToInt32 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        checked_float64_to_int32 "" vid pval
     | CheckedTaggedSignedToInt32 ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
@@ -393,7 +407,7 @@ let rec next program state cfg =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         truncate_int64_to_int32 vid pval
-        (* machine: type-conversion *)
+    (* machine: type-conversion *)
     | ChangeInt32ToFloat64 ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
@@ -414,14 +428,16 @@ let rec next program state cfg =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         change_uint32_to_float64 vid pval
+    | RoundFloat64ToInt32 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        round_float64_to_int32 vid pval
     | Empty -> (Value.empty, Control.empty, Bool.tr, Bool.fl)
     | _ ->
-        (* let msg =
-             Format.sprintf "unsupported instruction: %s%s"
-               (opcode |> Opcode.to_str)
-               (operands |> Operands.to_str)
-           in
-           print_endline msg; *)
+        let msg =
+          Format.sprintf "unsupported instruction: %s" (opcode |> Opcode.to_str)
+        in
+        print_endline msg;
         (Value.empty, Control.empty, Bool.tr, Bool.fl)
   in
 
@@ -429,14 +445,9 @@ let rec next program state cfg =
   let type_is_verified =
     match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
   in
-  let updated_rf =
-    RegisterFile.add vid value rf
-    (* if value != Value.empty then RegisterFile.add vid value rf else rf *)
-  in
-  let updated_cf =
-    ControlFile.add cid control cf
-    (* if control != Control.empty then ControlFile.add cid control cf else cf *)
-  in
+
+  let updated_rf = RegisterFile.add vid value rf in
+  let updated_cf = ControlFile.add cid control cf in
   let updated_ub = Bool.ors [ State.ub state; ub; Bool.not type_is_verified ] in
   let next_state =
     State.update next_pc updated_cf updated_rf !mem updated_asrt updated_ub

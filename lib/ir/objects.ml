@@ -52,7 +52,7 @@ module HeapNumber = struct
   let from_number_string s =
     { map = Map.heap_number_map; value = s |> BitVecVal.from_f64string }
 
-  let from_ieee_bv num_bv = { map = Map.heap_number_map; value = num_bv }
+  let from_value value = { map = Map.heap_number_map; value }
 
   let store ptr obj cond mem =
     mem := Memory.store ptr (Map.len / 8) cond obj.map !mem;
@@ -80,4 +80,18 @@ module HeapNumber = struct
   let is_ninf obj = BitVec.eqb obj.value (BitVecVal.ninf ())
 
   let is_inf obj = BitVec.eqb obj.value (BitVecVal.inf ())
+
+  let is_integer obj =
+    BitVec.eqb obj.value
+      (obj.value |> Float.from_ieee_bv |> Float.round Float.rne_mode
+     |> Float.to_ieee_bv)
+
+  let is_safe_integer obj =
+    let value_in_float = obj.value |> Float.from_ieee_bv in
+    Bool.ands
+      [
+        is_integer obj;
+        Float.ge value_in_float (Float.safe_integer_min ());
+        Float.le value_in_float (Float.safe_integer_max ());
+      ]
 end

@@ -55,7 +55,14 @@ let from_bv bv =
 let empty = from_int 0 |> cast Type.empty
 
 (* type *)
-let has_type ty t = BitVec.eqb (ty_of t) ty
+let has_type (ty : Type.t) t =
+  if ty = Type.any_tagged then
+    Bool.ors
+      [
+        BitVec.eqb (ty_of t) Type.tagged_pointer;
+        BitVec.eqb (ty_of t) Type.tagged_signed;
+      ]
+  else BitVec.eqb (ty_of t) ty
 
 let is_signed_integer t =
   Bool.ors (List.map (fun ty -> has_type ty t) Type.int_types)
@@ -156,6 +163,10 @@ let ashr lval rval =
   let lty = ty_of lval in
   BitVec.ashrb (data_of lval) (data_of rval) |> entype lty
 
+let ashri value i =
+  let ty = ty_of value in
+  BitVec.ashri (data_of value) i |> entype ty
+
 let xor lval rval =
   let lty = ty_of lval in
   BitVec.xor (data_of lval) (data_of rval) |> entype lty
@@ -178,6 +189,10 @@ let maski value bitlen = andi value (Int.shift_left 1 bitlen - 1)
 let eq lval rval = BitVec.eqb lval rval
 
 let weak_eq lval rval = BitVec.eqb (data_of lval) (data_of rval)
+
+let repr_eq repr lval rval =
+  let bitwidth = MachineType.Repr.width_of repr in
+  BitVec.eqb (BitVec.extract bitwidth 0 lval) (BitVec.extract bitwidth 0 rval)
 
 let slt lval rval = BitVec.sltb (data_of lval) (data_of rval)
 
@@ -306,25 +321,25 @@ let uint64_max = BitVec.addi (BitVec.shli int64_max 1) 1
 (* range check *)
 let is_in_smi_range t = Bool.ands [ sge t smi_min; sle t smi_max ]
 
-let is_empty value =
-  let size = BitVec.length_of value / len in
-  eq value (BitVec.repeat size empty)
-
 module Int32 = struct
-  type t = BitVec.t
+  let from_value value = BitVec.extract 31 0 (value |> data_of)
 
-  let from_value value =
-    BitVec.andi (value |> data_of) Constants.smi_mask |> entype Type.int32
+  let to_value t = t |> BitVec.zero_extend 32 |> entype Type.int32
+
+  let add lval rval =
+    let li = lval |> from_value in
+    let ri = rval |> from_value in
+    BitVec.addb li ri |> to_value
 
   let lt lval rval =
     let li = lval |> from_value in
     let ri = rval |> from_value in
-    slt li ri
+    BitVec.sltb li ri |> to_value
 
   let mul lval rval =
     let li = lval |> from_value in
     let ri = rval |> from_value in
-    andi (mul li ri) Constants.smi_mask
+    BitVec.mulb li ri |> to_value
 end
 
 module Int64 = struct
@@ -334,17 +349,39 @@ module Int64 = struct
 end
 
 module Float64 = struct
-  type t = BitVec.t
+  let from_value v = v |> data_of |> Z3utils.Float.from_ieee_bv
+
+  let to_value t = t |> Z3utils.Float.to_ieee_bv |> entype Type.float64
+
+  let to_int64_value t =
+    t |> from_value
+    |> Float.to_sbv (Z3.FloatingPoint.RoundingMode.mk_round_toward_zero ctx)
+    |> entype Type.int64
+
+  let to_int32_value t =
+    andi (t |> to_int64_value) Constants.smi_mask |> cast Type.int32
+
+  let is_minus_zero v = Z3utils.Float.is_minus_zero v
+
+  let add lval rval =
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
+    Z3utils.Float.add lf rf |> to_value
+
+  let sub lval rval =
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
+    Z3utils.Float.sub lf rf |> to_value
 
   let lt lval rval =
-    let lf = lval |> data_of |> Z3utils.Float.from_ieee_bv in
-    let rf = rval |> data_of |> Z3utils.Float.from_ieee_bv in
-    Z3utils.Float.lt lf rf
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
+    Bool.ite (Z3utils.Float.lt lf rf) tr fl
 
   let le lval rval =
-    let lf = lval |> data_of |> Z3utils.Float.from_ieee_bv in
-    let rf = rval |> data_of |> Z3utils.Float.from_ieee_bv in
-    Z3utils.Float.le lf rf
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
+    Bool.ite (Z3utils.Float.le lf rf) tr fl
 end
 
 module Composed = struct

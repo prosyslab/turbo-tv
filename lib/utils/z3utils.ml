@@ -88,6 +88,8 @@ end
 module Float = struct
   type t = E.expr
 
+  let rne_mode = Fl.RoundingMode.mk_rne ctx
+
   let single_sort = Fl.mk_sort_single ctx
 
   let double_sort = Fl.mk_sort_double ctx
@@ -100,9 +102,27 @@ module Float = struct
 
   let ninf ?(sort = !float_sort) () = Fl.mk_inf ctx sort true
 
+  let safe_integer_min ?(sort = !float_sort) () =
+    Fl.mk_numeral_s ctx
+      (Int64.of_string "-0x1fffffffffffff" |> Int64.to_string)
+      sort
+
+  let safe_integer_max ?(sort = !float_sort) () =
+    Fl.mk_numeral_s ctx
+      (Int64.of_string "0x1fffffffffffff" |> Int64.to_string)
+      sort
+
   let from_float ?(sort = !float_sort) f = Fl.mk_numeral_f ctx f sort
 
   let from_string ?(sort = !float_sort) s = Fl.mk_numeral_s ctx s sort
+
+  let from_signed_bv ?(sort = !float_sort) bv =
+    Fl.mk_to_fp_signed ctx rne_mode bv sort
+
+  let from_unsigned_bv ?(sort = !float_sort) bv =
+    Fl.mk_to_fp_unsigned ctx rne_mode bv sort
+
+  let from_ieee_bv ?(sort = !float_sort) bv = Fl.mk_to_fp_bv ctx bv sort
 
   let to_sbv ?(len = !bvlen) rm t = Fl.mk_to_sbv ctx rm t len
 
@@ -112,15 +132,9 @@ module Float = struct
 
   let to_real t = Fl.mk_to_real ctx t
 
-  let from_signed_bv ?(sort = !float_sort) bv =
-    Fl.mk_to_fp_signed ctx (Fl.RoundingMode.mk_rne ctx) bv sort
-
-  let from_unsigned_bv ?(sort = !float_sort) bv =
-    Fl.mk_to_fp_unsigned ctx (Fl.RoundingMode.mk_rne ctx) bv sort
-
-  let from_ieee_bv ?(sort = !float_sort) bv = Fl.mk_to_fp_bv ctx bv sort
-
   let round rm exp = Fl.mk_round_to_integral ctx rm exp
+
+  let eq lexp rexp = Fl.mk_eq ctx lexp rexp
 
   let ge lexp rexp = Fl.mk_geq ctx lexp rexp
 
@@ -141,6 +155,8 @@ module Float = struct
     Fl.mk_sub ctx rne lexp rexp
 
   let abs exp = Fl.mk_abs ctx exp
+
+  let is_minus_zero exp = eq (minus_zero ()) exp
 end
 
 module BitVecVal = struct
@@ -337,6 +353,8 @@ module BitVec = struct
 
   (* Bi-BitVec operation *)
   let concat lbv rbv = BV.mk_concat ctx lbv rbv
+
+  let to_int bv = BV.mk_bv2int ctx bv
 end
 
 module Array = struct

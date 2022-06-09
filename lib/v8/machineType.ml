@@ -81,22 +81,22 @@ module Repr = struct
     | Bit -> "kRepBit"
     | None -> "kNone"
 
-  let size_of t =
+  let width_of t =
     match t with
-    | Word8 -> 1
-    | Word16 -> 2
-    | Word32 -> 4
-    | Word64 -> 8
-    | Float32 -> 4
-    | Float64 -> 8
-    | Simd128 -> 16
-    | TaggedPointer -> 8
-    | MapWord -> 4
-    | TaggedSigned -> 8
-    | Tagged -> 8
-    | CompressedPointer -> 4
-    | Compressed -> 4
-    | SandboxedPointer -> 5
+    | Word8 -> 8
+    | Word16 -> 16
+    | Word32 -> 32
+    | Word64 -> 64
+    | Float32 -> 32
+    | Float64 -> 64
+    | Simd128 -> 128
+    | TaggedPointer -> 32
+    | MapWord -> 32
+    | TaggedSigned -> 32
+    | Tagged -> 32
+    | CompressedPointer -> 32
+    | Compressed -> 32
+    | SandboxedPointer -> 40
     | Bit -> 1
     | None -> 0
 
@@ -114,6 +114,8 @@ module Repr = struct
         tagged_size_log2
     | SandboxedPointer -> system_pointer_size_log2
     | _ -> failwith (Printf.sprintf "Unreachable: %s" (to_string t))
+
+  let size_of t = width_of t / 8
 end
 
 module Sem = struct

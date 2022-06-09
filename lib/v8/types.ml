@@ -120,7 +120,7 @@ let can_be_smi s =
 
 let rec of_string str =
   let parse_union union_ty_str =
-    let elems_reg = Re.Pcre.regexp "\\(([^\\)]*)\\)" in
+    let elems_reg = Re.Pcre.regexp "\\((.*)\\)" in
     let elems_ty_str =
       try
         Re.Group.get (Re.exec elems_reg union_ty_str) 1
