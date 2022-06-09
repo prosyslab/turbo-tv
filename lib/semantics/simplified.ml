@@ -294,14 +294,56 @@ let change_int64_to_tagged vid pval mem =
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, Control.empty, assertion, Bool.fl)
 
+(* Well-defined condition =
+ *  IsFloat64(pval) /\ WellDefined(pval)
+ * Deoptimization condition =
+ *  LostPrecision(pval) 
+ *  \/ (hint=CheckForMinusZero /\ pval = -0.0)
+ *)
+let checked_float64_to_int32 _hint vid pval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands [ Value.is_defined pval; Value.has_type Type.float64 pval ]
+  in
+
+  let value32 = pval |> Value.Float64.to_int32_value in
+
+  (* TODO: handing deoptimization *)
+  (* let deopt_cond =
+       let check_lost_precision =
+         Value.eq pval (value32 |> Value.Float64.from_value)
+       in
+       let check_minus_zero =
+         if hint = "dont-check-for-minus-zero" then Bool.tr
+         else if hint = "check-for-minus-zero" then
+           Value.Float64.is_minus_zero pval
+         else
+           let reason =
+             Format.sprintf "CheckedFloat64ToInt32: invalid hint(%s)" hint
+           in
+           failwith reason
+       in
+       Bool.ors [ check_lost_precision; check_minus_zero ]
+     in *)
+  let wd_value = value32 in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+
+  (value, Control.empty, assertion, Bool.fl)
+
+(* Well-defined condition =
+ *  IsTaggedSigned(pval) /\ WellDefined(pval)
+ * Deoptimization condition =
+ *  IsNotTaggedSigned(pval) 
+ *)
 let checked_tagged_signed_to_int32 vid pval =
   let value = Value.init vid in
+  let wd_cond =
+    Bool.ands [ Value.is_defined pval; Value.has_type Type.tagged_signed pval ]
+  in
 
   (* TODO: handling deoptimization *)
-  (* let deopt = Bool.not (is_tagged_signed pval) in *)
-  let result = BitVec.ashri (Value.data_of pval) 1 |> Value.entype Type.int32 in
-  let assertion =
-    Bool.ands [ Value.has_type Type.tagged_signed pval; Value.eq value result ]
-  in
+  (* let deopt_cond = Bool.not (Value.has_type Type.tagged_signed pval) in *)
+  let wd_value = pval |> Value.cast Type.int32 in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
 
   (value, Control.empty, assertion, Bool.fl)
