@@ -11,6 +11,12 @@ let validator = Solver.init
 
 module Id_set = Set.Make (Int)
 
+let tag base_is_tagged =
+  match base_is_tagged with
+  | "tagged base" -> 1
+  | "untagged base" -> 0
+  | _ -> failwith (Printf.sprintf "invalid input: %s" base_is_tagged)
+
 let rec next program state cfg =
   let pc = State.pc state in
   let cf = State.control_file state in
@@ -137,6 +143,10 @@ let rec next program state cfg =
         let pval = RegisterFile.find pid rf in
         number_expm1 vid pval mem
     (* simplified: comparison *)
+    | BooleanNot ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        boolean_not vid pval
     | ReferenceEqual ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -150,6 +160,17 @@ let rec next program state cfg =
         let ct_id = Operands.id_of_nth operands 1 in
         let ct = ControlFile.find ct_id cf in
         allocate_raw vid cid size_value ct
+    | LoadElement ->
+        let base_is_tagged = Operands.const_of_nth operands 0 in
+        let tag_value = tag base_is_tagged in
+        let header_size = Operands.const_of_nth operands 1 |> int_of_string in
+        let machine_type = Operands.const_of_nth operands 2 in
+        let repr = MachineType.Repr.of_rs_string machine_type in
+        let bid_id = Operands.id_of_nth operands 3 in
+        let bid = RegisterFile.find bid_id rf in
+        let ind_id = Operands.id_of_nth operands 4 in
+        let ind = RegisterFile.find ind_id rf in
+        load_element vid tag_value header_size repr bid ind !mem
     | StoreField ->
         let ptr_id = Operands.id_of_nth operands 0 in
         let ptr = RegisterFile.find ptr_id rf in
@@ -345,7 +366,7 @@ let rec next program state cfg =
         let ptr = RegisterFile.find ptr_id rf in
         let pos_id = Operands.id_of_nth operands 1 in
         let pos = RegisterFile.find pos_id rf in
-        let repr = Operands.const_of_nth operands 2 |> Repr.of_string in
+        let repr = Operands.const_of_nth operands 2 |> Repr.of_rs_string in
         load vid ptr pos repr !mem
     (* machine: bitcast *)
     | BitcastFloat32ToInt32 ->

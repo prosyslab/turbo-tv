@@ -573,7 +573,8 @@ let load vid ptr pos repr mem =
      In this case, we pick the head of the type candidates.*)
   let ty = Type.from_repr repr |> List.hd in
   let wd_value =
-    Memory.load_as (Pointer.move ptr pos) repr mem |> Value.entype ty
+    Memory.load_as (Pointer.move ptr pos) repr mem
+    |> Value.zero_extend_data |> Value.entype ty
   in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, Control.empty, assertion, Bool.fl)

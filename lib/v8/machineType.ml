@@ -35,7 +35,32 @@ module Repr = struct
     | "kRepSandboxedPointer" -> SandboxedPointer
     | "kRepBit" -> Bit
     | "kNone" -> None
-    | _ -> failwith "Invalid repr"
+    | _ -> failwith (Printf.sprintf "Invalid repr: %s" str)
+
+  let of_rs_string str =
+    try
+      List.find
+        (fun prefix -> String.starts_with ~prefix str)
+        [
+          "kRepWord8";
+          "kRepWord16";
+          "kRepWord32";
+          "kRepWord64";
+          "kRepFloat32";
+          "kRepFloat64";
+          "kRepSimd128";
+          "kRepTaggedPointer";
+          "kRepMapWord";
+          "kRepTaggedSigned";
+          "kRepTagged";
+          "kRepCompressedPointer";
+          "kRepCompressed";
+          "kRepSandboxedPointer";
+          "kRepBit";
+          "kNone";
+        ]
+      |> of_string
+    with Not_found -> failwith (Printf.sprintf "Invalid repr: %s" str)
 
   let to_string t =
     match t with
@@ -74,6 +99,21 @@ module Repr = struct
     | SandboxedPointer -> 5
     | Bit -> 1
     | None -> 0
+
+  let element_size_log2_of t =
+    let tagged_size_log2 = 3 in
+    let system_pointer_size_log2 = 3 in
+    match t with
+    | Bit | Word8 -> 0
+    | Word16 -> 1
+    | Word32 | Float32 -> 2
+    | Word64 | Float64 -> 3
+    | Simd128 -> 4
+    | TaggedSigned | TaggedPointer | Tagged | MapWord | CompressedPointer
+    | Compressed ->
+        tagged_size_log2
+    | SandboxedPointer -> system_pointer_size_log2
+    | _ -> failwith (Printf.sprintf "Unreachable: %s" (to_string t))
 end
 
 module Sem = struct

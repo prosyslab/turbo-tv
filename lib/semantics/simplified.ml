@@ -116,6 +116,21 @@ let number_expm1 vid nptr mem =
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, Control.empty, assertion, ub_cond)
 
+(* simplified: comparison *)
+(* well-defined condition:
+ * - WellDefined(pval) ^ IsBool(pval)
+ * assertion:
+ *  value = ite well-defined (not pval) UB *)
+let boolean_not vid pval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands [ Value.is_defined pval; Value.has_type Type.bool pval ]
+  in
+  let assertion =
+    Value.eq value (Bool.ite wd_cond (Bool.not pval) Value.undefined)
+  in
+  (value, Control.empty, assertion, Bool.fl)
+
 (* simplified: memory *)
 let allocate_raw vid cid size ct =
   let value = Value.init vid in
@@ -123,6 +138,15 @@ let allocate_raw vid cid size ct =
   let pointer = Memory.allocate size in
   let assertion = Bool.ands [ Value.eq value pointer; Bool.eq control ct ] in
   (value, control, assertion, Bool.fl)
+
+let load_element vid tag_value header_size repr bid ind mem =
+  let fixed_off = header_size - tag_value in
+  let off =
+    BitVec.addi
+      (BitVec.shli ind (MachineType.Repr.element_size_log2_of repr))
+      fixed_off
+  in
+  Machine.load vid bid off repr mem
 
 let store_field ptr pos mt value mem =
   let repr = MachineType.repr mt in

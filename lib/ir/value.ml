@@ -31,9 +31,14 @@ let cast ty t =
 
 (* entype [data] to type [ty] *)
 let entype ty data =
-  if BitVec.length_of data <> data_len then failwith "invalid data length"
+  let input_data_len = BitVec.length_of data in
+  if input_data_len <> data_len then
+    failwith (Printf.sprintf "invalid data length: %d" input_data_len)
     (* TODO handling undef of data *)
   else BitVec.concat (BitVecVal.zero ~len:1 ()) (BitVec.concat ty data)
+
+let zero_extend_data data =
+  BitVec.zero_extend (data_len - BitVec.length_of data) data
 
 (* constructor *)
 let init name = BitVec.init ~len name
