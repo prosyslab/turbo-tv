@@ -74,7 +74,7 @@ let int32_add vid lval rval =
     in
     Bool.ands [ type_is_int32; is_well_defined ]
   in
-  let wd_value = Value.andi (Value.add lval rval) Constants.smi_mask in
+  let wd_value = Value.Int32.add lval rval in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, Control.empty, assertion, Bool.fl)
 
@@ -96,9 +96,11 @@ let int32_add_with_overflow vid lval rval =
     Bool.ands [ type_is_int32; is_well_defined ]
   in
   let wd_value =
-    let added = Value.add lval rval in
-    let res = Value.andi added Constants.smi_mask in
-    let ovf = Bool.ite (Value.ugti added Constants.smi_max) Value.tr Value.fl in
+    let added = Value.Int32.add lval rval in
+    let res = Value.andi added Constants.int32_mask in
+    let ovf =
+      Bool.ite (Value.ugti added Constants.int32_mask) Value.tr Value.fl
+    in
     Composed.from_values [ res; ovf ]
   in
   let ud_value = Composed.from_values [ Value.undefined; Value.undefined ] in
