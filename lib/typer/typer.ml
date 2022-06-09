@@ -45,11 +45,16 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
       else failwith "is: wrong number of fields"
   | Range (lb, ub) ->
       let number = HeapNumber.load value !mem in
-      Bool.ands
-        [
-          Objects.is_heap_number value !mem;
-          BitVec.gef number.value lb;
-          BitVec.lef number.value ub;
-        ]
+      (* assume value is heap number or integer or float64 *)
+      Bool.ite
+        (* heap number *)
+        (Bool.ands
+           [
+             Value.has_type Type.tagged_pointer value;
+             Objects.is_heap_number value !mem;
+           ])
+        (Bool.ands [ BitVec.gef number.value lb; BitVec.lef number.value ub ])
+        (* float or integer *)
+        (Bool.ands [ Value.gef value lb; Value.lef value ub ])
   (* for now, handle only numeric types *)
   | _ -> Bool.tr
