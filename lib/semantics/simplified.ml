@@ -169,7 +169,7 @@ let number_expm1 vid nptr mem =
                (Bool.ite (HeapNumber.is_zero n)
                   (BitVecVal.from_f64string "0.0")
                   (Z3.FuncDecl.apply expm_decl [ n.value ])))))
-    |> HeapNumber.from_ieee_bv
+    |> HeapNumber.from_value
   in
   HeapNumber.store res_ptr expm1 wd_cond mem;
   let wd_value = res_ptr in
