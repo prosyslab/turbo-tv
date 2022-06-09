@@ -60,23 +60,84 @@ let speculative_number_bitwise_xor vid lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
- * - TaggedSigned(lval) ^ TaggedSigned(rval)
- * - WellDefined(lval) ^ WellDefined(rval)
+ * - IsTaggedPointer(lval) /\ IsTaggedPointer(rval)
+ * - PointsNumberObject(lval) /\ PointsNumberObject(rval)
+ * - IsSafeInteger(lval) /\ IsSafeInteger(rval)
+ * - IsWellDefined(lval) /\ IsWellDefined(rval)
  * assertion:
- *  value = ite well-defined ((lval+rval) mod 2**64) UB *)
-let speculative_safe_integer_add vid lval rval =
+ *  value = ite well-defined (lval+rval) UB *)
+let speculative_safe_integer_add vid lval rval mem =
   let value = Value.init vid in
-  let res = Value.andi (Value.add lval rval) Constants.smi_mask in
-  let assertion =
+
+  let lnum = HeapNumber.load lval !mem in
+  let rnum = HeapNumber.load lval !mem in
+
+  let wd_cond =
     Bool.ands
       [
-        Value.has_type Type.tagged_signed lval;
-        Value.has_type Type.tagged_signed rval;
-        Value.eq value res;
+        Value.is_defined lval;
+        Value.is_defined rval;
+        lval |> Value.has_type Type.tagged_pointer;
+        rval |> Value.has_type Type.tagged_pointer;
+        Objects.is_heap_number lval !mem;
+        Objects.is_heap_number rval !mem;
+        HeapNumber.is_safe_integer lnum;
+        HeapNumber.is_safe_integer rnum;
+      ]
+  in
+  let ub_cond = Bool.not wd_cond in
+
+  let res_ptr = HeapNumber.allocate in
+  let res = Value.Float64.add lnum.value rnum.value |> HeapNumber.from_value in
+  HeapNumber.store res_ptr res wd_cond mem;
+
+  let wd_value = res_ptr in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+
+  (value, Control.empty, assertion, ub_cond)
+
+(* well-defined condition:
+ * - IsTaggedPointer(lval) /\ IsTaggedPointer(rval)
+ * - PointsNumberObject(lval) /\ PointsNumberObject(rval)
+ * - IsSafeInteger(lval) /\ IsSafeInteger(rval)
+ * - IsWellDefined(lval) /\ IsWellDefined(rval)
+ * assertion:
+ *  value = ite well-defined (lval-rval) UB *)
+let speculative_safe_integer_subtract vid lval rval mem =
+  let value = Value.init vid in
+
+  let lnum = HeapNumber.load lval !mem in
+  let rnum = HeapNumber.load lval !mem in
+
+  let ub_cond =
+    Bool.not
+      (Bool.ors
+         [
+           Value.is_defined lval;
+           Value.is_defined rval;
+           lval |> Value.has_type Type.tagged_pointer;
+           rval |> Value.has_type Type.tagged_pointer;
+           Objects.is_heap_number lval !mem;
+           Objects.is_heap_number rval !mem;
+         ])
+  in
+  let wd_cond =
+    Bool.ands
+      [
+        Bool.not ub_cond;
+        HeapNumber.is_safe_integer lnum;
+        HeapNumber.is_safe_integer rnum;
       ]
   in
 
-  (value, Control.empty, assertion, Bool.fl)
+  let res_ptr = HeapNumber.allocate in
+  let res = Value.Float64.sub lnum.value rnum.value |> HeapNumber.from_value in
+  HeapNumber.store res_ptr res wd_cond mem;
+
+  let wd_value = res_ptr in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+
+  (value, Control.empty, assertion, ub_cond)
 
 let number_expm1 vid nptr mem =
   let value = Value.init vid in
@@ -163,10 +224,28 @@ let store_field ptr pos mt value mem =
   (Value.empty, Control.empty, Bool.tr, ub_cond)
 
 (* simplified: type-conversion *)
-(* well-defined condition:
- * - int32(pval)
- * - WellDefined(pval)
+(* well-defined condition 
+ * - IsInt32(pval) /\ IsWellDefined(pval) 
+ * - SmiMin < pval < SmiMax
  * assertion:
+ * value = ite well-defined TaggedSigned(pval) UV *)
+let change_int31_to_taggedsigned vid pval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [
+        pval |> Value.has_type Type.int32;
+        Value.is_defined pval;
+        Value.is_in_smi_range pval;
+      ]
+  in
+  let wd_value = pval |> Value.cast Type.tagged_signed in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
+(* Well-defined condition =
+ *  IsInt32(pval) /\ WellDefined(pval)
+ * Assertion =
  *  value = ite well-defined (tagged(pval)) UB *)
 let change_int32_to_tagged vid pval mem =
   let value = Value.init vid in
