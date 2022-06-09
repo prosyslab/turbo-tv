@@ -281,13 +281,13 @@ let change_int64_to_tagged vid pval mem =
     Bool.ands [ Value.is_defined pval; Value.has_type Type.int64 pval ]
   in
 
-  (* if pval is in smi range, value = (pval + pval) *)
+  (* if pval is in smi range, value = TaggedSigned(pval) *)
   let is_in_smi_range = Value.is_in_smi_range pval in
-  let smi = BitVec.addb data data |> Value.entype Type.tagged_signed in
+  let smi = pval |> Value.cast Type.tagged_signed in
 
   let ptr = HeapNumber.allocate in
   let number_value = data |> Float.from_signed_bv |> Float.to_ieee_bv in
-  let obj = HeapNumber.from_ieee_bv number_value in
+  let obj = HeapNumber.from_value number_value in
   HeapNumber.store ptr obj (Bool.not is_in_smi_range) mem;
 
   let wd_value = Bool.ite is_in_smi_range smi ptr in
