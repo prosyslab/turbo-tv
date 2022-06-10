@@ -10,17 +10,6 @@ module Fl = Z3.FloatingPoint
 (* global context *)
 let ctx = Z3.mk_context [ ("model", "true") ]
 
-(* print *)
-let simplify opt exp = E.simplify exp opt
-
-let str_of_exp exp = exp |> E.to_string
-
-let str_of_simplified exp = exp |> simplify None |> str_of_exp
-
-let print_exp exp = exp |> str_of_exp |> print_endline
-
-let print_simplified exp = exp |> simplify None |> str_of_exp |> print_endline
-
 (* default bitvector length *)
 let bvlen = ref 64
 
@@ -30,10 +19,26 @@ let set_bvlen len = bvlen := len
 
 let set_float_sort sort = float_sort := sort
 
+module Expr = struct
+  (* print *)
+  let simplify opt exp = E.simplify exp opt
+
+  let to_string exp = exp |> E.to_string
+
+  let to_simplified_string exp = exp |> simplify None |> to_string
+
+  let print_expr exp = exp |> to_string |> print_endline
+
+  let print_simplified_expr exp =
+    exp |> simplify None |> to_string |> print_endline
+end
+
 module Model = struct
   type t = M.model
 
   let to_str = M.to_string
+
+  let eval = M.eval
 end
 
 module Solver = struct

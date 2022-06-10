@@ -6,7 +6,7 @@ module Params = struct
     type t = BitVec.t
 
     (* paramater id *)
-    let init pid = Value.init pid |> Value.set_defined
+    let init pid = Value.init pid
   end
 
   type t = Param.t list
@@ -18,9 +18,19 @@ module Params = struct
         mk_param (cnt + 1) (Param.init ("p" ^ (cnt |> string_of_int)) :: params)
     in
     mk_param 0 []
+
+  let print_evaluated model t =
+    Format.printf "Parameters: \n";
+    List.iteri
+      (fun idx param ->
+        Format.printf "Parameter[%d]: %s\n" (idx + 1)
+          (Model.eval model param false |> Option.get |> Expr.to_string))
+      t;
+    Format.printf "\n"
 end
 
 type t = {
+  stage : string;
   pc : IR.Node.id;
   control_file : Control.t ControlFile.C.t;
   register_file : Value.t RegisterFile.R.t;
@@ -33,6 +43,7 @@ type t = {
 
 let init nparams stage : t =
   {
+    stage;
     pc = 0;
     control_file = ControlFile.init stage;
     register_file = RegisterFile.init stage;
@@ -56,6 +67,8 @@ let register_file t = t.register_file
 let memory t = t.memory
 
 let params t = t.params
+
+let stage t = t.stage
 
 let retvar t = t.retvar
 

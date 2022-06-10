@@ -463,9 +463,35 @@ let execute program nparams stage cfg =
   let init_state = State.init nparams stage in
   next program init_state cfg
 
-let run nparams before after before_cfg after_cfg =
-  let src_state = execute before nparams "before" before_cfg in
-  let tgt_state = execute after nparams "after" after_cfg in
+let print_counter_example program state model =
+  Format.printf "State of %s\n" (State.stage state);
+  let rf = State.register_file state in
+  let cf = State.control_file state in
+  let rec aux pc =
+    let _, opcode, operands = IR.instr_of pc program in
+    let instr_s =
+      Format.sprintf "%s(%s)" (opcode |> Opcode.to_str)
+        (operands |> Operands.to_str)
+    in
+
+    let prefix = if State.stage state = "before" then "b" else "a" in
+    RegisterFile.prefix := prefix ^ "v";
+    ControlFile.prefix := prefix ^ "c";
+
+    let value = RegisterFile.find (string_of_int pc) rf in
+    let control = ControlFile.find (string_of_int pc) cf in
+
+    Format.printf "#%d:%s => \n  Value: %s\n  Control: %s\n" pc instr_s
+      (Model.eval model value false |> Option.get |> Expr.to_string)
+      (Model.eval model control false |> Option.get |> Expr.to_string);
+
+    match opcode with End -> Format.printf "\n" | _ -> aux (pc + 1)
+  in
+  aux 0
+
+let run nparams src_program tgt_program before_cfg after_cfg =
+  let src_state = execute src_program nparams "before" before_cfg in
+  let tgt_state = execute tgt_program nparams "after" after_cfg in
 
   let retvar_is_same =
     Bool.eq
@@ -488,10 +514,12 @@ let run nparams before after before_cfg after_cfg =
   match status with
   | SATISFIABLE ->
       let model = Option.get (Solver.get_model validator) in
-      let model_str = model |> Model.to_str in
-      Printf.printf "Result: Not Verified \n";
-      Printf.printf "Assertion: \n%s\n\n" (assertion |> str_of_simplified);
-      Printf.printf "Model: \n%s" model_str
-  | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
+      Printf.printf "\nResult: Not Verified \n";
+      Printf.printf "CounterExample: \n";
+      Params.print_evaluated model (State.params src_state);
+
+      print_counter_example src_program src_state model;
+      print_counter_example tgt_program tgt_state model
+  | UNSATISFIABLE -> Printf.printf "\nResult: Verified\n"
   (* Printf.printf "Assertion: \n%s\n\n" (assertion |> str_of_simplified) *)
   | _ -> failwith "unknown"
