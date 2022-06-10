@@ -8,7 +8,7 @@ module BV = Z3.BitVector
 module Fl = Z3.FloatingPoint
 
 (* global context *)
-let ctx = Z3.mk_context [ ("model", "true"); ("unsat_core", "true") ]
+let ctx = Z3.mk_context [ ("model", "true") ]
 
 (* print *)
 let simplify opt exp = E.simplify exp opt
@@ -41,7 +41,10 @@ module Solver = struct
 
   type status = SATISFIABLE | UNSATISFIABLE | UNKNOWN
 
-  let init = S.mk_solver ctx None
+  let init logic =
+    match logic with
+    | None -> S.mk_solver ctx None
+    | Some logic -> S.mk_solver ctx (Some (Z3.Symbol.mk_string ctx logic))
 
   let check solver query = S.check solver [ query ]
 

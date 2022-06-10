@@ -7,7 +7,7 @@ open Z3utils
 
 let ctx = Z3utils.ctx
 
-let validator = Solver.init
+let validator = Solver.init (Some "QF_AUFBV")
 
 module Id_set = Set.Make (Int)
 
