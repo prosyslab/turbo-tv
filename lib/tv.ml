@@ -7,7 +7,7 @@ open Z3utils
 
 let ctx = Z3utils.ctx
 
-let validator = Solver.init (Some "QF_AUFBV")
+let validator = Solver.init None
 
 module Id_set = Set.Make (Int)
 
@@ -468,10 +468,16 @@ let print_counter_example program state model =
   let rf = State.register_file state in
   let cf = State.control_file state in
   let rec aux pc =
-    let _, opcode, operands = IR.instr_of pc program in
+    let ty, opcode, operands = IR.instr_of pc program in
     let instr_s =
-      Format.sprintf "%s(%s)" (opcode |> Opcode.to_str)
-        (operands |> Operands.to_str)
+      match ty with
+      | Some ty ->
+          Format.sprintf "%s(%s) [%s]" (opcode |> Opcode.to_str)
+            (operands |> Operands.to_str)
+            (ty |> Types.to_string)
+      | None ->
+          Format.sprintf "%s(%s)" (opcode |> Opcode.to_str)
+            (operands |> Operands.to_str)
     in
 
     let prefix = if State.stage state = "before" then "b" else "a" in
@@ -517,9 +523,7 @@ let run nparams src_program tgt_program before_cfg after_cfg =
       Printf.printf "\nResult: Not Verified \n";
       Printf.printf "CounterExample: \n";
       Params.print_evaluated model (State.params src_state);
-
       print_counter_example src_program src_state model;
       print_counter_example tgt_program tgt_state model
   | UNSATISFIABLE -> Printf.printf "\nResult: Verified\n"
-  (* Printf.printf "Assertion: \n%s\n\n" (assertion |> str_of_simplified) *)
   | _ -> failwith "unknown"
