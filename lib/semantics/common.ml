@@ -133,10 +133,7 @@ let phi vid incoming repr conds =
 (* common: procedure *)
 let parameter vid param =
   let value = Value.init vid in
-  let assertion =
-    Value.eq value
-      (Value.andi param Constants.smi_mask |> Value.cast Type.tagged_signed)
-  in
+  let assertion = Value.eq value param in
   (value, Control.empty, assertion, Bool.fl)
 
 let return vid return_value =
