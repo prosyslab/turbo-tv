@@ -181,11 +181,11 @@ let maski value bitlen = andi value (Int.shift_left 1 bitlen - 1)
 (* compare two values and return bool *)
 let eq lval rval = BitVec.eqb lval rval
 
-let weak_eq lval rval = BitVec.eqb (data_of lval) (data_of rval)
-
-let repr_eq repr lval rval =
-  let bitwidth = MachineType.Repr.width_of repr in
-  BitVec.eqb (BitVec.extract bitwidth 0 lval) (BitVec.extract bitwidth 0 rval)
+let weak_eq ?(repr = Repr.Word64) lval rval =
+  let width = Repr.width_of repr in
+  BitVec.eqb
+    (BitVec.extract (width - 1) 0 lval)
+    (BitVec.extract (width - 1) 0 rval)
 
 let slt lval rval = BitVec.sltb (data_of lval) (data_of rval)
 

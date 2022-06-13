@@ -7,7 +7,7 @@ module Repr = MachineType.Repr
 
 (* well-defined condition:
  * - IsFloat64Type(pval)
- * - WellDefined(pval)
+ * - IsWellDefined(pval)
  * assertion:
  * value = ite well-defined FloatAbs(pval) UB *)
 let float64_abs vid pval =
@@ -21,7 +21,7 @@ let float64_abs vid pval =
 
 (* well-defined condition:
  * - IsFloat64Type(pval) 
- * - WellDefined(pval) 
+ * - IsWellDefined(pval) 
  * assertion:
  * value = ite well-defined pval[0:32] UB *)
 let float64_extract_high_word32 vid pval =
@@ -38,7 +38,7 @@ let float64_extract_high_word32 vid pval =
 
 (* well-defined condition:
  * - IsFloat64Type(lval) /\ IsFloat64Type(rval)
- * - WellDefined(lval) /\ WellDefined(rval)
+ * - IsWellDefined(lval) /\ IsWellDefined(rval)
  * assertion:
  * value = ite well-defined (lval-rval) UB *)
 let float64_sub vid lval rval =
@@ -193,7 +193,7 @@ let int64_sub vid lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* - Well-defined condition = 
- *    WellDefined(lval) /\ IsFloat64(lval)
+ *    IsWellDefined(lval) /\ IsFloat64(lval)
  * - Assertion:
  *     value = ite well-defined (Round(lval, rtz)) undefined *)
 let round_float64_to_int32 vid pval =
@@ -206,9 +206,9 @@ let round_float64_to_int32 vid pval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined conditions:
- * - well_defined(lval) ^ well_defined(rval)
- * - word32(lval) ^ word32(rval)
- * - hint = "ShiftOutZero" ^ off = (rval mod 32) -> lval[-off:] = 0
+ *  IsWellDefined(lval) /\ IsWellDefined(rval)
+ *  /\ HasRepr(lval, Word32) /\ HasRepr(rval, Word32)
+ *  /\ (hint = "ShiftOutZero" /\ off = (rval mod 32) -> lval[-off:] = 0)
  * assertion:
  * value = ite well-defined (lval >> ((rval mod 32)) UB 
  *)
@@ -235,7 +235,7 @@ let word32_sar vid hint lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined conditions:
- * - WellDefined(lval) ^ WellDefined(rval)
+ * - IsWellDefined(lval) ^ IsWellDefined(rval)
  * - HasRepr(lval, Word32) ^ HasRepr(rval, Word32)
  * assertion:
  * value = ite well-defined (lval << rval) UB *)
@@ -255,7 +255,7 @@ let word32_shl vid lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined conditions:
- * - WellDefined(lval) ^ WellDefined(rval)
+ * - IsWellDefined(lval) ^ IsWellDefined(rval)
  * - HasRepr(lval, Word32) ^ HasRepr(rval, Word32)
  * assertion:
  * value = ite well-defined (lval xor rval) UB *)
@@ -275,7 +275,7 @@ let word32_xor vid lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined conditions:
- * - WellDefined(lval) ^ WellDefined(rval)
+ * - IsWellDefined(lval) ^ IsWellDefined(rval)
  * - HasRepr(lval, Word64) ^ HasRepr(rval, Word64)
  * assertion:
  * value = ite well-defined (lval << rval) UB *)
@@ -317,7 +317,7 @@ let word32_and vid lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
- * - WellDefined(lval) ^ WellDefined(rval)
+ * - IsWellDefined(lval) ^ IsWellDefined(rval)
  * - HasRepr(lval, Word32) ^ HasRepr(rval, Word32)
  * assertion:
  * value = ite well-defined (lval | rval) UB *)
@@ -437,35 +437,33 @@ let int64_less_than vid lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
- * - has_repr(lval, word32) ^ has_repr(rval, word32)
+ *  IsWellDefined(lval) ^ IsWellDefined(rval)
  * assertion: 
  *  value = ite well-defined (lval = rval) UB *)
 let word32_equal vid lval rval =
   let value = Value.init vid in
-  let wd_cond =
-    Bool.ands
-      [ Value.has_repr Repr.Word32 lval; Value.has_repr Repr.Word32 rval ]
+  let wd_cond = Bool.ands [ Value.is_defined lval; Value.is_defined rval ] in
+  let wd_value =
+    Bool.ite (Value.weak_eq ~repr:Repr.Word32 lval rval) Value.tr Value.fl
   in
-  let wd_value = Bool.ite (Value.weak_eq lval rval) Value.tr Value.fl in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
- * - has_repr(lval, word64) ^ has_repr(rval, word64)
+ *  IsWellDefined(lval) ^ IsWellDefined(rval) 
  * assertion:
  *  value = ite well-defined (lval = rval) UB *)
 let word64_equal vid lval rval =
   let value = Value.init vid in
-  let wd_cond =
-    Bool.ands
-      [ Value.has_repr Repr.Word64 lval; Value.has_repr Repr.Word64 rval ]
+  let wd_cond = Bool.ands [ Value.is_defined lval; Value.is_defined rval ] in
+  let wd_value =
+    Bool.ite (Value.weak_eq ~repr:Repr.Word64 lval rval) Value.tr Value.fl
   in
-  let wd_value = Bool.ite (Value.weak_eq lval rval) Value.tr Value.fl in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
- * - WellDefined(lval) ^ WellDefined(rval)
+ * - IsWellDefined(lval) ^ IsWellDefined(rval)
  * - IsUint32(lval) ^ IsUint32(rval)
  * assertion:
  * value = ite well-defined (lval < rval) UB *)
@@ -485,7 +483,7 @@ let uint32_less_than vid lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
- * - WellDefined(lval) ^ WellDefined(rval)
+ * - IsWellDefined(lval) ^ IsWellDefined(rval)
  * - IsUint32(lval) ^ IsUint32(rval)
  * assertion:
  * value = ite well-defined (lval <= rval) UB *)
@@ -526,7 +524,7 @@ let uint64_less_than vid lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
- * - WellDefined(lval) ^ WellDefined(rval)
+ * - IsWellDefined(lval) ^ IsWellDefined(rval)
  * - IsUint64(lval) ^ IsUint64(rval)
  * assertion:
  * value = ite well-defined (lval <= rval) UB *)
@@ -645,9 +643,9 @@ let bitcast_tagged_to_word vid v =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
- * - well_defined(v) ^ word32(v)
+ *  IsWellDefined(v) /\ HasRepr(v, Word32)
  * assertion:
- * value = ite well-defined word64(v) UB *)
+ *  value = ite well-defined word64(v) UB *)
 let bitcast_word32_to_word64 vid v =
   let value = Value.init vid in
   let wd_cond =
@@ -660,7 +658,7 @@ let bitcast_word32_to_word64 vid v =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
- * - well_defined(v) ^ any_tagged(v)
+ *  IsWellDefined(v) /\ HasRepr(v, Word64)
  * assertion:
  * value = ite well-defined tagged(v) UB *)
 let bitcast_word_to_tagged vid v =
