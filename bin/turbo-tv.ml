@@ -77,8 +77,8 @@ let main () =
     let tgt_grp = IR.create_from_ir_file tgt_ir_f in
     let src_cfg = IR.get_control_flow_graph src_grp in
     let tgt_cfg = IR.get_control_flow_graph tgt_grp in
-    (* for now, set number of parameters for testing 100 *)
-    let nparams = 100 in
+    (* for now, set number of parameters for testing 2 *)
+    let nparams = 2 in
     Tv.run nparams src_grp tgt_grp src_cfg tgt_cfg
   else
     let target =

@@ -5,7 +5,7 @@ let smi_min = -1073741824
 
 let smi_max = 1073741823
 
-let smi_mask = 0xefffffff
+let smi_mask = 0xfffffffe
 
 (* int32 *)
 let int32_mask = 0xffffffff

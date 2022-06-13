@@ -236,10 +236,10 @@ let change_int31_to_taggedsigned vid pval =
       [
         pval |> Value.has_type Type.int32;
         Value.is_defined pval;
-        Value.is_in_smi_range pval;
+        Value.Int32.is_in_smi_range pval;
       ]
   in
-  let wd_value = pval |> Value.cast Type.tagged_signed in
+  let wd_value = Value.Int32.to_tagged_signed pval in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, Control.empty, assertion, Bool.fl)
 
@@ -255,9 +255,9 @@ let change_int32_to_tagged vid pval mem =
     Bool.ands [ Value.is_defined pval; Value.has_type Type.int32 pval ]
   in
 
-  (* if pval is in smi range, value = TaggedSigned(pval) *)
-  let is_in_smi_range = Value.is_in_smi_range pval in
-  let smi = pval |> Value.cast Type.tagged_signed in
+  (* if pval is in smi range, value = TaggedSigned(pval+pval) *)
+  let is_in_smi_range = Value.Int32.is_in_smi_range pval in
+  let smi = Value.Int32.to_tagged_signed pval in
 
   let ptr = HeapNumber.allocate in
   let number_value = data |> Float.from_signed_bv |> Float.to_ieee_bv in
@@ -281,9 +281,9 @@ let change_int64_to_tagged vid pval mem =
     Bool.ands [ Value.is_defined pval; Value.has_type Type.int64 pval ]
   in
 
-  (* if pval is in smi range, value = TaggedSigned(pval) *)
-  let is_in_smi_range = Value.is_in_smi_range pval in
-  let smi = pval |> Value.cast Type.tagged_signed in
+  (* if pval is in smi range, value = TaggedSigned(pval+pval) *)
+  let is_in_smi_range = Value.Int64.is_in_smi_range pval in
+  let smi = Value.Int64.to_tagged_signed pval in
 
   let ptr = HeapNumber.allocate in
   let number_value = data |> Float.from_signed_bv |> Float.to_ieee_bv in
@@ -306,7 +306,7 @@ let checked_float64_to_int32 _hint vid pval =
     Bool.ands [ Value.is_defined pval; Value.has_type Type.float64 pval ]
   in
 
-  let value32 = pval |> Value.Float64.to_int32_value in
+  let value32 = pval |> Value.Float64.to_int32 in
 
   (* TODO: handing deoptimization *)
   (* let deopt_cond =
@@ -333,8 +333,9 @@ let checked_float64_to_int32 _hint vid pval =
 (* Well-defined condition =
  *  IsTaggedSigned(pval) /\ WellDefined(pval)
  * Deoptimization condition =
- *  IsNotTaggedSigned(pval) 
- *)
+ *  IsNotTaggedSigned(pval)
+ * Assertion = 
+ *  value = ite well-defined Int32(pval >> 1) UV *)
 let checked_tagged_signed_to_int32 vid pval =
   let value = Value.init vid in
   let wd_cond =
@@ -343,7 +344,7 @@ let checked_tagged_signed_to_int32 vid pval =
 
   (* TODO: handling deoptimization *)
   (* let deopt_cond = Bool.not (Value.has_type Type.tagged_signed pval) in *)
-  let wd_value = pval |> Value.cast Type.int32 in
+  let wd_value = Value.TaggedSigned.to_int32 pval in
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
 
   (value, Control.empty, assertion, Bool.fl)

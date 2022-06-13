@@ -13,7 +13,7 @@ module Params = struct
 
   let init nparams =
     let rec mk_param cnt params =
-      if cnt == nparams then params
+      if cnt == nparams then List.rev params
       else
         mk_param (cnt + 1) (Param.init ("p" ^ (cnt |> string_of_int)) :: params)
     in
@@ -23,7 +23,7 @@ module Params = struct
     Format.printf "Parameters: \n";
     List.iteri
       (fun idx param ->
-        Format.printf "Parameter[%d]: %s\n" (idx + 1)
+        Format.printf "Parameter[%d]: %s\n" idx
           (Model.eval model param false |> Option.get |> Expr.to_string))
       t;
     Format.printf "\n"
