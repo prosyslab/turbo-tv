@@ -218,6 +218,8 @@ let uge lval rval = BitVec.ugeb (data_of lval) (data_of rval)
 let ugei ?(width = len) lval i =
   BitVec.ugei (BitVec.extract (width - 1) 0 (data_of lval)) i
 
+let abs ty value = value |> data_of |> BitVec.abs |> entype ty
+
 (* Floating Point *)
 let gef lval f =
   (* assmue that lval is integer or float *)

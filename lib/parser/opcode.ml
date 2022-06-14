@@ -17,8 +17,7 @@ type kind =
   | B1B2B4V1V2
   | B2
   | B4
-  | B1B2B5V1
-  | B5
+  | B1B2B4V1
   | B1V2V3V4
   | V3
   | V4
@@ -903,7 +902,7 @@ type t =
   | Load
   (* b1b2b4v1v2 *)
   | LoadElement
-  (* b1b2b5v1 *)
+  (* b1b2b4v1 *)
   | LoadField
   (* b1v2v3v4 *)
   | LoadTypedElement
@@ -1153,7 +1152,7 @@ let get_kind opcode =
   | Return -> V2
   | Load -> V1V2B1
   | LoadElement -> B1B2B4V1V2
-  | LoadField -> B1B2B5V1
+  | LoadField -> B1B2B4V1
   | LoadTypedElement -> B1V2V3V4
   | Phi -> VVB1C1
   | Store -> V1V2B1V3
@@ -1178,8 +1177,7 @@ let split_kind kind =
   | B1B2B4V1V2 -> [ B1; B2; B4; V1; V2 ]
   | B2 -> [ B2 ]
   | B4 -> [ B4 ]
-  | B1B2B5V1 -> [ B1; B2; B5; V1 ]
-  | B5 -> [ B5 ]
+  | B1B2B4V1 -> [ B1; B2; B4; V1 ]
   | B1V2V3V4 -> [ B1; V2; V3; V4 ]
   | V3 -> [ V3 ]
   | V4 -> [ V4 ]

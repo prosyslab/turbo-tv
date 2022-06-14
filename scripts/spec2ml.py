@@ -112,14 +112,13 @@ def split_kind(kind):
 
 
 def gen_re_from_kind(kind):
-    if kind == "UNIMPL":
+    if kind == "UNIMPL" or kind.startswith("B"):
         return ""
 
     p_operand_re = "#(\\\\d*)"
     p_re_prefix = "\\\\("
     p_re_suffix = "[^\\\\)]*\\\\)"
 
-    b_operand_re = "([^,]*)"
     b_re_prefix = "(?:\\\\["
     b_re_suffix = "[^\\\\]]*\\\\])"
 
@@ -133,9 +132,7 @@ def gen_re_from_kind(kind):
     skip_re = "[^,]*, "
     skips_re = skip_re * (operand_pos - 1)
 
-    if operand_kind == "B":
-        re = f"let {kind.lower()}_re = Re.Pcre.regexp \"{b_re_prefix}{skips_re}{b_operand_re}{b_re_suffix}{p_re_prefix}{p_re_suffix}\" in"
-    elif operand_kind == "V":
+    if operand_kind == "V":
         re = f"let {kind.lower()}_re = Re.Pcre.regexp \"{b_re_prefix}{b_re_suffix}{{0,1}}{p_re_prefix}{skips_re}{p_operand_re}{p_re_suffix}\" in"
     elif operand_kind == "E":
         re = f"let {kind.lower()}_re = Re.Pcre.regexp \"{b_re_prefix}{b_re_suffix}{{0,1}}{p_re_prefix}{p_re_suffix}{p_re_prefix}{skips_re}{p_operand_re}{p_re_suffix}\" in"
@@ -160,17 +157,22 @@ def gen_match_from_kind(kind):
             "       let re = Re.Pcre.regexp \"#(\\\\d*)\" in"
             "       (Re.Group.get (Re.exec re arg) 1 |> Operand.of_id) :: res)"
             "     [] vargs |> List.rev in\n"
-            "  parse_operand t instr (parsed @ operands)"
-        )
+            "  parse_operand t instr (parsed @ operands)")
     else:
-        operand_type = "id" if kind.startswith("V") or kind.startswith(
-            "E") or kind.startswith("C") else "const"
-        return (
-            f"| {kind} ->\n"
-            f"  let {kind.lower()}= \n"
-            f"    Re.Group.get(Re.exec {kind.lower()}_re instr) 1 |> Operand.of_{operand_type} \n"
-            f"  in \n"
-            f"  parse_operand t instr ({kind.lower()}::operands)")
+        if kind.startswith("V") or kind.startswith("E") or kind.startswith(
+                "C"):
+            return (
+                f"| {kind} ->\n"
+                f"  let {kind.lower()}= \n"
+                f"    Re.Group.get(Re.exec {kind.lower()}_re instr) 1 |> Operand.of_id \n"
+                f"  in \n"
+                f"  parse_operand t instr ({kind.lower()}::operands)")
+        else:
+            return (f"| {kind} ->\n"
+                    f"  let {kind.lower()}= \n"
+                    f"    List.nth bracket_operands {int(kind[1]) - 1} \n"
+                    f"  in \n"
+                    f"  parse_operand t instr ({kind.lower()}::operands)")
 
 
 def gen_instr(opcodes, replace=False):
@@ -199,6 +201,7 @@ def gen_instr(opcodes, replace=False):
 
     parse_operand = (
         "let rec parse_operand (kinds : Opcode.kind list) instr operands =\n"
+        "let bracket_operands = Bracket.bracket_operands_parse instr in"
         f"{kinds_re}"
         "match kinds with\n"
         "| k :: t -> (\n"

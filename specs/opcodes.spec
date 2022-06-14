@@ -554,7 +554,7 @@ JSWasmCall,
 Load,v1,v2,b1
 LoadDataViewElement,
 LoadElement,b1,b2,b4,v1,v2
-LoadField,b1,b2,b5,v1
+LoadField,b1,b2,b4,v1
 LoadFieldByIndex,
 LoadFramePointer,
 LoadFromObject,

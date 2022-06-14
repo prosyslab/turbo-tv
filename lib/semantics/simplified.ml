@@ -39,6 +39,19 @@ let number_add vid lval rval =
   let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
   (value, Control.empty, assertion, Bool.fl)
 
+let number_abs vid pval =
+  let value = Value.init vid in
+  let wd_cond = Value.is_defined pval in
+  let ty = Value.ty_of pval in
+  let wd_value =
+    Bool.ite
+      (Bool.ors
+         [ Value.has_type Type.int32 pval; Value.has_type Type.int64 pval ])
+      (Value.abs ty pval) (Value.absf pval)
+  in
+  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  (value, Control.empty, assertion, Bool.fl)
+
 (* well-defined condition:
  * - WellDefined(lval) ^ WellDefined(rval)
  * - IsWord32(lval) ^ IsWord32(rval)
@@ -209,6 +222,18 @@ let load_element vid tag_value header_size repr bid ind mem =
       fixed_off
   in
   Machine.load vid bid off repr mem
+
+let load_field vid tag_value offset repr bid mem =
+  let off = offset - tag_value |> BitVecVal.from_int ~len:Value.len in
+  Machine.load vid bid off repr mem
+
+let load_typed_element vid array_type base extern ind mem =
+  let bid = BitVec.addb base extern in
+  let taggedness, header_size, machine_type =
+    MachineType.for_type_array_element array_type true
+  in
+  let repr = MachineType.repr machine_type in
+  load_element vid taggedness header_size repr bid ind mem
 
 let store_field ptr pos mt value mem =
   let repr = MachineType.repr mt in

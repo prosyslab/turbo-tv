@@ -138,6 +138,10 @@ let rec next program state cfg =
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
         number_add vid lval rval
+    | NumberAbs ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        number_abs vid pval
     | SpeculativeNumberBitwiseXor ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -189,6 +193,24 @@ let rec next program state cfg =
         let ind_id = Operands.id_of_nth operands 4 in
         let ind = RegisterFile.find ind_id rf in
         load_element vid tag_value header_size repr bid ind !mem
+    | LoadField ->
+        let base_is_tagged = Operands.const_of_nth operands 0 in
+        let tag_value = tag base_is_tagged in
+        let offset = Operands.const_of_nth operands 1 |> int_of_string in
+        let machine_type = Operands.const_of_nth operands 2 in
+        let repr = MachineType.Repr.of_rs_string machine_type in
+        let bid_id = Operands.id_of_nth operands 3 in
+        let bid = RegisterFile.find bid_id rf in
+        load_field vid tag_value offset repr bid !mem
+    | LoadTypedElement ->
+        let array_type = Operands.const_of_nth operands 0 |> int_of_string in
+        let base_id = Operands.id_of_nth operands 1 in
+        let base = RegisterFile.find base_id rf in
+        let extern_id = Operands.id_of_nth operands 2 in
+        let extern = RegisterFile.find extern_id rf in
+        let ind_id = Operands.id_of_nth operands 3 in
+        let ind = RegisterFile.find ind_id rf in
+        load_typed_element vid array_type base extern ind !mem
     | StoreField ->
         let ptr_id = Operands.id_of_nth operands 0 in
         let ptr = RegisterFile.find ptr_id rf in

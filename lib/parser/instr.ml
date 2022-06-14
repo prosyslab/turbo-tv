@@ -37,18 +37,8 @@ let create_from instr =
 
   let parse_operands kind instr =
     let rec parse_operand (kinds : Opcode.kind list) instr operands =
-      let b1_re = Re.Pcre.regexp "(?:\\[([^,]*)[^\\]]*\\])\\([^\\)]*\\)" in
-      let b2_re =
-        Re.Pcre.regexp "(?:\\[[^,]*, ([^,]*)[^\\]]*\\])\\([^\\)]*\\)"
-      in
-      let b4_re =
-        Re.Pcre.regexp
-          "(?:\\[[^,]*, [^,]*, [^,]*, ([^,]*)[^\\]]*\\])\\([^\\)]*\\)"
-      in
-      let b5_re =
-        Re.Pcre.regexp
-          "(?:\\[[^,]*, [^,]*, [^,]*, [^,]*, ([^,]*)[^\\]]*\\])\\([^\\)]*\\)"
-      in
+      let bracket_operands = Bracket.bracket_operands_parse instr in
+
       let c1_re =
         Re.Pcre.regexp
           "(?:\\[[^\\]]*\\]){0,1}\\([^\\)]*\\)\\([^\\)]*\\)\\(#(\\d*)[^\\)]*\\)"
@@ -84,25 +74,14 @@ let create_from instr =
           try
             match k with
             | B1 ->
-                let b1 =
-                  Re.Group.get (Re.exec b1_re instr) 1 |> Operand.of_const
-                in
+                let b1 = List.nth bracket_operands 0 in
                 parse_operand t instr (b1 :: operands)
             | B2 ->
-                let b2 =
-                  Re.Group.get (Re.exec b2_re instr) 1 |> Operand.of_const
-                in
+                let b2 = List.nth bracket_operands 1 in
                 parse_operand t instr (b2 :: operands)
             | B4 ->
-                let b4 =
-                  Re.Group.get (Re.exec b4_re instr) 1 |> Operand.of_const
-                in
+                let b4 = List.nth bracket_operands 3 in
                 parse_operand t instr (b4 :: operands)
-            | B5 ->
-                let b5 =
-                  Re.Group.get (Re.exec b5_re instr) 1 |> Operand.of_const
-                in
-                parse_operand t instr (b5 :: operands)
             | C1 ->
                 let c1 =
                   Re.Group.get (Re.exec c1_re instr) 1 |> Operand.of_id

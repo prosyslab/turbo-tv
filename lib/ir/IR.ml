@@ -131,11 +131,6 @@ let create_from graph_lines =
   let find_nid iid = IN.find iid iid2nid in
 
   let parse_innodes line =
-    let check_bracket_match left right =
-      match (left, right) with
-      | '(', ')' | '[', ']' | '<', '>' -> true
-      | _ -> false
-    in
     let grep_innodes line =
       let s = Stack.create () in
       let result, len, _ =
@@ -143,7 +138,8 @@ let create_from graph_lines =
           (fun (result, i, finished) ch ->
             if ch = '(' || ch = '[' || ch = '<' then Stack.push ch s
             else if ch = ')' || ch = ']' || ch = '>' then
-              if check_bracket_match (Stack.top s) ch then Stack.pop s |> ignore
+              if Utils.check_bracket_match (Stack.top s) ch then
+                Stack.pop s |> ignore
               else failwith "File has weird bracket";
             if Stack.length s = 1 && Stack.top s = '(' && not finished then
               (String.cat result (String.make 1 ch), i + 1, finished)

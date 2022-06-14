@@ -320,6 +320,8 @@ module BitVec = struct
   let subi lbv rval =
     BV.mk_sub ctx lbv (BitVecVal.from_int ~len:(length_of lbv) rval)
 
+  let abs bv = Bool.ite (slti bv 0) (BV.mk_neg ctx bv) bv
+
   (* rbv != 0 && lbv % rbv *)
   let modb lbv rbv = BV.mk_smod ctx lbv rbv
 

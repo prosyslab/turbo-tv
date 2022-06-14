@@ -241,3 +241,18 @@ let sem t : Sem.t =
 
 (* methods *)
 let size_of t = repr t |> Repr.size_of
+
+let for_type_array_element array_type is_extern =
+  let taggedness = if is_extern then 0 else 1 in
+  let header_size = if is_extern then 0 else 16 in
+  match array_type with
+  | 1 -> (taggedness, header_size, Int8)
+  | 2 | 9 -> (taggedness, header_size, Uint8)
+  | 3 -> (taggedness, header_size, Int16)
+  | 4 -> (taggedness, header_size, Uint16)
+  | 5 -> (taggedness, header_size, Int32)
+  | 6 -> (taggedness, header_size, Uint32)
+  | 7 -> (taggedness, header_size, Float32)
+  | 8 -> (taggedness, header_size, Float64)
+  | 10 | 11 -> failwith "Unimplemented"
+  | _ -> failwith (Printf.sprintf "Unreachable: %d" array_type)
