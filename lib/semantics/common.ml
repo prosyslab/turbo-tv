@@ -36,7 +36,10 @@ let external_constant vid c =
   (value, Control.empty, assertion, Bool.fl)
 
 (* behavior: value=c *)
-let heap_constant = external_constant
+let heap_constant vid c =
+  let value = Value.init vid in
+  let assertion = Value.eq value (c |> Value.cast Type.tagged_pointer) in
+  (value, Control.empty, assertion, Bool.fl)
 
 (* behavior: value=c *)
 let number_constant vid c next_bid mem =

@@ -36,13 +36,26 @@ let rec next program state cfg =
           |> Value.from_f64string |> Value.cast Type.float64
         in
         float64_constant vid c
-    | HeapConstant | ExternalConstant ->
+    | HeapConstant ->
+        let addr_name_re = Re.Pcre.regexp "(0x[0-9a-f]+) <([^>]*)>" in
+        let operand = Operands.const_of_nth operands 0 in
+        let addr_name = Re.exec addr_name_re operand in
+        let addr = Re.Group.get addr_name 1 |> Value.from_istring in
+        let name = Re.Group.get addr_name 2 in
+
+        print_endline name;
+
+        (* if constant is default constant, use pre-defined value in register file *)
+        if List.mem name State.default_constants then
+          heap_constant vid (RegisterFile.find name rf)
+        else heap_constant vid addr
+    | ExternalConstant ->
         let addr_re = Re.Pcre.regexp "(0x[0-9a-f]+)" in
         let operand = Operands.const_of_nth operands 0 in
         let c =
           Re.Group.get (Re.exec addr_re operand) 1 |> Value.from_istring
         in
-        heap_constant vid c
+        external_constant vid c
     | Int32Constant ->
         let c = Operands.const_of_nth operands 0 |> Value.from_istring in
         int32_constant vid c

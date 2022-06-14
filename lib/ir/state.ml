@@ -42,12 +42,12 @@ type t = {
   ub : Bool.t;
 }
 
+let default_constants =
+  [ "undefined"; "the_hole"; "null"; "empty_string"; "false"; "true" ]
+
 let init nparams stage : t =
   let next_bid = ref 0 in
   let embed_default_constants mem rf =
-    let default_constants =
-      [ "undefined"; "the_hole"; "null"; "empty_string"; "false"; "true" ]
-    in
     List.fold_left
       (fun (mem, rf) name ->
         let ptr =
@@ -56,7 +56,9 @@ let init nparams stage : t =
         let updated_mem =
           Memory.store ptr 1 Bool.tr (BitVecVal.from_int 0) mem
         in
-        (updated_mem, RegisterFile.add name ptr rf))
+        if stage = "before" then
+          (updated_mem, RegisterFile.add ("bv" ^ name) ptr rf)
+        else (updated_mem, RegisterFile.add ("av" ^ name) ptr rf))
       (mem, rf) default_constants
   in
 
