@@ -21,15 +21,20 @@ let bracket_operands_parse instr =
           | '(' | '[' | '<' ->
               Stack.push ch env.bracket_stack;
               if ch = '[' && not env.started then { env with started = true }
-              else env
+              else
+                let token = env.token ^ String.make 1 ch in
+                { env with token }
           | ')' | ']' | '>' ->
               let left = Stack.pop env.bracket_stack in
               if not (Utils.check_bracket_match left ch) then
                 failwith (Printf.sprintf "Bracket mismatch: %c %c" left ch);
+
               if ch = ']' && Stack.is_empty env.bracket_stack then
                 let operand = env.token |> Operand.of_const in
                 { env with token = ""; operands = operand :: env.operands }
-              else env
+              else
+                let token = env.token ^ String.make 1 ch in
+                { env with token }
           | ',' ->
               if Stack.length env.bracket_stack = 1 then
                 let operand = env.token |> Operand.of_const in
