@@ -66,7 +66,7 @@ let speculative_number_bitwise_xor vid lval rval =
  * - IsWellDefined(lval) /\ IsWellDefined(rval)
  * assertion:
  *  value = ite well-defined (lval+rval) UB *)
-let speculative_safe_integer_add vid lval rval mem =
+let speculative_safe_integer_add vid lval rval next_bid mem =
   let value = Value.init vid in
 
   let lnum = HeapNumber.load lval !mem in
@@ -87,7 +87,8 @@ let speculative_safe_integer_add vid lval rval mem =
   in
   let ub_cond = Bool.not wd_cond in
 
-  let res_ptr = HeapNumber.allocate in
+  let res_ptr = HeapNumber.allocate !next_bid in
+  next_bid := !next_bid + 1;
   let res = Value.Float64.add lnum.value rnum.value |> HeapNumber.from_value in
   HeapNumber.store res_ptr res wd_cond mem;
 
@@ -103,7 +104,7 @@ let speculative_safe_integer_add vid lval rval mem =
  * - IsWellDefined(lval) /\ IsWellDefined(rval)
  * assertion:
  *  value = ite well-defined (lval-rval) UB *)
-let speculative_safe_integer_subtract vid lval rval mem =
+let speculative_safe_integer_subtract vid lval rval next_bid mem =
   let value = Value.init vid in
 
   let lnum = HeapNumber.load lval !mem in
@@ -111,7 +112,7 @@ let speculative_safe_integer_subtract vid lval rval mem =
 
   let ub_cond =
     Bool.not
-      (Bool.ors
+      (Bool.ands
          [
            Value.is_defined lval;
            Value.is_defined rval;
@@ -130,7 +131,8 @@ let speculative_safe_integer_subtract vid lval rval mem =
       ]
   in
 
-  let res_ptr = HeapNumber.allocate in
+  let res_ptr = HeapNumber.allocate !next_bid in
+  next_bid := !next_bid + 1;
   let res = Value.Float64.sub lnum.value rnum.value |> HeapNumber.from_value in
   HeapNumber.store res_ptr res wd_cond mem;
 
@@ -139,7 +141,7 @@ let speculative_safe_integer_subtract vid lval rval mem =
 
   (value, Control.empty, assertion, ub_cond)
 
-let number_expm1 vid nptr mem =
+let number_expm1 vid nptr next_bid mem =
   let value = Value.init vid in
   let wd_cond =
     Bool.ands
@@ -152,7 +154,8 @@ let number_expm1 vid nptr mem =
   let ub_cond = Bool.not wd_cond in
 
   (* expm1 = e^{n}-1 *)
-  let res_ptr = HeapNumber.allocate in
+  let res_ptr = HeapNumber.allocate !next_bid in
+  next_bid := !next_bid + 1;
   let expm1 =
     let n = HeapNumber.load nptr !mem in
     let bv_sort = BV.mk_sort ctx 64 in
@@ -193,10 +196,12 @@ let boolean_not vid pval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* simplified: memory *)
-let allocate_raw vid cid size ct =
+let allocate_raw vid cid size next_bid ct =
   let value = Value.init vid in
   let control = Control.init cid in
-  let pointer = Memory.allocate size in
+  let pointer = Memory.allocate !next_bid size in
+  next_bid := !next_bid + 1;
+  (* assume AllocateRaw doesn't change the control *)
   let assertion = Bool.ands [ Value.eq value pointer; Bool.eq control ct ] in
   (value, control, assertion, Bool.fl)
 
@@ -247,7 +252,7 @@ let change_int31_to_taggedsigned vid pval =
  *  IsInt32(pval) /\ WellDefined(pval)
  * Assertion =
  *  value = ite well-defined (tagged(pval)) UB *)
-let change_int32_to_tagged vid pval mem =
+let change_int32_to_tagged vid pval next_bid mem =
   let value = Value.init vid in
   let data = Value.data_of pval in
 
@@ -259,7 +264,8 @@ let change_int32_to_tagged vid pval mem =
   let is_in_smi_range = Value.Int32.is_in_smi_range pval in
   let smi = Value.Int32.to_tagged_signed pval in
 
-  let ptr = HeapNumber.allocate in
+  let ptr = HeapNumber.allocate !next_bid in
+  next_bid := !next_bid + 1;
   let number_value = data |> Float.from_signed_bv |> Float.to_ieee_bv in
   let obj = HeapNumber.from_value number_value in
   HeapNumber.store ptr obj (Bool.not is_in_smi_range) mem;
@@ -273,7 +279,7 @@ let change_int32_to_tagged vid pval mem =
  * - WellDefined(lval)
  * assertion:
  *  value = ite well-defined (tagged(pval)) UB *)
-let change_int64_to_tagged vid pval mem =
+let change_int64_to_tagged vid pval next_bid mem =
   let value = Value.init vid in
   let data = Value.data_of value in
 
@@ -285,7 +291,8 @@ let change_int64_to_tagged vid pval mem =
   let is_in_smi_range = Value.Int64.is_in_smi_range pval in
   let smi = Value.Int64.to_tagged_signed pval in
 
-  let ptr = HeapNumber.allocate in
+  let ptr = HeapNumber.allocate !next_bid in
+  next_bid := !next_bid + 1;
   let number_value = data |> Float.from_signed_bv |> Float.to_ieee_bv in
   let obj = HeapNumber.from_value number_value in
   HeapNumber.store ptr obj (Bool.not is_in_smi_range) mem;

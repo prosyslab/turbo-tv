@@ -47,7 +47,8 @@ module HeapNumber = struct
 
   let number_offset = Map.len / 8
 
-  let allocate = Memory.allocate (size |> BitVecVal.from_int ~len:Value.len)
+  let allocate bid =
+    Memory.allocate bid (size |> BitVecVal.from_int ~len:Value.len)
 
   let from_number_string s =
     { map = Map.heap_number_map; value = s |> BitVecVal.from_f64string }

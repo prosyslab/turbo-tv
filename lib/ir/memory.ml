@@ -4,7 +4,7 @@ type t = Array.t
 
 let init name = Array.init name (BitVec.mk_sort Pointer.len) (BitVec.mk_sort 8)
 
-let allocate size = Pointer.init size
+let allocate bid size = Pointer.init bid size
 
 (* Load [value] at block of [ptr] with the size [sz]*)
 let load ptr sz mem =

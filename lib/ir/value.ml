@@ -1,4 +1,5 @@
 open Z3utils
+module Repr = MachineType.Repr
 
 type t = BitVec.t
 

@@ -9,8 +9,6 @@ let ctx = Z3utils.ctx
 
 let validator = Solver.init None
 
-module Id_set = Set.Make (Int)
-
 let tag base_is_tagged =
   match base_is_tagged with
   | "tagged base" -> 1
@@ -21,6 +19,7 @@ let rec next program state cfg =
   let pc = State.pc state in
   let cf = State.control_file state in
   let rf = State.register_file state in
+  let next_bid = ref (State.next_bid state) in
   let mem = ref (State.memory state) in
   let params = State.params state in
   let vid = !RegisterFile.prefix ^ string_of_int pc in
@@ -52,7 +51,7 @@ let rec next program state cfg =
         int64_constant vid c
     | NumberConstant ->
         let c_str = Operands.const_of_nth operands 0 in
-        number_constant vid c_str mem
+        number_constant vid c_str next_bid mem
     (* common: control *)
     | Projection ->
         let idx = Operands.const_of_nth operands 0 |> int_of_string in
@@ -137,17 +136,17 @@ let rec next program state cfg =
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        speculative_safe_integer_add vid lval rval mem
+        speculative_safe_integer_add vid lval rval next_bid mem
     | SpeculativeSafeIntegerSubtract ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        speculative_safe_integer_subtract vid lval rval mem
+        speculative_safe_integer_subtract vid lval rval next_bid mem
     | NumberExpm1 ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
-        number_expm1 vid pval mem
+        number_expm1 vid pval next_bid mem
     (* simplified: comparison *)
     | BooleanNot ->
         let pid = Operands.id_of_nth operands 0 in
@@ -165,7 +164,7 @@ let rec next program state cfg =
         let size_value = RegisterFile.find size_id rf in
         let ct_id = Operands.id_of_nth operands 1 in
         let ct = ControlFile.find ct_id cf in
-        allocate_raw vid cid size_value ct
+        allocate_raw vid cid size_value next_bid ct
     | LoadElement ->
         let base_is_tagged = Operands.const_of_nth operands 0 in
         let tag_value = tag base_is_tagged in
@@ -198,11 +197,11 @@ let rec next program state cfg =
     | ChangeInt32ToTagged ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
-        change_int32_to_tagged vid pval mem
+        change_int32_to_tagged vid pval next_bid mem
     | ChangeInt64ToTagged ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
-        change_int64_to_tagged vid pval mem
+        change_int64_to_tagged vid pval next_bid mem
     | CheckedFloat64ToInt32 ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
@@ -434,10 +433,10 @@ let rec next program state cfg =
         round_float64_to_int32 vid pval
     | Empty -> (Value.empty, Control.empty, Bool.tr, Bool.fl)
     | _ ->
-        let msg =
-          Format.sprintf "unsupported instruction: %s" (opcode |> Opcode.to_str)
-        in
-        print_endline msg;
+        (* let msg =
+             Format.sprintf "unsupported instruction: %s" (opcode |> Opcode.to_str)
+           in
+           print_endline msg; *)
         (Value.empty, Control.empty, Bool.tr, Bool.fl)
   in
 
@@ -450,8 +449,8 @@ let rec next program state cfg =
   let updated_cf = ControlFile.add cid control cf in
   let updated_ub = Bool.ors [ State.ub state; ub; Bool.not type_is_verified ] in
   let next_state =
-    State.update next_pc updated_cf updated_rf !mem updated_asrt updated_ub
-      state
+    State.update next_pc !next_bid updated_cf updated_rf !mem updated_asrt
+      updated_ub state
   in
 
   if State.is_end next_state then { next_state with retvar = Some value }

@@ -32,6 +32,7 @@ end
 type t = {
   stage : string;
   pc : IR.Node.id;
+  next_bid : int;
   control_file : Control.t ControlFile.C.t;
   register_file : Value.t RegisterFile.R.t;
   memory : Memory.t;
@@ -45,17 +46,18 @@ let init nparams stage : t =
   {
     stage;
     pc = 0;
+    next_bid = 0;
     control_file = ControlFile.init stage;
     register_file = RegisterFile.init stage;
+    memory = Memory.init ("mem_" ^ stage);
     params = Params.init nparams;
     retvar = None;
     assertion = Bool.tr;
-    memory = Memory.init ("mem_" ^ stage);
     ub = Bool.fl;
   }
 
-let update pc control_file register_file memory assertion ub t =
-  { t with pc; control_file; register_file; memory; assertion; ub }
+let update pc next_bid control_file register_file memory assertion ub t =
+  { t with pc; next_bid; control_file; register_file; memory; assertion; ub }
 
 (* getter *)
 let pc t = t.pc
@@ -63,6 +65,8 @@ let pc t = t.pc
 let control_file t = t.control_file
 
 let register_file t = t.register_file
+
+let next_bid t = t.next_bid
 
 let memory t = t.memory
 
