@@ -43,13 +43,36 @@ type t = {
 }
 
 let init nparams stage : t =
+  let next_bid = ref 0 in
+  let embed_default_constants mem rf =
+    let default_constants =
+      [ "undefined"; "the_hole"; "null"; "empty_string"; "false"; "true" ]
+    in
+    List.fold_left
+      (fun (mem, rf) name ->
+        let ptr =
+          Memory.allocate next_bid (BitVecVal.from_int ~len:Value.len 1)
+        in
+        let updated_mem =
+          Memory.store ptr 1 Bool.tr (BitVecVal.from_int 0) mem
+        in
+        (updated_mem, RegisterFile.add name ptr rf))
+      (mem, rf) default_constants
+  in
+
+  let empty_memory = Memory.init ("mem_" ^ stage) in
+  let empty_register_file = RegisterFile.init stage in
+  let memory, register_file =
+    embed_default_constants empty_memory empty_register_file
+  in
+
   {
     stage;
     pc = 0;
-    next_bid = 0;
+    next_bid = !next_bid;
     control_file = ControlFile.init stage;
-    register_file = RegisterFile.init stage;
-    memory = Memory.init ("mem_" ^ stage);
+    register_file;
+    memory;
     params = Params.init nparams;
     retvar = None;
     assertion = Bool.tr;

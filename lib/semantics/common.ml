@@ -41,8 +41,7 @@ let heap_constant = external_constant
 (* behavior: value=c *)
 let number_constant vid c next_bid mem =
   let value = Value.init vid in
-  let wd_value = HeapNumber.allocate !next_bid in
-  next_bid := !next_bid + 1;
+  let wd_value = HeapNumber.allocate next_bid in
   HeapNumber.store wd_value (HeapNumber.from_number_string c) Bool.tr mem;
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.fl)
