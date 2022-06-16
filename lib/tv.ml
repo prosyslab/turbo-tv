@@ -7,7 +7,15 @@ open Z3utils
 
 let ctx = Z3utils.ctx
 
-let validator = Solver.init None
+let tactic =
+  let simplify_tactic = Z3.Tactic.mk_tactic ctx "simplify" in
+  let fpa2bv_tactic = Z3.Tactic.mk_tactic ctx "fpa2bv" in
+  let qfaufbv_tactic = Z3.Tactic.mk_tactic ctx "qfaufbv" in
+  Z3.Tactic.and_then ctx simplify_tactic fpa2bv_tactic [ qfaufbv_tactic ]
+
+let validator = Solver.init_with_tactic tactic
+
+module Id_set = Set.Make (Int)
 
 let tag base_is_tagged =
   match base_is_tagged with

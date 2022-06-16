@@ -51,6 +51,8 @@ module Solver = struct
     | None -> S.mk_solver ctx None
     | Some logic -> S.mk_solver ctx (Some (Z3.Symbol.mk_string ctx logic))
 
+  let init_with_tactic tactic = S.mk_solver_t ctx tactic
+
   let check solver query = S.check solver [ query ]
 
   let get_model = S.get_model
