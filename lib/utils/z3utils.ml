@@ -6,6 +6,7 @@ module M = Z3.Model
 module S = Z3.Solver
 module BV = Z3.BitVector
 module Fl = Z3.FloatingPoint
+module T = Z3.Tactic
 
 (* global context *)
 let ctx = Z3.mk_context [ ("model", "true") ]
@@ -31,6 +32,18 @@ module Expr = struct
 
   let print_simplified_expr exp =
     exp |> simplify None |> to_string |> print_endline
+end
+
+module Tactic = struct
+  type t = T.tactic
+
+  let init name = T.mk_tactic ctx name
+
+  let and_then tactic_names =
+    let tactics = List.map init tactic_names in
+    match tactics with
+    | h :: s :: t -> T.and_then ctx h s t
+    | _ -> failwith "require more than two tactics"
 end
 
 module Model = struct

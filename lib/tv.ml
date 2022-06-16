@@ -7,13 +7,9 @@ open Z3utils
 
 let ctx = Z3utils.ctx
 
-let tactic =
-  let simplify_tactic = Z3.Tactic.mk_tactic ctx "simplify" in
-  let fpa2bv_tactic = Z3.Tactic.mk_tactic ctx "fpa2bv" in
-  let qfaufbv_tactic = Z3.Tactic.mk_tactic ctx "qfaufbv" in
-  Z3.Tactic.and_then ctx simplify_tactic fpa2bv_tactic [ qfaufbv_tactic ]
-
-let validator = Solver.init_with_tactic tactic
+let validator =
+  let tactic = Tactic.and_then [ "simplify"; "fpa2bv"; "qfaufbv" ] in
+  Solver.init_with_tactic tactic
 
 module Id_set = Set.Make (Int)
 
