@@ -36,12 +36,6 @@ let external_constant vid c =
   (value, Control.empty, assertion, Bool.fl)
 
 (* behavior: value=c *)
-let heap_constant vid c =
-  let value = Value.init vid in
-  let assertion = Value.eq value (c |> Value.cast Type.tagged_pointer) in
-  (value, Control.empty, assertion, Bool.fl)
-
-(* behavior: value=c *)
 let number_constant vid c next_bid mem =
   let value = Value.init vid in
   let wd_value = HeapNumber.allocate next_bid in
@@ -136,7 +130,18 @@ let phi vid incoming repr conds =
 (* common: procedure *)
 let parameter vid param =
   let value = Value.init vid in
-  let assertion = Value.eq value param in
+  (* assume parameter is tagged signed or tagged pointer *)
+  let assertion =
+    Bool.ands
+      [
+        Value.eq value param;
+        Bool.ors
+          [
+            Value.has_type Type.tagged_pointer param;
+            Value.has_type Type.tagged_signed param;
+          ];
+      ]
+  in
   (value, Control.empty, assertion, Bool.fl)
 
 let return vid return_value =

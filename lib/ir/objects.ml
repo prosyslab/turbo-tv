@@ -18,24 +18,6 @@ module Map = struct
   let heap_number_map = BitVecVal.from_int ~len 5
 end
 
-let map_of ptr mem = Memory.load ptr 4 mem
-
-let has_map_of map ptr mem = Value.eq (map_of ptr mem) map
-
-let is_big_int ptr mem = Value.eq (map_of ptr mem) Map.big_int_map
-
-let is_boolean ptr mem = Value.eq (map_of ptr mem) Map.boolean_map
-
-let is_fixed_array ptr mem = Value.eq (map_of ptr mem) Map.fixed_array_map
-
-let is_fixed_double_array ptr mem =
-  Value.eq (map_of ptr mem) Map.fixed_double_array_map
-
-let is_weak_fixed_array ptr mem =
-  Value.eq (map_of ptr mem) Map.weak_fixed_array_map
-
-let is_heap_number ptr mem = Value.eq (map_of ptr mem) Map.heap_number_map
-
 module HeapNumber = struct
   type t = { map : BitVec.t; value : BitVec.t }
 
@@ -96,3 +78,27 @@ module HeapNumber = struct
         Float.le value_in_float (Float.safe_integer_max ());
       ]
 end
+
+let map_of ptr mem = Memory.load ptr 4 mem
+
+let has_map_of map ptr mem = Value.eq (map_of ptr mem) map
+
+let is_big_int ptr mem = Value.eq (map_of ptr mem) Map.big_int_map
+
+let is_boolean ptr mem = Value.eq (map_of ptr mem) Map.boolean_map
+
+let is_fixed_array ptr mem = Value.eq (map_of ptr mem) Map.fixed_array_map
+
+let is_fixed_double_array ptr mem =
+  Value.eq (map_of ptr mem) Map.fixed_double_array_map
+
+let is_weak_fixed_array ptr mem =
+  Value.eq (map_of ptr mem) Map.weak_fixed_array_map
+
+let is_heap_number ptr mem =
+  Bool.ands
+    [
+      Z3utils.BitVec.eqi (ptr |> Pointer.size_of) HeapNumber.size;
+      Z3utils.BitVec.eqi (ptr |> Pointer.off_of) 0;
+      Value.eq (map_of ptr mem) Map.heap_number_map;
+    ]

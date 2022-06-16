@@ -40,20 +40,7 @@ let rec next program state cfg =
           |> Value.from_f64string |> Value.cast Type.float64
         in
         float64_constant vid c
-    | HeapConstant ->
-        let addr_name_re = Re.Pcre.regexp "(0x[0-9a-f]+) <([^>]*)>" in
-        let operand = Operands.const_of_nth operands 0 in
-        let addr_name = Re.exec addr_name_re operand in
-        let addr = Re.Group.get addr_name 1 |> Value.from_istring in
-        let name = Re.Group.get addr_name 2 in
-
-        print_endline name;
-
-        (* if constant is default constant, use pre-defined value in register file *)
-        if List.mem name State.default_constants then
-          heap_constant vid (RegisterFile.find name rf)
-        else heap_constant vid addr
-    | ExternalConstant ->
+    | HeapConstant | ExternalConstant ->
         let addr_re = Re.Pcre.regexp "(0x[0-9a-f]+)" in
         let operand = Operands.const_of_nth operands 0 in
         let c =
@@ -526,8 +513,8 @@ let print_counter_example program state model =
     let control = ControlFile.find (string_of_int pc) cf in
 
     Format.printf "#%d:%s => \n  Value: %s\n  Control: %s\n" pc instr_s
-      (Model.eval model value false |> Option.get |> Expr.to_string)
-      (Model.eval model control false |> Option.get |> Expr.to_string);
+      (Model.eval model value |> Expr.to_string)
+      (Model.eval model control |> Expr.to_string);
 
     match opcode with End -> Format.printf "\n" | _ -> aux (pc + 1)
   in
@@ -559,9 +546,13 @@ let run nparams src_program tgt_program before_cfg after_cfg =
   | SATISFIABLE ->
       let model = Option.get (Solver.get_model validator) in
       Printf.printf "\nResult: Not Verified \n";
+      Printf.printf "  ub is same: %s\n"
+        (Model.eval model ub_is_same |> Expr.to_string);
+      Printf.printf "  retvar is same: %s\n"
+        (Model.eval model retvar_is_same |> Expr.to_string);
       Printf.printf "CounterExample: \n";
       Params.print_evaluated model (State.params src_state);
       print_counter_example src_program src_state model;
       print_counter_example tgt_program tgt_state model
-  | UNSATISFIABLE -> Printf.printf "\nResult: Verified\n"
+  | UNSATISFIABLE -> Printf.printf "\nResult: Verified"
   | _ -> failwith "unknown"

@@ -51,7 +51,7 @@ module Model = struct
 
   let to_str = M.to_string
 
-  let eval = M.eval
+  let eval t expr = M.eval t expr false |> Option.get
 end
 
 module Solver = struct

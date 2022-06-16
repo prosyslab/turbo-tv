@@ -24,7 +24,7 @@ module Params = struct
     List.iteri
       (fun idx param ->
         Format.printf "Parameter[%d]: %s\n" idx
-          (Model.eval model param false |> Option.get |> Expr.to_string))
+          (Model.eval model param |> Expr.to_string))
       t;
     Format.printf "\n"
 end
@@ -42,40 +42,32 @@ type t = {
   ub : Bool.t;
 }
 
-let default_constants =
-  [ "undefined"; "the_hole"; "null"; "empty_string"; "false"; "true" ]
-
 let init nparams stage : t =
-  let next_bid = ref 0 in
-  let embed_default_constants mem rf =
-    List.fold_left
-      (fun (mem, rf) name ->
-        let ptr =
-          Memory.allocate next_bid (BitVecVal.from_int ~len:Value.len 1)
+  let params = Params.init nparams in
+  let rec allocate_mem_for_parmas params memory =
+    match params with
+    | param :: rest ->
+        let c =
+          BitVec.init ~len:(8 * 12)
+            (Format.sprintf "mem_for_%s" (param |> Expr.to_string))
         in
-        let updated_mem =
-          Memory.store ptr 1 Bool.tr (BitVecVal.from_int 0) mem
-        in
-        if stage = "before" then
-          (updated_mem, RegisterFile.add ("bv" ^ name) ptr rf)
-        else (updated_mem, RegisterFile.add ("av" ^ name) ptr rf))
-      (mem, rf) default_constants
+        allocate_mem_for_parmas rest
+          (Bool.ite
+             (Value.has_type Type.tagged_pointer param)
+             (Memory.store param 12 Bool.tr c memory)
+             memory)
+    | _ -> memory
   in
-
-  let empty_memory = Memory.init ("mem_" ^ stage) in
-  let empty_register_file = RegisterFile.init stage in
-  let memory, register_file =
-    embed_default_constants empty_memory empty_register_file
-  in
+  let memory = allocate_mem_for_parmas params (Memory.init ("mem_" ^ stage)) in
 
   {
     stage;
     pc = 0;
-    next_bid = !next_bid;
+    next_bid = 0;
     control_file = ControlFile.init stage;
-    register_file;
+    register_file = RegisterFile.init stage;
     memory;
-    params = Params.init nparams;
+    params;
     retvar = None;
     assertion = Bool.tr;
     ub = Bool.fl;

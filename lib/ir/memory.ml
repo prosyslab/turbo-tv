@@ -21,8 +21,7 @@ let load ptr sz mem =
 
 let load_as ptr repr mem =
   let load_size = MachineType.Repr.size_of repr in
-  let value = load ptr load_size mem in
-  value
+  load ptr load_size mem
 
 (* Store [value] at block of [ptr] with the size [sz] *)
 let store ptr sz cond value mem =
