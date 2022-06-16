@@ -73,32 +73,38 @@ let speculative_number_bitwise_xor vid lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
- * - IsTaggedPointer(lval) /\ IsTaggedPointer(rval)
- * - PointsNumberObject(lval) /\ PointsNumberObject(rval)
- * - IsSafeInteger(lval) /\ IsSafeInteger(rval)
- * - IsWellDefined(lval) /\ IsWellDefined(rval)
+ *  IsTaggedPointer(lval) /\ IsTaggedPointer(rval)
+ * /\ PointsNumberObject(lval) /\ PointsNumberObject(rval)
+ * /\ IsSafeInteger(lval) /\ IsSafeInteger(rval)
+ * /\ IsWellDefined(lval) /\ IsWellDefined(rval)
  * assertion:
  *  value = ite well-defined (lval+rval) UB *)
 let speculative_safe_integer_add vid lval rval next_bid mem =
   let value = Value.init vid in
 
   let lnum = HeapNumber.load lval !mem in
-  let rnum = HeapNumber.load lval !mem in
+  let rnum = HeapNumber.load rval !mem in
 
+  let ub_cond =
+    Bool.not
+      (Bool.ands
+         [
+           Value.is_defined lval;
+           Value.is_defined rval;
+           lval |> Value.has_type Type.tagged_pointer;
+           rval |> Value.has_type Type.tagged_pointer;
+           Objects.is_heap_number lval !mem;
+           Objects.is_heap_number rval !mem;
+         ])
+  in
   let wd_cond =
     Bool.ands
       [
-        Value.is_defined lval;
-        Value.is_defined rval;
-        lval |> Value.has_type Type.tagged_pointer;
-        rval |> Value.has_type Type.tagged_pointer;
-        Objects.is_heap_number lval !mem;
-        Objects.is_heap_number rval !mem;
+        Bool.not ub_cond;
         HeapNumber.is_safe_integer lnum;
         HeapNumber.is_safe_integer rnum;
       ]
   in
-  let ub_cond = Bool.not wd_cond in
 
   let res_ptr = HeapNumber.allocate next_bid in
   let res = Value.Float64.add lnum.value rnum.value |> HeapNumber.from_value in
