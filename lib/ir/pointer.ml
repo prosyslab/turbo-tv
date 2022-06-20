@@ -7,9 +7,8 @@ type t = Value.t
    16-48: bid
    48-64: size of struct
    64-69: value type(Pointer)
-   70: undef
 *)
-(* High |u|-ty-|--sz--|--bid--|-offset-| Low *)
+(* High |-ty-|--sz--|--bid--|-offset-| Low *)
 let size_len = 16
 
 let bid_len = 32

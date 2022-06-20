@@ -6,7 +6,7 @@ module Params = struct
     type t = BitVec.t
 
     (* paramater id *)
-    let init pid = Value.init pid |> Value.set_defined
+    let init pid = Value.init pid
   end
 
   type t = Param.t list

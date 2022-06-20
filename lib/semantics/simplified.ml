@@ -21,8 +21,6 @@ let number_add vid lval rval =
   let wd_cond =
     Bool.ands
       [
-        Value.is_defined lval;
-        Value.is_defined rval;
         Bool.ors
           [
             Bool.ands [ lval_int32; rval_int32 ];
@@ -36,12 +34,11 @@ let number_add vid lval rval =
       (Bool.ors [ lval_int32; lval_int64 ])
       (Value.add lval rval) (Value.addf lval rval)
   in
-  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, Control.empty, assertion, Bool.fl)
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.not wd_cond)
 
 let number_abs vid pval =
   let value = Value.init vid in
-  let wd_cond = Value.is_defined pval in
   let ty = Value.ty_of pval in
   let wd_value =
     Bool.ite
@@ -49,7 +46,7 @@ let number_abs vid pval =
          [ Value.has_type Type.int32 pval; Value.has_type Type.int64 pval ])
       (Value.abs ty pval) (Value.absf pval)
   in
-  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
@@ -61,16 +58,11 @@ let speculative_number_bitwise_xor vid lval rval =
   let value = Value.init vid in
   let wd_cond =
     Bool.ands
-      [
-        Value.is_defined lval;
-        Value.is_defined rval;
-        Value.has_repr Repr.Word32 lval;
-        Value.has_repr Repr.Word32 rval;
-      ]
+      [ Value.has_repr Repr.Word32 lval; Value.has_repr Repr.Word32 rval ]
   in
   let wd_value = Value.xor lval rval in
-  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, Control.empty, assertion, Bool.fl)
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* well-defined condition:
  *  IsTaggedPointer(lval) /\ IsTaggedPointer(rval)
@@ -85,22 +77,13 @@ let speculative_safe_integer_add vid lval rval next_bid mem =
   let lnum = HeapNumber.load lval !mem in
   let rnum = HeapNumber.load rval !mem in
 
-  let ub_cond =
-    Bool.not
-      (Bool.ands
-         [
-           Value.is_defined lval;
-           Value.is_defined rval;
-           lval |> Value.has_type Type.tagged_pointer;
-           rval |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number lval !mem;
-           Objects.is_heap_number rval !mem;
-         ])
-  in
   let wd_cond =
     Bool.ands
       [
-        Bool.not ub_cond;
+        lval |> Value.has_type Type.tagged_pointer;
+        rval |> Value.has_type Type.tagged_pointer;
+        Objects.is_heap_number lval !mem;
+        Objects.is_heap_number rval !mem;
         HeapNumber.is_safe_integer lnum;
         HeapNumber.is_safe_integer rnum;
       ]
@@ -111,9 +94,9 @@ let speculative_safe_integer_add vid lval rval next_bid mem =
   HeapNumber.store res_ptr res wd_cond mem;
 
   let wd_value = res_ptr in
-  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  let assertion = Value.eq value wd_value in
 
-  (value, Control.empty, assertion, ub_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* well-defined condition:
  * - IsTaggedPointer(lval) /\ IsTaggedPointer(rval)
@@ -128,22 +111,13 @@ let speculative_safe_integer_subtract vid lval rval next_bid mem =
   let lnum = HeapNumber.load lval !mem in
   let rnum = HeapNumber.load lval !mem in
 
-  let ub_cond =
-    Bool.not
-      (Bool.ands
-         [
-           Value.is_defined lval;
-           Value.is_defined rval;
-           lval |> Value.has_type Type.tagged_pointer;
-           rval |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number lval !mem;
-           Objects.is_heap_number rval !mem;
-         ])
-  in
   let wd_cond =
     Bool.ands
       [
-        Bool.not ub_cond;
+        lval |> Value.has_type Type.tagged_pointer;
+        rval |> Value.has_type Type.tagged_pointer;
+        Objects.is_heap_number lval !mem;
+        Objects.is_heap_number rval !mem;
         HeapNumber.is_safe_integer lnum;
         HeapNumber.is_safe_integer rnum;
       ]
@@ -154,16 +128,14 @@ let speculative_safe_integer_subtract vid lval rval next_bid mem =
   HeapNumber.store res_ptr res wd_cond mem;
 
   let wd_value = res_ptr in
-  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-
-  (value, Control.empty, assertion, ub_cond)
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.not wd_cond)
 
 let number_expm1 vid nptr next_bid mem =
   let value = Value.init vid in
   let wd_cond =
     Bool.ands
       [
-        Value.is_defined nptr;
         nptr |> Value.has_type Type.tagged_pointer;
         Objects.is_heap_number nptr !mem;
       ]
@@ -193,7 +165,7 @@ let number_expm1 vid nptr next_bid mem =
   HeapNumber.store res_ptr expm1 wd_cond mem;
   let wd_value = res_ptr in
 
-  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, ub_cond)
 
 (* simplified: comparison *)
@@ -203,13 +175,9 @@ let number_expm1 vid nptr next_bid mem =
  *  value = ite well-defined (not pval) UB *)
 let boolean_not vid pval =
   let value = Value.init vid in
-  let wd_cond =
-    Bool.ands [ Value.is_defined pval; Value.has_type Type.bool pval ]
-  in
-  let assertion =
-    Value.eq value (Bool.ite wd_cond (Bool.not pval) Value.undefined)
-  in
-  (value, Control.empty, assertion, Bool.fl)
+  let wd_cond = Bool.ands [ Value.has_type Type.bool pval ] in
+  let assertion = Value.eq value (Bool.not pval) in
+  (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* simplified: memory *)
 let allocate_raw vid cid size next_bid ct =
@@ -265,15 +233,11 @@ let change_int31_to_taggedsigned vid pval =
   let value = Value.init vid in
   let wd_cond =
     Bool.ands
-      [
-        pval |> Value.has_type Type.int32;
-        Value.is_defined pval;
-        Value.Int32.is_in_smi_range pval;
-      ]
+      [ pval |> Value.has_type Type.int32; Value.Int32.is_in_smi_range pval ]
   in
   let wd_value = Value.Int32.to_tagged_signed pval in
-  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, Control.empty, assertion, Bool.fl)
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* Well-defined condition =
  *  IsInt32(pval) /\ WellDefined(pval)
@@ -283,9 +247,7 @@ let change_int32_to_tagged vid pval next_bid mem =
   let value = Value.init vid in
   let data = Value.data_of pval in
 
-  let wd_cond =
-    Bool.ands [ Value.is_defined pval; Value.has_type Type.int32 pval ]
-  in
+  let wd_cond = Value.has_type Type.int32 pval in
 
   (* if pval is in smi range, value = TaggedSigned(pval+pval) *)
   let is_in_smi_range = Value.Int32.is_in_smi_range pval in
@@ -297,8 +259,8 @@ let change_int32_to_tagged vid pval next_bid mem =
   HeapNumber.store ptr obj (Bool.not is_in_smi_range) mem;
 
   let wd_value = Bool.ite is_in_smi_range smi ptr in
-  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, Control.empty, assertion, Bool.fl)
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* well-defined condition:
  * - int64(pval) 
@@ -309,9 +271,7 @@ let change_int64_to_tagged vid pval next_bid mem =
   let value = Value.init vid in
   let data = Value.data_of value in
 
-  let wd_cond =
-    Bool.ands [ Value.is_defined pval; Value.has_type Type.int64 pval ]
-  in
+  let wd_cond = Bool.ands [ Value.has_type Type.int64 pval ] in
 
   (* if pval is in smi range, value = TaggedSigned(pval+pval) *)
   let is_in_smi_range = Value.Int64.is_in_smi_range pval in
@@ -323,8 +283,8 @@ let change_int64_to_tagged vid pval next_bid mem =
   HeapNumber.store ptr obj (Bool.not is_in_smi_range) mem;
 
   let wd_value = Bool.ite is_in_smi_range smi ptr in
-  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
-  (value, Control.empty, assertion, Bool.fl)
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* Well-defined condition =
  *  IsFloat64(pval) /\ WellDefined(pval)
@@ -334,9 +294,7 @@ let change_int64_to_tagged vid pval next_bid mem =
  *)
 let checked_float64_to_int32 _hint vid pval =
   let value = Value.init vid in
-  let wd_cond =
-    Bool.ands [ Value.is_defined pval; Value.has_type Type.float64 pval ]
-  in
+  let wd_cond = Bool.ands [ Value.has_type Type.float64 pval ] in
 
   let value32 = pval |> Value.Float64.to_int32 in
 
@@ -358,9 +316,9 @@ let checked_float64_to_int32 _hint vid pval =
        Bool.ors [ check_lost_precision; check_minus_zero ]
      in *)
   let wd_value = value32 in
-  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  let assertion = Value.eq value wd_value in
 
-  (value, Control.empty, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* Well-defined condition =
  *  IsTaggedSigned(pval) /\ WellDefined(pval)
@@ -370,13 +328,11 @@ let checked_float64_to_int32 _hint vid pval =
  *  value = ite well-defined Int32(pval >> 1) UV *)
 let checked_tagged_signed_to_int32 vid pval =
   let value = Value.init vid in
-  let wd_cond =
-    Bool.ands [ Value.is_defined pval; Value.has_type Type.tagged_signed pval ]
-  in
+  let wd_cond = Bool.ands [ Value.has_type Type.tagged_signed pval ] in
 
   (* TODO: handling deoptimization *)
   (* let deopt_cond = Bool.not (Value.has_type Type.tagged_signed pval) in *)
   let wd_value = Value.TaggedSigned.to_int32 pval in
-  let assertion = Value.eq value (Bool.ite wd_cond wd_value Value.undefined) in
+  let assertion = Value.eq value wd_value in
 
-  (value, Control.empty, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.not wd_cond)

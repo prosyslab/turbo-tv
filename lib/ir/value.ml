@@ -3,14 +3,13 @@ module Repr = MachineType.Repr
 
 type t = BitVec.t
 
-(* 1-bit for undef & 5-bit for type & 64-bit for data *)
-let undef_len = 1
+(*  5-bit for type & 64-bit for data *)
 
 let ty_len = Type.len
 
 let data_len = 64
 
-let len = undef_len + ty_len + data_len
+let len = ty_len + data_len
 
 let size = len / 8
 
@@ -19,16 +18,12 @@ let ty_of t = BitVec.extract (data_len + ty_len - 1) data_len t
 
 let data_of t = BitVec.extract (data_len - 1) 0 t
 
-let undef_of t = BitVec.extract (len - 1) (len - 1) t
-
 (* cast value [t] to type [ty] *)
 let cast ty t =
   if BitVec.length_of t <> len then (
     BitVec.length_of t |> string_of_int |> print_endline;
     failwith "invalid value length")
-  else
-    let undef = undef_of t in
-    BitVec.concat undef (BitVec.concat ty (data_of t))
+  else BitVec.concat ty (data_of t)
 
 (* entype [data] to type [ty] *)
 let entype ty data =
@@ -36,7 +31,7 @@ let entype ty data =
   if input_data_len <> data_len then
     failwith (Printf.sprintf "invalid data length: %d" input_data_len)
     (* TODO handling undef of data *)
-  else BitVec.concat (BitVecVal.zero ~len:1 ()) (BitVec.concat ty data)
+  else BitVec.concat ty data
 
 let zero_extend_data data =
   BitVec.zero_extend (data_len - BitVec.length_of data) data
@@ -256,17 +251,6 @@ let subf lval rval =
 let absf value =
   value |> data_of |> Float.from_ieee_bv |> Float.abs |> Float.to_ieee_bv
   |> entype Type.float64
-
-(* defined & undefined *)
-let undefined = BitVec.shli (BitVecVal.from_int ~len 1) (ty_len + data_len)
-
-let is_undefined value = BitVec.eqb undefined (BitVec.andb undefined value)
-
-let is_defined value = Bool.not (is_undefined value)
-
-let set_undefined value = BitVec.orb undefined value
-
-let set_defined value = BitVec.andb (BitVec.notb undefined) value
 
 (* constant values *)
 

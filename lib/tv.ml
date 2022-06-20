@@ -548,6 +548,10 @@ let run nparams src_program tgt_program before_cfg after_cfg =
       Printf.printf "\nResult: Not Verified \n";
       Printf.printf "  ub is same: %s\n"
         (Model.eval model ub_is_same |> Expr.to_string);
+      Printf.printf "    src ub: %s\n"
+        (Model.eval model (State.ub src_state) |> Expr.to_string);
+      Printf.printf "    tgt ub: %s\n"
+        (Model.eval model (State.ub tgt_state) |> Expr.to_string);
       Printf.printf "  retvar is same: %s\n"
         (Model.eval model retvar_is_same |> Expr.to_string);
       Printf.printf "CounterExample: \n";

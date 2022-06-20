@@ -17,11 +17,8 @@ let int32_constant vid c =
   let wd_cond =
     Bool.ands [ Value.sge c Value.int32_min; Value.sle c Value.int32_max ]
   in
-  let assertion =
-    Value.eq value
-      (Bool.ite wd_cond (c |> Value.cast Type.int32) Value.undefined)
-  in
-  (value, Control.empty, assertion, Bool.fl)
+  let assertion = Value.eq value (c |> Value.cast Type.int32) in
+  (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* behavior: value=c *)
 let int64_constant vid c =
@@ -55,10 +52,8 @@ let projection vid idx incoming =
   let value = Value.init vid in
   let wd_cond = 0 <= idx && idx < 2 && idx <= Composed.size_of incoming in
   let wd_value = incoming |> Composed.select idx in
-  let assertion =
-    Value.eq value (if wd_cond then wd_value else Value.undefined)
-  in
-  (value, Control.empty, assertion, Bool.fl)
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, if wd_cond then Bool.fl else Bool.tr)
 
 (* well-defined condition:
  * - Bool(cond) ^ Bool(precond)
@@ -67,14 +62,10 @@ let projection vid idx incoming =
  *  ct = ite well-defined (precond ^ cond, precond ^ not cond) (UB, UB) *)
 let branch cid cond precond =
   let control = ControlTuple.init cid in
-  let wd_cond = Value.is_defined cond in
   let for_true = Bool.and_ precond (Value.is_true cond) in
   let for_false = Bool.and_ precond (Value.is_false cond) in
   let wd_value = ControlTuple.from_tf for_true for_false in
-  let ud_value = ControlTuple.from_tf Bool.fl Bool.fl in
-  let assertion =
-    ControlTuple.eq control (Bool.ite wd_cond wd_value ud_value)
-  in
+  let assertion = ControlTuple.eq control wd_value in
   (Value.empty, control, assertion, Bool.fl)
 
 (* well-defined condition:
