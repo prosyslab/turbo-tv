@@ -298,6 +298,18 @@ let uint64_min = BitVecVal.from_int 0 |> entype Type.const
 
 let uint64_max = BitVec.addi (BitVec.shli int64_max 1) 1
 
+module Bool = struct
+  let from_value value = value |> BitVec.extract 1 0
+
+  let to_string model value =
+    let v_str =
+      value |> from_value |> Model.eval model |> Expr.to_simplified_string
+    in
+    Format.sprintf "Bool(0x%x)"
+      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
+      |> Int32.of_string |> Int32.to_int)
+end
+
 module Int32 = struct
   let from_value value = BitVec.extract 31 0 value
 
@@ -306,6 +318,16 @@ module Int32 = struct
   let to_tagged_signed value =
     BitVec.shli (value |> from_value) 1
     |> BitVec.zero_extend 32 |> entype Type.tagged_signed
+
+  let to_string model value =
+    let v_str =
+      value |> from_value |> Model.eval model |> Expr.to_simplified_string
+    in
+    Format.sprintf "Int32(0x%x)"
+      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
+      |> Int32.of_string |> Int32.to_int)
+
+  let print ppf model value = Format.fprintf ppf "%s" (value |> to_string model)
 
   let add lval rval =
     let li = lval |> from_value in
@@ -323,7 +345,7 @@ module Int32 = struct
     BitVec.sltb li ri |> to_value
 
   let is_in_smi_range value =
-    Bool.ands
+    Z3utils.Bool.ands
       [
         BitVec.sgei (value |> from_value) Constants.smi_min;
         BitVec.slei (value |> from_value) Constants.smi_max;
@@ -333,18 +355,28 @@ end
 module Int64 = struct
   type t = BitVec.t
 
-  let from_value value = BitVec.extract 31 0 value
+  let from_value value = BitVec.extract 63 0 value
 
-  let to_value t = t |> BitVec.zero_extend 32 |> entype Type.int64
+  let to_value t = t |> entype Type.int64
 
   let to_tagged_signed value =
-    BitVec.shli (value |> from_value) 1
+    BitVec.shli (BitVec.extract 31 0 value) 1
     |> BitVec.zero_extend 32 |> entype Type.tagged_signed
+
+  let to_string model value =
+    let v_str =
+      value |> from_value |> Model.eval model |> Expr.to_simplified_string
+    in
+    Format.sprintf "Int64(0x%x)"
+      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
+      |> Int64.of_string |> Int64.to_int)
+
+  let print ppf model value = Format.fprintf ppf "%s" (value |> to_string model)
 
   let lt lval rval = slt lval rval
 
   let is_in_smi_range value =
-    Bool.ands
+    Z3utils.Bool.ands
       [
         BitVec.sgei (value |> from_value) Constants.smi_min;
         BitVec.slei (value |> from_value) Constants.smi_max;
@@ -364,6 +396,9 @@ module Float64 = struct
   let to_int32 value =
     andi (value |> to_int64) Constants.int32_mask |> cast Type.int32
 
+  let to_string model value =
+    value |> from_value |> Model.eval model |> Expr.to_string
+
   let is_minus_zero value = Float.is_minus_zero (value |> from_value)
 
   let add lval rval =
@@ -379,12 +414,12 @@ module Float64 = struct
   let lt lval rval =
     let lf = lval |> from_value in
     let rf = rval |> from_value in
-    Bool.ite (Z3utils.Float.lt lf rf) tr fl
+    Z3utils.Bool.ite (Z3utils.Float.lt lf rf) tr fl
 
   let le lval rval =
     let lf = lval |> from_value in
     let rf = rval |> from_value in
-    Bool.ite (Z3utils.Float.le lf rf) tr fl
+    Z3utils.Bool.ite (Z3utils.Float.le lf rf) tr fl
 end
 
 module TaggedSigned = struct
@@ -394,7 +429,11 @@ module TaggedSigned = struct
 
   let to_int32 value =
     BitVec.ashri (value |> from_value) 1
-    |> BitVec.zero_extend 32 |> entype Type.int32
+    |> BitVec.sign_extend 32 |> entype Type.int32
+
+  let to_string model value = value |> to_int32 |> Int32.to_string model
+
+  let print ppf model value = value |> to_int32 |> Int32.print ppf model
 end
 
 module Composed = struct

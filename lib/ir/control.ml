@@ -7,6 +7,8 @@ let init name = Bool.init name
 
 let empty = Bool.fl
 
+let to_string model cid = cid |> Model.eval model |> Expr.to_simplified_string
+
 (* only for branch *)
 module ControlTuple = struct
   type t = E.expr

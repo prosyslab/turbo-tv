@@ -32,6 +32,7 @@
   ;typer
   typer
   ;utils
+  printer
   utils
   err
   z3utils)

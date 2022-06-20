@@ -55,3 +55,17 @@ let can_access pos sz t =
 let can_access_as pos repr t =
   let repr_sz = MachineType.Repr.size_of repr in
   can_access pos repr_sz t
+
+let to_string model t =
+  let bid =
+    let bid_str = bid_of t |> Model.eval model |> Expr.to_string in
+    "0" ^ String.sub bid_str 1 (String.length bid_str - 1)
+    |> Int32.of_string |> Int32.unsigned_to_int |> Option.get
+  in
+  let offset =
+    let off_str = off_of t |> Model.eval model |> Expr.to_string in
+    "0" ^ String.sub off_str 1 (String.length off_str - 1)
+    |> Int32.of_string |> Int32.unsigned_to_int |> Option.get
+  in
+
+  Format.sprintf "Pointer(bid: %d, offset: %d)" bid offset

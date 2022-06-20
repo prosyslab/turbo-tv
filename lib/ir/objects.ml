@@ -16,6 +16,21 @@ module Map = struct
   let weak_fixed_array_map = BitVecVal.from_int ~len 4
 
   let heap_number_map = BitVecVal.from_int ~len 5
+
+  let to_string model t =
+    let map_bstr = t |> Model.eval model |> Expr.to_string in
+    let map =
+      "0" ^ String.sub map_bstr 1 (String.length map_bstr - 1)
+      |> Int32.of_string |> Int32.unsigned_to_int |> Option.get
+    in
+    match map with
+    | 0 -> "big_int"
+    | 1 -> "boolean"
+    | 2 -> "fixed_array"
+    | 3 -> "fixed_double_array"
+    | 4 -> "weak_fixed_array"
+    | 5 -> "heap_number"
+    | _ -> "to_string: unreachable"
 end
 
 module HeapNumber = struct
@@ -77,6 +92,11 @@ module HeapNumber = struct
         Float.ge value_in_float (Float.safe_integer_min ());
         Float.le value_in_float (Float.safe_integer_max ());
       ]
+
+  let to_string model obj =
+    Format.sprintf "HeapNumber(%s)"
+      (obj.value |> Model.eval model |> Float.from_ieee_bv |> Float.to_real
+     |> Expr.to_simplified_string)
 end
 
 let map_of ptr mem = Memory.load ptr 4 mem
@@ -102,3 +122,11 @@ let is_heap_number ptr mem =
       Z3utils.BitVec.eqi (ptr |> Pointer.off_of) 0;
       Value.eq (map_of ptr mem) Map.heap_number_map;
     ]
+
+let to_string model mem ptr =
+  let map_str = map_of ptr mem |> Map.to_string model in
+  match map_str with
+  | "heap_number" ->
+      let obj = HeapNumber.load ptr mem in
+      HeapNumber.to_string model obj
+  | _ -> failwith (Format.sprintf "to_string: not implemented for %s" map_str)

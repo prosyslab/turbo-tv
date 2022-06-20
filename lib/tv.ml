@@ -11,8 +11,6 @@ let validator =
   let tactic = Tactic.and_then [ "simplify"; "fpa2bv"; "qfaufbv" ] in
   Solver.init_with_tactic tactic
 
-module Id_set = Set.Make (Int)
-
 let tag base_is_tagged =
   match base_is_tagged with
   | "tagged base" -> 1
@@ -488,38 +486,6 @@ let execute program nparams stage cfg =
   let init_state = State.init nparams stage in
   next program init_state cfg
 
-let print_counter_example program state model =
-  Format.printf "State of %s\n" (State.stage state);
-  let rf = State.register_file state in
-  let cf = State.control_file state in
-  let rec aux pc =
-    let ty, opcode, operands = IR.instr_of pc program in
-    let instr_s =
-      match ty with
-      | Some ty ->
-          Format.sprintf "%s(%s) [%s]" (opcode |> Opcode.to_str)
-            (operands |> Operands.to_str)
-            (ty |> Types.to_string)
-      | None ->
-          Format.sprintf "%s(%s)" (opcode |> Opcode.to_str)
-            (operands |> Operands.to_str)
-    in
-
-    let prefix = if State.stage state = "before" then "b" else "a" in
-    RegisterFile.prefix := prefix ^ "v";
-    ControlFile.prefix := prefix ^ "c";
-
-    let value = RegisterFile.find (string_of_int pc) rf in
-    let control = ControlFile.find (string_of_int pc) cf in
-
-    Format.printf "#%d:%s => \n  Value: %s\n  Control: %s\n" pc instr_s
-      (Model.eval model value |> Expr.to_string)
-      (Model.eval model control |> Expr.to_string);
-
-    match opcode with End -> Format.printf "\n" | _ -> aux (pc + 1)
-  in
-  aux 0
-
 let run nparams src_program tgt_program before_cfg after_cfg =
   let src_state = execute src_program nparams "before" before_cfg in
   let tgt_state = execute tgt_program nparams "after" after_cfg in
@@ -555,8 +521,9 @@ let run nparams src_program tgt_program before_cfg after_cfg =
       Printf.printf "  retvar is same: %s\n"
         (Model.eval model retvar_is_same |> Expr.to_string);
       Printf.printf "CounterExample: \n";
-      Params.print_evaluated model (State.params src_state);
-      print_counter_example src_program src_state model;
-      print_counter_example tgt_program tgt_state model
-  | UNSATISFIABLE -> Printf.printf "\nResult: Verified"
+      Printer.print_params model (State.memory src_state)
+        (State.params src_state);
+      Printer.print_counter_example src_program src_state model;
+      Printer.print_counter_example tgt_program tgt_state model
+  | UNSATISFIABLE -> Printf.printf "\nResult: Verified\n"
   | _ -> failwith "unknown"
