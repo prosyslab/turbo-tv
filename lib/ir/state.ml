@@ -43,31 +43,14 @@ type t = {
 }
 
 let init nparams stage : t =
-  let params = Params.init nparams in
-  let rec allocate_mem_for_parmas params memory =
-    match params with
-    | param :: rest ->
-        let c =
-          BitVec.init ~len:(8 * 12)
-            (Format.sprintf "mem_for_%s" (param |> Expr.to_string))
-        in
-        allocate_mem_for_parmas rest
-          (Bool.ite
-             (Value.has_type Type.tagged_pointer param)
-             (Memory.store param 12 Bool.tr c memory)
-             memory)
-    | _ -> memory
-  in
-  let memory = allocate_mem_for_parmas params (Memory.init ("mem_" ^ stage)) in
-
   {
     stage;
     pc = 0;
     next_bid = 0;
     control_file = ControlFile.init stage;
     register_file = RegisterFile.init stage;
-    memory;
-    params;
+    memory = Memory.init "mem";
+    params = Params.init nparams;
     retvar = None;
     assertion = Bool.tr;
     ub = Bool.fl;
