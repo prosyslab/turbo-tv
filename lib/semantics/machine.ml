@@ -457,39 +457,47 @@ let uint64_less_than_or_equal vid lval rval =
   (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* machine: memory *)
-(* defined condition:
- *   well_defined(ptr) /\ well_defined(pos) /\
- *   pointer(ptr) /\
- *   can_access(ptr, pos, size)
- * behavior:
- *   ite defined (Mem[pos+size] := value) UB
- *)
+(* well-defined condition:
+ *   IsPointer(ptr) \/
+ *   (IsTaggedPointer(ptr) /\ CanAccess(ptr, pos, repr))
+ * assertion:
+ *   mem = ite well-defined Store(ptr, pos, repr, mem) mem *)
 let store ptr pos repr value mem =
   (* ptr must be pointer type & well-defined *)
-  let ptr_is_pointer = Value.has_type Type.pointer ptr in
-  let can_access = Pointer.can_access_as pos repr ptr in
-  let store_cond = Bool.ands [ ptr_is_pointer; can_access ] in
-  let ub_cond = Bool.not store_cond in
+  let wd_cond =
+    (* ptr must be a pointer or tagged pointer *)
+    let ptr_is_pointer = Value.has_type Type.pointer ptr in
+    let ptr_is_tagged_pointer = Value.has_type Type.tagged_pointer ptr in
+
+    (* check index out-of-bounds *)
+    let can_access = Pointer.can_access_as pos repr ptr in
+
+    (* only when value is tagged pointer, check boundary *)
+    Bool.ors [ ptr_is_pointer; Bool.ands [ ptr_is_tagged_pointer; can_access ] ]
+  in
 
   let store_size = repr |> Repr.size_of in
-  mem := Memory.store ptr store_size store_cond value !mem;
+  mem := Memory.store ptr store_size wd_cond value !mem;
 
-  (Value.empty, Control.empty, Bool.tr, ub_cond)
+  (Value.empty, Control.empty, Bool.tr, Bool.not wd_cond)
 
 (* well-defined condition:
- * - well_defined(ptr) ^ well_defined(pos)
- * - pointer(ptr) ^ repr(pos)
- * - can_access(ptr, pos, size)
+ *   IsPointer(ptr) \/
+ *   (IsTaggedPointer(ptr) /\ CanAccess(ptr, pos, repr))
  * assertion:
- * value = ite well-defined (Mem[pos+size]) UB *)
+ *   value = (Mem[pos+size]) *)
 let load vid ptr pos repr mem =
   let value = Value.init vid in
   let wd_cond =
-    (* ptr must be pointer type & well-defined *)
+    (* ptr must be a pointer or tagged pointer *)
     let ptr_is_pointer = Value.has_type Type.pointer ptr in
+    let ptr_is_tagged_pointer = Value.has_type Type.pointer ptr in
+
     (* check index out-of-bounds *)
-    let no_oob = Pointer.can_access_as pos repr ptr in
-    Bool.ands [ ptr_is_pointer; no_oob ]
+    let can_access = Pointer.can_access_as pos repr ptr in
+
+    (* only when value is tagged pointer, check boundary *)
+    Bool.ors [ ptr_is_pointer; Bool.ands [ ptr_is_tagged_pointer; can_access ] ]
   in
 
   (* Some repr can be mapped to more than one type.

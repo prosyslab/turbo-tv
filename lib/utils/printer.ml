@@ -61,7 +61,7 @@ let print_counter_example program state model =
     in
 
     match opcode with
-    | Start | Branch | Merge | Return ->
+    | Start | Branch | Merge | Return | IfFalse | IfTrue ->
         Format.printf "#%d:%s => \n  Control: %s\n" pc instr_s control;
         aux (pc + 1)
     | Phi ->
