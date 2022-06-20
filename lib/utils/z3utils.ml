@@ -3,6 +3,7 @@ module A = Z3.Z3Array
 module B = Z3.Boolean
 module E = Z3.Expr
 module M = Z3.Model
+module R = Z3.Arithmetic.Real
 module S = Z3.Solver
 module BV = Z3.BitVector
 module Fl = Z3.FloatingPoint
@@ -390,4 +391,10 @@ module Array = struct
   let store value key arr = A.mk_store ctx arr key value
 
   let select key arr = A.mk_select ctx arr key
+end
+
+module Real = struct
+  type t = E.expr
+
+  let to_decimal_string t = R.to_decimal_string t 5
 end

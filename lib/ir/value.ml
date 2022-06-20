@@ -310,6 +310,23 @@ module Bool = struct
       |> Int32.of_string |> Int32.to_int)
 end
 
+module TaggedSigned = struct
+  let from_value = BitVec.extract 31 1
+
+  let to_value t = t |> BitVec.zero_extend 32 |> entype Type.tagged_signed
+
+  let to_int32 value =
+    value |> from_value |> BitVec.sign_extend 33 |> entype Type.int32
+
+  let to_string model value =
+    let v_str =
+      value |> from_value |> Model.eval model |> Expr.to_simplified_string
+    in
+    Format.sprintf "TaggedSigned(0x%x)"
+      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
+      |> Int32.of_string |> Int32.to_int)
+end
+
 module Int32 = struct
   let from_value value = BitVec.extract 31 0 value
 
@@ -326,8 +343,6 @@ module Int32 = struct
     Format.sprintf "Int32(0x%x)"
       ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
       |> Int32.of_string |> Int32.to_int)
-
-  let print ppf model value = Format.fprintf ppf "%s" (value |> to_string model)
 
   let add lval rval =
     let li = lval |> from_value in
@@ -371,8 +386,6 @@ module Int64 = struct
       ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
       |> Int64.of_string |> Int64.to_int)
 
-  let print ppf model value = Format.fprintf ppf "%s" (value |> to_string model)
-
   let lt lval rval = slt lval rval
 
   let is_in_smi_range value =
@@ -397,7 +410,11 @@ module Float64 = struct
     andi (value |> to_int64) Constants.int32_mask |> cast Type.int32
 
   let to_string model value =
-    value |> from_value |> Model.eval model |> Expr.to_string
+    let v_str =
+      value |> from_value |> Model.eval model |> Float.to_real
+      |> Real.to_decimal_string
+    in
+    Format.sprintf "Float64(%s)" v_str
 
   let is_minus_zero value = Float.is_minus_zero (value |> from_value)
 
@@ -420,20 +437,6 @@ module Float64 = struct
     let lf = lval |> from_value in
     let rf = rval |> from_value in
     Z3utils.Bool.ite (Z3utils.Float.le lf rf) tr fl
-end
-
-module TaggedSigned = struct
-  let from_value = BitVec.extract 31 0
-
-  let to_value t = t |> BitVec.zero_extend 32 |> entype Type.tagged_signed
-
-  let to_int32 value =
-    BitVec.ashri (value |> from_value) 1
-    |> BitVec.sign_extend 32 |> entype Type.int32
-
-  let to_string model value = value |> to_int32 |> Int32.to_string model
-
-  let print ppf model value = value |> to_int32 |> Int32.print ppf model
 end
 
 module Composed = struct
