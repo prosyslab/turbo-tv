@@ -8,16 +8,14 @@ type t = Value.t
    48-64: size of struct
    64-69: value type(Pointer)
 *)
-(* High |-ty-|--bid--|-offset-(1)-| Low *)
+(* High |-size-|--bid--|-offset-(1)-| Low *)
 let size_len = 16
 
 let bid_len = 32
 
 let off_len = 16
 
-let len = Value.len
-
-let size = Value.size
+let len = size_len + bid_len + off_len
 
 (* getter *)
 let size_of t =

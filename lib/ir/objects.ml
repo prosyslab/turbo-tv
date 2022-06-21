@@ -113,4 +113,4 @@ let to_string model mem ptr =
   | "heap_number" ->
       let obj = HeapNumber.load ptr mem in
       HeapNumber.to_string model obj
-  | s -> s
+  | s -> s ^ " object: not implemented yet"

@@ -11,8 +11,6 @@ let data_len = 64
 
 let len = ty_len + data_len
 
-let size = len / 8
-
 (* getter *)
 let ty_of t = BitVec.extract (data_len + ty_len - 1) data_len t
 

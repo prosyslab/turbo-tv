@@ -19,9 +19,8 @@ let value_to_string model mem value =
         (Objects.to_string model mem value)
   | "any_tagged" ->
       let is_tagged_signed =
-        value
-        |> Value.has_type Type.tagged_signed
-        |> Model.eval model |> Expr.to_string |> bool_of_string
+        Bool.eq (BitVec.extract 0 0 value) (BitVecVal.from_int ~len:1 0)
+        |> Model.eval model |> Expr.to_simplified_string |> bool_of_string
       in
       if is_tagged_signed then value |> Value.TaggedSigned.to_string model
       else
