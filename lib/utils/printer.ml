@@ -15,7 +15,7 @@ let value_to_string model mem value =
   | "tagged_signed" -> value |> Value.TaggedSigned.to_string model
   | "tagged_pointer" ->
       Format.sprintf "%s => %s"
-        (value |> Pointer.to_string model)
+        (value |> TaggedPointer.to_string model)
         (Objects.to_string model mem value)
   | "any_tagged" ->
       let is_tagged_signed =
@@ -25,7 +25,7 @@ let value_to_string model mem value =
       if is_tagged_signed then value |> Value.TaggedSigned.to_string model
       else
         Format.sprintf "%s => %s"
-          (value |> Pointer.to_string model)
+          (value |> TaggedPointer.to_string model)
           (Objects.to_string model mem value)
   | "map_in_header" -> value |> Value.MapInHeader.to_string model
   | "empty" -> "empty"
@@ -73,12 +73,8 @@ let print_counter_example program state model =
     in
 
     match opcode with
-    | Start | Branch | Merge | Return | IfFalse | IfTrue ->
+    | Start | Branch | Merge | Return | IfFalse | IfTrue | JSStackCheck ->
         Format.printf "#%d:%s => \n  Control: %s\n" pc instr_s control;
-        aux (pc + 1)
-    | Phi ->
-        Format.printf "#%d:%s => \n  Value: %s\n  Control: %s\n" pc instr_s
-          value control;
         aux (pc + 1)
     | End -> Format.printf "\n"
     | _ ->

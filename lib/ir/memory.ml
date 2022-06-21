@@ -2,11 +2,11 @@ open Z3utils
 
 type t = Array.t
 
-let init name = Array.init name (BitVec.mk_sort Pointer.len) (BitVec.mk_sort 8)
+let init name = Array.init name (BitVec.mk_sort 64) (BitVec.mk_sort 8)
 
 let allocate bid size =
   bid := !bid + 1;
-  Pointer.init !bid size
+  TaggedPointer.init !bid size
 
 (* Load [value] at block of [ptr] with the size [sz]*)
 let load ptr sz mem =
@@ -15,9 +15,9 @@ let load ptr sz mem =
     else
       let byte = Array.select ptr mem in
       let res = if loaded_sz = 0 then byte else BitVec.concat byte res in
-      aux res (loaded_sz + 1) (Pointer.next ptr)
+      aux res (loaded_sz + 1) (TaggedPointer.next ptr)
   in
-  aux (BitVecVal.from_int ~len:1 0) 0 (ptr |> Value.data_of)
+  aux (BitVecVal.from_int ~len:1 0) 0 ptr
 
 let load_as ptr repr mem =
   let load_size = MachineType.Repr.size_of repr in
@@ -31,9 +31,9 @@ let store ptr sz cond value mem =
       let byte = BitVec.extract ((stored_sz * 8) + 7) (stored_sz * 8) value in
       let original = load ptr 1 mem in
       let updated_mem = Array.store (Bool.ite cond byte original) ptr mem in
-      aux (stored_sz + 1) value (Pointer.next ptr) updated_mem
+      aux (stored_sz + 1) value (TaggedPointer.next ptr) updated_mem
   in
-  aux 0 value (ptr |> Value.data_of) mem
+  aux 0 value ptr mem
 
 let store_as ptr repr cond value mem =
   let store_size = MachineType.Repr.size_of repr in

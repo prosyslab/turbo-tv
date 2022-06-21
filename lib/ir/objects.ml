@@ -20,16 +20,24 @@ module HeapNumber = struct
   let from_value value = { map = Objmap.heap_number_map; value }
 
   let store ptr obj cond mem =
-    mem := Memory.store ptr (Objmap.len / 8) cond obj.map !mem;
+    (* ptr is tagged *)
     mem :=
       Memory.store
-        (Pointer.movei ptr number_offset)
+        (ptr |> TaggedPointer.to_raw_pointer)
+        (Objmap.len / 8) cond obj.map !mem;
+    mem :=
+      Memory.store
+        (TaggedPointer.movei ptr number_offset |> TaggedPointer.to_raw_pointer)
         (number_len / 8) cond obj.value !mem
 
   let load ptr mem =
     {
-      map = Memory.load ptr (Objmap.len / 8) mem;
-      value = Memory.load (Pointer.movei ptr number_offset) (number_len / 8) mem;
+      map =
+        Memory.load (ptr |> TaggedPointer.to_raw_pointer) (Objmap.len / 8) mem;
+      value =
+        Memory.load
+          (TaggedPointer.movei ptr number_offset |> TaggedPointer.to_raw_pointer)
+          (number_len / 8) mem;
     }
 
   let map_of obj = obj.map
@@ -88,7 +96,7 @@ module HeapNumber = struct
     Format.sprintf "HeapNumber(%s)" f_str
 end
 
-let map_of ptr mem = Memory.load ptr 4 mem
+let map_of ptr mem = Memory.load (ptr |> TaggedPointer.to_raw_pointer) 4 mem
 
 let has_map_of map ptr mem = Value.eq (map_of ptr mem) map
 
