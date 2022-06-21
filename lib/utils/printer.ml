@@ -17,6 +17,17 @@ let value_to_string model mem value =
       Format.sprintf "%s => %s"
         (value |> Pointer.to_string model)
         (Objects.to_string model mem value)
+  | "any_tagged" ->
+      let is_tagged_signed =
+        value
+        |> Value.has_type Type.tagged_signed
+        |> Model.eval model |> Expr.to_string |> bool_of_string
+      in
+      if is_tagged_signed then value |> Value.TaggedSigned.to_string model
+      else
+        Format.sprintf "%s => %s"
+          (value |> Pointer.to_string model)
+          (Objects.to_string model mem value)
   | "map_in_header" -> value |> Value.MapInHeader.to_string model
   | "empty" -> "empty"
   | _ -> failwith (Format.sprintf "print_value: not implemented for %s" ty_str)
