@@ -16,6 +16,7 @@ let value_to_string model mem value =
       Format.sprintf "%s => %s"
         (value |> Pointer.to_string model)
         (Objects.to_string model mem value)
+  | "map_in_header" -> value |> Value.MapInHeader.to_string model
   | "empty" -> "empty"
   | _ -> failwith (Format.sprintf "print_value: not implemented for %s" ty_str)
 

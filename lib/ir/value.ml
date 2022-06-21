@@ -327,6 +327,14 @@ module TaggedSigned = struct
       |> Int32.of_string |> Int32.to_int)
 end
 
+module MapInHeader = struct
+  let from_value value = value |> data_of |> Z3utils.BitVec.extract 31 0
+
+  let to_string model value =
+    let map_str = Objmap.to_string model (value |> from_value) in
+    Format.sprintf "MapInHeader(%s)" map_str
+end
+
 module Int32 = struct
   let from_value value = BitVec.extract 31 0 value
 
@@ -411,8 +419,7 @@ module Float64 = struct
 
   let to_string model value =
     let v_str =
-      value |> from_value |> Model.eval model |> Float.to_real
-      |> Real.to_decimal_string
+      value |> from_value |> Model.eval model |> Real.to_decimal_string
     in
     Format.sprintf "Float64(%s)" v_str
 

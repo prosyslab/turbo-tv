@@ -17,6 +17,7 @@
   control
   registerFile
   state
+  objmap
   memory
   type
   value
