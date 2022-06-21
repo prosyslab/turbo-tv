@@ -172,7 +172,7 @@ let int64_sub vid lval rval =
 let round_float64_to_int32 vid pval =
   let value = Value.init vid in
   let wd_cond = Bool.ands [ Value.has_type Type.float64 pval ] in
-  let wd_value = value |> Value.round_float64_to_int32 in
+  let wd_value = value |> Value.Float64.to_int32 in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
@@ -574,7 +574,7 @@ let bitcast_word_to_tagged vid v =
 let change_float64_to_int64 vid pval =
   let value = Value.init vid in
   let wd_cond = Bool.ands [ Value.has_type Type.float64 pval ] in
-  let wd_value = value |> Value.float64_to_int64 in
+  let wd_value = value |> Value.Float64.to_int64 in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 

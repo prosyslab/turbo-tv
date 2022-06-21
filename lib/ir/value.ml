@@ -71,15 +71,6 @@ let is_integer t = Bool.ors [ is_signed_integer t; is_unsigned_integer t ]
 let is_float t = Bool.ors (List.map (fun ty -> has_type ty t) Type.float_types)
 
 (* type casting operations *)
-let round_float64_to_int32 t =
-  data_of t |> Float.from_ieee_bv
-  |> Float.to_sbv (Z3.FloatingPoint.RoundingMode.mk_round_toward_zero ctx)
-  |> entype Type.int32
-
-let float64_to_int64 t =
-  data_of t |> Float.from_ieee_bv
-  |> Float.to_sbv (Z3.FloatingPoint.RoundingMode.mk_round_toward_zero ctx)
-  |> entype Type.int64
 
 let int32_to_int64 t =
   let x = t |> BitVec.extract 31 0 |> BitVec.sign_extend 32 in
@@ -359,6 +350,10 @@ module Int32 = struct
     BitVec.shli (value |> from_value) 1
     |> BitVec.zero_extend 32 |> entype Type.tagged_signed
 
+  let to_float64 value =
+    value |> from_value |> BitVec.zero_extend 32 |> Float.from_signed_bv
+    |> Float.to_ieee_bv |> entype Type.float64
+
   let to_string model value =
     let v_str =
       value |> from_value |> Model.eval model |> Expr.to_simplified_string
@@ -439,6 +434,11 @@ module Float64 = struct
     Format.sprintf "Float64(%s)" v_str
 
   let is_minus_zero value = Float.is_minus_zero (value |> from_value)
+
+  let eq lval rval =
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
+    Z3utils.Float.eq lf rf
 
   let add lval rval =
     let lf = lval |> from_value in

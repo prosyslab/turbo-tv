@@ -301,7 +301,7 @@ let checked_float64_to_int32 _hint vid pval =
   (* TODO: handing deoptimization *)
   (* let deopt_cond =
        let check_lost_precision =
-         Value.eq pval (value32 |> Value.Float64.from_value)
+         Value.Float64.eq pval (value32 |> Value.Int32.to_float64)
        in
        let check_minus_zero =
          if hint = "dont-check-for-minus-zero" then Bool.tr

@@ -104,13 +104,7 @@ let is_fixed_double_array ptr mem =
 let is_weak_fixed_array ptr mem =
   Value.eq (map_of ptr mem) Objmap.weak_fixed_array_map
 
-let is_heap_number ptr mem =
-  Bool.ands
-    [
-      Z3utils.BitVec.eqi (ptr |> Pointer.size_of) HeapNumber.size;
-      Z3utils.BitVec.eqi (ptr |> Pointer.off_of) 0;
-      Value.eq (map_of ptr mem) Objmap.heap_number_map;
-    ]
+let is_heap_number ptr mem = Value.eq (map_of ptr mem) Objmap.heap_number_map
 
 let to_string model mem ptr =
   let map = map_of ptr mem in

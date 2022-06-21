@@ -8,7 +8,7 @@ type t = Value.t
    48-64: size of struct
    64-69: value type(Pointer)
 *)
-(* High |-ty-|--sz--|--bid--|-offset-| Low *)
+(* High |-ty-|--bid--|-offset-(1)-| Low *)
 let size_len = 16
 
 let bid_len = 32
@@ -32,7 +32,11 @@ let init bid sz =
   let bid = BitVecVal.from_int ~len:64 bid in
   let sz = Value.data_of sz in
   let value =
-    BitVec.orb (BitVec.shli sz (bid_len + off_len)) (BitVec.shli bid off_len)
+    BitVec.ori
+      (BitVec.orb
+         (BitVec.shli sz (bid_len + off_len))
+         (BitVec.shli bid off_len))
+      1
     |> Value.entype Type.tagged_pointer
   in
   value
@@ -64,8 +68,9 @@ let to_string model t =
   in
   let offset =
     let off_str = off_of t |> Model.eval model |> Expr.to_string in
-    "0" ^ String.sub off_str 1 (String.length off_str - 1)
-    |> Int32.of_string |> Int32.unsigned_to_int |> Option.get
+    ("0" ^ String.sub off_str 1 (String.length off_str - 1)
+    |> Int32.of_string |> Int32.unsigned_to_int |> Option.get)
+    - 1
   in
 
-  Format.sprintf "Pointer(bid: %d, offset: %d)" bid offset
+  Format.sprintf "TaggedPointer(bid: %d, offset: %d)" bid offset

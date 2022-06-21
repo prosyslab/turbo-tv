@@ -678,7 +678,6 @@ type t =
   | SpeculativeBigIntAsUintN
   | SpeculativeBigIntNegate
   | SpeculativeBigIntSubtract
-  | SpeculativeNumberAdd
   | SpeculativeNumberBitwiseAnd
   | SpeculativeNumberBitwiseOr
   | SpeculativeNumberDivide
@@ -835,7 +834,6 @@ type t =
   | ChangeTaggedSignedToInt32
   | ChangeUint32ToFloat64
   | ChangeUint32ToUint64
-  | CheckedFloat64ToInt32
   | CheckedTaggedSignedToInt32
   | Float64Abs
   | Float64ExtractHighWord32
@@ -863,6 +861,7 @@ type t =
   | Parameter
   (* b1v1 *)
   | ChangeFloat64ToTagged
+  | CheckedFloat64ToInt32
   | Projection
   (* cv *)
   | End
@@ -882,6 +881,7 @@ type t =
   | Int64Sub
   | NumberAdd
   | ReferenceEqual
+  | SpeculativeNumberAdd
   | SpeculativeNumberBitwiseXor
   | SpeculativeSafeIntegerAdd
   | SpeculativeSafeIntegerSubtract
@@ -1081,9 +1081,9 @@ let get_kind opcode =
   | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
   | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
   | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
-  | SpeculativeBigIntSubtract | SpeculativeNumberAdd
-  | SpeculativeNumberBitwiseAnd | SpeculativeNumberBitwiseOr
-  | SpeculativeNumberDivide | SpeculativeNumberEqual | SpeculativeNumberLessThan
+  | SpeculativeBigIntSubtract | SpeculativeNumberBitwiseAnd
+  | SpeculativeNumberBitwiseOr | SpeculativeNumberDivide
+  | SpeculativeNumberEqual | SpeculativeNumberLessThan
   | SpeculativeNumberLessThanOrEqual | SpeculativeNumberModulus
   | SpeculativeNumberMultiply | SpeculativeNumberPow
   | SpeculativeNumberShiftLeft | SpeculativeNumberShiftRight
@@ -1129,25 +1129,25 @@ let get_kind opcode =
   | ChangeFloat32ToFloat64 | ChangeFloat64ToInt64 | ChangeInt31ToTaggedSigned
   | ChangeInt32ToFloat64 | ChangeInt32ToInt64 | ChangeInt32ToTagged
   | ChangeInt64ToFloat64 | ChangeInt64ToTagged | ChangeTaggedSignedToInt32
-  | ChangeUint32ToFloat64 | ChangeUint32ToUint64 | CheckedFloat64ToInt32
-  | CheckedTaggedSignedToInt32 | Float64Abs | Float64ExtractHighWord32
-  | NumberAbs | NumberExpm1 | RoundFloat64ToInt32 | StackPointerGreaterThan
-  | ToBoolean | TruncateInt64ToInt32 | TruncateTaggedToBit ->
+  | ChangeUint32ToFloat64 | ChangeUint32ToUint64 | CheckedTaggedSignedToInt32
+  | Float64Abs | Float64ExtractHighWord32 | NumberAbs | NumberExpm1
+  | RoundFloat64ToInt32 | StackPointerGreaterThan | ToBoolean
+  | TruncateInt64ToInt32 | TruncateTaggedToBit ->
       V1
   | IfFalse | IfTrue -> C1
   | Branch -> V1E1
   | Call | ExternalConstant | Float64Constant | HeapConstant | Int32Constant
   | Int64Constant | JSStackCheck | NumberConstant | Parameter ->
       B1
-  | ChangeFloat64ToTagged | Projection -> B1V1
+  | ChangeFloat64ToTagged | CheckedFloat64ToInt32 | Projection -> B1V1
   | End | Merge -> CV
   | Float64Equal | Float64LessThan | Float64LessThanOrEqual | Float64Sub
   | Int32Add | Int32AddWithOverflow | Int32LessThan | Int32Mul | Int32Sub
   | Int64Add | Int64LessThan | Int64Sub | NumberAdd | ReferenceEqual
-  | SpeculativeNumberBitwiseXor | SpeculativeSafeIntegerAdd
-  | SpeculativeSafeIntegerSubtract | Uint32LessThan | Uint32LessThanOrEqual
-  | Uint64LessThan | Uint64LessThanOrEqual | Word32And | Word32Equal | Word32Or
-  | Word32Shl | Word32Xor | Word64Equal | Word64Shl ->
+  | SpeculativeNumberAdd | SpeculativeNumberBitwiseXor
+  | SpeculativeSafeIntegerAdd | SpeculativeSafeIntegerSubtract | Uint32LessThan
+  | Uint32LessThanOrEqual | Uint64LessThan | Uint64LessThanOrEqual | Word32And
+  | Word32Equal | Word32Or | Word32Shl | Word32Xor | Word64Equal | Word64Shl ->
       V1V2
   | Return -> V2
   | Load -> V1V2B1
@@ -1840,7 +1840,6 @@ let of_str str =
   | "SpeculativeBigIntAsUintN" -> SpeculativeBigIntAsUintN
   | "SpeculativeBigIntNegate" -> SpeculativeBigIntNegate
   | "SpeculativeBigIntSubtract" -> SpeculativeBigIntSubtract
-  | "SpeculativeNumberAdd" -> SpeculativeNumberAdd
   | "SpeculativeNumberBitwiseAnd" -> SpeculativeNumberBitwiseAnd
   | "SpeculativeNumberBitwiseOr" -> SpeculativeNumberBitwiseOr
   | "SpeculativeNumberDivide" -> SpeculativeNumberDivide
@@ -1995,7 +1994,6 @@ let of_str str =
   | "ChangeTaggedSignedToInt32" -> ChangeTaggedSignedToInt32
   | "ChangeUint32ToFloat64" -> ChangeUint32ToFloat64
   | "ChangeUint32ToUint64" -> ChangeUint32ToUint64
-  | "CheckedFloat64ToInt32" -> CheckedFloat64ToInt32
   | "CheckedTaggedSignedToInt32" -> CheckedTaggedSignedToInt32
   | "Float64Abs" -> Float64Abs
   | "Float64ExtractHighWord32" -> Float64ExtractHighWord32
@@ -2019,6 +2017,7 @@ let of_str str =
   | "NumberConstant" -> NumberConstant
   | "Parameter" -> Parameter
   | "ChangeFloat64ToTagged" -> ChangeFloat64ToTagged
+  | "CheckedFloat64ToInt32" -> CheckedFloat64ToInt32
   | "Projection" -> Projection
   | "End" -> End
   | "Merge" -> Merge
@@ -2036,6 +2035,7 @@ let of_str str =
   | "Int64Sub" -> Int64Sub
   | "NumberAdd" -> NumberAdd
   | "ReferenceEqual" -> ReferenceEqual
+  | "SpeculativeNumberAdd" -> SpeculativeNumberAdd
   | "SpeculativeNumberBitwiseXor" -> SpeculativeNumberBitwiseXor
   | "SpeculativeSafeIntegerAdd" -> SpeculativeSafeIntegerAdd
   | "SpeculativeSafeIntegerSubtract" -> SpeculativeSafeIntegerSubtract
@@ -2711,7 +2711,6 @@ let to_str opcode =
   | SpeculativeBigIntAsUintN -> "SpeculativeBigIntAsUintN"
   | SpeculativeBigIntNegate -> "SpeculativeBigIntNegate"
   | SpeculativeBigIntSubtract -> "SpeculativeBigIntSubtract"
-  | SpeculativeNumberAdd -> "SpeculativeNumberAdd"
   | SpeculativeNumberBitwiseAnd -> "SpeculativeNumberBitwiseAnd"
   | SpeculativeNumberBitwiseOr -> "SpeculativeNumberBitwiseOr"
   | SpeculativeNumberDivide -> "SpeculativeNumberDivide"
@@ -2866,7 +2865,6 @@ let to_str opcode =
   | ChangeTaggedSignedToInt32 -> "ChangeTaggedSignedToInt32"
   | ChangeUint32ToFloat64 -> "ChangeUint32ToFloat64"
   | ChangeUint32ToUint64 -> "ChangeUint32ToUint64"
-  | CheckedFloat64ToInt32 -> "CheckedFloat64ToInt32"
   | CheckedTaggedSignedToInt32 -> "CheckedTaggedSignedToInt32"
   | Float64Abs -> "Float64Abs"
   | Float64ExtractHighWord32 -> "Float64ExtractHighWord32"
@@ -2890,6 +2888,7 @@ let to_str opcode =
   | NumberConstant -> "NumberConstant"
   | Parameter -> "Parameter"
   | ChangeFloat64ToTagged -> "ChangeFloat64ToTagged"
+  | CheckedFloat64ToInt32 -> "CheckedFloat64ToInt32"
   | Projection -> "Projection"
   | End -> "End"
   | Merge -> "Merge"
@@ -2907,6 +2906,7 @@ let to_str opcode =
   | Int64Sub -> "Int64Sub"
   | NumberAdd -> "NumberAdd"
   | ReferenceEqual -> "ReferenceEqual"
+  | SpeculativeNumberAdd -> "SpeculativeNumberAdd"
   | SpeculativeNumberBitwiseXor -> "SpeculativeNumberBitwiseXor"
   | SpeculativeSafeIntegerAdd -> "SpeculativeSafeIntegerAdd"
   | SpeculativeSafeIntegerSubtract -> "SpeculativeSafeIntegerSubtract"

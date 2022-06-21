@@ -66,7 +66,7 @@ CheckReceiverOrNullOrUndefined,
 CheckSmi,
 CheckString,
 CheckSymbol,
-CheckedFloat64ToInt32,v1
+CheckedFloat64ToInt32,b1,v1
 CheckedFloat64ToInt64,
 CheckedInt32Add,
 CheckedInt32Div,
@@ -707,7 +707,7 @@ SpeculativeBigIntAsIntN,
 SpeculativeBigIntAsUintN,
 SpeculativeBigIntNegate,
 SpeculativeBigIntSubtract,
-SpeculativeNumberAdd,
+SpeculativeNumberAdd,v1,v2
 SpeculativeNumberBitwiseAnd,
 SpeculativeNumberBitwiseOr,
 SpeculativeNumberBitwiseXor,v1,v2

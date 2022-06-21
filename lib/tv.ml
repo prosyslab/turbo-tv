@@ -227,9 +227,10 @@ let rec next program state cfg =
         let pval = RegisterFile.find pid rf in
         change_int64_to_tagged vid pval next_bid mem
     | CheckedFloat64ToInt32 ->
-        let pid = Operands.id_of_nth operands 0 in
+        let hint = Operands.const_of_nth operands 0 in
+        let pid = Operands.id_of_nth operands 1 in
         let pval = RegisterFile.find pid rf in
-        checked_float64_to_int32 "" vid pval
+        checked_float64_to_int32 hint vid pval
     | CheckedTaggedSignedToInt32 ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
@@ -490,13 +491,13 @@ let run nparams src_program tgt_program before_cfg after_cfg =
   let src_state = execute src_program nparams "before" before_cfg in
   let tgt_state = execute tgt_program nparams "after" after_cfg in
 
-  let retvar_is_same =
+  let retval_is_same =
     Bool.eq
       (State.retvar src_state |> Option.get)
       (State.retvar tgt_state |> Option.get)
   in
   let ub_is_same = Bool.eq (State.ub src_state) (State.ub tgt_state) in
-  let is_refined = Bool.ands [ retvar_is_same; ub_is_same ] in
+  let is_refined = Bool.ands [ retval_is_same; ub_is_same ] in
 
   let assertion =
     Bool.ands
@@ -519,7 +520,7 @@ let run nparams src_program tgt_program before_cfg after_cfg =
       Printf.printf "    tgt ub: %s\n"
         (Model.eval model (State.ub tgt_state) |> Expr.to_string);
       Printf.printf "  retvar is same: %s\n"
-        (Model.eval model retvar_is_same |> Expr.to_string);
+        (Model.eval model retval_is_same |> Expr.to_string);
       Printf.printf "CounterExample: \n";
       Printer.print_params model (State.memory src_state)
         (State.params src_state);
