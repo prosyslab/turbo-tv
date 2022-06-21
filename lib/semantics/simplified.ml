@@ -336,3 +336,32 @@ let checked_tagged_signed_to_int32 vid pval =
   let assertion = Value.eq value wd_value in
 
   (value, Control.empty, assertion, Bool.not wd_cond)
+
+let to_boolean vid pval mem =
+  let value = Value.init vid in
+  let wd_cond = Bool.ands [ Value.has_type Type.tagged_pointer pval ] in
+
+  (* currently only handle the heap number;
+     look: https://tc39.es/ecma262/#sec-toboolean *)
+  let decl =
+    let value_sort = BV.mk_sort ctx 69 in
+    Z3.FuncDecl.mk_func_decl_s ctx "unknown_to_boolean" [ value_sort ]
+      Bool.mk_sort
+  in
+
+  let wd_value =
+    let number = HeapNumber.load value !mem in
+    Bool.ite
+      (Objects.map_of value !mem |> Bool.eq Objmap.heap_number_map)
+      (Bool.ite
+         (Bool.ors
+            [
+              HeapNumber.is_minus_zero number;
+              HeapNumber.is_zero number;
+              HeapNumber.is_nan number;
+            ])
+         Value.fl Value.tr)
+      (Bool.ite (Z3.FuncDecl.apply decl [ pval ]) Value.tr Value.fl)
+  in
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.not wd_cond)

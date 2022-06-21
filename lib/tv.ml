@@ -235,6 +235,10 @@ let rec next program state cfg =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         checked_tagged_signed_to_int32 vid pval
+    | ToBoolean ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        to_boolean vid pval mem
     (* machine: arithmetic *)
     | Float64Abs ->
         let pid = Operands.id_of_nth operands 0 in
