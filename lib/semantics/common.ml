@@ -98,23 +98,27 @@ let merge cid conds =
   let assertion = Value.eq control merged in
   (Value.empty, control, assertion, Bool.fl)
 
-let phi vid incoming repr conds =
+let phi vid incomings repr conds =
   let value = Value.init vid in
   (* select one of types candidated by repr *)
   let ty = Type.from_repr repr |> List.hd in
   let rec mk_value values conds =
     match values with
-    | h :: [ t ] ->
-        Bool.ite (List.hd conds) (h |> Value.cast ty) (t |> Value.cast ty)
+    | h :: [ t ] -> Bool.ite (List.hd conds) h t
     | h :: t when List.length t > 1 ->
-        Bool.ite (List.hd conds)
-          (h |> Value.cast ty)
-          (mk_value t (List.tl conds))
+        Bool.ite (List.hd conds) h (mk_value t (List.tl conds))
     (* length of incoming is larger than 1 *)
     | [ _ ] -> failwith "unreachable"
     | _ -> failwith "unreachable"
   in
-  let wd_value = mk_value incoming conds in
+
+  (* settle [incoming_value] to the 'tagged signed' type or 'tagged pointer type' if [ty] is 'any tagged' *)
+  let wd_value =
+    let incoming_value = mk_value incomings conds in
+    if ty = Type.any_tagged then Value.AnyTagged.settle incoming_value
+    else incoming_value |> Value.cast ty
+  in
+
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.fl)
 
