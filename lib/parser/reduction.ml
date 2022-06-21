@@ -1,5 +1,9 @@
 let special_prefix = "- "
+
 let in_place_prefix = "- In-place update"
+
+let lowering_prefix = "- Simplified Lowering"
+
 let replacement_prefix = "- Replacement"
 
 let extract_special_lines lines =
@@ -21,6 +25,7 @@ let update_reductions line_info reductions =
 
 let is_reduction_occur line =
   String.starts_with ~prefix:in_place_prefix line
+  || String.starts_with ~prefix:lowering_prefix line
   || String.starts_with ~prefix:replacement_prefix line
 
 let get_indices_and_desc reduction =
