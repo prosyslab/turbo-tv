@@ -470,14 +470,17 @@ let store ptr pos repr value mem =
     let ptr_is_tagged_pointer = Value.has_type Type.tagged_pointer ptr in
 
     (* check index out-of-bounds *)
-    let can_access = Pointer.can_access_as pos repr ptr in
+    let can_access = TaggedPointer.can_access_as pos repr ptr in
 
     (* only when value is tagged pointer, check boundary *)
     Bool.ors [ ptr_is_pointer; Bool.ands [ ptr_is_tagged_pointer; can_access ] ]
   in
 
   let store_size = repr |> Repr.size_of in
-  mem := Memory.store ptr store_size wd_cond value !mem;
+  mem :=
+    Memory.store
+      (ptr |> TaggedPointer.to_raw_pointer)
+      store_size wd_cond value !mem;
 
   (Value.empty, Control.empty, Bool.tr, Bool.not wd_cond)
 
@@ -494,7 +497,7 @@ let load vid ptr pos repr mem =
     let ptr_is_tagged_pointer = Value.has_type Type.pointer ptr in
 
     (* check index out-of-bounds *)
-    let can_access = Pointer.can_access_as pos repr ptr in
+    let can_access = TaggedPointer.can_access_as pos repr ptr in
 
     (* only when value is tagged pointer, check boundary *)
     Bool.ors [ ptr_is_pointer; Bool.ands [ ptr_is_tagged_pointer; can_access ] ]
@@ -505,7 +508,9 @@ let load vid ptr pos repr mem =
      In this case, we pick the head of the type candidates.*)
   let ty = Type.from_repr repr |> List.hd in
   let wd_value =
-    Memory.load_as (Pointer.move ptr pos) repr mem
+    Memory.load_as
+      (TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer)
+      repr mem
     |> Value.zero_extend_data |> Value.entype ty
   in
   let assertion = Value.eq value wd_value in

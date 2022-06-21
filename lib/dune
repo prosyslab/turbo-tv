@@ -13,7 +13,7 @@
   IR
   objects
   constants
-  pointer
+  taggedPointer
   control
   registerFile
   state

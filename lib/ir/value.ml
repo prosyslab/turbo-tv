@@ -48,7 +48,8 @@ let from_bv bv =
 
 let empty = from_int 0 |> cast Type.empty
 
-(* type *)
+(* type checks *)
+(* [has_type] assumes that [t] is a not any-tagged value *)
 let has_type (ty : Type.t) t =
   if ty = Type.any_tagged then
     Bool.ors
@@ -287,18 +288,6 @@ let uint64_min = BitVecVal.from_int 0 |> entype Type.const
 
 let uint64_max = BitVec.addi (BitVec.shli int64_max 1) 1
 
-module Bool = struct
-  let from_value value = value |> BitVec.extract 1 0
-
-  let to_string model value =
-    let v_str =
-      value |> from_value |> Model.eval model |> Expr.to_simplified_string
-    in
-    Format.sprintf "Bool(0x%x)"
-      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
-      |> Int32.of_string |> Int32.to_int)
-end
-
 module TaggedSigned = struct
   let from_value = BitVec.extract 31 1
 
@@ -312,6 +301,37 @@ module TaggedSigned = struct
       value |> from_value |> Model.eval model |> Expr.to_simplified_string
     in
     Format.sprintf "TaggedSigned(0x%x)"
+      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
+      |> Int32.of_string |> Int32.to_int)
+end
+
+module AnyTagged = struct
+  let settle value =
+    (* Use [is_tagged_signed] and [is_tagged_pointer] only when [t] can be a any-tagged value.*)
+    let is_tagged_signed value =
+      Bool.ors
+        [
+          has_type Type.tagged_signed value;
+          Bool.ands
+            [
+              has_type Type.any_tagged value;
+              Bool.eq (BitVec.extract 0 0 value) (BitVecVal.from_int ~len:1 0);
+            ];
+        ]
+    in
+    Bool.ite (is_tagged_signed value)
+      (cast Type.tagged_signed value)
+      (cast Type.tagged_pointer value)
+end
+
+module Bool = struct
+  let from_value value = value |> BitVec.extract 1 0
+
+  let to_string model value =
+    let v_str =
+      value |> from_value |> Model.eval model |> Expr.to_simplified_string
+    in
+    Format.sprintf "Bool(0x%x)"
       ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
       |> Int32.of_string |> Int32.to_int)
 end

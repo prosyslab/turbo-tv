@@ -95,7 +95,6 @@ let speculative_safe_integer_add vid lval rval next_bid mem =
 
   let wd_value = res_ptr in
   let assertion = Value.eq value wd_value in
-
   (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* well-defined condition:
@@ -109,7 +108,7 @@ let speculative_safe_integer_subtract vid lval rval next_bid mem =
   let value = Value.init vid in
 
   let lnum = HeapNumber.load lval !mem in
-  let rnum = HeapNumber.load lval !mem in
+  let rnum = HeapNumber.load rval !mem in
 
   let wd_cond =
     Bool.ands
@@ -216,11 +215,14 @@ let store_field ptr pos mt value mem =
   let ty_check = Value.has_type Type.pointer ptr in
 
   (* check index out-of-bounds *)
-  let can_access = Pointer.can_access_as pos repr ptr in
+  let can_access = TaggedPointer.can_access_as pos repr ptr in
   let ub_cond = Bool.not (Bool.ands [ ty_check; can_access ]) in
   let store_cond = Bool.not ub_cond in
 
-  mem := Memory.store_as (Pointer.move ptr pos) repr store_cond value !mem;
+  mem :=
+    Memory.store_as
+      (TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer)
+      repr store_cond value !mem;
   (Value.empty, Control.empty, Bool.tr, ub_cond)
 
 (* simplified: type-conversion *)
