@@ -335,6 +335,21 @@ module MapInHeader = struct
     Format.sprintf "MapInHeader(%s)" map_str
 end
 
+module Int8 = struct
+  let from_value value = BitVec.extract 7 0 value
+
+  let to_value t = t |> BitVec.zero_extend 56 |> entype Type.int8
+
+  let to_string model value =
+    let v_str =
+      value |> from_value |> Model.eval model |> BitVec.sign_extend 24
+      |> Expr.to_simplified_string
+    in
+    Format.sprintf "Int8(0x%x)"
+      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
+      |> Int32.of_string |> Int32.to_int)
+end
+
 module Int32 = struct
   let from_value value = BitVec.extract 31 0 value
 

@@ -29,4 +29,4 @@ let to_string model t =
   | 3 -> "fixed_double_array"
   | 4 -> "weak_fixed_array"
   | 5 -> "heap_number"
-  | _ -> failwith (Format.sprintf "Unknown map: 0x%x" map)
+  | _ -> Format.sprintf "unknown(map:0x%x)" map

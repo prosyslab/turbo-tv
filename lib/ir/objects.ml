@@ -97,7 +97,4 @@ let to_string model mem ptr =
   | "heap_number" ->
       let obj = HeapNumber.load ptr mem in
       HeapNumber.to_string model obj
-  | _ ->
-      failwith
-        (Format.sprintf "Objects.to_string: not implemented for map '%s'"
-           map_str)
+  | s -> s

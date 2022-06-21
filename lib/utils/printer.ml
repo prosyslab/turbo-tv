@@ -4,6 +4,7 @@ let value_to_string model mem value =
   let ty_str = value |> Value.ty_of |> Type.to_string model in
   match ty_str with
   | "bool" -> value |> Value.Bool.to_string model
+  | "int8" -> value |> Value.Int8.to_string model
   | "int32" -> value |> Value.Int32.to_string model
   (* | "uint32" -> value |> Uint32.to_string *)
   | "int64" -> value |> Value.Int64.to_string model
