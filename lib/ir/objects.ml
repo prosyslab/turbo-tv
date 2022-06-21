@@ -61,9 +61,31 @@ module HeapNumber = struct
       ]
 
   let to_string model obj =
-    Format.sprintf "HeapNumber(%s)"
-      (obj.value |> Model.eval model |> Float.from_ieee_bv |> Float.to_real
-     |> Expr.to_simplified_string)
+    let f_str =
+      let fval = obj.value |> Float.from_ieee_bv |> Model.eval model in
+      let is_nan =
+        fval |> Float.is_nan |> Expr.to_simplified_string |> bool_of_string
+      in
+      let is_minus_zero =
+        fval |> Float.is_minus_zero |> Expr.to_simplified_string
+        |> bool_of_string
+      in
+      let is_inf =
+        fval |> Float.is_minus_zero |> Expr.to_simplified_string
+        |> bool_of_string
+      in
+      let is_ninf =
+        fval |> Float.is_minus_zero |> Expr.to_simplified_string
+        |> bool_of_string
+      in
+
+      if is_nan then "NaN"
+      else if is_minus_zero then "-0.0"
+      else if is_inf then "Infinity"
+      else if is_ninf then "-Infinity"
+      else fval |> Real.to_decimal_string
+    in
+    Format.sprintf "HeapNumber(%s)" f_str
 end
 
 let map_of ptr mem = Memory.load ptr 4 mem

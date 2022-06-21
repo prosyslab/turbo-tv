@@ -118,7 +118,7 @@ module Float = struct
 
   let double_sort = Fl.mk_sort_double ctx
 
-  let minus_zero ?(sort = !float_sort) () = Fl.mk_numeral_s ctx "-0" sort
+  let minus_zero ?(sort = !float_sort) () = Fl.mk_numeral_s ctx "-0.0" sort
 
   let nan ?(sort = !float_sort) () = Fl.mk_nan ctx sort
 
@@ -180,7 +180,14 @@ module Float = struct
 
   let abs exp = Fl.mk_abs ctx exp
 
-  let is_minus_zero exp = eq (minus_zero ()) exp
+  let is_minus_zero exp =
+    Bool.ands [ Fl.mk_is_negative ctx exp; Fl.mk_is_zero ctx exp ]
+
+  let is_nan exp = Fl.mk_is_nan ctx exp
+
+  let is_inf exp = Fl.mk_is_infinite ctx exp
+
+  let is_ninf exp = [ Fl.mk_is_negative ctx exp; is_inf exp ]
 end
 
 module BitVecVal = struct
