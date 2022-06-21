@@ -120,6 +120,8 @@ let rec next program state cfg =
                return_values)
         in
         (value, Control.empty, assertion, Bool.fl)
+    (* JS: comparision *)
+    | JSStackCheck -> (Value.empty, Bool.tr, Bool.tr, Bool.fl)
     (* simplified: arithmetic *)
     | NumberAdd ->
         let lpid = Operands.id_of_nth operands 0 in
