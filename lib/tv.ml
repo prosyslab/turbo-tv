@@ -68,13 +68,13 @@ let rec next program state cfg =
         branch cid cond_value precond_token
     | IfFalse ->
         let nid = Operands.id_of_nth operands 0 in
-        let cond_token = ControlFile.find nid cf in
-        if_false cid cond_token
+        let ctrl_token = ControlFile.find nid cf in
+        if_false cid ctrl_token
     | IfTrue ->
         let nid = Operands.id_of_nth operands 0 in
-        let cond_token = ControlFile.find nid cf in
-        if_true cid cond_token
-    | Phi ->
+        let ctrl_token = ControlFile.find nid cf in
+        if_true cid ctrl_token
+    | Phi -> (
         let rev = operands |> List.rev in
         let ctrl_id = Operands.id_of_nth rev 0 in
         let _, ctrl_opcode, incomings_id =
@@ -516,8 +516,15 @@ let run nparams src_program tgt_program before_cfg after_cfg =
       (State.retvar src_state |> Option.get)
       (State.retvar tgt_state |> Option.get)
   in
-  let ub_is_same = Bool.eq (State.ub src_state) (State.ub tgt_state) in
-  let is_refined = Bool.ands [ retval_is_same; ub_is_same ] in
+
+  let src_ub = State.ub src_state in
+  let tgt_ub = State.ub tgt_state in
+  let ub_is_same = Bool.eq src_ub tgt_ub in
+  let is_refined =
+    Bool.ite ub_is_same
+      (Bool.ite (Bool.eq src_ub Bool.tr) Bool.tr retval_is_same)
+      Bool.fl
+  in
 
   let assertion =
     Bool.ands
