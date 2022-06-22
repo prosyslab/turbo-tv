@@ -71,20 +71,10 @@ let is_float t = Bool.ors (List.map (fun ty -> has_type ty t) Type.float_types)
 
 (* type casting operations *)
 
-let int32_to_int64 t =
-  let x = t |> BitVec.extract 31 0 |> BitVec.sign_extend 32 in
-  x |> entype Type.int64
-
 let uint32_to_int64 t = t |> cast Type.int64
 
 let int64_to_float64 t =
   data_of t |> Float.from_signed_bv |> Float.to_ieee_bv |> entype Type.float64
-
-let int32_to_float64 t = t |> int32_to_int64 |> int64_to_float64
-
-let int32_to_int64 t =
-  let x = t |> BitVec.extract 31 0 |> BitVec.sign_extend 32 in
-  x |> entype Type.int64
 
 let uint32_to_float64 t = t |> uint32_to_int64 |> int64_to_float64
 
@@ -291,10 +281,13 @@ let uint64_max = BitVec.addi (BitVec.shli int64_max 1) 1
 module TaggedSigned = struct
   let from_value = BitVec.extract 31 1
 
-  let to_value t = t |> BitVec.zero_extend 32 |> entype Type.tagged_signed
+  let to_value t =
+    BitVec.concat t (BitVecVal.from_int ~len:1 0)
+    |> BitVec.zero_extend 32 |> entype Type.tagged_signed
 
   let to_int32 value =
-    value |> from_value |> BitVec.sign_extend 33 |> entype Type.int32
+    value |> from_value |> BitVec.sign_extend 1 |> BitVec.zero_extend 32
+    |> entype Type.int32
 
   let to_string model value =
     let v_str =
@@ -307,17 +300,8 @@ end
 
 module AnyTagged = struct
   let settle value =
-    (* Use [is_tagged_signed] and [is_tagged_pointer] only when [t] can be a any-tagged value.*)
     let is_tagged_signed value =
-      Bool.ors
-        [
-          has_type Type.tagged_signed value;
-          Bool.ands
-            [
-              has_type Type.any_tagged value;
-              Bool.eq (BitVec.extract 0 0 value) (BitVecVal.from_int ~len:1 0);
-            ];
-        ]
+      Bool.eq (BitVec.extract 0 0 value) (BitVecVal.from_int ~len:1 0)
     in
     Bool.ite (is_tagged_signed value)
       (cast Type.tagged_signed value)
@@ -364,22 +348,28 @@ module Int32 = struct
 
   let to_value t = t |> BitVec.zero_extend 32 |> entype Type.int32
 
+  (* type-conversion *)
+  let to_float64 value =
+    value |> from_value |> BitVec.sign_extend 32 |> Float.from_signed_bv
+    |> Float.to_ieee_bv |> entype Type.float64
+
+  let to_int64 value =
+    value |> from_value |> BitVec.sign_extend 32 |> entype Type.int64
+
   let to_tagged_signed value =
     BitVec.shli (value |> from_value) 1
     |> BitVec.zero_extend 32 |> entype Type.tagged_signed
 
-  let to_float64 value =
-    value |> from_value |> BitVec.zero_extend 32 |> Float.from_signed_bv
-    |> Float.to_ieee_bv |> entype Type.float64
-
+  (* pp *)
   let to_string model value =
     let v_str =
       value |> from_value |> Model.eval model |> Expr.to_simplified_string
     in
-    Format.sprintf "Int32(0x%x)"
+    Format.sprintf "Int32(0x%lx)"
       ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
-      |> Int32.of_string |> Int32.to_int)
+      |> Int32.of_string)
 
+  (* Int32 V x Int32 V *)
   let add lval rval =
     let li = lval |> from_value in
     let ri = rval |> from_value in
@@ -395,6 +385,7 @@ module Int32 = struct
     let ri = rval |> from_value in
     BitVec.sltb li ri |> to_value
 
+  (* Method *)
   let is_in_smi_range value =
     Z3utils.Bool.ands
       [
@@ -418,9 +409,9 @@ module Int64 = struct
     let v_str =
       value |> from_value |> Model.eval model |> Expr.to_simplified_string
     in
-    Format.sprintf "Int64(0x%x)"
+    Format.sprintf "Int64(0x%Lx)"
       ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
-      |> Int64.of_string |> Int64.to_int)
+      |> Int64.of_string)
 
   let lt lval rval = slt lval rval
 

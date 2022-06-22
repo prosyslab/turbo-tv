@@ -584,35 +584,35 @@ let change_float64_to_int64 vid pval =
   (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* well-defined condition:
- * - well_defined(v) ^ int32(v)
+ *  IsInt32(v)
  * assertion:
- *  value = ite well-defined float64(v) UB *)
+ *  value = Float64(v) *)
 let change_int32_to_float64 vid pval =
   let value = Value.init vid in
-  let wd_cond = Bool.ands [ Value.has_type Type.int32 pval ] in
-  let wd_value = value |> Value.int32_to_float64 in
+  let wd_cond = Value.has_type Type.int32 pval in
+  let wd_value = value |> Value.Int32.to_float64 in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* well-defined condition:
- * - well_defined(v) ^ int32(v)
+ *  IsInt32(v)
  * assertion:
- *  value = ite well-defined int64(v) UB *)
+ *  value = Int64(v) *)
 let change_int32_to_int64 vid pval =
   let value = Value.init vid in
-  let wd_cond = Bool.ands [ Value.has_type Type.int32 pval ] in
+  let wd_cond = Value.has_type Type.int32 pval in
   (* extend sign bit *)
-  let wd_value = value |> Value.int32_to_int64 in
+  let wd_value = value |> Value.Int32.to_int64 in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* well-defined condition:
- * - well_defined(v) ^ int64(v)
+ *  IsInt64(v)
  * assertion:
- *  value = ite well-defined float64(v) UB *)
+ *  value = Float64(v) *)
 let change_int64_to_float64 vid pval =
   let value = Value.init vid in
-  let wd_cond = Bool.ands [ Value.has_type Type.int64 pval ] in
+  let wd_cond = Value.has_type Type.int64 pval in
   let wd_value = value |> Value.int64_to_float64 in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
