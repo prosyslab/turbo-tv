@@ -98,7 +98,7 @@ let merge cid conds =
   let assertion = Value.eq control merged in
   (Value.empty, control, assertion, Bool.fl)
 
-let phi vid incomings repr conds =
+let phi vid incomings repr ctrls =
   let value = Value.init vid in
   (* select one of types candidated by repr *)
   let ty = Type.from_repr repr |> List.hd in
@@ -114,7 +114,7 @@ let phi vid incomings repr conds =
 
   (* settle [incoming_value] to the 'tagged signed' type or 'tagged pointer type' if [ty] is 'any tagged' *)
   let wd_value =
-    let incoming_value = mk_value incomings conds in
+    let incoming_value = mk_value incomings ctrls in
     if ty = Type.any_tagged then Value.AnyTagged.settle incoming_value
     else incoming_value |> Value.cast ty
   in

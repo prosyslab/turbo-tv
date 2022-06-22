@@ -76,23 +76,37 @@ let rec next program state cfg =
         if_true cid cond_token
     | Phi ->
         let rev = operands |> List.rev in
-        let cond_id = Operands.id_of_nth rev 0 in
-        let cond_tokens =
-          IR.instr_of (cond_id |> int_of_string) program
-          |> fun (_, _, conds_id) ->
-          ControlFile.find_all (conds_id |> Operands.id_of_all) cf
+        let ctrl_id = Operands.id_of_nth rev 0 in
+        let _, ctrl_opcode, incomings_id =
+          IR.instr_of (ctrl_id |> int_of_string) program
         in
-        let repr = Operands.const_of_nth rev 1 |> MachineType.Repr.of_string in
-        let incoming_values =
-          RegisterFile.find_all
-            (rev |> List.tl |> List.tl |> List.rev |> Operands.id_of_all)
-            rf
-        in
-        phi vid incoming_values repr cond_tokens
+        match ctrl_opcode with
+        | Merge ->
+            let incoming_ctrl_tokens =
+              ControlFile.find_all (incomings_id |> Operands.id_of_all) cf
+            in
+            let repr =
+              Operands.const_of_nth rev 1 |> MachineType.Repr.of_string
+            in
+            let incoming_values =
+              RegisterFile.find_all
+                (rev |> List.tl |> List.tl |> List.rev |> Operands.id_of_all)
+                rf
+            in
+            phi vid incoming_values repr incoming_ctrl_tokens
+        | Dead -> (Value.empty, Control.empty, Bool.tr, Bool.fl)
+        | _ ->
+            failwith
+              (Format.sprintf "Phi is not implemented for incoming opcode: %s"
+                 (ctrl_opcode |> Opcode.to_str)))
     | Start -> start cid
     | Merge ->
         let conds = ControlFile.find_all (operands |> Operands.id_of_all) cf in
         merge cid conds
+    (* common: deoptimization *)
+    | DeoptimizeUnless -> (Value.empty, Bool.tr, Bool.tr, Bool.fl)
+    (* common: dead *)
+    | Dead -> (Value.empty, Control.empty, Bool.tr, Bool.fl)
     (* common: procedure *)
     | Parameter ->
         let pidx = Operands.const_of_nth operands 0 |> int_of_string in
