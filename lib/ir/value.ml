@@ -294,6 +294,10 @@ module TaggedSigned = struct
     value |> from_value |> BitVec.sign_extend 1 |> BitVec.zero_extend 32
     |> entype Type.int32
 
+  let to_float64 value =
+    value |> from_value |> Float.from_signed_bv |> Float.to_ieee_bv
+    |> entype Type.float64
+
   let to_string model value =
     let v_str =
       value |> from_value |> Model.eval model |> Expr.to_simplified_string
@@ -441,6 +445,8 @@ module Float64 = struct
   let to_int32 value =
     andi (value |> to_int64) Constants.int32_mask |> cast Type.int32
 
+  let to_tagged_signed value = value |> to_int32 |> Int32.to_tagged_signed
+
   let to_string model value =
     let v_str =
       value |> from_value |> Model.eval model |> Real.to_decimal_string
@@ -473,6 +479,12 @@ module Float64 = struct
     let lf = lval |> from_value in
     let rf = rval |> from_value in
     Z3utils.Bool.ite (Z3utils.Float.le lf rf) tr fl
+
+  let is_integer value = eq value (value |> to_int32 |> Int32.to_float64)
+
+  let can_be_smi value =
+    Z3utils.Bool.ands
+      [ value |> is_integer; value |> to_int32 |> Int32.is_in_smi_range ]
 end
 
 module Composed = struct

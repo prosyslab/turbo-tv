@@ -29,11 +29,10 @@ let store ptr sz cond value mem =
     if stored_sz = sz then mem
     else
       let byte = BitVec.extract ((stored_sz * 8) + 7) (stored_sz * 8) value in
-      let original = load ptr 1 mem in
-      let updated_mem = Array.store (Bool.ite cond byte original) ptr mem in
+      let updated_mem = Array.store byte ptr mem in
       aux (stored_sz + 1) value (TaggedPointer.next ptr) updated_mem
   in
-  aux 0 value ptr mem
+  Bool.ite cond (aux 0 value ptr mem) mem
 
 let store_as ptr repr cond value mem =
   let store_size = MachineType.Repr.size_of repr in

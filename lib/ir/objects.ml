@@ -17,8 +17,6 @@ module HeapNumber = struct
   let from_number_string s =
     { map = Objmap.heap_number_map; value = s |> BitVecVal.from_f64string }
 
-  let from_value value = { map = Objmap.heap_number_map; value }
-
   let store ptr obj cond mem =
     (* ptr is tagged *)
     mem :=
@@ -39,6 +37,12 @@ module HeapNumber = struct
           (TaggedPointer.movei ptr number_offset |> TaggedPointer.to_raw_pointer)
           (number_len / 8) mem;
     }
+
+  let from_float64 bid cond value mem =
+    let ptr = allocate bid in
+    let obj = { map = Objmap.heap_number_map; value } in
+    store ptr obj cond mem;
+    ptr
 
   let map_of obj = obj.map
 
