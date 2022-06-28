@@ -6,9 +6,17 @@ let lowering_prefix = "- Simplified Lowering"
 
 let replacement_prefix = "- Replacement"
 
+let mapi_tail_rec f lst =
+  let rec mapi_tail_rec_helper f i lst acc =
+    match lst with
+    | [] -> List.rev acc
+    | hd :: tl -> mapi_tail_rec_helper f (i + 1) tl (f i hd :: acc)
+  in
+  mapi_tail_rec_helper f 0 lst []
+
 let extract_special_lines lines =
   lines
-  |> List.mapi (fun i line -> (i, line))
+  |> mapi_tail_rec (fun i line -> (i, line))
   |> List.filter (fun (_, line) ->
          String.starts_with ~prefix:special_prefix line)
 
@@ -51,7 +59,7 @@ let get_reductions lines =
            let center = List.nth reduction 2 |> snd in
            is_reduction_occur center)
   in
-  let lines_with_ind = lines |> List.mapi (fun i line -> (i, line)) in
+  let lines_with_ind = lines |> mapi_tail_rec (fun i line -> (i, line)) in
   List.map
     (fun reduction ->
       let ( before_graph_start,

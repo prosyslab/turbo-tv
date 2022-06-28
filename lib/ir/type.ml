@@ -87,7 +87,7 @@ let to_string model t =
   | 20 -> "none"
   | 21 -> "empty"
   | 22 -> "const"
-  | _ -> failwith "unreachable"
+  | _ -> failwith (Printf.sprintf "unreachable type: %s" ty_in_binstring)
 
 (* ty from MachineType *)
 let from_machine_type (mt : MachineType.t) =

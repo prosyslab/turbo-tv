@@ -712,12 +712,11 @@ SpeculativeNumberBitwiseAnd,
 SpeculativeNumberBitwiseOr,
 SpeculativeNumberBitwiseXor,v1,v2
 SpeculativeNumberDivide,
-SpeculativeNumberEqual,
+SpeculativeNumberEqual,v1,v2
 SpeculativeNumberLessThan,
 SpeculativeNumberLessThanOrEqual,
 SpeculativeNumberModulus,
 SpeculativeNumberMultiply,
-SpeculativeNumberPow,
 SpeculativeNumberShiftLeft,
 SpeculativeNumberShiftRight,
 SpeculativeNumberShiftRightLogical,

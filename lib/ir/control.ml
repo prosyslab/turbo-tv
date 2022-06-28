@@ -31,12 +31,16 @@ module ControlTuple = struct
     Z3.FuncDecl.apply ctor [ for_true; for_false ]
 
   let true_cond t =
-    let true_decl = field_decls |> List.hd in
-    Z3.FuncDecl.apply true_decl [ t ]
+    if Z3utils.sort_equal t empty then t
+    else
+      let true_decl = field_decls |> List.hd in
+      Z3.FuncDecl.apply true_decl [ t ]
 
   let false_cond t =
-    let false_decl = List.nth field_decls 1 in
-    Z3.FuncDecl.apply false_decl [ t ]
+    if Z3utils.sort_equal t empty then t
+    else
+      let false_decl = List.nth field_decls 1 in
+      Z3.FuncDecl.apply false_decl [ t ]
 
   let eq lexp rexp =
     let true_cond_eq = Bool.eq (lexp |> true_cond) (rexp |> true_cond) in

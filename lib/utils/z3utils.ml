@@ -138,7 +138,9 @@ module Float = struct
 
   let from_float ?(sort = !float_sort) f = Fl.mk_numeral_f ctx f sort
 
-  let from_string ?(sort = !float_sort) s = Fl.mk_numeral_s ctx s sort
+  let from_string ?(sort = !float_sort) s =
+    if String.equal s "nan" then Fl.mk_nan ctx sort
+    else Fl.mk_numeral_s ctx s sort
 
   let from_signed_bv ?(sort = !float_sort) bv =
     Fl.mk_to_fp_signed ctx rne_mode bv sort
@@ -405,3 +407,5 @@ module Real = struct
 
   let to_decimal_string t = R.to_decimal_string t 5
 end
+
+let sort_equal e1 e2 = Z3.Sort.equal (Z3.Expr.get_sort e1) (Z3.Expr.get_sort e2)

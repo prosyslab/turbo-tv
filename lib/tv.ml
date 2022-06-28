@@ -147,12 +147,24 @@ let rec next program state cfg =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         number_abs vid pval
+    | SpeculativeNumberAdd ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        number_add vid lval rval
     | SpeculativeNumberBitwiseXor ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
         speculative_number_bitwise_xor vid lval rval
+    | SpeculativeNumberEqual ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        speculative_number_equal vid lval rval
     | SpeculativeSafeIntegerAdd ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in

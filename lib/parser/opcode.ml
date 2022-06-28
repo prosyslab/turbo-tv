@@ -681,12 +681,10 @@ type t =
   | SpeculativeNumberBitwiseAnd
   | SpeculativeNumberBitwiseOr
   | SpeculativeNumberDivide
-  | SpeculativeNumberEqual
   | SpeculativeNumberLessThan
   | SpeculativeNumberLessThanOrEqual
   | SpeculativeNumberModulus
   | SpeculativeNumberMultiply
-  | SpeculativeNumberPow
   | SpeculativeNumberShiftLeft
   | SpeculativeNumberShiftRight
   | SpeculativeNumberShiftRightLogical
@@ -883,6 +881,7 @@ type t =
   | ReferenceEqual
   | SpeculativeNumberAdd
   | SpeculativeNumberBitwiseXor
+  | SpeculativeNumberEqual
   | SpeculativeSafeIntegerAdd
   | SpeculativeSafeIntegerSubtract
   | Uint32LessThan
@@ -1083,9 +1082,8 @@ let get_kind opcode =
   | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
   | SpeculativeBigIntSubtract | SpeculativeNumberBitwiseAnd
   | SpeculativeNumberBitwiseOr | SpeculativeNumberDivide
-  | SpeculativeNumberEqual | SpeculativeNumberLessThan
-  | SpeculativeNumberLessThanOrEqual | SpeculativeNumberModulus
-  | SpeculativeNumberMultiply | SpeculativeNumberPow
+  | SpeculativeNumberLessThan | SpeculativeNumberLessThanOrEqual
+  | SpeculativeNumberModulus | SpeculativeNumberMultiply
   | SpeculativeNumberShiftLeft | SpeculativeNumberShiftRight
   | SpeculativeNumberShiftRightLogical | SpeculativeNumberSubtract
   | SpeculativeToNumber | StackSlot | Start | StateValues | StaticAssert
@@ -1144,7 +1142,7 @@ let get_kind opcode =
   | Float64Equal | Float64LessThan | Float64LessThanOrEqual | Float64Sub
   | Int32Add | Int32AddWithOverflow | Int32LessThan | Int32Mul | Int32Sub
   | Int64Add | Int64LessThan | Int64Sub | NumberAdd | ReferenceEqual
-  | SpeculativeNumberAdd | SpeculativeNumberBitwiseXor
+  | SpeculativeNumberAdd | SpeculativeNumberBitwiseXor | SpeculativeNumberEqual
   | SpeculativeSafeIntegerAdd | SpeculativeSafeIntegerSubtract | Uint32LessThan
   | Uint32LessThanOrEqual | Uint64LessThan | Uint64LessThanOrEqual | Word32And
   | Word32Equal | Word32Or | Word32Shl | Word32Xor | Word64Equal | Word64Shl ->
@@ -1843,12 +1841,10 @@ let of_str str =
   | "SpeculativeNumberBitwiseAnd" -> SpeculativeNumberBitwiseAnd
   | "SpeculativeNumberBitwiseOr" -> SpeculativeNumberBitwiseOr
   | "SpeculativeNumberDivide" -> SpeculativeNumberDivide
-  | "SpeculativeNumberEqual" -> SpeculativeNumberEqual
   | "SpeculativeNumberLessThan" -> SpeculativeNumberLessThan
   | "SpeculativeNumberLessThanOrEqual" -> SpeculativeNumberLessThanOrEqual
   | "SpeculativeNumberModulus" -> SpeculativeNumberModulus
   | "SpeculativeNumberMultiply" -> SpeculativeNumberMultiply
-  | "SpeculativeNumberPow" -> SpeculativeNumberPow
   | "SpeculativeNumberShiftLeft" -> SpeculativeNumberShiftLeft
   | "SpeculativeNumberShiftRight" -> SpeculativeNumberShiftRight
   | "SpeculativeNumberShiftRightLogical" -> SpeculativeNumberShiftRightLogical
@@ -2037,6 +2033,7 @@ let of_str str =
   | "ReferenceEqual" -> ReferenceEqual
   | "SpeculativeNumberAdd" -> SpeculativeNumberAdd
   | "SpeculativeNumberBitwiseXor" -> SpeculativeNumberBitwiseXor
+  | "SpeculativeNumberEqual" -> SpeculativeNumberEqual
   | "SpeculativeSafeIntegerAdd" -> SpeculativeSafeIntegerAdd
   | "SpeculativeSafeIntegerSubtract" -> SpeculativeSafeIntegerSubtract
   | "Uint32LessThan" -> Uint32LessThan
@@ -2714,12 +2711,10 @@ let to_str opcode =
   | SpeculativeNumberBitwiseAnd -> "SpeculativeNumberBitwiseAnd"
   | SpeculativeNumberBitwiseOr -> "SpeculativeNumberBitwiseOr"
   | SpeculativeNumberDivide -> "SpeculativeNumberDivide"
-  | SpeculativeNumberEqual -> "SpeculativeNumberEqual"
   | SpeculativeNumberLessThan -> "SpeculativeNumberLessThan"
   | SpeculativeNumberLessThanOrEqual -> "SpeculativeNumberLessThanOrEqual"
   | SpeculativeNumberModulus -> "SpeculativeNumberModulus"
   | SpeculativeNumberMultiply -> "SpeculativeNumberMultiply"
-  | SpeculativeNumberPow -> "SpeculativeNumberPow"
   | SpeculativeNumberShiftLeft -> "SpeculativeNumberShiftLeft"
   | SpeculativeNumberShiftRight -> "SpeculativeNumberShiftRight"
   | SpeculativeNumberShiftRightLogical -> "SpeculativeNumberShiftRightLogical"
@@ -2908,6 +2903,7 @@ let to_str opcode =
   | ReferenceEqual -> "ReferenceEqual"
   | SpeculativeNumberAdd -> "SpeculativeNumberAdd"
   | SpeculativeNumberBitwiseXor -> "SpeculativeNumberBitwiseXor"
+  | SpeculativeNumberEqual -> "SpeculativeNumberEqual"
   | SpeculativeSafeIntegerAdd -> "SpeculativeSafeIntegerAdd"
   | SpeculativeSafeIntegerSubtract -> "SpeculativeSafeIntegerSubtract"
   | Uint32LessThan -> "Uint32LessThan"

@@ -64,6 +64,29 @@ let speculative_number_bitwise_xor vid lval rval =
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
+let speculative_number_equal vid lval rval =
+  let value = Value.init vid in
+  let lval_int32 = Value.has_type Type.int32 lval in
+  let rval_int32 = Value.has_type Type.int32 rval in
+  let lval_uint32 = Value.has_type Type.uint32 lval in
+  let rval_uint32 = Value.has_type Type.uint32 rval in
+  let lval_float64 = Value.has_type Type.float64 lval in
+  let rval_float64 = Value.has_type Type.float64 rval in
+  let wd_cond =
+    Bool.ands
+      [
+        Bool.ors
+          [
+            Bool.ands [ lval_int32; rval_int32 ];
+            Bool.ands [ lval_uint32; rval_uint32 ];
+            Bool.ands [ lval_float64; rval_float64 ];
+          ];
+      ]
+  in
+  let wd_value = Bool.ite (Value.eq lval rval) Value.tr Value.fl in
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.not wd_cond)
+
 (* well-defined condition:
  *  IsTaggedPointer(lval) /\ IsTaggedPointer(rval)
  * /\ PointsNumberObject(lval) /\ PointsNumberObject(rval)
@@ -175,7 +198,8 @@ let number_expm1 vid nptr next_bid mem =
 let boolean_not vid pval =
   let value = Value.init vid in
   let wd_cond = Bool.ands [ Value.has_type Type.bool pval ] in
-  let assertion = Value.eq value (Bool.not pval) in
+  let wd_value = Bool.ite (Value.eq Value.fl pval) Value.tr Value.fl in
+  let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* simplified: memory *)
