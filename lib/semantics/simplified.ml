@@ -2,6 +2,9 @@ open Z3utils
 module HeapNumber = Objects.HeapNumber
 module Repr = MachineType.Repr
 
+let has_type_all ty values =
+  Bool.ands (List.map (fun v -> Value.has_type ty v) values)
+
 (* simplified: arithmetic *)
 (* well-defined condition:
  * - WellDefined(lval) ^ WellDefined(rval)
@@ -12,23 +15,16 @@ module Repr = MachineType.Repr
  *  value = ite well-defined (lval + rval) UB *)
 let number_add vid lval rval =
   let value = Value.init vid in
-  let lval_int32 = Value.has_type Type.int32 lval in
-  let rval_int32 = Value.has_type Type.int32 rval in
-  let lval_int64 = Value.has_type Type.int64 lval in
-  let rval_int64 = Value.has_type Type.int64 rval in
-  let lval_float64 = Value.has_type Type.float64 lval in
-  let rval_float64 = Value.has_type Type.float64 rval in
   let wd_cond =
-    Bool.ands
+    Bool.ors
       [
-        Bool.ors
-          [
-            Bool.ands [ lval_int32; rval_int32 ];
-            Bool.ands [ lval_int64; rval_int64 ];
-            Bool.ands [ lval_float64; rval_float64 ];
-          ];
+        has_type_all Type.int32 [ lval; rval ];
+        has_type_all Type.int64 [ lval; rval ];
+        has_type_all Type.float64 [ lval; rval ];
       ]
   in
+  let lval_int32 = Value.has_type Type.int32 lval in
+  let lval_int64 = Value.has_type Type.int64 lval in
   let wd_value =
     Bool.ite
       (Bool.ors [ lval_int32; lval_int64 ])
@@ -66,21 +62,12 @@ let speculative_number_bitwise_xor vid lval rval =
 
 let speculative_number_equal vid lval rval =
   let value = Value.init vid in
-  let lval_int32 = Value.has_type Type.int32 lval in
-  let rval_int32 = Value.has_type Type.int32 rval in
-  let lval_uint32 = Value.has_type Type.uint32 lval in
-  let rval_uint32 = Value.has_type Type.uint32 rval in
-  let lval_float64 = Value.has_type Type.float64 lval in
-  let rval_float64 = Value.has_type Type.float64 rval in
   let wd_cond =
-    Bool.ands
+    Bool.ors
       [
-        Bool.ors
-          [
-            Bool.ands [ lval_int32; rval_int32 ];
-            Bool.ands [ lval_uint32; rval_uint32 ];
-            Bool.ands [ lval_float64; rval_float64 ];
-          ];
+        has_type_all Type.int32 [ lval; rval ];
+        has_type_all Type.uint32 [ lval; rval ];
+        has_type_all Type.float64 [ lval; rval ];
       ]
   in
   let wd_value = Bool.ite (Value.eq lval rval) Value.tr Value.fl in
@@ -202,6 +189,28 @@ let boolean_not vid pval =
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
+let number_less_than vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ors
+      [
+        has_type_all Type.int32 [ lval; rval ];
+        has_type_all Type.uint32 [ lval; rval ];
+        has_type_all Type.float64 [ lval; rval ];
+      ]
+  in
+  let comparison_expr =
+    Bool.ite
+      (Value.has_type Type.int32 lval)
+      (Value.slt lval rval)
+      (Bool.ite
+         (Value.has_type Type.uint32 lval)
+         (Value.ult lval rval) (Value.ltf lval rval))
+  in
+  let wd_value = Bool.ite comparison_expr Value.tr Value.fl in
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.not wd_cond)
+
 (* simplified: memory *)
 let allocate_raw vid cid size next_bid ct =
   let value = Value.init vid in
@@ -250,6 +259,25 @@ let store_field ptr pos mt value mem =
   (Value.empty, Control.empty, Bool.tr, ub_cond)
 
 (* simplified: type-conversion *)
+(* well-defined condition
+   - IsBool(pval)
+   assertion:
+    value = ite well-defined (ite pval true false) UB *)
+let change_bit_to_tagged vid pval next_bid mem =
+  let value = Value.init vid in
+  let wd_cond = Value.has_type Type.bool pval in
+  let true_ptr = HeapNumber.allocate next_bid in
+  let false_ptr = HeapNumber.allocate next_bid in
+  HeapNumber.store true_ptr
+    (Float.from_string "1" |> Float.to_ieee_bv |> HeapNumber.from_value)
+    Bool.tr mem;
+  HeapNumber.store false_ptr
+    (Float.from_string "0" |> Float.to_ieee_bv |> HeapNumber.from_value)
+    Bool.tr mem;
+  let wd_value = Bool.ite (Value.eq Value.tr pval) true_ptr false_ptr in
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.not wd_cond)
+
 (* well-defined condition 
  * - IsInt32(pval) /\ IsWellDefined(pval) 
  * - SmiMin < pval < SmiMax

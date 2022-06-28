@@ -186,6 +186,12 @@ let rec next program state cfg =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         boolean_not vid pval
+    | NumberLessThan ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        number_less_than vid lval rval
     | ReferenceEqual ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -242,6 +248,10 @@ let rec next program state cfg =
         let value = RegisterFile.find value_id rf in
         store_field ptr pos machine_type value mem
     (* simplified: type-conversion *)
+    | ChangeBitToTagged ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        change_bit_to_tagged vid pval next_bid mem
     | ChangeInt31ToTaggedSigned ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
@@ -355,7 +365,7 @@ let rec next program state cfg =
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        float64_equal vid lval rval
+        float64_less_than vid lval rval
     | Word32And ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in

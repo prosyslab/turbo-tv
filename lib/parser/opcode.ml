@@ -44,7 +44,6 @@ type t =
   | BitcastInt64ToFloat64
   | BitcastTaggedToWordForTagAndSmiBits
   | BitcastWordToTaggedSigned
-  | ChangeBitToTagged
   | ChangeFloat64ToInt32
   | ChangeFloat64ToTaggedPointer
   | ChangeFloat64ToUint32
@@ -587,7 +586,6 @@ type t =
   | NumberIsMinusZero
   | NumberIsNaN
   | NumberIsSafeInteger
-  | NumberLessThan
   | NumberLessThanOrEqual
   | NumberLog
   | NumberLog10
@@ -821,6 +819,7 @@ type t =
   | BitcastWord32ToWord64
   | BitcastWordToTagged
   | BooleanNot
+  | ChangeBitToTagged
   | ChangeFloat32ToFloat64
   | ChangeFloat64ToInt64
   | ChangeInt31ToTaggedSigned
@@ -878,6 +877,7 @@ type t =
   | Int64LessThan
   | Int64Sub
   | NumberAdd
+  | NumberLessThan
   | ReferenceEqual
   | SpeculativeNumberAdd
   | SpeculativeNumberBitwiseXor
@@ -922,19 +922,19 @@ let get_kind opcode =
   | ArgumentsLengthState | AssertType | BeginRegion | BigIntAdd | BigIntNegate
   | BigIntSubtract | BitcastInt32ToFloat32 | BitcastInt64ToFloat64
   | BitcastTaggedToWordForTagAndSmiBits | BitcastWordToTaggedSigned
-  | ChangeBitToTagged | ChangeFloat64ToInt32 | ChangeFloat64ToTaggedPointer
-  | ChangeFloat64ToUint32 | ChangeFloat64ToUint64 | ChangeInt64ToBigInt
-  | ChangeTaggedSignedToInt64 | ChangeTaggedToBit | ChangeTaggedToFloat64
-  | ChangeTaggedToInt32 | ChangeTaggedToInt64 | ChangeTaggedToTaggedSigned
-  | ChangeTaggedToUint32 | ChangeUint32ToTagged | ChangeUint64ToBigInt
-  | ChangeUint64ToTagged | CheckBigInt | CheckBounds | CheckClosure
-  | CheckEqualsInternalizedString | CheckEqualsSymbol | CheckFloat64Hole
-  | CheckHeapObject | CheckIf | CheckInternalizedString | CheckMaps
-  | CheckNotTaggedHole | CheckNumber | CheckReceiver
-  | CheckReceiverOrNullOrUndefined | CheckSmi | CheckString | CheckSymbol
-  | CheckedFloat64ToInt64 | CheckedInt32Add | CheckedInt32Div | CheckedInt32Mod
-  | CheckedInt32Mul | CheckedInt32Sub | CheckedInt32ToTaggedSigned
-  | CheckedInt64ToInt32 | CheckedInt64ToTaggedSigned | CheckedTaggedToArrayIndex
+  | ChangeFloat64ToInt32 | ChangeFloat64ToTaggedPointer | ChangeFloat64ToUint32
+  | ChangeFloat64ToUint64 | ChangeInt64ToBigInt | ChangeTaggedSignedToInt64
+  | ChangeTaggedToBit | ChangeTaggedToFloat64 | ChangeTaggedToInt32
+  | ChangeTaggedToInt64 | ChangeTaggedToTaggedSigned | ChangeTaggedToUint32
+  | ChangeUint32ToTagged | ChangeUint64ToBigInt | ChangeUint64ToTagged
+  | CheckBigInt | CheckBounds | CheckClosure | CheckEqualsInternalizedString
+  | CheckEqualsSymbol | CheckFloat64Hole | CheckHeapObject | CheckIf
+  | CheckInternalizedString | CheckMaps | CheckNotTaggedHole | CheckNumber
+  | CheckReceiver | CheckReceiverOrNullOrUndefined | CheckSmi | CheckString
+  | CheckSymbol | CheckedFloat64ToInt64 | CheckedInt32Add | CheckedInt32Div
+  | CheckedInt32Mod | CheckedInt32Mul | CheckedInt32Sub
+  | CheckedInt32ToTaggedSigned | CheckedInt64ToInt32
+  | CheckedInt64ToTaggedSigned | CheckedTaggedToArrayIndex
   | CheckedTaggedToFloat64 | CheckedTaggedToInt32 | CheckedTaggedToInt64
   | CheckedTaggedToTaggedPointer | CheckedTaggedToTaggedSigned
   | CheckedTruncateTaggedToWord32 | CheckedUint32Bounds | CheckedUint32Div
@@ -1057,26 +1057,26 @@ let get_kind opcode =
   | NumberCosh | NumberDivide | NumberEqual | NumberExp | NumberFloor
   | NumberFround | NumberImul | NumberIsFinite | NumberIsFloat64Hole
   | NumberIsInteger | NumberIsMinusZero | NumberIsNaN | NumberIsSafeInteger
-  | NumberLessThan | NumberLessThanOrEqual | NumberLog | NumberLog10
-  | NumberLog1p | NumberLog2 | NumberMax | NumberMin | NumberModulus
-  | NumberMultiply | NumberPow | NumberRound | NumberSameValue | NumberShiftLeft
-  | NumberShiftRight | NumberShiftRightLogical | NumberSign | NumberSilenceNaN
-  | NumberSin | NumberSinh | NumberSqrt | NumberSubtract | NumberTan
-  | NumberTanh | NumberToBoolean | NumberToInt32 | NumberToString
-  | NumberToUint32 | NumberToUint8Clamped | NumberTrunc | ObjectId
-  | ObjectIsArrayBufferView | ObjectIsBigInt | ObjectIsCallable
-  | ObjectIsConstructor | ObjectIsDetectableCallable | ObjectIsFiniteNumber
-  | ObjectIsInteger | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable
-  | ObjectIsNumber | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi
-  | ObjectIsString | ObjectIsSymbol | ObjectIsUndetectable | ObjectState
-  | OsrValue | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber
-  | PlainPrimitiveToWord32 | Plug | PointerConstant | ProtectedLoad
-  | ProtectedStore | RelocatableInt32Constant | RelocatableInt64Constant
-  | RestLength | Retain | RoundInt32ToFloat32 | RoundInt64ToFloat32
-  | RoundInt64ToFloat64 | RoundUint32ToFloat32 | RoundUint64ToFloat32
-  | RoundUint64ToFloat64 | RuntimeAbort | S128And | S128AndNot | S128Const
-  | S128Not | S128Or | S128Select | S128Xor | S128Zero | SLVerifierHint
-  | SameValue | SameValueNumbersOnly | Select | SignExtendWord16ToInt32
+  | NumberLessThanOrEqual | NumberLog | NumberLog10 | NumberLog1p | NumberLog2
+  | NumberMax | NumberMin | NumberModulus | NumberMultiply | NumberPow
+  | NumberRound | NumberSameValue | NumberShiftLeft | NumberShiftRight
+  | NumberShiftRightLogical | NumberSign | NumberSilenceNaN | NumberSin
+  | NumberSinh | NumberSqrt | NumberSubtract | NumberTan | NumberTanh
+  | NumberToBoolean | NumberToInt32 | NumberToString | NumberToUint32
+  | NumberToUint8Clamped | NumberTrunc | ObjectId | ObjectIsArrayBufferView
+  | ObjectIsBigInt | ObjectIsCallable | ObjectIsConstructor
+  | ObjectIsDetectableCallable | ObjectIsFiniteNumber | ObjectIsInteger
+  | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable | ObjectIsNumber
+  | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi | ObjectIsString
+  | ObjectIsSymbol | ObjectIsUndetectable | ObjectState | OsrValue
+  | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber | PlainPrimitiveToWord32
+  | Plug | PointerConstant | ProtectedLoad | ProtectedStore
+  | RelocatableInt32Constant | RelocatableInt64Constant | RestLength | Retain
+  | RoundInt32ToFloat32 | RoundInt64ToFloat32 | RoundInt64ToFloat64
+  | RoundUint32ToFloat32 | RoundUint64ToFloat32 | RoundUint64ToFloat64
+  | RuntimeAbort | S128And | S128AndNot | S128Const | S128Not | S128Or
+  | S128Select | S128Xor | S128Zero | SLVerifierHint | SameValue
+  | SameValueNumbersOnly | Select | SignExtendWord16ToInt32
   | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
   | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
   | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
@@ -1123,7 +1123,7 @@ let get_kind opcode =
       UNIMPL
   | AllocateRaw -> V1C1
   | BitcastFloat32ToInt32 | BitcastFloat64ToInt64 | BitcastTaggedToWord
-  | BitcastWord32ToWord64 | BitcastWordToTagged | BooleanNot
+  | BitcastWord32ToWord64 | BitcastWordToTagged | BooleanNot | ChangeBitToTagged
   | ChangeFloat32ToFloat64 | ChangeFloat64ToInt64 | ChangeInt31ToTaggedSigned
   | ChangeInt32ToFloat64 | ChangeInt32ToInt64 | ChangeInt32ToTagged
   | ChangeInt64ToFloat64 | ChangeInt64ToTagged | ChangeTaggedSignedToInt32
@@ -1141,11 +1141,12 @@ let get_kind opcode =
   | End | Merge -> CV
   | Float64Equal | Float64LessThan | Float64LessThanOrEqual | Float64Sub
   | Int32Add | Int32AddWithOverflow | Int32LessThan | Int32Mul | Int32Sub
-  | Int64Add | Int64LessThan | Int64Sub | NumberAdd | ReferenceEqual
-  | SpeculativeNumberAdd | SpeculativeNumberBitwiseXor | SpeculativeNumberEqual
-  | SpeculativeSafeIntegerAdd | SpeculativeSafeIntegerSubtract | Uint32LessThan
-  | Uint32LessThanOrEqual | Uint64LessThan | Uint64LessThanOrEqual | Word32And
-  | Word32Equal | Word32Or | Word32Shl | Word32Xor | Word64Equal | Word64Shl ->
+  | Int64Add | Int64LessThan | Int64Sub | NumberAdd | NumberLessThan
+  | ReferenceEqual | SpeculativeNumberAdd | SpeculativeNumberBitwiseXor
+  | SpeculativeNumberEqual | SpeculativeSafeIntegerAdd
+  | SpeculativeSafeIntegerSubtract | Uint32LessThan | Uint32LessThanOrEqual
+  | Uint64LessThan | Uint64LessThanOrEqual | Word32And | Word32Equal | Word32Or
+  | Word32Shl | Word32Xor | Word64Equal | Word64Shl ->
       V1V2
   | Return -> V2
   | Load -> V1V2B1
@@ -1204,7 +1205,6 @@ let of_str str =
   | "BitcastInt64ToFloat64" -> BitcastInt64ToFloat64
   | "BitcastTaggedToWordForTagAndSmiBits" -> BitcastTaggedToWordForTagAndSmiBits
   | "BitcastWordToTaggedSigned" -> BitcastWordToTaggedSigned
-  | "ChangeBitToTagged" -> ChangeBitToTagged
   | "ChangeFloat64ToInt32" -> ChangeFloat64ToInt32
   | "ChangeFloat64ToTaggedPointer" -> ChangeFloat64ToTaggedPointer
   | "ChangeFloat64ToUint32" -> ChangeFloat64ToUint32
@@ -1747,7 +1747,6 @@ let of_str str =
   | "NumberIsMinusZero" -> NumberIsMinusZero
   | "NumberIsNaN" -> NumberIsNaN
   | "NumberIsSafeInteger" -> NumberIsSafeInteger
-  | "NumberLessThan" -> NumberLessThan
   | "NumberLessThanOrEqual" -> NumberLessThanOrEqual
   | "NumberLog" -> NumberLog
   | "NumberLog10" -> NumberLog10
@@ -1979,6 +1978,7 @@ let of_str str =
   | "BitcastWord32ToWord64" -> BitcastWord32ToWord64
   | "BitcastWordToTagged" -> BitcastWordToTagged
   | "BooleanNot" -> BooleanNot
+  | "ChangeBitToTagged" -> ChangeBitToTagged
   | "ChangeFloat32ToFloat64" -> ChangeFloat32ToFloat64
   | "ChangeFloat64ToInt64" -> ChangeFloat64ToInt64
   | "ChangeInt31ToTaggedSigned" -> ChangeInt31ToTaggedSigned
@@ -2030,6 +2030,7 @@ let of_str str =
   | "Int64LessThan" -> Int64LessThan
   | "Int64Sub" -> Int64Sub
   | "NumberAdd" -> NumberAdd
+  | "NumberLessThan" -> NumberLessThan
   | "ReferenceEqual" -> ReferenceEqual
   | "SpeculativeNumberAdd" -> SpeculativeNumberAdd
   | "SpeculativeNumberBitwiseXor" -> SpeculativeNumberBitwiseXor
@@ -2074,7 +2075,6 @@ let to_str opcode =
   | BitcastInt64ToFloat64 -> "BitcastInt64ToFloat64"
   | BitcastTaggedToWordForTagAndSmiBits -> "BitcastTaggedToWordForTagAndSmiBits"
   | BitcastWordToTaggedSigned -> "BitcastWordToTaggedSigned"
-  | ChangeBitToTagged -> "ChangeBitToTagged"
   | ChangeFloat64ToInt32 -> "ChangeFloat64ToInt32"
   | ChangeFloat64ToTaggedPointer -> "ChangeFloat64ToTaggedPointer"
   | ChangeFloat64ToUint32 -> "ChangeFloat64ToUint32"
@@ -2617,7 +2617,6 @@ let to_str opcode =
   | NumberIsMinusZero -> "NumberIsMinusZero"
   | NumberIsNaN -> "NumberIsNaN"
   | NumberIsSafeInteger -> "NumberIsSafeInteger"
-  | NumberLessThan -> "NumberLessThan"
   | NumberLessThanOrEqual -> "NumberLessThanOrEqual"
   | NumberLog -> "NumberLog"
   | NumberLog10 -> "NumberLog10"
@@ -2849,6 +2848,7 @@ let to_str opcode =
   | BitcastWord32ToWord64 -> "BitcastWord32ToWord64"
   | BitcastWordToTagged -> "BitcastWordToTagged"
   | BooleanNot -> "BooleanNot"
+  | ChangeBitToTagged -> "ChangeBitToTagged"
   | ChangeFloat32ToFloat64 -> "ChangeFloat32ToFloat64"
   | ChangeFloat64ToInt64 -> "ChangeFloat64ToInt64"
   | ChangeInt31ToTaggedSigned -> "ChangeInt31ToTaggedSigned"
@@ -2900,6 +2900,7 @@ let to_str opcode =
   | Int64LessThan -> "Int64LessThan"
   | Int64Sub -> "Int64Sub"
   | NumberAdd -> "NumberAdd"
+  | NumberLessThan -> "NumberLessThan"
   | ReferenceEqual -> "ReferenceEqual"
   | SpeculativeNumberAdd -> "SpeculativeNumberAdd"
   | SpeculativeNumberBitwiseXor -> "SpeculativeNumberBitwiseXor"

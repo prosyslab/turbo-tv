@@ -21,7 +21,7 @@ BitcastWordToTaggedSigned,
 BooleanNot,v1
 Branch,v1,e1
 Call,b1
-ChangeBitToTagged,
+ChangeBitToTagged,v1
 ChangeFloat32ToFloat64,v1
 ChangeFloat64ToInt32,
 ChangeFloat64ToInt64,v1
@@ -610,7 +610,7 @@ NumberIsInteger,
 NumberIsMinusZero,
 NumberIsNaN,
 NumberIsSafeInteger,
-NumberLessThan,
+NumberLessThan,v1,v2
 NumberLessThanOrEqual,
 NumberLog,
 NumberLog10,

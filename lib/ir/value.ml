@@ -232,6 +232,11 @@ let absf value =
   value |> data_of |> Float.from_ieee_bv |> Float.abs |> Float.to_ieee_bv
   |> entype Type.float64
 
+let ltf lval rval =
+  let lf = lval |> data_of |> Float.from_ieee_bv in
+  let rf = rval |> data_of |> Float.from_ieee_bv in
+  Float.lt lf rf
+
 (* constant values *)
 
 let tr = addi empty 1 |> cast Type.bool
