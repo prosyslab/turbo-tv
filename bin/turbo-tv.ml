@@ -55,9 +55,9 @@ let main () =
   let tgt_cfg = IR.get_control_flow_graph tgt_grp in
   let nparams = 2 in
 
-  if emit_graph then IR.generate_graph_output "source.dot" src_grp;
-  IR.generate_graph_output "target.dot" tgt_grp;
-
+  if emit_graph then (
+    IR.generate_graph_output "source.dot" src_grp;
+    IR.generate_graph_output "target.dot" tgt_grp);
   Tv.run nparams src_grp tgt_grp src_cfg tgt_cfg
 
 let () = main ()
