@@ -38,9 +38,11 @@ module HeapNumber = struct
           (number_len / 8) mem;
     }
 
-  let from_float64 bid cond value mem =
+  let from_float64 bid cond value_f64 mem =
     let ptr = allocate bid in
-    let obj = { map = Objmap.heap_number_map; value } in
+    let obj =
+      { map = Objmap.heap_number_map; value = value_f64 |> Value.data_of }
+    in
     store ptr obj cond mem;
     ptr
 

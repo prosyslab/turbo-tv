@@ -186,7 +186,8 @@ let number_expm1 vid nptr next_bid mem =
                (Bool.ite (HeapNumber.is_nan n) (BitVecVal.nan ())
                   (Bool.ite (HeapNumber.is_zero n)
                      (BitVecVal.from_f64string "0.0")
-                     (Z3.FuncDecl.apply expm_decl [ n.value ]))))))
+                     (Z3.FuncDecl.apply expm_decl [ n.value ])))))
+      |> Value.entype Type.float64)
       mem
   in
   let wd_value = expm1 in
@@ -283,15 +284,17 @@ let store_field ptr pos mt value mem =
 let change_bit_to_tagged vid pval next_bid mem =
   let value = Value.init vid in
   let wd_cond = Value.has_type Type.bool pval in
-  let true_ptr = HeapNumber.allocate next_bid in
-  let false_ptr = HeapNumber.allocate next_bid in
-  HeapNumber.store true_ptr
-    (Float.from_string "1" |> Float.to_ieee_bv |> HeapNumber.from_value)
-    Bool.tr mem;
-  HeapNumber.store false_ptr
-    (Float.from_string "0" |> Float.to_ieee_bv |> HeapNumber.from_value)
-    Bool.tr mem;
-  let wd_value = Bool.ite (Value.eq Value.tr pval) true_ptr false_ptr in
+  let true_ =
+    HeapNumber.from_float64 next_bid wd_cond
+      (Value.from_f64string "1.0" |> Value.cast Type.float64)
+      mem
+  in
+  let false_ =
+    HeapNumber.from_float64 next_bid wd_cond
+      (Value.from_f64string "0.0" |> Value.cast Type.float64)
+      mem
+  in
+  let wd_value = Bool.ite (Value.eq Value.tr pval) true_ false_ in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
