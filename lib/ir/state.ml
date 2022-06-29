@@ -28,7 +28,7 @@ type t = {
   register_file : Value.t RegisterFile.R.t;
   memory : Memory.t;
   params : BitVec.t list;
-  retvar : BitVec.t Option.t;
+  retval : BitVec.t;
   assertion : BitVec.t;
   ub : Bool.t;
 }
@@ -42,7 +42,7 @@ let init nparams stage : t =
     register_file = RegisterFile.init stage;
     memory = Memory.init "mem";
     params = Params.init nparams;
-    retvar = None;
+    retval = Value.empty;
     assertion = Bool.tr;
     ub = Bool.fl;
   }
@@ -65,7 +65,7 @@ let params t = t.params
 
 let stage t = t.stage
 
-let retvar t = t.retvar
+let retval t = t.retval
 
 let assertion t = t.assertion
 
