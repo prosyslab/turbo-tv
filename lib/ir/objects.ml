@@ -100,6 +100,8 @@ module HeapNumber = struct
       else fval |> Real.to_decimal_string
     in
     Format.sprintf "HeapNumber(%s)" f_str
+
+  let eq lobj robj = Bool.eq lobj.value robj.value
 end
 
 let map_of ptr mem = Memory.load (ptr |> TaggedPointer.to_raw_pointer) 4 mem
@@ -118,7 +120,7 @@ let is_fixed_double_array ptr mem =
 let is_weak_fixed_array ptr mem =
   Value.eq (map_of ptr mem) Objmap.weak_fixed_array_map
 
-let is_heap_number ptr mem = Value.eq (map_of ptr mem) Objmap.heap_number_map
+let is_heap_number ptr mem = has_map_of Objmap.heap_number_map ptr mem
 
 let to_string model mem ptr =
   let map = map_of ptr mem in

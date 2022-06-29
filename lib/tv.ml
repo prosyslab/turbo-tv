@@ -1,5 +1,6 @@
 module Params = State.Params
 module ControlFile = Control.ControlFile
+module HeapNumber = Objects.HeapNumber
 open Common
 open Simplified
 open Machine
@@ -520,7 +521,7 @@ let rec next program state cfg =
       updated_ub state
   in
 
-  if State.is_end next_state then { next_state with retvar = Some value }
+  if State.is_end next_state then { next_state with retval = value }
   else next program next_state cfg
 
 (* execute the program and retrieve a final state *)
@@ -533,10 +534,27 @@ let run nparams src_program tgt_program before_cfg after_cfg =
   let src_state = execute src_program nparams "before" before_cfg in
   let tgt_state = execute tgt_program nparams "after" after_cfg in
 
+  (* assumptions:
+     1. Return value is either smi or heap number.
+     2. If heap-number can be smi, then it must be converted into smi before reach here. *)
   let retval_is_same =
-    Bool.eq
-      (State.retvar src_state |> Option.get)
-      (State.retvar tgt_state |> Option.get)
+    let src_retval = State.retval src_state in
+    let tgt_retval = State.retval tgt_state in
+    let src_mem = State.memory src_state in
+    let tgt_mem = State.memory tgt_state in
+    Bool.ands
+      [
+        (* has same type *)
+        Bool.eq (src_retval |> Value.ty_of) (tgt_retval |> Value.ty_of);
+        Bool.ite
+          (src_retval |> Value.has_type Type.tagged_signed)
+          (* smi *)
+          (Value.eq src_retval tgt_retval)
+          (* heap-number *)
+          (HeapNumber.eq
+             (HeapNumber.load src_retval src_mem)
+             (HeapNumber.load tgt_retval tgt_mem));
+      ]
   in
 
   let src_ub = State.ub src_state in
