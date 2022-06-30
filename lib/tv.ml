@@ -278,6 +278,10 @@ let rec next program state cfg =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         to_boolean vid pval mem
+    | TruncateTaggedToBit ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        truncate_tagged_to_bit vid pval mem
     (* machine: arithmetic *)
     | Float64Abs ->
         let pid = Operands.id_of_nth operands 0 in

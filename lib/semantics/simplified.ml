@@ -417,7 +417,6 @@ let to_boolean vid pval mem =
       ]
   in
 
-  (* uninterpreted function to handle other types *)
   let uif =
     let value_sort = BV.mk_sort ctx Value.len in
     Z3.FuncDecl.mk_func_decl_s ctx "to_boolean" [ value_sort ] Bool.mk_sort
@@ -446,3 +445,42 @@ let to_boolean vid pval mem =
   in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
+
+let truncate_tagged_to_bit vid pval mem =
+  let value = Value.init vid in
+
+  let uif =
+    let value_sort = BV.mk_sort ctx Value.len in
+    Z3.FuncDecl.mk_func_decl_s ctx "truncate_tagged_to_bit" [ value_sort ]
+      Bool.mk_sort
+  in
+
+  let res =
+    let number = HeapNumber.load pval !mem in
+    Bool.ite
+      (* if [pval] is smi, return [pval] != 0 *)
+      (pval |> Value.has_type Type.tagged_signed)
+      (Bool.ite (Value.TaggedSigned.is_zero pval) Value.fl Value.tr)
+      (Bool.ite
+         (* if [pval] is heap number, return [pval] != 0.0, -0.0 or NaN *)
+         (Bool.ands
+            [
+              pval |> Value.has_type Type.tagged_pointer;
+              Objects.is_heap_number pval !mem;
+            ])
+         (Bool.ite
+            (Bool.ors
+               [
+                 HeapNumber.is_minus_zero number;
+                 HeapNumber.is_zero number;
+                 HeapNumber.is_nan number;
+               ])
+            Value.fl Value.tr)
+         (* otherwise, pass it to uif
+            [TODO] handle other objects
+            (look: LowerTruncateTaggedToBit@src/compiler/effect-control-linearizer.cc) *)
+         (Bool.ite (Z3.FuncDecl.apply uif [ pval ]) Value.tr Value.fl))
+  in
+
+  let assertion = Value.eq value res in
+  (value, Control.empty, assertion, Bool.fl)
