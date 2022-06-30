@@ -73,10 +73,10 @@ let print_counter_example program state model =
     in
 
     match opcode with
-    | Start | Branch | Merge | Return | IfFalse | IfTrue | JSStackCheck ->
+    | Start | Branch | Merge | IfFalse | IfTrue | JSStackCheck ->
         Format.printf "#%d:%s => \n  Control: %s\n" pc instr_s control;
         aux (pc + 1)
-    | End -> Format.printf "\n"
+    | End -> Format.printf "#%d:%s => \n  Value: %s\n\n" pc instr_s value
     | _ ->
         Format.printf "#%d:%s => \n  Value: %s\n" pc instr_s value;
         aux (pc + 1)
