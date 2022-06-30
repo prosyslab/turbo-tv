@@ -15,7 +15,11 @@ let float64_constant vid c =
 let int32_constant vid c =
   let value = Value.init vid in
   let wd_cond =
-    Bool.ands [ Value.sge c Value.int32_min; Value.sle c Value.int32_max ]
+    Bool.ands
+      [
+        Value.Int32.ge c Value.Int32.min_value;
+        Value.Int32.le c Value.Int32.max_value;
+      ]
   in
   let assertion = Value.eq value (c |> Value.cast Type.int32) in
   (value, Control.empty, assertion, Bool.not wd_cond)

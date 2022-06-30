@@ -59,35 +59,35 @@ let uint_types = [ uint8; uint16; uint32; uint64 ]
 let float_types = [ float32; float64 ]
 
 let to_string model t =
-  let ty_in_binstring =
-    let ty_str = t |> Model.eval model |> Expr.to_simplified_string in
-    "0" ^ String.sub ty_str 1 (String.length ty_str - 1)
-  in
-  match ty_in_binstring |> int_of_string with
-  | 0 -> "int8"
-  | 1 -> "uint8"
-  | 2 -> "int16"
-  | 3 -> "uint16"
-  | 4 -> "int32"
-  | 5 -> "uint32"
-  | 6 -> "int64"
-  | 7 -> "uint64"
-  | 8 -> "float32"
-  | 9 -> "float64"
-  | 10 -> "simd128"
-  | 11 -> "pointer"
-  | 12 -> "tagged_pointer"
-  | 13 -> "map_in_header"
-  | 14 -> "tagged_signed"
-  | 15 -> "any_tagged"
-  | 16 -> "compressed_pointer"
-  | 17 -> "any_compressed"
-  | 18 -> "sandboxed_pointer"
-  | 19 -> "bool"
-  | 20 -> "none"
-  | 21 -> "empty"
-  | 22 -> "const"
-  | _ -> failwith (Printf.sprintf "unreachable type: %s" ty_in_binstring)
+  let ty_str = t |> Model.eval model |> Expr.to_simplified_string in
+  let ty_in_binstring = "0" ^ String.sub ty_str 1 (String.length ty_str - 1) in
+  try
+    match ty_in_binstring |> int_of_string with
+    | 0 -> "int8"
+    | 1 -> "uint8"
+    | 2 -> "int16"
+    | 3 -> "uint16"
+    | 4 -> "int32"
+    | 5 -> "uint32"
+    | 6 -> "int64"
+    | 7 -> "uint64"
+    | 8 -> "float32"
+    | 9 -> "float64"
+    | 10 -> "simd128"
+    | 11 -> "pointer"
+    | 12 -> "tagged_pointer"
+    | 13 -> "map_in_header"
+    | 14 -> "tagged_signed"
+    | 15 -> "any_tagged"
+    | 16 -> "compressed_pointer"
+    | 17 -> "any_compressed"
+    | 18 -> "sandboxed_pointer"
+    | 19 -> "bool"
+    | 20 -> "none"
+    | 21 -> "empty"
+    | 22 -> "const"
+    | _ -> failwith "unreachable"
+  with _ -> ty_str
 
 (* ty from MachineType *)
 let from_machine_type (mt : MachineType.t) =

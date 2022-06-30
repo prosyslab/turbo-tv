@@ -29,7 +29,7 @@ let value_to_string model mem value =
           (Objects.to_string model mem value)
   | "map_in_header" -> value |> Value.MapInHeader.to_string model
   | "empty" -> "empty"
-  | _ -> failwith (Format.sprintf "print_value: not implemented for %s" ty_str)
+  | _ -> ty_str ^ (value |> Model.eval model |> Expr.to_simplified_string)
 
 let print_params model mem params =
   Format.printf "Parameters: \n";
@@ -61,7 +61,7 @@ let print_counter_example program state model =
             (operands |> Operands.to_str)
     in
 
-    let prefix = if State.stage state = "before" then "b" else "a" in
+    let prefix = String.sub (State.stage state) 0 1 in
     RegisterFile.prefix := prefix ^ "v";
     Control.ControlFile.prefix := prefix ^ "c";
 

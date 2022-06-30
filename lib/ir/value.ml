@@ -263,13 +263,6 @@ let smi_min = Constants.smi_min |> BitVecVal.from_int |> entype Type.const
 
 let smi_max = Constants.smi_max |> BitVecVal.from_int |> entype Type.const
 
-(* Int32 constant values *)
-let int32_min =
-  Int32.min_int |> Int32.to_int |> BitVecVal.from_int |> entype Type.const
-
-let int32_max =
-  Int32.max_int |> Int32.to_int |> BitVecVal.from_int |> entype Type.const
-
 (* Int64 constant values *)
 let int64_min =
   Int64.min_int |> Int64.to_string |> BitVecVal.from_istring
@@ -372,15 +365,6 @@ module Int32 = struct
     BitVec.shli (value |> from_value) 1
     |> BitVec.zero_extend 32 |> entype Type.tagged_signed
 
-  (* pp *)
-  let to_string model value =
-    let v_str =
-      value |> from_value |> Model.eval model |> Expr.to_simplified_string
-    in
-    Format.sprintf "Int32(0x%lx)"
-      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
-      |> Int32.of_string)
-
   (* Int32 V x Int32 V *)
   let add lval rval =
     let li = lval |> from_value in
@@ -395,15 +379,41 @@ module Int32 = struct
   let lt lval rval =
     let li = lval |> from_value in
     let ri = rval |> from_value in
-    BitVec.sltb li ri |> to_value
+    BitVec.sltb li ri
 
-  (* Method *)
+  let le lval rval =
+    let li = lval |> from_value in
+    let ri = rval |> from_value in
+    BitVec.sleb li ri
+
+  let ge lval rval =
+    let li = lval |> from_value in
+    let ri = rval |> from_value in
+    BitVec.sgeb li ri
+
+  (* constant *)
+  let min_value =
+    BitVecVal.from_int ~len:32 (Int32.min_int |> Int32.to_int) |> to_value
+
+  let max_value =
+    BitVecVal.from_int ~len:32 (Int32.max_int |> Int32.to_int) |> to_value
+
+  (* method *)
   let is_in_smi_range value =
     Z3utils.Bool.ands
       [
         BitVec.sgei (value |> from_value) Constants.smi_min;
         BitVec.slei (value |> from_value) Constants.smi_max;
       ]
+
+  (* pp *)
+  let to_string model value =
+    let v_str =
+      value |> from_value |> Model.eval model |> Expr.to_simplified_string
+    in
+    Format.sprintf "Int32(0x%lx)"
+      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
+      |> Int32.of_string)
 end
 
 module Int64 = struct

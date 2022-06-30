@@ -54,10 +54,7 @@ module ControlFile = struct
   let prefix = ref ""
 
   let init stage =
-    prefix :=
-      if stage = "before" then "bc"
-      else if stage = "after" then "ac"
-      else failwith "Invalid stage";
+    prefix := String.sub stage 0 1 ^ "c";
     C.empty
 
   let add key value rf = C.add key value rf

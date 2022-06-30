@@ -29,10 +29,9 @@ module Expr = struct
 
   let to_simplified_string exp = exp |> simplify None |> to_string
 
-  let print_expr exp = exp |> to_string |> print_endline
+  let print exp = exp |> to_string |> print_endline
 
-  let print_simplified_expr exp =
-    exp |> simplify None |> to_string |> print_endline
+  let print_simplified exp = exp |> simplify None |> to_string |> print_endline
 end
 
 module Tactic = struct

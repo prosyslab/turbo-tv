@@ -534,6 +534,23 @@ let execute program nparams stage cfg =
   let init_state = State.init nparams stage in
   next program init_state cfg
 
+let check_ub_semantic nparams program cfg =
+  let state = execute program nparams "test" cfg in
+  let ub = State.ub state in
+  let assertion = Bool.ands [ State.assertion state; ub ] in
+  let status = Solver.check validator assertion in
+
+  match status with
+  | SATISFIABLE ->
+      let model = Option.get (Solver.get_model validator) in
+      Printf.printf "\nResult: X\n";
+      Printf.printf "UB: %s\n" (Model.eval model ub |> Expr.to_simplified_string);
+      Printf.printf "CounterExample: \n";
+      Printer.print_params model (State.memory state) (State.params state);
+      Printer.print_counter_example program state model
+  | UNSATISFIABLE -> Printf.printf "\nResult: O\n"
+  | _ -> failwith "unknown"
+
 let run nparams src_program tgt_program before_cfg after_cfg =
   let src_state = execute src_program nparams "before" before_cfg in
   let tgt_state = execute tgt_program nparams "after" after_cfg in

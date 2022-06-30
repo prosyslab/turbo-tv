@@ -4,10 +4,7 @@ module R = Map.Make (String)
 let prefix = ref ""
 
 let init stage =
-  prefix :=
-    if stage = "before" then "bv"
-    else if stage = "after" then "av"
-    else failwith "Invalid stage";
+  prefix := String.sub stage 0 1 ^ "v";
   R.empty
 
 let add key value rf = R.add key value rf
