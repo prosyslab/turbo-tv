@@ -448,6 +448,13 @@ let to_boolean vid pval mem =
 
 let truncate_tagged_to_bit vid pval mem =
   let value = Value.init vid in
+  let wd_cond =
+    Bool.ors
+      [
+        Value.has_type Type.tagged_signed pval;
+        Value.has_type Type.tagged_pointer pval;
+      ]
+  in
 
   let uif =
     let value_sort = BV.mk_sort ctx Value.len in
@@ -483,4 +490,4 @@ let truncate_tagged_to_bit vid pval mem =
   in
 
   let assertion = Value.eq value res in
-  (value, Control.empty, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.not wd_cond)
