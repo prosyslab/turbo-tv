@@ -60,19 +60,16 @@ let main () =
     let tgt_ir_p = target |> Option.get in
     let src_grp = IR.create_from_ir_file src_ir_p in
     let tgt_grp = IR.create_from_ir_file tgt_ir_p in
-    let src_cfg = IR.get_control_flow_graph src_grp in
-    let tgt_cfg = IR.get_control_flow_graph tgt_grp in
     let nparams = 2 in
 
     if emit_graph then (
       IR.generate_graph_output "source.dot" src_grp;
       IR.generate_graph_output "target.dot" tgt_grp);
 
-    Tv.run nparams src_grp tgt_grp src_cfg tgt_cfg)
+    Tv.run nparams src_grp tgt_grp)
   else
     let test_ir_p = source |> Option.get in
     let test_grp = IR.create_from_ir_file test_ir_p in
-    let test_cfg = IR.get_control_flow_graph test_grp in
-    Tv.check_ub_semantic 2 test_grp test_cfg
+    Tv.check_ub_semantic 2 test_grp
 
 let () = main ()

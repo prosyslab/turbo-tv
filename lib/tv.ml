@@ -18,7 +18,7 @@ let tag base_is_tagged =
   | "untagged base" -> 0
   | _ -> failwith (Printf.sprintf "invalid input: %s" base_is_tagged)
 
-let rec next program state cfg =
+let rec next program state =
   let pc = State.pc state in
   let cf = State.control_file state in
   let rf = State.register_file state in
@@ -526,16 +526,16 @@ let rec next program state cfg =
   in
 
   if State.is_end next_state then { next_state with retval = value }
-  else next program next_state cfg
+  else next program next_state
 
 (* execute the program and retrieve a final state *)
-let execute program nparams stage cfg =
+let execute stage program nparams =
   (* symbols for parameters *)
   let init_state = State.init nparams stage in
-  next program init_state cfg
+  next program init_state
 
-let check_ub_semantic nparams program cfg =
-  let state = execute program nparams "test" cfg in
+let check_ub_semantic nparams program =
+  let state = execute "test" program nparams in
   let ub = State.ub state in
   let assertion = Bool.ands [ State.assertion state; ub ] in
   let status = Solver.check validator assertion in
@@ -551,9 +551,9 @@ let check_ub_semantic nparams program cfg =
   | UNSATISFIABLE -> Printf.printf "\nResult: O\n"
   | _ -> failwith "unknown"
 
-let run nparams src_program tgt_program before_cfg after_cfg =
-  let src_state = execute src_program nparams "before" before_cfg in
-  let tgt_state = execute tgt_program nparams "after" after_cfg in
+let run nparams src_program tgt_program =
+  let src_state = execute "before" src_program nparams in
+  let tgt_state = execute "after" tgt_program nparams in
 
   (* assumptions:
      1. Return value is either smi or heap number.
