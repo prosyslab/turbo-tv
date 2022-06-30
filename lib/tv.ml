@@ -113,7 +113,7 @@ let rec next program state cfg =
         let pidx = Operands.const_of_nth operands 0 |> int_of_string in
         if 0 < pidx && pidx <= List.length params then
           let param = List.nth params (pidx - 1) in
-          parameter vid param
+          parameter vid param !mem
         else (Value.empty, Control.empty, Bool.tr, Bool.fl)
     | Call -> (Value.tr, Control.empty, Bool.tr, Bool.fl)
     | Return ->

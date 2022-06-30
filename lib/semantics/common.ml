@@ -127,17 +127,23 @@ let phi vid incomings repr ctrls =
   (value, Control.empty, assertion, Bool.fl)
 
 (* common: procedure *)
-let parameter vid param =
+let parameter vid param mem =
   let value = Value.init vid in
-  (* assume parameter is tagged signed or tagged pointer *)
+  (* assume parameter is tagged signed or heap number
+     [TODO] allow parameter to point random address after implement the other object types
+  *)
   let assertion =
     Bool.ands
       [
         Value.eq value param;
         Bool.ors
           [
-            Value.has_type Type.tagged_pointer param;
             Value.has_type Type.tagged_signed param;
+            Bool.ands
+              [
+                Value.has_type Type.tagged_pointer param;
+                Objects.is_heap_number param mem;
+              ];
           ];
       ]
   in
