@@ -6,34 +6,32 @@ let has_type_all ty values =
   Bool.ands (List.map (fun v -> Value.has_type ty v) values)
 
 (* simplified: arithmetic *)
-let number_abs vid pval next_bid mem =
+let number_abs vid nptr next_bid mem =
   let value = Value.init vid in
   let wd_cond =
     Bool.ands
       [
-        pval |> Value.has_type Type.tagged_pointer;
-        Objects.is_heap_number pval !mem;
+        nptr |> Value.has_type Type.tagged_pointer;
+        Objects.is_heap_number nptr !mem;
       ]
   in
-  let pnum = HeapNumber.load pval !mem in
-  let wd_value =
-    let res_num_value =
-      (* nan -> nan *)
-      Bool.ite (HeapNumber.is_nan pnum) (Float.nan ())
-        (* -0 -> 0 *)
-        (Bool.ite
-           (HeapNumber.is_minus_zero pnum)
-           (Float.from_float 0.0)
-           (* ninf -> inf *)
-           (Bool.ite (HeapNumber.is_ninf pnum) (Float.inf ())
-              (* n < 0 -> -n *)
-              (Bool.ite
-                 (HeapNumber.is_negative pnum)
-                 (Float.neg pnum.value) pnum.value)))
-    in
-    HeapNumber.from_float64 next_bid wd_cond res_num_value mem
+  let abs =
+    let n = HeapNumber.load nptr !mem in
+    HeapNumber.from_float64 next_bid wd_cond
+      ((* nan -> nan *)
+       Bool.ite (HeapNumber.is_nan n) (Float.nan ())
+         (* -0 -> 0 *)
+         (Bool.ite
+            (HeapNumber.is_minus_zero n)
+            (Float.from_float 0.0)
+            (* ninf -> inf *)
+            (Bool.ite (HeapNumber.is_ninf n) (Float.inf ())
+               (* n < 0 -> -n *)
+               (Bool.ite (HeapNumber.is_negative n) (Float.neg n.value) n.value)))
+      |> Value.entype Type.float64)
+      mem
   in
-  let assertion = Value.eq value wd_value in
+  let assertion = Value.eq value abs in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* well-defined condition:
@@ -209,9 +207,7 @@ let number_expm1 vid nptr next_bid mem =
       |> Value.entype Type.float64)
       mem
   in
-  let wd_value = expm1 in
-
-  let assertion = Value.eq value wd_value in
+  let assertion = Value.eq value expm1 in
   (value, Control.empty, assertion, ub_cond)
 
 (* simplified: comparison *)
