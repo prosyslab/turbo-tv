@@ -63,6 +63,14 @@ module HeapNumber = struct
   let is_safe_integer obj =
     obj.value |> Value.entype Type.float64 |> Value.Float64.is_safe_integer
 
+  let is_positive obj =
+    obj.value |> Value.entype Type.float64 |> Value.Float64.is_positive
+
+  let is_negative obj =
+    obj.value |> Value.entype Type.float64 |> Value.Float64.is_negative
+
+  let eq lobj robj = Bool.eq lobj.value robj.value
+
   let to_string model obj =
     let f_str =
       let fval = obj.value |> Float.from_ieee_bv |> Model.eval model in
@@ -89,8 +97,6 @@ module HeapNumber = struct
       else fval |> Real.to_decimal_string
     in
     Format.sprintf "HeapNumber(%s)" f_str
-
-  let eq lobj robj = Bool.eq lobj.value robj.value
 end
 
 let map_of ptr mem = Memory.load (ptr |> TaggedPointer.to_raw_pointer) 4 mem

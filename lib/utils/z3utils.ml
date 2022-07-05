@@ -161,6 +161,8 @@ module Float = struct
 
   let eq lexp rexp = Fl.mk_eq ctx lexp rexp
 
+  let gt lexp rexp = Fl.mk_gt ctx lexp rexp
+
   let ge lexp rexp = Fl.mk_geq ctx lexp rexp
 
   let gef lexp rexp = Fl.mk_geq ctx lexp (rexp |> from_float)
@@ -180,6 +182,8 @@ module Float = struct
     Fl.mk_sub ctx rne lexp rexp
 
   let abs exp = Fl.mk_abs ctx exp
+
+  let neg exp = Fl.mk_neg ctx exp
 
   let is_minus_zero exp =
     Bool.ands [ Fl.mk_is_negative ctx exp; Fl.mk_is_zero ctx exp ]

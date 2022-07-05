@@ -470,6 +470,10 @@ module Float64 = struct
 
   let is_minus_zero value = Float.is_minus_zero (value |> from_value)
 
+  let is_positive value = BitVec.eqi (BitVec.extract 63 63 (value |> data_of)) 0
+
+  let is_negative value = BitVec.eqi (BitVec.extract 63 63 (value |> data_of)) 0
+
   let eq lval rval =
     let lf = lval |> from_value in
     let rf = rval |> from_value in
@@ -495,10 +499,19 @@ module Float64 = struct
     let rf = rval |> from_value in
     Z3utils.Float.le lf rf
 
+  let gt lval rval =
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
+    Z3utils.Float.gt lf rf
+
   let ge lval rval =
     let lf = lval |> from_value in
     let rf = rval |> from_value in
     Z3utils.Float.ge lf rf
+
+  let neg value =
+    let f = value |> from_value in
+    Z3utils.Float.neg f |> to_value
 
   let round value =
     Z3utils.Float.round Z3utils.Float.rne_mode (value |> from_value)
