@@ -60,19 +60,8 @@ module HeapNumber = struct
 
   let is_inf obj = BitVec.eqb obj.value (BitVecVal.inf ())
 
-  let is_integer obj =
-    BitVec.eqb obj.value
-      (obj.value |> Float.from_ieee_bv |> Float.round Float.rne_mode
-     |> Float.to_ieee_bv)
-
   let is_safe_integer obj =
-    let value_in_float = obj.value |> Float.from_ieee_bv in
-    Bool.ands
-      [
-        is_integer obj;
-        Float.ge value_in_float (Float.safe_integer_min ());
-        Float.le value_in_float (Float.safe_integer_max ());
-      ]
+    obj.value |> Value.entype Type.float64 |> Value.Float64.is_safe_integer
 
   let to_string model obj =
     let f_str =

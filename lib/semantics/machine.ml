@@ -293,7 +293,7 @@ let float64_equal vid lval rval =
       [ Value.has_repr Repr.Float64 lval; Value.has_repr Repr.Float64 rval ]
   in
   (* use strong equal since only Float64 type is defined for Float64 Repr. *)
-  let wd_value = Bool.ite (Value.eq lval rval) Value.tr Value.fl in
+  let wd_value = Bool.ite (Value.Float64.eq lval rval) Value.tr Value.fl in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
@@ -311,7 +311,7 @@ let float64_less_than vid lval rval =
     in
     Bool.ands [ are_float64 ]
   in
-  let wd_value = Value.Float64.lt lval rval in
+  let wd_value = Bool.ite (Value.Float64.lt lval rval) Value.tr Value.fl in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 

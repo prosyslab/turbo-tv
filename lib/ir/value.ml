@@ -452,11 +452,13 @@ module Float64 = struct
 
   let to_int64 value =
     value |> from_value
-    |> Float.to_sbv (Z3.FloatingPoint.RoundingMode.mk_round_toward_zero ctx)
+    |> Z3utils.Float.to_sbv Z3utils.Float.rne_mode
     |> entype Type.int64
 
   let to_int32 value =
-    andi (value |> to_int64) Constants.int32_mask |> cast Type.int32
+    value |> from_value
+    |> Z3utils.Float.to_sbv ~len:32 Z3utils.Float.rne_mode
+    |> BitVec.sign_extend 32 |> entype Type.int32
 
   let to_tagged_signed value = value |> to_int32 |> Int32.to_tagged_signed
 
@@ -486,14 +488,30 @@ module Float64 = struct
   let lt lval rval =
     let lf = lval |> from_value in
     let rf = rval |> from_value in
-    Z3utils.Bool.ite (Z3utils.Float.lt lf rf) tr fl
+    Z3utils.Float.lt lf rf
 
   let le lval rval =
     let lf = lval |> from_value in
     let rf = rval |> from_value in
-    Z3utils.Bool.ite (Z3utils.Float.le lf rf) tr fl
+    Z3utils.Float.le lf rf
 
-  let is_integer value = eq value (value |> to_int32 |> Int32.to_float64)
+  let ge lval rval =
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
+    Z3utils.Float.ge lf rf
+
+  let round value =
+    Z3utils.Float.round Z3utils.Float.rne_mode (value |> from_value)
+
+  let is_integer value = eq value (value |> round |> to_value)
+
+  let safe_integer_max = Float.safe_integer_max () |> to_value
+
+  let safe_integer_min = Float.safe_integer_min () |> to_value
+
+  let is_safe_integer value =
+    Z3utils.Bool.ands
+      [ is_integer value; ge value safe_integer_min; le value safe_integer_max ]
 
   let can_be_smi value =
     Z3utils.Bool.ands
