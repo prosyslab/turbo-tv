@@ -5,7 +5,6 @@
  (modules
   ;parser
   bracket
-  reduction
   opcode
   operands
   instr
