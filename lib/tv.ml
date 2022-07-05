@@ -147,7 +147,7 @@ let rec next program state =
     | NumberAbs ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
-        number_abs vid pval
+        number_abs vid pval next_bid mem
     | SpeculativeNumberAdd ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -552,8 +552,8 @@ let check_ub_semantic nparams program =
   | _ -> failwith "unknown"
 
 let run nparams src_program tgt_program =
-  let src_state = execute "before" src_program nparams in
-  let tgt_state = execute "after" tgt_program nparams in
+  let src_state = execute "source" src_program nparams in
+  let tgt_state = execute "target" tgt_program nparams in
 
   (* assumptions:
      1. Return value is either smi or heap number.

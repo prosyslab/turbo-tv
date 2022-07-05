@@ -6,6 +6,36 @@ let has_type_all ty values =
   Bool.ands (List.map (fun v -> Value.has_type ty v) values)
 
 (* simplified: arithmetic *)
+let number_abs vid pval next_bid mem =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [
+        pval |> Value.has_type Type.tagged_pointer;
+        Objects.is_heap_number pval !mem;
+      ]
+  in
+  let pnum = HeapNumber.load pval !mem in
+  let wd_value =
+    let res_num_value =
+      (* nan -> nan *)
+      Bool.ite (HeapNumber.is_nan pnum) (Float.nan ())
+        (* -0 -> 0 *)
+        (Bool.ite
+           (HeapNumber.is_minus_zero pnum)
+           (Float.from_float 0.0)
+           (* ninf -> inf *)
+           (Bool.ite (HeapNumber.is_ninf pnum) (Float.inf ())
+              (* n < 0 -> -n *)
+              (Bool.ite
+                 (HeapNumber.is_negative pnum)
+                 (Float.neg pnum.value) pnum.value)))
+    in
+    HeapNumber.from_float64 next_bid wd_cond res_num_value mem
+  in
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.not wd_cond)
+
 (* well-defined condition:
  * - WellDefined(lval) ^ WellDefined(rval)
  * - IsInt32(lval) ^ IsInt32(rval)
@@ -32,18 +62,6 @@ let number_add vid lval rval =
   in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
-
-let number_abs vid pval =
-  let value = Value.init vid in
-  let ty = Value.ty_of pval in
-  let wd_value =
-    Bool.ite
-      (Bool.ors
-         [ Value.has_type Type.int32 pval; Value.has_type Type.int64 pval ])
-      (Value.abs ty pval) (Value.absf pval)
-  in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
  * - WellDefined(lval) ^ WellDefined(rval)
@@ -75,17 +93,18 @@ let speculative_number_equal vid lval rval =
   (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* well-defined condition:
- *  IsTaggedPointer(lval) /\ IsTaggedPointer(rval)
- * /\ PointsNumberObject(lval) /\ PointsNumberObject(rval)
- * /\ IsSafeInteger(lval) /\ IsSafeInteger(rval)
- * /\ IsWellDefined(lval) /\ IsWellDefined(rval)
+ * (IsTaggedSigned(lval) /\ IsTaggedSigned(rval))
+ * \/ (IsTaggedPointer(lval) /\ IsTaggedPointer(rval)
+ *    /\ PointsNumberObject(lval) /\ PointsNumberObject(rval)
+ *    /\ IsAdditiveSafeInteger(lval) /\ IsAdditiveSafeInteger(rval))
  * assertion:
  *  value = ite well-defined (lval+rval) UB *)
 let speculative_safe_integer_add vid lval rval next_bid mem =
   let value = Value.init vid in
 
+  (* [TODO] handling deoptimization *)
   let deopt_cond =
-    let check_value value =
+    let is_safe_integer value =
       Bool.ors
         [
           value |> Value.has_type Type.tagged_signed;
@@ -97,7 +116,7 @@ let speculative_safe_integer_add vid lval rval next_bid mem =
             ];
         ]
     in
-    Bool.ors [ Bool.not (check_value lval); Bool.not (check_value rval) ]
+    Bool.not (Bool.ands [ is_safe_integer lval; is_safe_integer rval ])
   in
 
   let added_f64 =
@@ -109,7 +128,7 @@ let speculative_safe_integer_add vid lval rval next_bid mem =
         (number.value |> Value.entype Type.float64)
     in
     let lf = lval |> value_to_float64 in
-    let rf = lval |> value_to_float64 in
+    let rf = rval |> value_to_float64 in
     Value.Float64.add lf rf
   in
 
