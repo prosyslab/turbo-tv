@@ -275,6 +275,10 @@ let rec next program state =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         checked_tagged_signed_to_int32 vid pval
+    | NumberToInt32 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        number_to_int32 vid pval next_bid mem
     | ToBoolean ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in

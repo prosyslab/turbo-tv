@@ -264,11 +264,24 @@ let number_multiply vid lval rval next_bid mem =
   let assertion = Value.eq value multiply in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
-(* well-defined condition:
- * - WellDefined(lval) ^ WellDefined(rval)
- * - IsWord32(lval) ^ IsWord32(rval)
- * assertion:
- *  value = ite well-defined (lval xor rval) UB *)
+let number_to_int32 vid pval next_bid mem =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [
+        pval |> Value.has_type Type.tagged_pointer;
+        Objects.is_heap_number pval !mem;
+      ]
+  in
+  (* https://tc39.es/ecma262/#sec-toint32 *)
+  let to_int32 =
+    let num = HeapNumber.load pval !mem in
+    let i = num |> HeapNumber.to_float64 |> Float64.to_int32 in
+    HeapNumber.from_float64 next_bid wd_cond (i |> Value.Int32.to_float64) mem
+  in
+  let assertion = Value.eq value to_int32 in
+  (value, Control.empty, assertion, Bool.not wd_cond)
+
 let speculative_number_bitwise_xor vid lval rval =
   let value = Value.init vid in
   let wd_cond =
@@ -588,7 +601,6 @@ let change_int64_to_tagged vid pval next_bid mem =
 let checked_float64_to_int32 _hint vid pval =
   let value = Value.init vid in
   let wd_cond = Bool.ands [ Value.has_type Type.float64 pval ] in
-
   let value32 = pval |> Float64.to_int32 in
 
   (* TODO: handing deoptimization *)
