@@ -25,8 +25,9 @@ let rec next program state =
   let next_bid = ref (State.next_bid state) in
   let mem = ref (State.memory state) in
   let params = State.params state in
-  let vid = !RegisterFile.prefix ^ string_of_int pc in
-  let cid = !ControlFile.prefix ^ string_of_int pc in
+  let node_id = string_of_int pc in
+  let vid = RegisterFile.vid node_id in
+  let cid = ControlFile.cid node_id in
 
   let ty, opcode, operands = IR.instr_of pc program in
   let next_pc = match opcode with End -> -1 | _ -> pc + 1 in
@@ -165,7 +166,7 @@ let rec next program state =
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        speculative_number_equal vid lval rval
+        speculative_number_equal vid lval rval next_bid mem
     | SpeculativeSafeIntegerAdd ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -192,7 +193,7 @@ let rec next program state =
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        number_less_than vid lval rval
+        number_less_than vid lval rval next_bid mem
     | ReferenceEqual ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -517,12 +518,27 @@ let rec next program state =
     match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
   in
 
+  (* dependency checker *)
+  let updated_deopt_node_map =
+    let prev = State.deopt_node_map state in
+    if List.mem opcode DependencyChecker.deopt_nodes then
+      DependencyChecker.deopt_node_map_add pc opcode operands rf control prev
+    else prev
+  in
+  let updated_kill_node_map =
+    let prev = State.kill_node_map state in
+    if List.mem opcode DependencyChecker.kill_nodes then
+      DependencyChecker.NodeMap.add pc control prev
+    else prev
+  in
+
+  (* update state *)
   let updated_rf = RegisterFile.add vid value rf in
   let updated_cf = ControlFile.add cid control cf in
   let updated_ub = Bool.ors [ State.ub state; ub; Bool.not type_is_verified ] in
   let next_state =
     State.update next_pc !next_bid updated_cf updated_rf !mem updated_asrt
-      updated_ub state
+      updated_ub updated_deopt_node_map updated_kill_node_map state
   in
 
   if State.is_end next_state then { next_state with retval = value }
@@ -552,8 +568,19 @@ let check_ub_semantic nparams program =
   | _ -> failwith "unknown"
 
 let run nparams src_program tgt_program =
-  let src_state = execute "source" src_program nparams in
-  let tgt_state = execute "target" tgt_program nparams in
+  let src_state = execute "before" src_program nparams in
+  DependencyChecker.check src_program
+    (State.deopt_node_map src_state)
+    (State.kill_node_map src_state)
+    (State.assertion src_state)
+    "src";
+
+  let tgt_state = execute "after" tgt_program nparams in
+  DependencyChecker.check tgt_program
+    (State.deopt_node_map tgt_state)
+    (State.kill_node_map tgt_state)
+    (State.assertion tgt_state)
+    "tgt";
 
   (* assumptions:
      1. Return value is either smi or heap number.
@@ -600,7 +627,7 @@ let run nparams src_program tgt_program =
   match status with
   | SATISFIABLE ->
       let model = Option.get (Solver.get_model validator) in
-      Printf.printf "\nResult: Not Verified \n";
+      Printf.printf "Result: Not Verified \n";
       Printf.printf "  ub is same: %s\n"
         (Model.eval model ub_is_same |> Expr.to_string);
       Printf.printf "    src ub: %s\n"
@@ -614,5 +641,5 @@ let run nparams src_program tgt_program =
         (State.params src_state);
       Printer.print_counter_example src_program src_state model;
       Printer.print_counter_example tgt_program tgt_state model
-  | UNSATISFIABLE -> Printf.printf "\nResult: Verified\n"
+  | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
   | _ -> failwith "unknown"

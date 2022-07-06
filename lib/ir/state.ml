@@ -31,6 +31,8 @@ type t = {
   retval : BitVec.t;
   assertion : BitVec.t;
   ub : Bool.t;
+  deopt_node_map : Z3.Expr.expr DependencyChecker.NodeMap.t;
+  kill_node_map : Z3.Expr.expr DependencyChecker.NodeMap.t;
 }
 
 let init nparams stage : t =
@@ -45,10 +47,24 @@ let init nparams stage : t =
     retval = Value.empty;
     assertion = Bool.tr;
     ub = Bool.fl;
+    deopt_node_map = DependencyChecker.NodeMap.empty;
+    kill_node_map = DependencyChecker.NodeMap.empty;
   }
 
-let update pc next_bid control_file register_file memory assertion ub t =
-  { t with pc; next_bid; control_file; register_file; memory; assertion; ub }
+let update pc next_bid control_file register_file memory assertion ub
+    deopt_node_map kill_node_map t =
+  {
+    t with
+    pc;
+    next_bid;
+    control_file;
+    register_file;
+    memory;
+    assertion;
+    ub;
+    deopt_node_map;
+    kill_node_map;
+  }
 
 (* getter *)
 let pc t = t.pc
@@ -72,3 +88,7 @@ let assertion t = t.assertion
 let ub t = t.ub
 
 let is_end t = t.pc = -1
+
+let deopt_node_map t = t.deopt_node_map
+
+let kill_node_map t = t.kill_node_map

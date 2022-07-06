@@ -3,6 +3,8 @@ module R = Map.Make (String)
 
 let prefix = ref ""
 
+let vid id = !prefix ^ id
+
 let init stage =
   prefix := String.sub stage 0 1 ^ "v";
   R.empty

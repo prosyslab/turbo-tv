@@ -87,6 +87,24 @@ let find_by_opcode opcode graph =
     raise (NodeNotFound (Opcode.to_str opcode, reason))
   else node
 
+let is_connected start_id end_id graph =
+  let rec is_connected_helper present end_id visited graph =
+    let next_nodes = G.succ graph present in
+    List.fold_left
+      (fun (result, visited) next_node ->
+        if Node.id next_node = end_id then (true, visited)
+        else if List.mem next_node visited then (result, visited)
+        else
+          let new_visited = next_node :: visited in
+          let next_result, next_visited =
+            is_connected_helper next_node end_id new_visited graph
+          in
+          (result || next_result, next_visited))
+      (false, visited) next_nodes
+  in
+  let start_node = find_by_id start_id graph in
+  is_connected_helper start_node end_id [] graph |> fst
+
 let true_br_of id graph =
   find_in_succ
     (fun node -> node |> Node.instr |> Instr.opcode = Opcode.IfTrue)

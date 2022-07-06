@@ -104,8 +104,8 @@ DeadValue,
 DebugBreak,
 DelayedStringConstant,
 Deoptimize,
-DeoptimizeIf,
-DeoptimizeUnless,
+DeoptimizeIf,v1
+DeoptimizeUnless,v1
 EffectPhi,
 End,cv
 EnsureWritableFastElements,
@@ -616,10 +616,10 @@ NumberLog,
 NumberLog10,
 NumberLog1p,
 NumberLog2,
-NumberMax,
-NumberMin,
+NumberMax,v1,v2
+NumberMin,v1,v2
 NumberModulus,
-NumberMultiply,
+NumberMultiply,v1,v2
 NumberPow,
 NumberRound,
 NumberSameValue,

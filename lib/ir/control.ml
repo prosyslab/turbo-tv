@@ -53,6 +53,8 @@ module ControlFile = struct
 
   let prefix = ref ""
 
+  let cid id = !prefix ^ id
+
   let init stage =
     prefix := String.sub stage 0 1 ^ "c";
     C.empty
