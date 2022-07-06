@@ -635,7 +635,7 @@ NumberSubtract,
 NumberTan,
 NumberTanh,
 NumberToBoolean,
-NumberToInt32,
+NumberToInt32,v1
 NumberToString,
 NumberToUint32,
 NumberToUint8Clamped,

@@ -605,7 +605,6 @@ type t =
   | NumberTan
   | NumberTanh
   | NumberToBoolean
-  | NumberToInt32
   | NumberToString
   | NumberToUint32
   | NumberToUint8Clamped
@@ -833,6 +832,7 @@ type t =
   | Float64ExtractHighWord32
   | NumberAbs
   | NumberExpm1
+  | NumberToInt32
   | RoundFloat64ToInt32
   | StackPointerGreaterThan
   | ToBoolean
@@ -1060,21 +1060,21 @@ let get_kind opcode =
   | NumberModulus | NumberPow | NumberRound | NumberSameValue | NumberShiftLeft
   | NumberShiftRight | NumberShiftRightLogical | NumberSign | NumberSilenceNaN
   | NumberSin | NumberSinh | NumberSqrt | NumberSubtract | NumberTan
-  | NumberTanh | NumberToBoolean | NumberToInt32 | NumberToString
-  | NumberToUint32 | NumberToUint8Clamped | NumberTrunc | ObjectId
-  | ObjectIsArrayBufferView | ObjectIsBigInt | ObjectIsCallable
-  | ObjectIsConstructor | ObjectIsDetectableCallable | ObjectIsFiniteNumber
-  | ObjectIsInteger | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable
-  | ObjectIsNumber | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi
-  | ObjectIsString | ObjectIsSymbol | ObjectIsUndetectable | ObjectState
-  | OsrValue | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber
-  | PlainPrimitiveToWord32 | Plug | PointerConstant | ProtectedLoad
-  | ProtectedStore | RelocatableInt32Constant | RelocatableInt64Constant
-  | RestLength | Retain | RoundInt32ToFloat32 | RoundInt64ToFloat32
-  | RoundInt64ToFloat64 | RoundUint32ToFloat32 | RoundUint64ToFloat32
-  | RoundUint64ToFloat64 | RuntimeAbort | S128And | S128AndNot | S128Const
-  | S128Not | S128Or | S128Select | S128Xor | S128Zero | SLVerifierHint
-  | SameValue | SameValueNumbersOnly | Select | SignExtendWord16ToInt32
+  | NumberTanh | NumberToBoolean | NumberToString | NumberToUint32
+  | NumberToUint8Clamped | NumberTrunc | ObjectId | ObjectIsArrayBufferView
+  | ObjectIsBigInt | ObjectIsCallable | ObjectIsConstructor
+  | ObjectIsDetectableCallable | ObjectIsFiniteNumber | ObjectIsInteger
+  | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable | ObjectIsNumber
+  | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi | ObjectIsString
+  | ObjectIsSymbol | ObjectIsUndetectable | ObjectState | OsrValue
+  | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber | PlainPrimitiveToWord32
+  | Plug | PointerConstant | ProtectedLoad | ProtectedStore
+  | RelocatableInt32Constant | RelocatableInt64Constant | RestLength | Retain
+  | RoundInt32ToFloat32 | RoundInt64ToFloat32 | RoundInt64ToFloat64
+  | RoundUint32ToFloat32 | RoundUint64ToFloat32 | RoundUint64ToFloat64
+  | RuntimeAbort | S128And | S128AndNot | S128Const | S128Not | S128Or
+  | S128Select | S128Xor | S128Zero | SLVerifierHint | SameValue
+  | SameValueNumbersOnly | Select | SignExtendWord16ToInt32
   | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
   | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
   | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
@@ -1127,8 +1127,9 @@ let get_kind opcode =
   | ChangeInt64ToFloat64 | ChangeInt64ToTagged | ChangeTaggedSignedToInt32
   | ChangeUint32ToFloat64 | ChangeUint32ToUint64 | CheckedTaggedSignedToInt32
   | DeoptimizeIf | DeoptimizeUnless | Float64Abs | Float64ExtractHighWord32
-  | NumberAbs | NumberExpm1 | RoundFloat64ToInt32 | StackPointerGreaterThan
-  | ToBoolean | TruncateInt64ToInt32 | TruncateTaggedToBit ->
+  | NumberAbs | NumberExpm1 | NumberToInt32 | RoundFloat64ToInt32
+  | StackPointerGreaterThan | ToBoolean | TruncateInt64ToInt32
+  | TruncateTaggedToBit ->
       V1
   | IfFalse | IfTrue -> C1
   | Branch -> V1E1
@@ -1764,7 +1765,6 @@ let of_str str =
   | "NumberTan" -> NumberTan
   | "NumberTanh" -> NumberTanh
   | "NumberToBoolean" -> NumberToBoolean
-  | "NumberToInt32" -> NumberToInt32
   | "NumberToString" -> NumberToString
   | "NumberToUint32" -> NumberToUint32
   | "NumberToUint8Clamped" -> NumberToUint8Clamped
@@ -1990,6 +1990,7 @@ let of_str str =
   | "Float64ExtractHighWord32" -> Float64ExtractHighWord32
   | "NumberAbs" -> NumberAbs
   | "NumberExpm1" -> NumberExpm1
+  | "NumberToInt32" -> NumberToInt32
   | "RoundFloat64ToInt32" -> RoundFloat64ToInt32
   | "StackPointerGreaterThan" -> StackPointerGreaterThan
   | "ToBoolean" -> ToBoolean
@@ -2634,7 +2635,6 @@ let to_str opcode =
   | NumberTan -> "NumberTan"
   | NumberTanh -> "NumberTanh"
   | NumberToBoolean -> "NumberToBoolean"
-  | NumberToInt32 -> "NumberToInt32"
   | NumberToString -> "NumberToString"
   | NumberToUint32 -> "NumberToUint32"
   | NumberToUint8Clamped -> "NumberToUint8Clamped"
@@ -2860,6 +2860,7 @@ let to_str opcode =
   | Float64ExtractHighWord32 -> "Float64ExtractHighWord32"
   | NumberAbs -> "NumberAbs"
   | NumberExpm1 -> "NumberExpm1"
+  | NumberToInt32 -> "NumberToInt32"
   | RoundFloat64ToInt32 -> "RoundFloat64ToInt32"
   | StackPointerGreaterThan -> "StackPointerGreaterThan"
   | ToBoolean -> "ToBoolean"
