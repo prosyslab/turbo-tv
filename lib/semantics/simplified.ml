@@ -121,7 +121,85 @@ let number_expm1 vid nptr next_bid mem =
       mem
   in
   let assertion = Value.eq value expm1 in
-  (value, Control.empty, assertion, ub_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond)
+
+let number_max vid lval rval next_bid mem =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [
+        lval |> Value.has_type Type.tagged_pointer;
+        rval |> Value.has_type Type.tagged_pointer;
+        Objects.is_heap_number lval !mem;
+        Objects.is_heap_number rval !mem;
+      ]
+  in
+  (* https://tc39.es/ecma262/#sec-math.max *)
+  let max =
+    let lnum = HeapNumber.load lval !mem in
+    let rnum = HeapNumber.load rval !mem in
+    HeapNumber.from_float64 next_bid wd_cond
+      (Bool.ite
+         (* if lnum or rnum is nan, return nan *)
+         (Bool.ors [ HeapNumber.is_nan lnum; HeapNumber.is_nan rnum ])
+         Float64.nan
+         (* if lnum is -0 and rnum is 0, return 0 *)
+         (Bool.ite
+            (Bool.ands
+               [ HeapNumber.is_minus_zero lnum; HeapNumber.is_zero rnum ])
+            Float64.zero
+            (* if lnum is 0 and rnum is -0, return 0 *)
+            (Bool.ite
+               (Bool.ands
+                  [ HeapNumber.is_zero lnum; HeapNumber.is_minus_zero rnum ])
+               Float64.zero
+               (* if lnum < rnum, return rnum else return lnum *)
+               (Bool.ite (HeapNumber.lt lnum rnum)
+                  (rnum |> HeapNumber.to_float64)
+                  (lnum |> HeapNumber.to_float64)))))
+      mem
+  in
+  let assertion = Value.eq value max in
+  (value, Control.empty, assertion, Bool.not wd_cond)
+
+let number_min vid lval rval next_bid mem =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [
+        lval |> Value.has_type Type.tagged_pointer;
+        rval |> Value.has_type Type.tagged_pointer;
+        Objects.is_heap_number lval !mem;
+        Objects.is_heap_number rval !mem;
+      ]
+  in
+  (* https://tc39.es/ecma262/#sec-math.min *)
+  let min =
+    let lnum = HeapNumber.load lval !mem in
+    let rnum = HeapNumber.load rval !mem in
+    HeapNumber.from_float64 next_bid wd_cond
+      (Bool.ite
+         (* if lnum or rnum is nan, return nan *)
+         (Bool.ors [ HeapNumber.is_nan lnum; HeapNumber.is_nan rnum ])
+         Float64.nan
+         (* if lnum is -0 and rnum is 0, return -0 *)
+         (Bool.ite
+            (Bool.ands
+               [ HeapNumber.is_minus_zero lnum; HeapNumber.is_zero rnum ])
+            Float64.minus_zero
+            (* if lnum is 0 and rnum is -0, return -0 *)
+            (Bool.ite
+               (Bool.ands
+                  [ HeapNumber.is_zero lnum; HeapNumber.is_minus_zero rnum ])
+               Float64.minus_zero
+               (* if lnum < rnum, return lnum else return rnum *)
+               (Bool.ite (HeapNumber.lt lnum rnum)
+                  (lnum |> HeapNumber.to_float64)
+                  (rnum |> HeapNumber.to_float64)))))
+      mem
+  in
+  let assertion = Value.eq value min in
+  (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* well-defined condition:
  * - WellDefined(lval) ^ WellDefined(rval)
