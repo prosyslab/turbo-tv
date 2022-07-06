@@ -20,16 +20,16 @@ let number_abs vid nptr next_bid mem =
     let n = HeapNumber.load nptr !mem in
     HeapNumber.from_float64 next_bid wd_cond
       ((* nan -> nan *)
-       Bool.ite (HeapNumber.is_nan n) Value.Float64.nan
+       Bool.ite (HeapNumber.is_nan n) Float64.nan
          (* -0 -> 0 *)
          (Bool.ite
             (HeapNumber.is_minus_zero n)
-            Value.Float64.zero
+            Float64.zero
             (* ninf -> inf *)
-            (Bool.ite (HeapNumber.is_ninf n) Value.Float64.inf
+            (Bool.ite (HeapNumber.is_ninf n) Float64.inf
                (* n < 0 -> -n *)
                (Bool.ite (HeapNumber.is_negative n)
-                  (Value.Float64.neg (n.value |> Value.entype Type.float64))
+                  (Float64.neg (n.value |> Value.entype Type.float64))
                   (n.value |> Value.entype Type.float64)))))
       mem
   in
@@ -55,15 +55,15 @@ let number_add vid lval rval next_bid mem =
       (* if lnum or rnum is nan, return nan *)
       (Bool.ite
          (Bool.ors [ HeapNumber.is_nan lnum; HeapNumber.is_nan rnum ])
-         Value.Float64.nan
+         Float64.nan
          (* inf+ninf = nan *)
          (Bool.ite
             (Bool.ands [ HeapNumber.is_inf lnum; HeapNumber.is_ninf rnum ])
-            Value.Float64.nan
+            Float64.nan
             (* ninf+inf = nan *)
             (Bool.ite
                (Bool.ands [ HeapNumber.is_ninf lnum; HeapNumber.is_inf rnum ])
-               Value.Float64.nan
+               Float64.nan
                (* lnum is inf or -inf, return lnum*)
                (Bool.ite
                   (Bool.ors [ HeapNumber.is_inf lnum; HeapNumber.is_ninf lnum ])
@@ -80,9 +80,9 @@ let number_add vid lval rval next_bid mem =
                              HeapNumber.is_minus_zero lnum;
                              HeapNumber.is_minus_zero rnum;
                            ])
-                        Value.Float64.minus_zero
+                        Float64.minus_zero
                         (* else, n+n *)
-                        (Value.Float64.add lnum.value rnum.value)))))))
+                        (Float64.add lnum.value rnum.value)))))))
       mem
   in
   let assertion = Value.eq value add in
@@ -269,13 +269,13 @@ let speculative_safe_integer_add vid lval rval next_bid mem =
     in
     let lf = lval |> value_to_float64 in
     let rf = rval |> value_to_float64 in
-    Value.Float64.add lf rf
+    Float64.add lf rf
   in
 
   let res =
     Bool.ite
-      (added_f64 |> Value.Float64.can_be_smi)
-      (added_f64 |> Value.Float64.to_tagged_signed)
+      (added_f64 |> Float64.can_be_smi)
+      (added_f64 |> Float64.to_tagged_signed)
       (HeapNumber.from_float64 next_bid (Bool.not deopt_cond) added_f64 mem)
   in
 
@@ -309,7 +309,7 @@ let speculative_safe_integer_subtract vid lval rval next_bid mem =
 
   let res =
     HeapNumber.from_float64 next_bid wd_cond
-      (Value.Float64.sub lnum.value rnum.value)
+      (Float64.sub lnum.value rnum.value)
       mem
   in
 
@@ -317,42 +317,7 @@ let speculative_safe_integer_subtract vid lval rval next_bid mem =
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
-let number_expm1 vid nptr next_bid mem =
-  let value = Value.init vid in
-  let wd_cond =
-    Bool.ands
-      [
-        nptr |> Value.has_type Type.tagged_pointer;
-        Objects.is_heap_number nptr !mem;
-      ]
-  in
-  let ub_cond = Bool.not wd_cond in
-
-  (* expm1 = e^{n}-1 *)
-  let expm1 =
-    let n = HeapNumber.load nptr !mem in
-    let bv_sort = BV.mk_sort ctx 64 in
-    let expm_decl =
-      Z3.FuncDecl.mk_func_decl_s ctx "unknown_number_expm1" [ bv_sort ] bv_sort
-    in
-    HeapNumber.from_float64 next_bid wd_cond
-      (Bool.ite
-         (HeapNumber.is_minus_zero n)
-         (BitVecVal.minus_zero ())
-         (Bool.ite (HeapNumber.is_inf n) (BitVecVal.inf ())
-            (Bool.ite (HeapNumber.is_ninf n)
-               (BitVecVal.from_f64string "-1.0")
-               (Bool.ite (HeapNumber.is_nan n) (BitVecVal.nan ())
-                  (Bool.ite (HeapNumber.is_zero n)
-                     (BitVecVal.from_f64string "0.0")
-                     (Z3.FuncDecl.apply expm_decl [ n.value ])))))
-      |> Value.entype Type.float64)
-      mem
-  in
-  let assertion = Value.eq value expm1 in
-  (value, Control.empty, assertion, ub_cond)
-
-(* simplified: comparison *)
+(* simplified: logic *)
 (* well-defined condition:
  * - WellDefined(pval) ^ IsBool(pval)
  * assertion:
@@ -364,6 +329,7 @@ let boolean_not vid pval =
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
+(* simplified: comparison *)
 let number_less_than vid lval rval =
   let value = Value.init vid in
   let wd_cond =
@@ -523,17 +489,17 @@ let checked_float64_to_int32 _hint vid pval =
   let value = Value.init vid in
   let wd_cond = Bool.ands [ Value.has_type Type.float64 pval ] in
 
-  let value32 = pval |> Value.Float64.to_int32 in
+  let value32 = pval |> Float64.to_int32 in
 
   (* TODO: handing deoptimization *)
   (* let deopt_cond =
        let check_lost_precision =
-         Value.Float64.eq pval (value32 |> Value.Int32.to_float64)
+         Float64.eq pval (value32 |> Value.Int32.to_float64)
        in
        let check_minus_zero =
          if hint = "dont-check-for-minus-zero" then Bool.tr
          else if hint = "check-for-minus-zero" then
-           Value.Float64.is_minus_zero pval
+           Float64.is_minus_zero pval
          else
            let reason =
              Format.sprintf "CheckedFloat64ToInt32: invalid hint(%s)" hint

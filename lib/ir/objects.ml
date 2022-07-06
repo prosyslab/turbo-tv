@@ -46,6 +46,8 @@ module HeapNumber = struct
     store ptr obj cond mem;
     ptr
 
+  let to_float64 obj = obj.value |> Value.entype Type.float64
+
   let map_of obj = obj.map
 
   let number_of obj = obj.value
@@ -61,15 +63,20 @@ module HeapNumber = struct
   let is_inf obj = BitVec.eqb obj.value (BitVecVal.inf ())
 
   let is_safe_integer obj =
-    obj.value |> Value.entype Type.float64 |> Value.Float64.is_safe_integer
+    obj.value |> Value.entype Type.float64 |> Float64.is_safe_integer
 
   let is_positive obj =
-    obj.value |> Value.entype Type.float64 |> Value.Float64.is_positive
+    obj.value |> Value.entype Type.float64 |> Float64.is_positive
 
   let is_negative obj =
-    obj.value |> Value.entype Type.float64 |> Value.Float64.is_negative
+    obj.value |> Value.entype Type.float64 |> Float64.is_negative
 
   let eq lobj robj = Bool.eq lobj.value robj.value
+
+  let lt lobj robj =
+    let l_f64 = lobj |> to_float64 in
+    let r_f64 = robj |> to_float64 in
+    Float64.lt l_f64 r_f64
 
   let to_string model obj =
     let f_str =

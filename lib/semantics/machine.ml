@@ -172,7 +172,7 @@ let int64_sub vid lval rval =
 let round_float64_to_int32 vid pval =
   let value = Value.init vid in
   let wd_cond = Bool.ands [ Value.has_type Type.float64 pval ] in
-  let wd_value = value |> Value.Float64.to_int32 in
+  let wd_value = value |> Float64.to_int32 in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
@@ -293,7 +293,7 @@ let float64_equal vid lval rval =
       [ Value.has_repr Repr.Float64 lval; Value.has_repr Repr.Float64 rval ]
   in
   (* use strong equal since only Float64 type is defined for Float64 Repr. *)
-  let wd_value = Bool.ite (Value.Float64.eq lval rval) Value.tr Value.fl in
+  let wd_value = Bool.ite (Float64.eq lval rval) Value.tr Value.fl in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
@@ -311,7 +311,7 @@ let float64_less_than vid lval rval =
     in
     Bool.ands [ are_float64 ]
   in
-  let wd_value = Bool.ite (Value.Float64.lt lval rval) Value.tr Value.fl in
+  let wd_value = Bool.ite (Float64.lt lval rval) Value.tr Value.fl in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
@@ -329,7 +329,7 @@ let float64_less_than_or_equal vid lval rval =
     in
     Bool.ands [ are_float64 ]
   in
-  let wd_value = Bool.ite (Value.Float64.le lval rval) Value.tr Value.fl in
+  let wd_value = Bool.ite (Float64.le lval rval) Value.tr Value.fl in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
@@ -579,7 +579,7 @@ let bitcast_word_to_tagged vid v =
 let change_float64_to_int64 vid pval =
   let value = Value.init vid in
   let wd_cond = Bool.ands [ Value.has_type Type.float64 pval ] in
-  let wd_value = value |> Value.Float64.to_int64 in
+  let wd_value = value |> Float64.to_int64 in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 

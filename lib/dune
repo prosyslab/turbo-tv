@@ -20,6 +20,7 @@
   memory
   type
   value
+  float64
   ;tv
   tv
   ;v8
