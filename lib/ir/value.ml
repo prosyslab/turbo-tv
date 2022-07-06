@@ -474,6 +474,16 @@ module Float64 = struct
 
   let is_negative value = BitVec.eqi (BitVec.extract 63 63 (value |> data_of)) 0
 
+  let nan = Float.nan () |> entype Type.float64
+
+  let ninf = Float.ninf () |> entype Type.float64
+
+  let inf = Float.inf () |> entype Type.float64
+
+  let zero = Float.from_float 0.0 |> entype Type.float64
+
+  let minus_zero = Float.minus_zero () |> entype Type.float64
+
   let eq lval rval =
     let lf = lval |> from_value in
     let rf = rval |> from_value in

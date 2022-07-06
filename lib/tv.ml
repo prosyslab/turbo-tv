@@ -143,7 +143,7 @@ let rec next program state =
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        number_add vid lval rval
+        number_add vid lval rval next_bid mem
     | NumberAbs ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
@@ -153,7 +153,7 @@ let rec next program state =
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        number_add vid lval rval
+        number_add vid lval rval next_bid mem
     | SpeculativeNumberBitwiseXor ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in

@@ -36,32 +36,92 @@ let number_abs vid nptr next_bid mem =
   let assertion = Value.eq value abs in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
-(* well-defined condition:
- * - WellDefined(lval) ^ WellDefined(rval)
- * - IsInt32(lval) ^ IsInt32(rval)
- * | IsInt64(lval) ^ IsInt64(rval)
- * | IsFloat64(lval) ^ IsFloat64(rval)
- * assertion:
- *  value = ite well-defined (lval + rval) UB *)
-let number_add vid lval rval =
+let number_add vid lval rval next_bid mem =
   let value = Value.init vid in
   let wd_cond =
-    Bool.ors
+    Bool.ands
       [
-        has_type_all Type.int32 [ lval; rval ];
-        has_type_all Type.int64 [ lval; rval ];
-        has_type_all Type.float64 [ lval; rval ];
+        lval |> Value.has_type Type.tagged_pointer;
+        rval |> Value.has_type Type.tagged_pointer;
+        Objects.is_heap_number lval !mem;
+        Objects.is_heap_number rval !mem;
       ]
   in
-  let lval_int32 = Value.has_type Type.int32 lval in
-  let lval_int64 = Value.has_type Type.int64 lval in
-  let wd_value =
-    Bool.ite
-      (Bool.ors [ lval_int32; lval_int64 ])
-      (Value.add lval rval) (Value.addf lval rval)
+  (* https://tc39.es/ecma262/#sec-numeric-types-number-add *)
+  let add =
+    let lnum = HeapNumber.load lval !mem in
+    let rnum = HeapNumber.load rval !mem in
+    HeapNumber.from_float64 next_bid wd_cond
+      (* if lnum or rnum is nan, return nan *)
+      (Bool.ite
+         (Bool.ors [ HeapNumber.is_nan lnum; HeapNumber.is_nan rnum ])
+         Value.Float64.nan
+         (* inf+ninf = nan *)
+         (Bool.ite
+            (Bool.ands [ HeapNumber.is_inf lnum; HeapNumber.is_ninf rnum ])
+            Value.Float64.nan
+            (* ninf+inf = nan *)
+            (Bool.ite
+               (Bool.ands [ HeapNumber.is_ninf lnum; HeapNumber.is_inf rnum ])
+               Value.Float64.nan
+               (* lnum is inf or -inf, return lnum*)
+               (Bool.ite
+                  (Bool.ors [ HeapNumber.is_inf lnum; HeapNumber.is_ninf lnum ])
+                  (lnum.value |> Value.entype Type.float64)
+                  (* rnum is inf or -inf, return rnum*)
+                  (Bool.ite
+                     (Bool.ors
+                        [ HeapNumber.is_inf rnum; HeapNumber.is_ninf rnum ])
+                     (rnum.value |> Value.entype Type.float64)
+                     (* -0 + -0 = -0 *)
+                     (Bool.ite
+                        (Bool.ands
+                           [
+                             HeapNumber.is_minus_zero lnum;
+                             HeapNumber.is_minus_zero rnum;
+                           ])
+                        Value.Float64.minus_zero
+                        (* else, n+n *)
+                        (Value.Float64.add lnum.value rnum.value)))))))
+      mem
   in
-  let assertion = Value.eq value wd_value in
+  let assertion = Value.eq value add in
   (value, Control.empty, assertion, Bool.not wd_cond)
+
+let number_expm1 vid nptr next_bid mem =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [
+        nptr |> Value.has_type Type.tagged_pointer;
+        Objects.is_heap_number nptr !mem;
+      ]
+  in
+  let ub_cond = Bool.not wd_cond in
+
+  (* expm1 = e^{n}-1 *)
+  let expm1 =
+    let n = HeapNumber.load nptr !mem in
+    let bv_sort = BV.mk_sort ctx 64 in
+    let expm_decl =
+      Z3.FuncDecl.mk_func_decl_s ctx "unknown_number_expm1" [ bv_sort ] bv_sort
+    in
+    HeapNumber.from_float64 next_bid wd_cond
+      (Bool.ite
+         (HeapNumber.is_minus_zero n)
+         (BitVecVal.minus_zero ())
+         (Bool.ite (HeapNumber.is_inf n) (BitVecVal.inf ())
+            (Bool.ite (HeapNumber.is_ninf n)
+               (BitVecVal.from_f64string "-1.0")
+               (Bool.ite (HeapNumber.is_nan n) (BitVecVal.nan ())
+                  (Bool.ite (HeapNumber.is_zero n)
+                     (BitVecVal.from_f64string "0.0")
+                     (Z3.FuncDecl.apply expm_decl [ n.value ])))))
+      |> Value.entype Type.float64)
+      mem
+  in
+  let assertion = Value.eq value expm1 in
+  (value, Control.empty, assertion, ub_cond)
 
 (* well-defined condition:
  * - WellDefined(lval) ^ WellDefined(rval)
