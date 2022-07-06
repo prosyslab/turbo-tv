@@ -3,6 +3,8 @@ module A = Z3.Z3Array
 module B = Z3.Boolean
 module E = Z3.Expr
 module M = Z3.Model
+module AR = Z3.Arithmetic
+module I = Z3.Arithmetic.Integer
 module R = Z3.Arithmetic.Real
 module S = Z3.Solver
 module BV = Z3.BitVector
@@ -159,6 +161,8 @@ module Float = struct
 
   let round rm exp = Fl.mk_round_to_integral ctx rm exp
 
+  let floor exp = Fl.mk_round_to_integral ctx (Fl.RoundingMode.mk_rtn ctx) exp
+
   let eq lexp rexp = Fl.mk_eq ctx lexp rexp
 
   let gt lexp rexp = Fl.mk_gt ctx lexp rexp
@@ -183,14 +187,19 @@ module Float = struct
 
   let neg exp = Fl.mk_neg ctx exp
 
-  let is_minus_zero exp =
-    Bool.ands [ Fl.mk_is_negative ctx exp; Fl.mk_is_zero ctx exp ]
+  let is_negative exp = Fl.mk_is_negative ctx exp
+
+  let is_positive exp = Fl.mk_is_positive ctx exp
+
+  let is_zero exp = Fl.mk_is_zero ctx exp
+
+  let is_minus_zero exp = Bool.ands [ is_negative exp; is_zero exp ]
 
   let is_nan exp = Fl.mk_is_nan ctx exp
 
   let is_inf exp = Fl.mk_is_infinite ctx exp
 
-  let is_ninf exp = [ Fl.mk_is_negative ctx exp; is_inf exp ]
+  let is_ninf exp = Bool.ands [ is_negative exp; is_inf exp ]
 end
 
 module BitVecVal = struct
@@ -403,10 +412,26 @@ module Array = struct
   let select key arr = A.mk_select ctx arr key
 end
 
+module Integer = struct
+  type t = E.expr
+
+  let from_int i = I.mk_numeral_i ctx i
+
+  let ge lexp rexp = AR.mk_ge ctx lexp rexp
+
+  let sub lexp rexp = AR.mk_sub ctx [ lexp; rexp ]
+
+  let mod_ lexp rexp = I.mk_mod ctx lexp rexp
+
+  let to_bv ?(len = !bvlen) exp = I.mk_int2bv ctx len exp
+end
+
 module Real = struct
   type t = E.expr
 
   let to_decimal_string t = R.to_decimal_string t 5
+
+  let to_integer t = R.mk_real2int ctx t
 end
 
 let sort_equal e1 e2 = Z3.Sort.equal (Z3.Expr.get_sort e1) (Z3.Expr.get_sort e2)
