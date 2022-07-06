@@ -97,27 +97,29 @@ let number_expm1 vid nptr next_bid mem =
         Objects.is_heap_number nptr !mem;
       ]
   in
-  let ub_cond = Bool.not wd_cond in
-
-  (* expm1 = e^{n}-1 *)
+  (* https://tc39.es/ecma262/#sec-math.expm1 *)
   let expm1 =
-    let n = HeapNumber.load nptr !mem in
+    let num = HeapNumber.load nptr !mem in
     let bv_sort = BV.mk_sort ctx 64 in
     let expm_decl =
       Z3.FuncDecl.mk_func_decl_s ctx "unknown_number_expm1" [ bv_sort ] bv_sort
     in
     HeapNumber.from_float64 next_bid wd_cond
+      (* if num is NaN or 0 or -0 or inf, return num*)
       (Bool.ite
-         (HeapNumber.is_minus_zero n)
-         (BitVecVal.minus_zero ())
-         (Bool.ite (HeapNumber.is_inf n) (BitVecVal.inf ())
-            (Bool.ite (HeapNumber.is_ninf n)
-               (BitVecVal.from_f64string "-1.0")
-               (Bool.ite (HeapNumber.is_nan n) (BitVecVal.nan ())
-                  (Bool.ite (HeapNumber.is_zero n)
-                     (BitVecVal.from_f64string "0.0")
-                     (Z3.FuncDecl.apply expm_decl [ n.value ])))))
-      |> Value.entype Type.float64)
+         (Bool.ors
+            [
+              HeapNumber.is_nan num;
+              HeapNumber.is_zero num;
+              HeapNumber.is_minus_zero num;
+              HeapNumber.is_inf num;
+            ])
+         (num |> HeapNumber.to_float64)
+         (* if num is -inf, return -1 *)
+         (Bool.ite (HeapNumber.is_ninf num)
+            (Float.from_float (-1.0) |> Float64.from_float)
+            (Z3.FuncDecl.apply expm_decl [ num.value ]
+            |> Value.entype Type.float64)))
       mem
   in
   let assertion = Value.eq value expm1 in
