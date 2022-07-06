@@ -218,18 +218,39 @@ let speculative_number_bitwise_xor vid lval rval =
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
-let speculative_number_equal vid lval rval =
+let speculative_number_equal vid lval rval next_bid mem =
   let value = Value.init vid in
   let wd_cond =
-    Bool.ors
+    Bool.ands
       [
-        has_type_all Type.int32 [ lval; rval ];
-        has_type_all Type.uint32 [ lval; rval ];
-        has_type_all Type.float64 [ lval; rval ];
+        lval |> Value.has_type Type.tagged_pointer;
+        rval |> Value.has_type Type.tagged_pointer;
+        Objects.is_heap_number lval !mem;
+        Objects.is_heap_number rval !mem;
       ]
   in
-  let wd_value = Bool.ite (Value.eq lval rval) Value.tr Value.fl in
-  let assertion = Value.eq value wd_value in
+  let true_ = HeapNumber.from_float64 next_bid wd_cond Float64.one mem in
+  let false_ = HeapNumber.from_float64 next_bid wd_cond Float64.zero mem in
+  let result =
+    let lnum = HeapNumber.load lval !mem in
+    let rnum = HeapNumber.load rval !mem in
+    HeapNumber.from_float64 next_bid wd_cond
+      (Bool.ite
+         (Bool.ors [ HeapNumber.is_nan lnum; HeapNumber.is_nan rnum ])
+         false_
+         (Bool.ite
+            (Bool.ors
+               [
+                 HeapNumber.eq lnum rnum;
+                 Bool.ands
+                   [ HeapNumber.is_zero lnum; HeapNumber.is_minus_zero rnum ];
+                 Bool.ands
+                   [ HeapNumber.is_minus_zero lnum; HeapNumber.is_zero rnum ];
+               ])
+            true_ false_))
+      mem
+  in
+  let assertion = Value.eq value result in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* well-defined condition:
@@ -330,26 +351,44 @@ let boolean_not vid pval =
   (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* simplified: comparison *)
-let number_less_than vid lval rval =
+let number_less_than vid lval rval next_bid mem =
   let value = Value.init vid in
   let wd_cond =
-    Bool.ors
+    Bool.ands
       [
-        has_type_all Type.int32 [ lval; rval ];
-        has_type_all Type.uint32 [ lval; rval ];
-        has_type_all Type.float64 [ lval; rval ];
+        lval |> Value.has_type Type.tagged_pointer;
+        rval |> Value.has_type Type.tagged_pointer;
+        Objects.is_heap_number lval !mem;
+        Objects.is_heap_number rval !mem;
       ]
   in
-  let comparison_expr =
-    Bool.ite
-      (Value.has_type Type.int32 lval)
-      (Value.slt lval rval)
+  let true_ = HeapNumber.from_float64 next_bid wd_cond Float64.one mem in
+  let false_ = HeapNumber.from_float64 next_bid wd_cond Float64.zero mem in
+  let result =
+    let lnum = HeapNumber.load lval !mem in
+    let rnum = HeapNumber.load rval !mem in
+    HeapNumber.from_float64 next_bid wd_cond
       (Bool.ite
-         (Value.has_type Type.uint32 lval)
-         (Value.ult lval rval) (Value.ltf lval rval))
+         (Bool.ors [ HeapNumber.is_nan lnum; HeapNumber.is_nan rnum ])
+         false_
+         (Bool.ite
+            (Bool.ors
+               [
+                 HeapNumber.eq lnum rnum;
+                 Bool.ands
+                   [ HeapNumber.is_zero lnum; HeapNumber.is_minus_zero rnum ];
+                 Bool.ands
+                   [ HeapNumber.is_minus_zero lnum; HeapNumber.is_zero rnum ];
+               ])
+            false_
+            (Bool.ite (HeapNumber.is_inf lnum) false_
+               (Bool.ite (HeapNumber.is_inf rnum) true_
+                  (Bool.ite (HeapNumber.is_ninf rnum) false_
+                     (Bool.ite (HeapNumber.is_ninf lnum) true_
+                        (Bool.ite (HeapNumber.lt lnum rnum) true_ false_)))))))
+      mem
   in
-  let wd_value = Bool.ite comparison_expr Value.tr Value.fl in
-  let assertion = Value.eq value wd_value in
+  let assertion = Value.eq value result in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* simplified: memory *)

@@ -36,6 +36,8 @@ let inf = Float.inf () |> from_float
 
 let zero = Float.from_float 0.0 |> from_float
 
+let one = Float.from_float 1.0 |> from_float
+
 let minus_zero = Float.minus_zero () |> from_float
 
 let eq lval rval =
