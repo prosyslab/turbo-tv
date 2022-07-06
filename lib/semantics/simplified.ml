@@ -203,6 +203,67 @@ let number_min vid lval rval next_bid mem =
   let assertion = Value.eq value min in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
+let number_multiply vid lval rval next_bid mem =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [
+        lval |> Value.has_type Type.tagged_pointer;
+        rval |> Value.has_type Type.tagged_pointer;
+        Objects.is_heap_number lval !mem;
+        Objects.is_heap_number rval !mem;
+      ]
+  in
+  (* https://tc39.es/ecma262/#sec-math.multiply *)
+  let multiply =
+    let lnum = HeapNumber.load lval !mem in
+    let rnum = HeapNumber.load rval !mem in
+
+    let if_l_is_inf_or_ninf l r =
+      Bool.ite
+        (Bool.ors [ HeapNumber.is_zero r; HeapNumber.is_minus_zero r ])
+        Float64.nan
+        (Bool.ite (HeapNumber.is_positive r)
+           (l |> HeapNumber.to_float64)
+           (l |> HeapNumber.to_float64 |> Float64.neg))
+    in
+
+    let if_minus_zero n =
+      Bool.ite
+        (Bool.ors [ HeapNumber.is_minus_zero n; HeapNumber.is_negative n ])
+        Float64.zero Float64.minus_zero
+    in
+
+    HeapNumber.from_float64 next_bid wd_cond
+      (Bool.ite
+         (* if lnum or rnum is nan, return nan *)
+         (Bool.ors [ HeapNumber.is_nan lnum; HeapNumber.is_nan rnum ])
+         Float64.nan
+         (* if lnum is inf or -inf *)
+         (Bool.ite
+            (Bool.ors [ HeapNumber.is_inf lnum; HeapNumber.is_ninf lnum ])
+            (if_l_is_inf_or_ninf lnum rnum)
+            (* if rnum is inf or -inf *)
+            (Bool.ite
+               (Bool.ors [ HeapNumber.is_inf rnum; HeapNumber.is_ninf rnum ])
+               (if_l_is_inf_or_ninf rnum lnum)
+               (* if lnum is -0 *)
+               (Bool.ite
+                  (HeapNumber.is_minus_zero lnum)
+                  (if_minus_zero rnum)
+                  (* if rnum is -0 *)
+                  (Bool.ite
+                     (HeapNumber.is_minus_zero rnum)
+                     (if_minus_zero lnum)
+                     (* else, return lnum * rnum *)
+                     (Float64.mul
+                        (lnum |> HeapNumber.to_float64)
+                        (rnum |> HeapNumber.to_float64)))))))
+      mem
+  in
+  let assertion = Value.eq value multiply in
+  (value, Control.empty, assertion, Bool.not wd_cond)
+
 (* well-defined condition:
  * - WellDefined(lval) ^ WellDefined(rval)
  * - IsWord32(lval) ^ IsWord32(rval)

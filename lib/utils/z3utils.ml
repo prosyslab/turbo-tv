@@ -173,13 +173,11 @@ module Float = struct
 
   let lef lexp rexp = Fl.mk_leq ctx lexp (rexp |> from_float)
 
-  let add lexp rexp =
-    let rne = Fl.RoundingMode.mk_rne ctx in
-    Fl.mk_add ctx rne lexp rexp
+  let add lexp rexp = Fl.mk_add ctx rne_mode lexp rexp
 
-  let sub lexp rexp =
-    let rne = Fl.RoundingMode.mk_rne ctx in
-    Fl.mk_sub ctx rne lexp rexp
+  let sub lexp rexp = Fl.mk_sub ctx rne_mode lexp rexp
+
+  let mul lexp rexp = Fl.mk_mul ctx rne_mode lexp rexp
 
   let abs exp = Fl.mk_abs ctx exp
 

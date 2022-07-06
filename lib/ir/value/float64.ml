@@ -55,6 +55,11 @@ let sub lval rval =
   let rf = rval |> to_float in
   Z3utils.Float.sub lf rf |> from_float
 
+let mul lval rval =
+  let lf = lval |> to_float in
+  let rf = rval |> to_float in
+  Z3utils.Float.mul lf rf |> from_float
+
 let lt lval rval =
   let lf = lval |> to_float in
   let rf = rval |> to_float in
