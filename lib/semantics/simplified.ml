@@ -15,20 +15,22 @@ let number_abs vid nptr next_bid mem =
         Objects.is_heap_number nptr !mem;
       ]
   in
+  (* https://tc39.es/ecma262/#sec-math.abs *)
   let abs =
     let n = HeapNumber.load nptr !mem in
     HeapNumber.from_float64 next_bid wd_cond
       ((* nan -> nan *)
-       Bool.ite (HeapNumber.is_nan n) (Float.nan ())
+       Bool.ite (HeapNumber.is_nan n) Value.Float64.nan
          (* -0 -> 0 *)
          (Bool.ite
             (HeapNumber.is_minus_zero n)
-            (Float.from_float 0.0)
+            Value.Float64.zero
             (* ninf -> inf *)
-            (Bool.ite (HeapNumber.is_ninf n) (Float.inf ())
+            (Bool.ite (HeapNumber.is_ninf n) Value.Float64.inf
                (* n < 0 -> -n *)
-               (Bool.ite (HeapNumber.is_negative n) (Float.neg n.value) n.value)))
-      |> Value.entype Type.float64)
+               (Bool.ite (HeapNumber.is_negative n)
+                  (Value.Float64.neg (n.value |> Value.entype Type.float64))
+                  (n.value |> Value.entype Type.float64)))))
       mem
   in
   let assertion = Value.eq value abs in
