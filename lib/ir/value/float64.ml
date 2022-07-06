@@ -6,17 +6,17 @@ let from_float f = f |> Z3utils.Float.to_ieee_bv |> Value.entype Type.float64
 let to_float value = value |> Value.data_of |> Z3utils.Float.from_ieee_bv
 
 let to_intx width value =
-  let value_int =
+  let value_ix =
     let f = value |> to_float in
-    let i_mod_2_32 =
+    let i_mod_2_x =
       Bool.ite (Float.is_negative f)
         (Integer.mod_
            (f |> Float.abs |> Float.floor |> Float.neg |> Float.to_real
           |> Real.to_integer)
-           (Integer.from_int (Utils.pow 2 32)))
+           (Integer.from_int (Utils.pow 2 width)))
         (Integer.mod_
            (f |> Float.abs |> Float.floor |> Float.to_real |> Real.to_integer)
-           (Integer.from_int (Utils.pow 2 32)))
+           (Integer.from_int (Utils.pow 2 width)))
     in
     Bool.ite
       (* if num is nan or 0 or -0 or inf or -inf, return 0 *)
@@ -31,15 +31,15 @@ let to_intx width value =
       (Integer.from_int 0)
       (* else *)
       (Bool.ite
-         (Integer.ge i_mod_2_32 (Integer.from_int (Utils.pow 2 31)))
-         (Integer.sub i_mod_2_32 (Integer.from_int (Utils.pow 2 32)))
-         i_mod_2_32)
+         (Integer.ge i_mod_2_x (Integer.from_int (Utils.pow 2 (width - 1))))
+         (Integer.sub i_mod_2_x (Integer.from_int (Utils.pow 2 width)))
+         i_mod_2_x)
   in
   match width with
   | 32 ->
-      value_int |> Integer.to_bv ~len:32 |> BitVec.zero_extend 32
+      value_ix |> Integer.to_bv ~len:32 |> BitVec.zero_extend 32
       |> Value.entype Type.int32
-  | 64 -> value_int |> Integer.to_bv ~len:64 |> Value.entype Type.int64
+  | 64 -> value_ix |> Integer.to_bv ~len:64 |> Value.entype Type.int64
   | _ -> failwith "not implemented"
 
 let to_int32 value = value |> to_intx 32
