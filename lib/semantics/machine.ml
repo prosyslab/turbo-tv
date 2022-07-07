@@ -494,7 +494,7 @@ let load vid ptr pos repr mem =
   let wd_cond =
     (* ptr must be a pointer or tagged pointer *)
     let ptr_is_pointer = Value.has_type Type.pointer ptr in
-    let ptr_is_tagged_pointer = Value.has_type Type.pointer ptr in
+    let ptr_is_tagged_pointer = Value.has_type Type.tagged_pointer ptr in
 
     (* check index out-of-bounds *)
     let can_access = TaggedPointer.can_access_as pos repr ptr in
