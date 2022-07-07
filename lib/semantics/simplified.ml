@@ -260,6 +260,14 @@ let number_multiply vid lval rval next_bid mem =
   let assertion = Value.eq value multiply in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
+let speculative_number_add vid lval rval next_bid mem =
+  (* [TODO] handle deoptimization *)
+  number_add vid lval rval next_bid mem
+
+let speculative_number_multiply vid lval rval next_bid mem =
+  (* [TODO] handle deoptimization *)
+  number_multiply vid lval rval next_bid mem
+
 (* well-defined condition:
  * (IsTaggedSigned(lval) /\ IsTaggedSigned(rval))
  * \/ (IsTaggedPointer(lval) /\ IsTaggedPointer(rval)
@@ -657,6 +665,33 @@ let number_to_int32 vid pval next_bid mem =
   in
   let assertion = Value.eq value to_int32 in
   (value, Control.empty, assertion, Bool.not wd_cond)
+
+let speculative_to_number vid pval next_bid mem =
+  let value = Value.init vid in
+  (* [TODO] handle deoptimization *)
+  (* assumption: [pval] is heap number or smi *)
+  let deopt_cond =
+    Bool.not
+      (Bool.ors
+         [
+           pval |> Value.has_type Type.tagged_signed;
+           Bool.ands
+             [
+               pval |> Value.has_type Type.tagged_pointer;
+               Objects.is_heap_number pval !mem;
+               HeapNumber.is_safe_integer (HeapNumber.load pval !mem);
+             ];
+         ])
+  in
+  let to_number =
+    Bool.ite
+      (pval |> Value.has_type Type.tagged_signed)
+      (Value.TaggedSigned.to_float64 pval)
+      (HeapNumber.load pval !mem |> HeapNumber.to_float64)
+    |> HeapNumber.from_float64 next_bid (Bool.not deopt_cond) mem
+  in
+  let assertion = Value.eq value to_number in
+  (value, Control.empty, assertion, deopt_cond)
 
 let to_boolean vid pval mem =
   let value = Value.init vid in
