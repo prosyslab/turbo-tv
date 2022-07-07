@@ -421,6 +421,32 @@ let boolean_not vid pval =
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
+let speculative_number_bitwise_or vid lval rval next_bid mem =
+  let value = Value.init vid in
+  (* [TODO] handle deoptimization *)
+  let deopt_cond =
+    Bool.not
+      (Bool.ands
+         [
+           lval |> Value.has_type Type.tagged_pointer;
+           rval |> Value.has_type Type.tagged_pointer;
+           Objects.is_heap_number lval !mem;
+           Objects.is_heap_number rval !mem;
+         ])
+  in
+  let bitwise_or =
+    let lnum = HeapNumber.load lval !mem in
+    let rnum = HeapNumber.load rval !mem in
+    Value.Int32.or_
+      (lnum |> HeapNumber.to_float64 |> Float64.to_int32)
+      (rnum |> HeapNumber.to_float64 |> Float64.to_int32)
+    |> Value.Int32.to_float64
+    |> HeapNumber.from_float64 next_bid (Bool.not deopt_cond) mem
+  in
+
+  let assertion = Value.eq value bitwise_or in
+  (value, Control.empty, assertion, deopt_cond)
+
 (* simplified: comparison *)
 let number_less_than vid lval rval next_bid mem =
   let value = Value.init vid in

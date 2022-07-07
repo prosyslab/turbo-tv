@@ -138,7 +138,7 @@ let rec next program state =
         (value, Control.empty, assertion, Bool.fl)
     (* JS: comparision *)
     | JSStackCheck -> (Value.empty, Bool.tr, Bool.tr, Bool.fl)
-    (* simplified: arithmetic *)
+    (* simplified: numeric *)
     | NumberAdd ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -149,24 +149,34 @@ let rec next program state =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         number_abs vid pval next_bid mem
+    | NumberExpm1 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        number_expm1 vid pval next_bid mem
+    | NumberMax ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        number_max vid lval rval next_bid mem
+    | NumberMin ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        number_min vid lval rval next_bid mem
+    | NumberMultiply ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        number_multiply vid lval rval next_bid mem
     | SpeculativeNumberAdd ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
         number_add vid lval rval next_bid mem
-    | SpeculativeNumberBitwiseXor ->
-        let lpid = Operands.id_of_nth operands 0 in
-        let rpid = Operands.id_of_nth operands 1 in
-        let lval = RegisterFile.find lpid rf in
-        let rval = RegisterFile.find rpid rf in
-        speculative_number_bitwise_xor vid lval rval
-    | SpeculativeNumberEqual ->
-        let lpid = Operands.id_of_nth operands 0 in
-        let rpid = Operands.id_of_nth operands 1 in
-        let lval = RegisterFile.find lpid rf in
-        let rval = RegisterFile.find rpid rf in
-        speculative_number_equal vid lval rval next_bid mem
     | SpeculativeSafeIntegerAdd ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -179,21 +189,36 @@ let rec next program state =
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
         speculative_safe_integer_subtract vid lval rval next_bid mem
-    | NumberExpm1 ->
-        let pid = Operands.id_of_nth operands 0 in
-        let pval = RegisterFile.find pid rf in
-        number_expm1 vid pval next_bid mem
-    (* simplified: comparison *)
+    (* simplified: bitwise *)
     | BooleanNot ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         boolean_not vid pval
+    | SpeculativeNumberBitwiseOr ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        speculative_number_bitwise_or vid lval rval next_bid mem
+    | SpeculativeNumberBitwiseXor ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        speculative_number_bitwise_xor vid lval rval
+    (* simplified: comparison *)
     | NumberLessThan ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
         number_less_than vid lval rval next_bid mem
+    | SpeculativeNumberEqual ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        speculative_number_equal vid lval rval next_bid mem
     | ReferenceEqual ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in

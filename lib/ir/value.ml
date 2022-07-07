@@ -376,6 +376,11 @@ module Int32 = struct
     let ri = rval |> from_value in
     BitVec.mulb li ri |> to_value
 
+  let or_ lval rval =
+    let li = lval |> from_value in
+    let ri = rval |> from_value in
+    BitVec.orb li ri |> to_value
+
   let lt lval rval =
     let li = lval |> from_value in
     let ri = rval |> from_value in
