@@ -9,7 +9,7 @@ open Z3utils
 let ctx = Z3utils.ctx
 
 let validator =
-  let tactic = Tactic.and_then [ "simplify"; "fpa2bv"; "qfaufbv" ] in
+  let tactic = Tactic.and_then [ "simplify"; "eq2bv"; "fpa2bv"; "qfaufbv" ] in
   Solver.init_with_tactic tactic
 
 let tag base_is_tagged =
@@ -176,7 +176,13 @@ let rec next program state =
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        number_add vid lval rval next_bid mem
+        speculative_number_add vid lval rval next_bid mem
+    | SpeculativeNumberMultiply ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        speculative_number_multiply vid lval rval next_bid mem
     | SpeculativeSafeIntegerAdd ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -304,6 +310,10 @@ let rec next program state =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         number_to_int32 vid pval next_bid mem
+    | SpeculativeToNumber ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        speculative_to_number vid pval next_bid mem
     | ToBoolean ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
@@ -594,7 +604,9 @@ let check_ub_semantic nparams program =
       Printer.print_params model (State.memory state) (State.params state);
       Printer.print_counter_example program state model
   | UNSATISFIABLE -> Printf.printf "\nResult: O\n"
-  | _ -> failwith "unknown"
+  | UNKNOWN ->
+      let reason = Z3.Solver.get_reason_unknown validator in
+      Printf.printf "Result: Unknown\nReason: %s" reason
 
 let run nparams src_program tgt_program =
   let src_state = execute "before" src_program nparams in
@@ -665,4 +677,6 @@ let run nparams src_program tgt_program =
       Printer.print_counter_example src_program src_state model;
       Printer.print_counter_example tgt_program tgt_state model
   | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
-  | _ -> Printf.printf "Result: Unknown"
+  | UNKNOWN ->
+      let reason = Z3.Solver.get_reason_unknown validator in
+      Printf.printf "Result: Unknown\nReason: %s" reason
