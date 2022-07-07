@@ -379,6 +379,16 @@ let speculative_number_bitwise_or vid lval rval next_bid mem =
   let assertion = Value.eq value bitwise_or in
   (value, Control.empty, assertion, deopt_cond)
 
+let speculative_number_bitwise_xor vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [ Value.has_repr Repr.Word32 lval; Value.has_repr Repr.Word32 rval ]
+  in
+  let wd_value = Value.xor lval rval in
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.not wd_cond)
+
 (* simplified: comparison *)
 let number_less_than vid lval rval next_bid mem =
   let value = Value.init vid in

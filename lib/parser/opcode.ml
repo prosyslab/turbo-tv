@@ -671,17 +671,14 @@ type t =
   | SpeculativeBigIntNegate
   | SpeculativeBigIntSubtract
   | SpeculativeNumberBitwiseAnd
-  | SpeculativeNumberBitwiseOr
   | SpeculativeNumberDivide
   | SpeculativeNumberLessThan
   | SpeculativeNumberLessThanOrEqual
   | SpeculativeNumberModulus
-  | SpeculativeNumberMultiply
   | SpeculativeNumberShiftLeft
   | SpeculativeNumberShiftRight
   | SpeculativeNumberShiftRightLogical
   | SpeculativeNumberSubtract
-  | SpeculativeToNumber
   | StackSlot
   | Start
   | StateValues
@@ -712,7 +709,6 @@ type t =
   | TaggedIndexConstant
   | TailCall
   | Terminate
-  | Throw
   | TransitionAndStoreElement
   | TransitionAndStoreNonNumberElement
   | TransitionAndStoreNumberElement
@@ -834,6 +830,7 @@ type t =
   | NumberExpm1
   | NumberToInt32
   | RoundFloat64ToInt32
+  | SpeculativeToNumber
   | StackPointerGreaterThan
   | ToBoolean
   | TruncateInt64ToInt32
@@ -841,6 +838,7 @@ type t =
   (* c1 *)
   | IfFalse
   | IfTrue
+  | Throw
   (* v1e1 *)
   | Branch
   (* b1 *)
@@ -880,8 +878,10 @@ type t =
   | NumberMultiply
   | ReferenceEqual
   | SpeculativeNumberAdd
+  | SpeculativeNumberBitwiseOr
   | SpeculativeNumberBitwiseXor
   | SpeculativeNumberEqual
+  | SpeculativeNumberMultiply
   | SpeculativeSafeIntegerAdd
   | SpeculativeSafeIntegerSubtract
   | Uint32LessThan
@@ -1079,24 +1079,22 @@ let get_kind opcode =
   | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
   | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
   | SpeculativeBigIntSubtract | SpeculativeNumberBitwiseAnd
-  | SpeculativeNumberBitwiseOr | SpeculativeNumberDivide
-  | SpeculativeNumberLessThan | SpeculativeNumberLessThanOrEqual
-  | SpeculativeNumberModulus | SpeculativeNumberMultiply
+  | SpeculativeNumberDivide | SpeculativeNumberLessThan
+  | SpeculativeNumberLessThanOrEqual | SpeculativeNumberModulus
   | SpeculativeNumberShiftLeft | SpeculativeNumberShiftRight
-  | SpeculativeNumberShiftRightLogical | SpeculativeNumberSubtract
-  | SpeculativeToNumber | StackSlot | Start | StateValues | StaticAssert
-  | StoreDataViewElement | StoreElement | StoreLane | StoreMessage
-  | StoreSignedSmallElement | StoreToObject | StoreTypedElement
-  | StringCharCodeAt | StringCodePointAt | StringConcat | StringEqual
-  | StringFromCodePointAt | StringFromSingleCharCode | StringFromSingleCodePoint
-  | StringIndexOf | StringLength | StringLessThan | StringLessThanOrEqual
-  | StringSubstring | StringToLowerCaseIntl | StringToNumber
-  | StringToUpperCaseIntl | Switch | TaggedIndexConstant | TailCall | Terminate
-  | Throw | TransitionAndStoreElement | TransitionAndStoreNonNumberElement
-  | TransitionAndStoreNumberElement | TransitionElementsKind | TrapIf
-  | TrapUnless | TruncateBigIntToWord64 | TruncateFloat32ToInt32
-  | TruncateFloat32ToUint32 | TruncateFloat64ToFloat32 | TruncateFloat64ToInt64
-  | TruncateFloat64ToUint32 | TruncateFloat64ToWord32
+  | SpeculativeNumberShiftRightLogical | SpeculativeNumberSubtract | StackSlot
+  | Start | StateValues | StaticAssert | StoreDataViewElement | StoreElement
+  | StoreLane | StoreMessage | StoreSignedSmallElement | StoreToObject
+  | StoreTypedElement | StringCharCodeAt | StringCodePointAt | StringConcat
+  | StringEqual | StringFromCodePointAt | StringFromSingleCharCode
+  | StringFromSingleCodePoint | StringIndexOf | StringLength | StringLessThan
+  | StringLessThanOrEqual | StringSubstring | StringToLowerCaseIntl
+  | StringToNumber | StringToUpperCaseIntl | Switch | TaggedIndexConstant
+  | TailCall | Terminate | TransitionAndStoreElement
+  | TransitionAndStoreNonNumberElement | TransitionAndStoreNumberElement
+  | TransitionElementsKind | TrapIf | TrapUnless | TruncateBigIntToWord64
+  | TruncateFloat32ToInt32 | TruncateFloat32ToUint32 | TruncateFloat64ToFloat32
+  | TruncateFloat64ToInt64 | TruncateFloat64ToUint32 | TruncateFloat64ToWord32
   | TruncateTaggedPointerToBit | TruncateTaggedToFloat64
   | TruncateTaggedToWord32 | TryTruncateFloat32ToInt64
   | TryTruncateFloat32ToUint64 | TryTruncateFloat64ToInt64
@@ -1128,10 +1126,10 @@ let get_kind opcode =
   | ChangeUint32ToFloat64 | ChangeUint32ToUint64 | CheckedTaggedSignedToInt32
   | DeoptimizeIf | DeoptimizeUnless | Float64Abs | Float64ExtractHighWord32
   | NumberAbs | NumberExpm1 | NumberToInt32 | RoundFloat64ToInt32
-  | StackPointerGreaterThan | ToBoolean | TruncateInt64ToInt32
-  | TruncateTaggedToBit ->
+  | SpeculativeToNumber | StackPointerGreaterThan | ToBoolean
+  | TruncateInt64ToInt32 | TruncateTaggedToBit ->
       V1
-  | IfFalse | IfTrue -> C1
+  | IfFalse | IfTrue | Throw -> C1
   | Branch -> V1E1
   | Call | ExternalConstant | Float64Constant | HeapConstant | Int32Constant
   | Int64Constant | JSStackCheck | NumberConstant | Parameter ->
@@ -1142,7 +1140,8 @@ let get_kind opcode =
   | Int32Add | Int32AddWithOverflow | Int32LessThan | Int32Mul | Int32Sub
   | Int64Add | Int64LessThan | Int64Sub | NumberAdd | NumberLessThan | NumberMax
   | NumberMin | NumberMultiply | ReferenceEqual | SpeculativeNumberAdd
-  | SpeculativeNumberBitwiseXor | SpeculativeNumberEqual
+  | SpeculativeNumberBitwiseOr | SpeculativeNumberBitwiseXor
+  | SpeculativeNumberEqual | SpeculativeNumberMultiply
   | SpeculativeSafeIntegerAdd | SpeculativeSafeIntegerSubtract | Uint32LessThan
   | Uint32LessThanOrEqual | Uint64LessThan | Uint64LessThanOrEqual | Word32And
   | Word32Equal | Word32Or | Word32Shl | Word32Xor | Word64Equal | Word64Shl ->
@@ -1831,17 +1830,14 @@ let of_str str =
   | "SpeculativeBigIntNegate" -> SpeculativeBigIntNegate
   | "SpeculativeBigIntSubtract" -> SpeculativeBigIntSubtract
   | "SpeculativeNumberBitwiseAnd" -> SpeculativeNumberBitwiseAnd
-  | "SpeculativeNumberBitwiseOr" -> SpeculativeNumberBitwiseOr
   | "SpeculativeNumberDivide" -> SpeculativeNumberDivide
   | "SpeculativeNumberLessThan" -> SpeculativeNumberLessThan
   | "SpeculativeNumberLessThanOrEqual" -> SpeculativeNumberLessThanOrEqual
   | "SpeculativeNumberModulus" -> SpeculativeNumberModulus
-  | "SpeculativeNumberMultiply" -> SpeculativeNumberMultiply
   | "SpeculativeNumberShiftLeft" -> SpeculativeNumberShiftLeft
   | "SpeculativeNumberShiftRight" -> SpeculativeNumberShiftRight
   | "SpeculativeNumberShiftRightLogical" -> SpeculativeNumberShiftRightLogical
   | "SpeculativeNumberSubtract" -> SpeculativeNumberSubtract
-  | "SpeculativeToNumber" -> SpeculativeToNumber
   | "StackSlot" -> StackSlot
   | "Start" -> Start
   | "StateValues" -> StateValues
@@ -1872,7 +1868,6 @@ let of_str str =
   | "TaggedIndexConstant" -> TaggedIndexConstant
   | "TailCall" -> TailCall
   | "Terminate" -> Terminate
-  | "Throw" -> Throw
   | "TransitionAndStoreElement" -> TransitionAndStoreElement
   | "TransitionAndStoreNonNumberElement" -> TransitionAndStoreNonNumberElement
   | "TransitionAndStoreNumberElement" -> TransitionAndStoreNumberElement
@@ -1992,12 +1987,14 @@ let of_str str =
   | "NumberExpm1" -> NumberExpm1
   | "NumberToInt32" -> NumberToInt32
   | "RoundFloat64ToInt32" -> RoundFloat64ToInt32
+  | "SpeculativeToNumber" -> SpeculativeToNumber
   | "StackPointerGreaterThan" -> StackPointerGreaterThan
   | "ToBoolean" -> ToBoolean
   | "TruncateInt64ToInt32" -> TruncateInt64ToInt32
   | "TruncateTaggedToBit" -> TruncateTaggedToBit
   | "IfFalse" -> IfFalse
   | "IfTrue" -> IfTrue
+  | "Throw" -> Throw
   | "Branch" -> Branch
   | "Call" -> Call
   | "ExternalConstant" -> ExternalConstant
@@ -2032,8 +2029,10 @@ let of_str str =
   | "NumberMultiply" -> NumberMultiply
   | "ReferenceEqual" -> ReferenceEqual
   | "SpeculativeNumberAdd" -> SpeculativeNumberAdd
+  | "SpeculativeNumberBitwiseOr" -> SpeculativeNumberBitwiseOr
   | "SpeculativeNumberBitwiseXor" -> SpeculativeNumberBitwiseXor
   | "SpeculativeNumberEqual" -> SpeculativeNumberEqual
+  | "SpeculativeNumberMultiply" -> SpeculativeNumberMultiply
   | "SpeculativeSafeIntegerAdd" -> SpeculativeSafeIntegerAdd
   | "SpeculativeSafeIntegerSubtract" -> SpeculativeSafeIntegerSubtract
   | "Uint32LessThan" -> Uint32LessThan
@@ -2701,17 +2700,14 @@ let to_str opcode =
   | SpeculativeBigIntNegate -> "SpeculativeBigIntNegate"
   | SpeculativeBigIntSubtract -> "SpeculativeBigIntSubtract"
   | SpeculativeNumberBitwiseAnd -> "SpeculativeNumberBitwiseAnd"
-  | SpeculativeNumberBitwiseOr -> "SpeculativeNumberBitwiseOr"
   | SpeculativeNumberDivide -> "SpeculativeNumberDivide"
   | SpeculativeNumberLessThan -> "SpeculativeNumberLessThan"
   | SpeculativeNumberLessThanOrEqual -> "SpeculativeNumberLessThanOrEqual"
   | SpeculativeNumberModulus -> "SpeculativeNumberModulus"
-  | SpeculativeNumberMultiply -> "SpeculativeNumberMultiply"
   | SpeculativeNumberShiftLeft -> "SpeculativeNumberShiftLeft"
   | SpeculativeNumberShiftRight -> "SpeculativeNumberShiftRight"
   | SpeculativeNumberShiftRightLogical -> "SpeculativeNumberShiftRightLogical"
   | SpeculativeNumberSubtract -> "SpeculativeNumberSubtract"
-  | SpeculativeToNumber -> "SpeculativeToNumber"
   | StackSlot -> "StackSlot"
   | Start -> "Start"
   | StateValues -> "StateValues"
@@ -2742,7 +2738,6 @@ let to_str opcode =
   | TaggedIndexConstant -> "TaggedIndexConstant"
   | TailCall -> "TailCall"
   | Terminate -> "Terminate"
-  | Throw -> "Throw"
   | TransitionAndStoreElement -> "TransitionAndStoreElement"
   | TransitionAndStoreNonNumberElement -> "TransitionAndStoreNonNumberElement"
   | TransitionAndStoreNumberElement -> "TransitionAndStoreNumberElement"
@@ -2862,12 +2857,14 @@ let to_str opcode =
   | NumberExpm1 -> "NumberExpm1"
   | NumberToInt32 -> "NumberToInt32"
   | RoundFloat64ToInt32 -> "RoundFloat64ToInt32"
+  | SpeculativeToNumber -> "SpeculativeToNumber"
   | StackPointerGreaterThan -> "StackPointerGreaterThan"
   | ToBoolean -> "ToBoolean"
   | TruncateInt64ToInt32 -> "TruncateInt64ToInt32"
   | TruncateTaggedToBit -> "TruncateTaggedToBit"
   | IfFalse -> "IfFalse"
   | IfTrue -> "IfTrue"
+  | Throw -> "Throw"
   | Branch -> "Branch"
   | Call -> "Call"
   | ExternalConstant -> "ExternalConstant"
@@ -2902,8 +2899,10 @@ let to_str opcode =
   | NumberMultiply -> "NumberMultiply"
   | ReferenceEqual -> "ReferenceEqual"
   | SpeculativeNumberAdd -> "SpeculativeNumberAdd"
+  | SpeculativeNumberBitwiseOr -> "SpeculativeNumberBitwiseOr"
   | SpeculativeNumberBitwiseXor -> "SpeculativeNumberBitwiseXor"
   | SpeculativeNumberEqual -> "SpeculativeNumberEqual"
+  | SpeculativeNumberMultiply -> "SpeculativeNumberMultiply"
   | SpeculativeSafeIntegerAdd -> "SpeculativeSafeIntegerAdd"
   | SpeculativeSafeIntegerSubtract -> "SpeculativeSafeIntegerSubtract"
   | Uint32LessThan -> "Uint32LessThan"
