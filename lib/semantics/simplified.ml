@@ -368,10 +368,7 @@ let speculative_safe_integer_add vid lval rval next_bid mem =
   in
 
   let res =
-    Bool.ite
-      (added_f64 |> Float64.can_be_smi)
-      (added_f64 |> Float64.to_tagged_signed)
-      (HeapNumber.from_float64 next_bid (Bool.not deopt_cond) added_f64 mem)
+    HeapNumber.from_float64 next_bid (Bool.not deopt_cond) added_f64 mem
   in
 
   let assertion = Value.eq value res in

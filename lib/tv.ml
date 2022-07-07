@@ -586,27 +586,21 @@ let run nparams src_program tgt_program =
     (State.assertion tgt_state)
     "tgt";
 
-  (* assumptions:
-     1. Return value is either smi or heap number.
-     2. If heap-number can be smi, then it must be converted into smi before reach here. *)
+  (* assume return value is either smi or heap number. *)
   let retval_is_same =
     let src_retval = State.retval src_state in
     let tgt_retval = State.retval tgt_state in
     let src_mem = State.memory src_state in
     let tgt_mem = State.memory tgt_state in
-    Bool.ands
-      [
-        (* has same type *)
-        Bool.eq (src_retval |> Value.ty_of) (tgt_retval |> Value.ty_of);
-        Bool.ite
-          (src_retval |> Value.has_type Type.tagged_signed)
-          (* smi *)
-          (Value.eq src_retval tgt_retval)
-          (* heap-number *)
-          (HeapNumber.eq
-             (HeapNumber.load src_retval src_mem)
-             (HeapNumber.load tgt_retval tgt_mem));
-      ]
+    let to_float64 value mem =
+      Bool.ite
+        (value |> Value.has_type Type.tagged_signed)
+        (* if smi *)
+        (value |> Value.TaggedSigned.to_float64)
+        (* else if heap number *)
+        (HeapNumber.load value mem |> HeapNumber.to_float64)
+    in
+    Bool.eq (to_float64 src_retval src_mem) (to_float64 tgt_retval tgt_mem)
   in
 
   let src_ub = State.ub src_state in
@@ -646,4 +640,4 @@ let run nparams src_program tgt_program =
       Printer.print_counter_example src_program src_state model;
       Printer.print_counter_example tgt_program tgt_state model
   | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
-  | _ -> failwith "unknown"
+  | _ -> Printf.printf "Result: Unknown"
