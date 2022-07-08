@@ -386,6 +386,12 @@ let rec next program state =
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
         word32_shl vid lval rval
+    | Word32Shr ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        word32_shr vid lval rval
     | Word32Xor ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in

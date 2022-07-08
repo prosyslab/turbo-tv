@@ -221,6 +221,21 @@ let word32_shl vid lval rval =
  * - IsWellDefined(lval) ^ IsWellDefined(rval)
  * - HasRepr(lval, Word32) ^ HasRepr(rval, Word32)
  * assertion:
+ * value = ite well-defined (lval >> rval) UB *)
+let word32_shr vid lval rval =
+  let value = Value.init vid in
+  let wd_cond =
+    Bool.ands
+      [ Value.has_repr Repr.Word32 lval; Value.has_repr Repr.Word32 rval ]
+  in
+  let wd_value = Value.lshr lval rval in
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.not wd_cond)
+
+(* well-defined conditions:
+ * - IsWellDefined(lval) ^ IsWellDefined(rval)
+ * - HasRepr(lval, Word32) ^ HasRepr(rval, Word32)
+ * assertion:
  * value = ite well-defined (lval xor rval) UB *)
 let word32_xor vid lval rval =
   let value = Value.init vid in
