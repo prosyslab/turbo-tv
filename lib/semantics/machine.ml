@@ -18,8 +18,8 @@ let float64_abs vid pval =
   (value, Control.empty, assertion, Bool.not wd_cond)
 
 (* well-defined condition:
- * - IsFloat64Type(pval) 
- * - IsWellDefined(pval) 
+ * - IsFloat64Type(pval)
+ * - IsWellDefined(pval)
  * assertion:
  * value = ite well-defined pval[0:32] UB *)
 let float64_extract_high_word32 vid pval =
@@ -50,7 +50,7 @@ let float64_sub vid lval rval =
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
-(* well-defined condition: 
+(* well-defined condition:
  * - int32(lval) ^ int32(rval)
  * - well_defined(lval) ^ well_defined(rval)
  * assertion:
@@ -68,7 +68,7 @@ let int32_add vid lval rval =
 (* well-defined condition:
  * - int32(lval) ^ int32(rval)
  * - well_defined(lval) ^ well_defined(rval)
- * assertion: 
+ * assertion:
  * value = ite well-defined ((lval+rval) mod 2**32)::(lval+rval > smi_max) UB *)
 let int32_add_with_overflow vid lval rval =
   let value = Composed.init vid 2 in
@@ -131,7 +131,7 @@ let int32_sub vid lval rval =
 (* well-defined condition:
  * - int64(lval) ^ int64(rval)
  * - well_defined(lval) ^ well_defined(rval)
- * assertion: 
+ * assertion:
  * value = ite well-defined ((lval+rval) mod 2**64) UB *)
 let int64_add vid lval rval =
   let value = Value.init vid in
@@ -150,7 +150,7 @@ let int64_add vid lval rval =
 (* Well-defined condition:
  * - int64(lval) ^ int64(rval)
  * - well_defined(lval) ^ well_defined(rval)
- * assertion: 
+ * assertion:
  * value = ite well-defined (lval-rval) UB *)
 let int64_sub vid lval rval =
   let value = Value.init vid in
@@ -165,7 +165,7 @@ let int64_sub vid lval rval =
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
-(* - Well-defined condition = 
+(* - Well-defined condition =
  *    IsWellDefined(lval) /\ IsFloat64(lval)
  * - Assertion:
  *     value = ite well-defined (Round(lval, rtz)) undefined *)
@@ -181,7 +181,7 @@ let round_float64_to_int32 vid pval =
  *  /\ HasRepr(lval, Word32) /\ HasRepr(rval, Word32)
  *  /\ (hint = "ShiftOutZero" /\ off = (rval mod 32) -> lval[-off:] = 0)
  * assertion:
- * value = ite well-defined (lval >> ((rval mod 32)) UB 
+ * value = ite well-defined (lval >> ((rval mod 32)) UB
  *)
 let word32_sar vid hint lval rval =
   let value = Value.init vid in
@@ -284,7 +284,7 @@ let word32_or vid lval rval =
 (* machine: comparison *)
 (* well-defined condition:
  * - has_repr(lval, float64) ^ has_repr(rval, float64)
- * assertion: 
+ * assertion:
  *  value = ite well-defined (lval = rval) UB *)
 let float64_equal vid lval rval =
   let value = Value.init vid in
@@ -300,7 +300,7 @@ let float64_equal vid lval rval =
 (* well-defined condition:
  * - is_defined(lval) /\ is_defined(rval)
  * - has_type(lval, float64) ^ has_type(rval, float64)
- * assertion: 
+ * assertion:
  *  value = ite well-defined (lval < rval) UB *)
 let float64_less_than vid lval rval =
   let value = Value.init vid in
@@ -318,7 +318,7 @@ let float64_less_than vid lval rval =
 (* well-defined condition:
  * - IsDefined(lval) /\ IsDefined(rval)
  * - IsFloat64(lval) /\ IsFloat64(rval)
- * assertion: 
+ * assertion:
  *  value = ite well-defined (lval <= rval) UB *)
 let float64_less_than_or_equal vid lval rval =
   let value = Value.init vid in
@@ -371,7 +371,7 @@ let int64_less_than vid lval rval =
 
 (* well-defined condition:
  *  IsWellDefined(lval) ^ IsWellDefined(rval)
- * assertion: 
+ * assertion:
  *  value = ite well-defined (lval = rval) UB *)
 let word32_equal vid lval rval =
   let value = Value.init vid in
@@ -382,7 +382,7 @@ let word32_equal vid lval rval =
   (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
- *  IsWellDefined(lval) ^ IsWellDefined(rval) 
+ *  IsWellDefined(lval) ^ IsWellDefined(rval)
  * assertion:
  *  value = ite well-defined (lval = rval) UB *)
 let word64_equal vid lval rval =
@@ -426,7 +426,7 @@ let uint32_less_than_or_equal vid lval rval =
 (* well-defined condition:
  * - well_defined(lval) ^ well_defined(rval)
  * - uint64(lval) ^ uint64(rval)
- * assertion: 
+ * assertion:
  * value = ite well-defined (lval < rval) UB *)
 let uint64_less_than vid lval rval =
   let value = Value.init vid in
