@@ -23,6 +23,7 @@ type kind =
   | V4
   | VVB1C1
   | VV
+  | V2V3V1
   | V1V2B1V3
   | V1B2B4V2
   | B1V1V2
@@ -658,7 +659,6 @@ type t =
   | SLVerifierHint
   | SameValue
   | SameValueNumbersOnly
-  | Select
   | SignExtendWord16ToInt32
   | SignExtendWord16ToInt64
   | SignExtendWord32ToInt64
@@ -773,7 +773,6 @@ type t =
   | Word32Rol
   | Word32Ror
   | Word32Select
-  | Word32Shr
   | Word64And
   | Word64AtomicAdd
   | Word64AtomicAnd
@@ -892,6 +891,7 @@ type t =
   | Word32Equal
   | Word32Or
   | Word32Shl
+  | Word32Shr
   | Word32Xor
   | Word64Equal
   | Word64Shl
@@ -907,6 +907,8 @@ type t =
   | LoadTypedElement
   (* vvb1c1 *)
   | Phi
+  (* v2v3v1 *)
+  | Select
   (* v1v2b1v3 *)
   | Store
   (* v1b2b4v2 *)
@@ -1074,10 +1076,10 @@ let get_kind opcode =
   | RoundUint32ToFloat32 | RoundUint64ToFloat32 | RoundUint64ToFloat64
   | RuntimeAbort | S128And | S128AndNot | S128Const | S128Not | S128Or
   | S128Select | S128Xor | S128Zero | SLVerifierHint | SameValue
-  | SameValueNumbersOnly | Select | SignExtendWord16ToInt32
-  | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
-  | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
-  | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
+  | SameValueNumbersOnly | SignExtendWord16ToInt32 | SignExtendWord16ToInt64
+  | SignExtendWord32ToInt64 | SignExtendWord8ToInt32 | SignExtendWord8ToInt64
+  | Simd128ReverseBytes | SpeculativeBigIntAdd | SpeculativeBigIntAsIntN
+  | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
   | SpeculativeBigIntSubtract | SpeculativeNumberBitwiseAnd
   | SpeculativeNumberDivide | SpeculativeNumberLessThan
   | SpeculativeNumberLessThanOrEqual | SpeculativeNumberModulus
@@ -1109,8 +1111,8 @@ let get_kind opcode =
   | Word32AtomicPairSub | Word32AtomicPairXor | Word32AtomicStore
   | Word32AtomicSub | Word32AtomicXor | Word32Clz | Word32Ctz | Word32PairSar
   | Word32PairShl | Word32PairShr | Word32Popcnt | Word32ReverseBits
-  | Word32ReverseBytes | Word32Rol | Word32Ror | Word32Select | Word32Shr
-  | Word64And | Word64AtomicAdd | Word64AtomicAnd | Word64AtomicCompareExchange
+  | Word32ReverseBytes | Word32Rol | Word32Ror | Word32Select | Word64And
+  | Word64AtomicAdd | Word64AtomicAnd | Word64AtomicCompareExchange
   | Word64AtomicExchange | Word64AtomicLoad | Word64AtomicOr | Word64AtomicStore
   | Word64AtomicSub | Word64AtomicXor | Word64Clz | Word64ClzLowerable
   | Word64Ctz | Word64CtzLowerable | Word64Or | Word64Popcnt | Word64ReverseBits
@@ -1144,7 +1146,8 @@ let get_kind opcode =
   | SpeculativeNumberEqual | SpeculativeNumberMultiply
   | SpeculativeSafeIntegerAdd | SpeculativeSafeIntegerSubtract | Uint32LessThan
   | Uint32LessThanOrEqual | Uint64LessThan | Uint64LessThanOrEqual | Word32And
-  | Word32Equal | Word32Or | Word32Shl | Word32Xor | Word64Equal | Word64Shl ->
+  | Word32Equal | Word32Or | Word32Shl | Word32Shr | Word32Xor | Word64Equal
+  | Word64Shl ->
       V1V2
   | Return -> V2
   | Load -> V1V2B1
@@ -1152,6 +1155,7 @@ let get_kind opcode =
   | LoadField -> B1B2B4V1
   | LoadTypedElement -> B1V2V3V4
   | Phi -> VVB1C1
+  | Select -> V2V3V1
   | Store -> V1V2B1V3
   | StoreField -> V1B2B4V2
   | Word32Sar -> B1V1V2
@@ -1180,6 +1184,7 @@ let split_kind kind =
   | V4 -> [ V4 ]
   | VVB1C1 -> [ VV; B1; C1 ]
   | VV -> [ VV ]
+  | V2V3V1 -> [ V2; V3; V1 ]
   | V1V2B1V3 -> [ V1; V2; B1; V3 ]
   | V1B2B4V2 -> [ V1; B2; B4; V2 ]
   | B1V1V2 -> [ B1; V1; V2 ]
@@ -1817,7 +1822,6 @@ let of_str str =
   | "SLVerifierHint" -> SLVerifierHint
   | "SameValue" -> SameValue
   | "SameValueNumbersOnly" -> SameValueNumbersOnly
-  | "Select" -> Select
   | "SignExtendWord16ToInt32" -> SignExtendWord16ToInt32
   | "SignExtendWord16ToInt64" -> SignExtendWord16ToInt64
   | "SignExtendWord32ToInt64" -> SignExtendWord32ToInt64
@@ -1932,7 +1936,6 @@ let of_str str =
   | "Word32Rol" -> Word32Rol
   | "Word32Ror" -> Word32Ror
   | "Word32Select" -> Word32Select
-  | "Word32Shr" -> Word32Shr
   | "Word64And" -> Word64And
   | "Word64AtomicAdd" -> Word64AtomicAdd
   | "Word64AtomicAnd" -> Word64AtomicAnd
@@ -2043,6 +2046,7 @@ let of_str str =
   | "Word32Equal" -> Word32Equal
   | "Word32Or" -> Word32Or
   | "Word32Shl" -> Word32Shl
+  | "Word32Shr" -> Word32Shr
   | "Word32Xor" -> Word32Xor
   | "Word64Equal" -> Word64Equal
   | "Word64Shl" -> Word64Shl
@@ -2052,6 +2056,7 @@ let of_str str =
   | "LoadField" -> LoadField
   | "LoadTypedElement" -> LoadTypedElement
   | "Phi" -> Phi
+  | "Select" -> Select
   | "Store" -> Store
   | "StoreField" -> StoreField
   | "Word32Sar" -> Word32Sar
@@ -2687,7 +2692,6 @@ let to_str opcode =
   | SLVerifierHint -> "SLVerifierHint"
   | SameValue -> "SameValue"
   | SameValueNumbersOnly -> "SameValueNumbersOnly"
-  | Select -> "Select"
   | SignExtendWord16ToInt32 -> "SignExtendWord16ToInt32"
   | SignExtendWord16ToInt64 -> "SignExtendWord16ToInt64"
   | SignExtendWord32ToInt64 -> "SignExtendWord32ToInt64"
@@ -2802,7 +2806,6 @@ let to_str opcode =
   | Word32Rol -> "Word32Rol"
   | Word32Ror -> "Word32Ror"
   | Word32Select -> "Word32Select"
-  | Word32Shr -> "Word32Shr"
   | Word64And -> "Word64And"
   | Word64AtomicAdd -> "Word64AtomicAdd"
   | Word64AtomicAnd -> "Word64AtomicAnd"
@@ -2913,6 +2916,7 @@ let to_str opcode =
   | Word32Equal -> "Word32Equal"
   | Word32Or -> "Word32Or"
   | Word32Shl -> "Word32Shl"
+  | Word32Shr -> "Word32Shr"
   | Word32Xor -> "Word32Xor"
   | Word64Equal -> "Word64Equal"
   | Word64Shl -> "Word64Shl"
@@ -2922,6 +2926,7 @@ let to_str opcode =
   | LoadField -> "LoadField"
   | LoadTypedElement -> "LoadTypedElement"
   | Phi -> "Phi"
+  | Select -> "Select"
   | Store -> "Store"
   | StoreField -> "StoreField"
   | Word32Sar -> "Word32Sar"

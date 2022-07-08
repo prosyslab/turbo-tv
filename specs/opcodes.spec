@@ -695,7 +695,7 @@ S128Zero,
 SLVerifierHint,
 SameValue,
 SameValueNumbersOnly,
-Select,
+Select,v2,v3,v1
 SignExtendWord16ToInt32,
 SignExtendWord16ToInt64,
 SignExtendWord32ToInt64,
@@ -834,7 +834,7 @@ Word32Ror,
 Word32Sar,b1,v1,v2
 Word32Select,
 Word32Shl,v1,v2
-Word32Shr,
+Word32Shr,v1,v2
 Word32Xor,v1,v2
 Word64And,
 Word64AtomicAdd,
