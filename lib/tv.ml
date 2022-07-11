@@ -101,6 +101,14 @@ let rec next program state =
             failwith
               (Format.sprintf "Phi is not implemented for incoming opcode: %s"
                  (ctrl_opcode |> Opcode.to_str)))
+    | Select ->
+        let cond_id = Operands.id_of_nth operands 0 in
+        let true_id = Operands.id_of_nth operands 1 in
+        let false_id = Operands.id_of_nth operands 2 in
+        let cond_value = RegisterFile.find cond_id rf in
+        let true_value = RegisterFile.find true_id rf in
+        let false_value = RegisterFile.find false_id rf in
+        select vid cond_value true_value false_value
     | Start -> start cid
     | Merge ->
         let conds = ControlFile.find_all (operands |> Operands.id_of_all) cf in

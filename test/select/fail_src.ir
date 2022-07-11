@@ -1,0 +1,8 @@
+#0:Start()()()
+#1:Int32Constant[1]()()()
+#2:Int32Constant[2]()()()
+#3:Int32LessThan(#1:Int32Constant, #2:Int32Constant)()()
+#4:Select(#3:Int32LessThan, #1:Int32Constant, #2:Int32Constant)()()
+#5:ChangeInt31ToTaggedSigned(#4:Select)()()
+#6:Return(#1:Int32Constant, #5:ChangeInt31ToTaggedSigned)()()
+#7:End()()(#6:Return)

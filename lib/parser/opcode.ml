@@ -23,7 +23,7 @@ type kind =
   | V4
   | VVB1C1
   | VV
-  | V2V3V1
+  | V1V2V3
   | V1V2B1V3
   | V1B2B4V2
   | B1V1V2
@@ -907,7 +907,7 @@ type t =
   | LoadTypedElement
   (* vvb1c1 *)
   | Phi
-  (* v2v3v1 *)
+  (* v1v2v3 *)
   | Select
   (* v1v2b1v3 *)
   | Store
@@ -1155,7 +1155,7 @@ let get_kind opcode =
   | LoadField -> B1B2B4V1
   | LoadTypedElement -> B1V2V3V4
   | Phi -> VVB1C1
-  | Select -> V2V3V1
+  | Select -> V1V2V3
   | Store -> V1V2B1V3
   | StoreField -> V1B2B4V2
   | Word32Sar -> B1V1V2
@@ -1184,7 +1184,7 @@ let split_kind kind =
   | V4 -> [ V4 ]
   | VVB1C1 -> [ VV; B1; C1 ]
   | VV -> [ VV ]
-  | V2V3V1 -> [ V2; V3; V1 ]
+  | V1V2V3 -> [ V1; V2; V3 ]
   | V1V2B1V3 -> [ V1; V2; B1; V3 ]
   | V1B2B4V2 -> [ V1; B2; B4; V2 ]
   | B1V1V2 -> [ B1; V1; V2 ]

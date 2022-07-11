@@ -126,6 +126,13 @@ let phi vid incomings repr ctrls =
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.fl)
 
+let select vid cond tr fl =
+  let value = Value.init vid in
+  let wd_cond = cond |> Value.has_type Type.bool in
+  let res = Bool.ite (Value.is_true cond) tr fl in
+  let assertion = Value.eq value res in
+  (value, Control.empty, assertion, Bool.not wd_cond)
+
 (* common: procedure *)
 let parameter vid param mem =
   let value = Value.init vid in

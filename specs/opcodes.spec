@@ -695,7 +695,7 @@ S128Zero,
 SLVerifierHint,
 SameValue,
 SameValueNumbersOnly,
-Select,v2,v3,v1
+Select,v1,v2,v3
 SignExtendWord16ToInt32,
 SignExtendWord16ToInt64,
 SignExtendWord32ToInt64,
