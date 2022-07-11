@@ -796,7 +796,7 @@ Uint64LessThanOrEqual,v1,v2
 Uint64Mod,
 UnalignedLoad,
 UnalignedStore,
-Unreachable,
+Unreachable,c1
 UnsafePointerAdd,
 V128AnyTrue,
 VerifyType,

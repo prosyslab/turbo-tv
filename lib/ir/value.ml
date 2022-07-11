@@ -247,6 +247,8 @@ let fl = empty |> cast Type.bool
 
 let is_false value = eq fl value
 
+let to_bool value = Bool.ite (eq value fl) Bool.fl Bool.tr
+
 let zero = BitVecVal.zero () |> entype Type.const
 
 (* IEEE-754 *)

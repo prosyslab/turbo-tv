@@ -32,7 +32,6 @@ type t = {
   assertion : BitVec.t;
   ub : Bool.t;
   deopt : Bool.t;
-  unreachable : Bool.t;
 }
 
 let init nparams stage : t =
@@ -48,11 +47,9 @@ let init nparams stage : t =
     assertion = Bool.tr;
     ub = Bool.fl;
     deopt = Bool.fl;
-    unreachable = Bool.fl;
   }
 
-let update pc next_bid control_file register_file memory assertion ub deopt
-    unreachable t =
+let update pc next_bid control_file register_file memory assertion ub deopt t =
   {
     t with
     pc;
@@ -63,7 +60,6 @@ let update pc next_bid control_file register_file memory assertion ub deopt
     assertion;
     ub;
     deopt;
-    unreachable;
   }
 
 (* getter *)
@@ -88,7 +84,5 @@ let assertion t = t.assertion
 let ub t = t.ub
 
 let deopt t = t.deopt
-
-let unreachable t = t.unreachable
 
 let is_end t = t.pc = -1

@@ -740,7 +740,6 @@ type t =
   | Uint64Mod
   | UnalignedLoad
   | UnalignedStore
-  | Unreachable
   | UnsafePointerAdd
   | V128AnyTrue
   | VerifyType
@@ -838,6 +837,7 @@ type t =
   | IfFalse
   | IfTrue
   | Throw
+  | Unreachable
   (* v1e1 *)
   | Branch
   (* b1 *)
@@ -1102,22 +1102,22 @@ let get_kind opcode =
   | TryTruncateFloat32ToUint64 | TryTruncateFloat64ToInt64
   | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf | TypedObjectState
   | TypedStateValues | Uint32Div | Uint32Mod | Uint32MulHigh | Uint64Div
-  | Uint64Mod | UnalignedLoad | UnalignedStore | Unreachable | UnsafePointerAdd
-  | V128AnyTrue | VerifyType | Word32AtomicAdd | Word32AtomicAnd
-  | Word32AtomicCompareExchange | Word32AtomicExchange | Word32AtomicLoad
-  | Word32AtomicOr | Word32AtomicPairAdd | Word32AtomicPairAnd
-  | Word32AtomicPairCompareExchange | Word32AtomicPairExchange
-  | Word32AtomicPairLoad | Word32AtomicPairOr | Word32AtomicPairStore
-  | Word32AtomicPairSub | Word32AtomicPairXor | Word32AtomicStore
-  | Word32AtomicSub | Word32AtomicXor | Word32Clz | Word32Ctz | Word32PairSar
-  | Word32PairShl | Word32PairShr | Word32Popcnt | Word32ReverseBits
-  | Word32ReverseBytes | Word32Rol | Word32Ror | Word32Select | Word64And
-  | Word64AtomicAdd | Word64AtomicAnd | Word64AtomicCompareExchange
-  | Word64AtomicExchange | Word64AtomicLoad | Word64AtomicOr | Word64AtomicStore
-  | Word64AtomicSub | Word64AtomicXor | Word64Clz | Word64ClzLowerable
-  | Word64Ctz | Word64CtzLowerable | Word64Or | Word64Popcnt | Word64ReverseBits
-  | Word64ReverseBytes | Word64Rol | Word64RolLowerable | Word64Ror
-  | Word64RorLowerable | Word64Sar | Word64Select | Word64Shr | Word64Xor ->
+  | Uint64Mod | UnalignedLoad | UnalignedStore | UnsafePointerAdd | V128AnyTrue
+  | VerifyType | Word32AtomicAdd | Word32AtomicAnd | Word32AtomicCompareExchange
+  | Word32AtomicExchange | Word32AtomicLoad | Word32AtomicOr
+  | Word32AtomicPairAdd | Word32AtomicPairAnd | Word32AtomicPairCompareExchange
+  | Word32AtomicPairExchange | Word32AtomicPairLoad | Word32AtomicPairOr
+  | Word32AtomicPairStore | Word32AtomicPairSub | Word32AtomicPairXor
+  | Word32AtomicStore | Word32AtomicSub | Word32AtomicXor | Word32Clz
+  | Word32Ctz | Word32PairSar | Word32PairShl | Word32PairShr | Word32Popcnt
+  | Word32ReverseBits | Word32ReverseBytes | Word32Rol | Word32Ror
+  | Word32Select | Word64And | Word64AtomicAdd | Word64AtomicAnd
+  | Word64AtomicCompareExchange | Word64AtomicExchange | Word64AtomicLoad
+  | Word64AtomicOr | Word64AtomicStore | Word64AtomicSub | Word64AtomicXor
+  | Word64Clz | Word64ClzLowerable | Word64Ctz | Word64CtzLowerable | Word64Or
+  | Word64Popcnt | Word64ReverseBits | Word64ReverseBytes | Word64Rol
+  | Word64RolLowerable | Word64Ror | Word64RorLowerable | Word64Sar
+  | Word64Select | Word64Shr | Word64Xor ->
       UNIMPL
   | AllocateRaw -> V1C1
   | BitcastFloat32ToInt32 | BitcastFloat64ToInt64 | BitcastTaggedToWord
@@ -1131,7 +1131,7 @@ let get_kind opcode =
   | SpeculativeToNumber | StackPointerGreaterThan | ToBoolean
   | TruncateInt64ToInt32 | TruncateTaggedToBit ->
       V1
-  | IfFalse | IfTrue | Throw -> C1
+  | IfFalse | IfTrue | Throw | Unreachable -> C1
   | Branch -> V1E1
   | Call | ExternalConstant | Float64Constant | HeapConstant | Int32Constant
   | Int64Constant | JSStackCheck | NumberConstant | Parameter ->
@@ -1903,7 +1903,6 @@ let of_str str =
   | "Uint64Mod" -> Uint64Mod
   | "UnalignedLoad" -> UnalignedLoad
   | "UnalignedStore" -> UnalignedStore
-  | "Unreachable" -> Unreachable
   | "UnsafePointerAdd" -> UnsafePointerAdd
   | "V128AnyTrue" -> V128AnyTrue
   | "VerifyType" -> VerifyType
@@ -1998,6 +1997,7 @@ let of_str str =
   | "IfFalse" -> IfFalse
   | "IfTrue" -> IfTrue
   | "Throw" -> Throw
+  | "Unreachable" -> Unreachable
   | "Branch" -> Branch
   | "Call" -> Call
   | "ExternalConstant" -> ExternalConstant
@@ -2773,7 +2773,6 @@ let to_str opcode =
   | Uint64Mod -> "Uint64Mod"
   | UnalignedLoad -> "UnalignedLoad"
   | UnalignedStore -> "UnalignedStore"
-  | Unreachable -> "Unreachable"
   | UnsafePointerAdd -> "UnsafePointerAdd"
   | V128AnyTrue -> "V128AnyTrue"
   | VerifyType -> "VerifyType"
@@ -2868,6 +2867,7 @@ let to_str opcode =
   | IfFalse -> "IfFalse"
   | IfTrue -> "IfTrue"
   | Throw -> "Throw"
+  | Unreachable -> "Unreachable"
   | Branch -> "Branch"
   | Call -> "Call"
   | ExternalConstant -> "ExternalConstant"

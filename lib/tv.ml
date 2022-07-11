@@ -18,6 +18,19 @@ let tag base_is_tagged =
   | "untagged base" -> 0
   | _ -> failwith (Printf.sprintf "invalid input: %s" base_is_tagged)
 
+let update_deopt (opcode : Opcode.t) operands rf control deopt =
+  match opcode with
+  | Deoptimize -> Bool.ands [ control; deopt ]
+  | DeoptimizeIf ->
+      let cond_id = Operands.id_of_nth operands 0 in
+      let cond = RegisterFile.find cond_id rf |> Value.to_bool in
+      Bool.ands [ control; cond; deopt ]
+  | DeoptimizeUnless ->
+      let cond_id = Operands.id_of_nth operands 0 in
+      let cond = RegisterFile.find cond_id rf |> Value.to_bool in
+      Bool.ands [ control; Bool.not cond; deopt ]
+  | _ -> deopt
+
 let rec next program state =
   let pc = State.pc state in
   let cf = State.control_file state in
@@ -117,6 +130,10 @@ let rec next program state =
     | Merge ->
         let conds = ControlFile.find_all (operands |> Operands.id_of_all) cf in
         merge cid conds
+    | Unreachable ->
+        let cid = Operands.id_of_nth operands 0 in
+        let ctrl_token = ControlFile.find cid cf in
+        (Value.empty, Control.empty, Bool.tr, ctrl_token)
     (* common: deoptimization *)
     | DeoptimizeUnless -> (Value.empty, Bool.tr, Bool.tr, Bool.fl)
     (* common: dead *)
@@ -579,11 +596,12 @@ let rec next program state =
   let updated_rf = RegisterFile.add vid value rf in
   let updated_cf = ControlFile.add cid control cf in
   let updated_ub = Bool.ors [ State.ub state; ub; Bool.not type_is_verified ] in
-  let updated_deopt = State.deopt state in
-  let updated_unreachable = State.unreachable state in
+  let updated_deopt =
+    update_deopt opcode operands rf control (State.deopt state)
+  in
   let next_state =
     State.update next_pc !next_bid updated_cf updated_rf !mem updated_asrt
-      updated_ub updated_deopt updated_unreachable state
+      updated_ub updated_deopt state
   in
 
   if State.is_end next_state then { next_state with retval = value }
@@ -598,18 +616,19 @@ let execute stage program nparams =
 let check_ub_semantic nparams program =
   let state = execute "test" program nparams in
   let ub = State.ub state in
-  let assertion = Bool.ands [ State.assertion state; ub ] in
+  let precond = Bool.not (State.deopt state) in
+  let assertion = Bool.ands [ State.assertion state; precond; ub ] in
   let status = Solver.check validator assertion in
 
   match status with
   | SATISFIABLE ->
       let model = Option.get (Solver.get_model validator) in
-      Printf.printf "\nResult: X\n";
+      Printf.printf "Result: Not Verified\n";
       Printf.printf "UB: %s\n" (Model.eval model ub |> Expr.to_simplified_string);
       Printf.printf "CounterExample: \n";
       Printer.print_params model (State.memory state) (State.params state);
       Printer.print_counter_example program state model
-  | UNSATISFIABLE -> Printf.printf "\nResult: O\n"
+  | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
   | UNKNOWN ->
       let reason = Z3.Solver.get_reason_unknown validator in
       Printf.printf "Result: Unknown\nReason: %s" reason
