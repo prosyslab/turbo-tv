@@ -48,11 +48,6 @@ let to_int64 value = value |> to_intx 64
 
 let to_tagged_signed value = value |> to_int32 |> Value.Int32.to_tagged_signed
 
-(* pp *)
-let to_string model value =
-  let v_str = value |> to_float |> Model.eval model |> Real.to_decimal_string in
-  Format.sprintf "Float64(%s)" v_str
-
 (* constants *)
 let nan = Float.nan () |> from_float
 
@@ -128,6 +123,12 @@ let is_integer value = eq value (value |> round |> from_float)
 
 let is_minus_zero value = Float.is_minus_zero (value |> to_float)
 
+let is_nan value = Float.is_nan (value |> to_float)
+
+let is_inf value = Float.is_inf (value |> to_float)
+
+let is_ninf value = Float.is_ninf (value |> to_float)
+
 let is_negative value =
   BitVec.eqi (BitVec.extract 63 63 (value |> Value.data_of)) 0
 
@@ -145,3 +146,20 @@ let can_be_smi value =
       Z3utils.Bool.not (value |> is_minus_zero);
       value |> to_int32 |> Value.Int32.is_in_smi_range;
     ]
+
+(* pp *)
+let to_string model value =
+  let evaluated = value |> Model.eval model in
+  if String.contains (evaluated |> is_nan |> Expr.to_simplified_string) 't' then
+    "Float64(NaN)"
+  else if String.contains (evaluated |> is_inf |> Expr.to_simplified_string) 't'
+  then "Float64(+oo)"
+  else if
+    String.contains (evaluated |> is_ninf |> Expr.to_simplified_string) 't'
+  then "Float64(-oo)"
+  else if
+    String.contains
+      (evaluated |> is_minus_zero |> Expr.to_simplified_string)
+      't'
+  then "Float64(-0)"
+  else Format.sprintf "Float64(%s)" (evaluated |> Real.to_decimal_string)
