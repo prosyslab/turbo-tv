@@ -102,7 +102,7 @@ type t =
   | NonNumber
   | Any
   | HeapConstant of int
-  | OtherNumberConstant of int
+  | OtherNumberConstant of float
   | Tuple of t list
   | Union of t list
   | Range of (float * float)
@@ -143,25 +143,37 @@ let rec of_string str =
     Tuple elems_ty
   in
 
-  let parse_constant kind c_ty_str =
-    let value_reg = Re.Pcre.regexp (kind ^ "\\((0x[0-9a-f]*).*") in
+  let parse_heap_constant c_ty_str =
+    let value_reg = Re.Pcre.regexp "HeapConstant\\((0x[0-9a-f]*).*" in
     let value_str =
       try Re.Group.get (Re.exec value_reg c_ty_str) 1
       with Not_found ->
         let cause = c_ty_str in
-        let reason = "Cannot parse '" ^ kind ^ "' from the " ^ c_ty_str in
+        let reason = "Cannot parse 'HeapConstant' from the " ^ c_ty_str in
         raise (InvalidFormat (cause, reason))
     in
     let value = value_str |> int_of_string in
-    match kind with
-    | "HeapConstant" -> HeapConstant value
-    | "OtherNumberConstant" -> OtherNumberConstant value
-    | _ -> failwith "Unreachable"
+    HeapConstant value
+  in
+
+  let parse_other_number_constant c_ty_str =
+    let value_reg = Re.Pcre.regexp "OtherNumberConstant\\((-?[a-z\\.0-9]*).*" in
+    let value_str =
+      try Re.Group.get (Re.exec value_reg c_ty_str) 1
+      with Not_found ->
+        let cause = c_ty_str in
+        let reason =
+          "Cannot parse 'OtherNumberConstant' from the " ^ c_ty_str
+        in
+        raise (InvalidFormat (cause, reason))
+    in
+    let value = value_str |> float_of_string in
+    OtherNumberConstant value
   in
 
   let parse_range range_ty_str =
     let limits_reg =
-      Re.Pcre.regexp "Range\\((-?[\\.0-9]*),\\s*(-?[\\.0-9]*)\\)"
+      Re.Pcre.regexp "Range\\((-?[a-z\\.0-9]*),\\s*(-?[a-z\\.0-9]*)\\)"
     in
     let limits =
       try
@@ -280,10 +292,9 @@ let rec of_string str =
   | s when String.starts_with ~prefix:"(" s -> parse_union s
   | s when String.starts_with ~prefix:"<" s -> parse_tuple s
   | s when String.starts_with ~prefix:"Range" s -> parse_range s
-  | s when String.starts_with ~prefix:"HeapConstant" s ->
-      parse_constant "HeapConstant" s
+  | s when String.starts_with ~prefix:"HeapConstant" s -> parse_heap_constant s
   | s when String.starts_with ~prefix:"OtherNumberConstant" s ->
-      parse_constant "OtherNumberConstant" s
+      parse_other_number_constant s
   | _ -> failwith ("Cannot parse " ^ str)
 
 let rec to_string t =
@@ -392,7 +403,7 @@ let rec to_string t =
       |> Printf.sprintf "Tuple (%s)"
   | Range (lb, ub) -> Printf.sprintf "Range (%f, %f)" lb ub
   | HeapConstant v -> Printf.sprintf "HeapConstant (0x%x)" v
-  | OtherNumberConstant v -> Printf.sprintf "OtherNumberConstant (0x%x)" v
+  | OtherNumberConstant v -> Printf.sprintf "OtherNumberConstant (%f)" v
 
 (* range *)
 let lb_of range_ty = fst range_ty

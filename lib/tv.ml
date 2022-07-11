@@ -110,6 +110,10 @@ let rec next program state =
         let false_value = RegisterFile.find false_id rf in
         select vid cond_value true_value false_value
     | Start -> start cid
+    | Throw ->
+        let nid = Operands.id_of_nth operands 0 in
+        let ctrl_token = ControlFile.find nid cf in
+        throw cid ctrl_token
     | Merge ->
         let conds = ControlFile.find_all (operands |> Operands.id_of_all) cf in
         merge cid conds
@@ -571,27 +575,15 @@ let rec next program state =
     match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
   in
 
-  (* dependency checker *)
-  let updated_deopt_node_map =
-    let prev = State.deopt_node_map state in
-    if List.mem opcode DependencyChecker.deopt_nodes then
-      DependencyChecker.deopt_node_map_add pc opcode operands rf control prev
-    else prev
-  in
-  let updated_kill_node_map =
-    let prev = State.kill_node_map state in
-    if List.mem opcode DependencyChecker.kill_nodes then
-      DependencyChecker.NodeMap.add pc control prev
-    else prev
-  in
-
   (* update state *)
   let updated_rf = RegisterFile.add vid value rf in
   let updated_cf = ControlFile.add cid control cf in
   let updated_ub = Bool.ors [ State.ub state; ub; Bool.not type_is_verified ] in
+  let updated_deopt = State.deopt state in
+  let updated_unreachable = State.unreachable state in
   let next_state =
     State.update next_pc !next_bid updated_cf updated_rf !mem updated_asrt
-      updated_ub updated_deopt_node_map updated_kill_node_map state
+      updated_ub updated_deopt updated_unreachable state
   in
 
   if State.is_end next_state then { next_state with retval = value }
@@ -624,18 +616,7 @@ let check_ub_semantic nparams program =
 
 let run nparams src_program tgt_program =
   let src_state = execute "before" src_program nparams in
-  DependencyChecker.check src_program
-    (State.deopt_node_map src_state)
-    (State.kill_node_map src_state)
-    (State.assertion src_state)
-    "src";
-
   let tgt_state = execute "after" tgt_program nparams in
-  DependencyChecker.check tgt_program
-    (State.deopt_node_map tgt_state)
-    (State.kill_node_map tgt_state)
-    (State.assertion tgt_state)
-    "tgt";
 
   (* assume return value is either smi or heap number. *)
   let retval_is_same =

@@ -36,7 +36,5 @@
   printer
   utils
   err
-  z3utils
-  ;checker
-  dependencyChecker)
+  z3utils)
  (libraries core_unix cmdliner ocamlgraph str re z3))

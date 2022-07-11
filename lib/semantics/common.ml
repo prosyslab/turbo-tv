@@ -133,6 +133,11 @@ let select vid cond tr fl =
   let assertion = Value.eq value res in
   (value, Control.empty, assertion, Bool.not wd_cond)
 
+let throw cid cond =
+  let control = Control.init cid in
+  let assertion = Value.eq control cond in
+  (Value.empty, control, assertion, Bool.fl)
+
 (* common: procedure *)
 let parameter vid param mem =
   let value = Value.init vid in
