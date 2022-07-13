@@ -47,6 +47,7 @@ let print_counter_example program state model =
   Format.printf "State of %s\n" (State.stage state);
   let rf = State.register_file state in
   let cf = State.control_file state in
+  let uf = State.ub_file state in
   let mem = State.memory state in
   let rec aux pc =
     let ty, opcode, operands = IR.instr_of pc program in
@@ -64,6 +65,7 @@ let print_counter_example program state model =
     let prefix = String.sub (State.stage state) 0 1 in
     RegisterFile.prefix := prefix ^ "v";
     Control.ControlFile.prefix := prefix ^ "c";
+    Ub.UBFile.prefix := prefix ^ "u";
 
     let value =
       RegisterFile.find (string_of_int pc) rf |> value_to_string model mem
@@ -71,14 +73,18 @@ let print_counter_example program state model =
     let control =
       Control.ControlFile.find (string_of_int pc) cf |> Control.to_string model
     in
+    let ub = Ub.UBFile.find (string_of_int pc) uf |> Ub.to_string model in
 
     match opcode with
     | Start | Branch | Merge | IfFalse | IfTrue | JSStackCheck ->
-        Format.printf "#%d:%s => \n  Control: %s\n" pc instr_s control;
+        Format.printf "#%d:%s => \n  Control: %s\n  UB: %s\n" pc instr_s control
+          ub;
         aux (pc + 1)
-    | End -> Format.printf "#%d:%s => \n  Value: %s\n\n" pc instr_s value
+    | End ->
+        Format.printf "#%d:%s => \n  Value: %s\n  UB: %s\n\n" pc instr_s value
+          ub
     | _ ->
-        Format.printf "#%d:%s => \n  Value: %s\n" pc instr_s value;
+        Format.printf "#%d:%s => \n  Value: %s\n  UB: %s\n" pc instr_s value ub;
         aux (pc + 1)
   in
 
