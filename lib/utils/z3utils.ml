@@ -115,6 +115,8 @@ module Float = struct
 
   let rne_mode = Fl.RoundingMode.mk_rne ctx
 
+  let rtn_mode = Fl.RoundingMode.mk_rtn ctx
+
   let single_sort = Fl.mk_sort_single ctx
 
   let double_sort = Fl.mk_sort_double ctx
@@ -166,7 +168,7 @@ module Float = struct
 
   let round rm exp = Fl.mk_round_to_integral ctx rm exp
 
-  let floor exp = Fl.mk_round_to_integral ctx (Fl.RoundingMode.mk_rtn ctx) exp
+  let floor exp = round rtn_mode exp
 
   let eq lexp rexp = Fl.mk_eq ctx lexp rexp
 
@@ -377,6 +379,8 @@ module BitVec = struct
     let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
     BV.mk_mul ctx lbv rbv
 
+  let neg bv = BV.mk_neg ctx bv
+
   let ashrb lbv rbv = BV.mk_ashr ctx lbv rbv
 
   let ashri lbv rval =
@@ -404,7 +408,9 @@ module BitVec = struct
   (* Bi-BitVec operation *)
   let concat lbv rbv = BV.mk_concat ctx lbv rbv
 
-  let to_int bv = BV.mk_bv2int ctx bv
+  let to_sint bv = BV.mk_bv2int ctx bv true
+
+  let to_uint bv = BV.mk_bv2int ctx bv false
 end
 
 module Array = struct

@@ -11,11 +11,12 @@ let to_intx width value =
     let i_mod_2_x =
       Bool.ite (Float.is_negative f)
         (Integer.mod_
-           (f |> Float.abs |> Float.floor |> Float.neg |> Float.to_real
-          |> Real.to_integer)
+           (f |> Float.abs
+           |> Float.to_sbv Float.rtn_mode
+           |> BitVec.neg |> BitVec.to_sint)
            (Integer.from_int (Utils.pow 2 width)))
         (Integer.mod_
-           (f |> Float.abs |> Float.floor |> Float.to_real |> Real.to_integer)
+           (f |> Float.abs |> Float.to_sbv Float.rtn_mode |> BitVec.to_sint)
            (Integer.from_int (Utils.pow 2 width)))
     in
     Bool.ite
