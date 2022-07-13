@@ -187,16 +187,12 @@ let word32_sar vid hint lval rval =
   let value = Value.init vid in
   let off = Value.modi rval 32 in
   let wd_cond =
-    let repr_is_word32 =
-      Bool.ands
-        [ Value.has_repr Repr.Word32 lval; Value.has_repr Repr.Word32 lval ]
-    in
     let hint_is_shift_out_zero = String.equal hint "ShfitOutZero" in
     if hint_is_shift_out_zero then
       let shift_out = Value.mask lval off in
       let shift_out_is_zero = Value.eq shift_out Value.zero in
-      Bool.ands [ repr_is_word32; shift_out_is_zero ]
-    else Bool.ands [ repr_is_word32 ]
+      shift_out_is_zero
+    else Bool.tr
   in
   let wd_value = Value.ashr lval off in
   let assertion = Value.eq value wd_value in
@@ -209,13 +205,9 @@ let word32_sar vid hint lval rval =
  * value = ite well-defined (lval << rval) UB *)
 let word32_shl vid lval rval =
   let value = Value.init vid in
-  let wd_cond =
-    Bool.ands
-      [ Value.has_repr Repr.Word32 lval; Value.has_repr Repr.Word32 rval ]
-  in
   let wd_value = Value.shl lval rval in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined conditions:
  * - IsWellDefined(lval) ^ IsWellDefined(rval)
@@ -224,13 +216,9 @@ let word32_shl vid lval rval =
  * value = ite well-defined (lval >> rval) UB *)
 let word32_shr vid lval rval =
   let value = Value.init vid in
-  let wd_cond =
-    Bool.ands
-      [ Value.has_repr Repr.Word32 lval; Value.has_repr Repr.Word32 rval ]
-  in
   let wd_value = Value.lshr lval rval in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined conditions:
  * - IsWellDefined(lval) ^ IsWellDefined(rval)
@@ -239,13 +227,9 @@ let word32_shr vid lval rval =
  * value = ite well-defined (lval xor rval) UB *)
 let word32_xor vid lval rval =
   let value = Value.init vid in
-  let wd_cond =
-    Bool.ands
-      [ Value.has_repr Repr.Word32 lval; Value.has_repr Repr.Word32 rval ]
-  in
   let wd_value = Value.xor lval rval in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined conditions:
  * - IsWellDefined(lval) ^ IsWellDefined(rval)
@@ -254,13 +238,9 @@ let word32_xor vid lval rval =
  * value = ite well-defined (lval << rval) UB *)
 let word64_shl vid lval rval =
   let value = Value.init vid in
-  let wd_cond =
-    Bool.ands
-      [ Value.has_repr Repr.Word64 lval; Value.has_repr Repr.Word64 rval ]
-  in
   let wd_value = Value.shl lval rval in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* machine: logic *)
 (* well-defined condition:
@@ -270,16 +250,9 @@ let word64_shl vid lval rval =
  * value = ite well-defined (lval & rval) UB *)
 let word32_and vid lval rval =
   let value = Value.init vid in
-  let wd_cond =
-    let repr_is_word32 =
-      Bool.ands
-        [ Value.has_repr Repr.Word32 lval; Value.has_repr Repr.Word32 rval ]
-    in
-    Bool.ands [ repr_is_word32 ]
-  in
   let wd_value = Value.and_ lval rval in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* well-defined condition:
  * - IsWellDefined(lval) ^ IsWellDefined(rval)
@@ -288,13 +261,9 @@ let word32_and vid lval rval =
  * value = ite well-defined (lval | rval) UB *)
 let word32_or vid lval rval =
   let value = Value.init vid in
-  let wd_cond =
-    Bool.ands
-      [ Value.has_repr Repr.Word32 lval; Value.has_repr Repr.Word32 rval ]
-  in
   let wd_value = Value.or_ lval rval in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.fl)
 
 (* machine: comparison *)
 (* well-defined condition:
@@ -307,7 +276,6 @@ let float64_equal vid lval rval =
     Bool.ands
       [ Value.has_repr Repr.Float64 lval; Value.has_repr Repr.Float64 rval ]
   in
-  (* use strong equal since only Float64 type is defined for Float64 Repr. *)
   let wd_value = Bool.ite (Float64.eq lval rval) Value.tr Value.fl in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.not wd_cond)
