@@ -1,5 +1,6 @@
 module Params = State.Params
 module ControlFile = Control.ControlFile
+module UBFile = Ub.UBFile
 module HeapNumber = Objects.HeapNumber
 open Common
 open Simplified
@@ -35,15 +36,18 @@ let rec next program state =
   let pc = State.pc state in
   let cf = State.control_file state in
   let rf = State.register_file state in
+  let uf = State.ub_file state in
   let next_bid = ref (State.next_bid state) in
   let mem = ref (State.memory state) in
   let params = State.params state in
   let node_id = string_of_int pc in
   let vid = RegisterFile.vid node_id in
   let cid = ControlFile.cid node_id in
+  let uid = UBFile.uid node_id in
 
   let ty, opcode, operands = IR.instr_of pc program in
   let next_pc = match opcode with End -> -1 | _ -> pc + 1 in
+
   let value, control, assertion, ub =
     match opcode with
     (* common: constants *)
@@ -587,24 +591,68 @@ let rec next program state =
         (Value.empty, Control.empty, Bool.tr, Bool.fl)
   in
 
-  let updated_asrt = Bool.ands [ State.assertion state; assertion ] in
-  let type_is_verified =
-    match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
+  let propagated_ub =
+    let type_is_verified =
+      match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
+    in
+    let ub_from_input =
+      match opcode with
+      | Merge ->
+          let pids = operands |> Operands.id_of_all in
+          let conds = ControlFile.find_all pids cf in
+          let ubs = UBFile.find_all pids uf in
+          Bool.ors
+            (List.rev_map2 (fun cond ub -> Bool.ands [ cond; ub ]) conds ubs)
+      | Phi -> (
+          let rev = operands |> List.rev in
+          let ctrl_id = Operands.id_of_nth rev 0 in
+          let ctrl_ub = UBFile.find ctrl_id uf in
+          let _, ctrl_opcode, incomings_id =
+            IR.instr_of (ctrl_id |> int_of_string) program
+          in
+          match ctrl_opcode with
+          | Merge ->
+              let incoming_ctrl_tokens =
+                ControlFile.find_all (incomings_id |> Operands.id_of_all) cf
+              in
+              let incoming_ubs =
+                UBFile.find_all
+                  (rev |> List.tl |> List.tl |> List.rev |> Operands.id_of_all)
+                  uf
+              in
+              Bool.ors
+                (ctrl_ub
+                :: List.rev_map2
+                     (fun ctrl ub -> Bool.ands [ ctrl; ub ])
+                     incoming_ctrl_tokens incoming_ubs)
+          | Dead -> Bool.tr
+          | _ ->
+              failwith
+                (Format.sprintf "Phi is not implemented for incoming opcode: %s"
+                   (ctrl_opcode |> Opcode.to_str)))
+      | _ ->
+          let pids = Operands.id_of_all operands in
+          let ubs = UBFile.find_all pids uf in
+          Bool.ors ubs
+    in
+    Bool.ors [ ub; ub_from_input; Bool.not type_is_verified ]
   in
 
   (* update state *)
+  let updated_asrt = Bool.ands [ State.assertion state; assertion ] in
   let updated_rf = RegisterFile.add vid value rf in
   let updated_cf = ControlFile.add cid control cf in
-  let updated_ub = Bool.ors [ State.ub state; ub; Bool.not type_is_verified ] in
+  let updated_uf = UBFile.add uid propagated_ub uf in
   let updated_deopt =
     update_deopt opcode operands rf control (State.deopt state)
   in
   let next_state =
-    State.update next_pc !next_bid updated_cf updated_rf !mem updated_asrt
-      updated_ub updated_deopt state
+    State.update next_pc !next_bid updated_cf updated_rf updated_uf !mem
+      updated_asrt updated_deopt state
   in
 
-  if State.is_end next_state then { next_state with retval = value }
+  if State.is_end next_state then
+    { next_state with retval = value; ub = propagated_ub }
   else next program next_state
 
 (* execute the program and retrieve a final state *)

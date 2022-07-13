@@ -80,4 +80,8 @@ let int_of_nth operands idx =
   nth operands idx |> Operand.const |> Operand.c_as_int
 
 let id_of_all operands =
-  List.map (fun operand -> operand |> Operand.id) operands
+  List.fold_left
+    (fun res operand ->
+      match operand with Operand.Id id -> id :: res | _ -> res)
+    [] operands
+  |> List.rev
