@@ -75,7 +75,7 @@ CheckedInt32Mul,
 CheckedInt32Sub,
 CheckedInt32ToTaggedSigned,
 CheckedInt64ToInt32,
-CheckedInt64ToTaggedSigned,
+CheckedInt64ToTaggedSigned, 
 CheckedTaggedSignedToInt32,v1
 CheckedTaggedToArrayIndex,
 CheckedTaggedToFloat64,

@@ -1,5 +1,6 @@
 open Z3utils
 module ControlFile = Control.ControlFile
+module DeoptFile = Deopt.DeoptFile
 module UBFile = Ub.UBFile
 
 module Params = struct
@@ -28,6 +29,7 @@ type t = {
   control_file : Control.t ControlFile.C.t;
   register_file : Value.t RegisterFile.R.t;
   ub_file : Bool.t UBFile.U.t;
+  deopt_file : Bool.t DeoptFile.D.t;
   memory : Memory.t;
   params : BitVec.t list;
   retval : BitVec.t;
@@ -44,6 +46,7 @@ let init nparams stage : t =
     control_file = ControlFile.init stage;
     register_file = RegisterFile.init stage;
     ub_file = UBFile.init stage;
+    deopt_file = DeoptFile.init stage;
     memory = Memory.init "mem";
     params = Params.init nparams;
     retval = Value.empty;
@@ -52,8 +55,8 @@ let init nparams stage : t =
     deopt = Bool.fl;
   }
 
-let update pc next_bid control_file register_file ub_file memory assertion deopt
-    t =
+let update pc next_bid control_file register_file ub_file deopt_file memory
+    assertion t =
   {
     t with
     pc;
@@ -61,9 +64,9 @@ let update pc next_bid control_file register_file ub_file memory assertion deopt
     control_file;
     register_file;
     ub_file;
+    deopt_file;
     memory;
     assertion;
-    deopt;
   }
 
 (* getter *)
@@ -78,6 +81,8 @@ let control_file t = t.control_file
 let register_file t = t.register_file
 
 let ub_file t = t.ub_file
+
+let deopt_file t = t.deopt_file
 
 let memory t = t.memory
 

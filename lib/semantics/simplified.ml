@@ -34,7 +34,7 @@ let number_abs vid nptr next_bid mem =
   in
 
   let assertion = Value.eq value abs in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 let number_add vid lval rval next_bid mem =
   let value = Value.init vid in
@@ -85,7 +85,7 @@ let number_add vid lval rval next_bid mem =
   in
 
   let assertion = Value.eq value add in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 let number_expm1 vid nptr next_bid mem =
   let value = Value.init vid in
@@ -121,7 +121,7 @@ let number_expm1 vid nptr next_bid mem =
   in
 
   let assertion = Value.eq value expm1 in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 let number_max vid lval rval next_bid mem =
   let value = Value.init vid in
@@ -159,7 +159,7 @@ let number_max vid lval rval next_bid mem =
   in
 
   let assertion = Value.eq value max in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 let number_min vid lval rval next_bid mem =
   let value = Value.init vid in
@@ -197,7 +197,7 @@ let number_min vid lval rval next_bid mem =
   in
 
   let assertion = Value.eq value min in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 let number_multiply vid lval rval next_bid mem =
   let value = Value.init vid in
@@ -258,7 +258,7 @@ let number_multiply vid lval rval next_bid mem =
   in
 
   let assertion = Value.eq value multiply in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 let speculative_number_add vid lval rval next_bid mem =
   (* [TODO] handle deoptimization *)
@@ -313,7 +313,7 @@ let speculative_safe_integer_add vid lval rval next_bid mem =
   in
 
   let assertion = Value.eq value res in
-  (value, Control.empty, assertion, deopt_cond)
+  (value, Control.empty, assertion, deopt_cond, deopt_cond)
 
 (* well-defined condition:
  * - IsTaggedPointer(lval) /\ IsTaggedPointer(rval)
@@ -347,7 +347,7 @@ let speculative_safe_integer_subtract vid lval rval next_bid mem =
 
   let wd_value = res in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 (* simplified: bitwise *)
 (* well-defined condition:
@@ -359,7 +359,7 @@ let boolean_not vid pval =
   let wd_cond = Bool.ands [ Value.has_type Type.bool pval ] in
   let wd_value = Bool.ite (Value.eq Value.fl pval) Value.tr Value.fl in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 let speculative_number_bitwise_or vid lval rval next_bid mem =
   let value = Value.init vid in
@@ -385,7 +385,7 @@ let speculative_number_bitwise_or vid lval rval next_bid mem =
   in
 
   let assertion = Value.eq value bitwise_or in
-  (value, Control.empty, assertion, deopt_cond)
+  (value, Control.empty, assertion, deopt_cond, deopt_cond)
 
 let speculative_number_bitwise_xor vid lval rval =
   let value = Value.init vid in
@@ -395,7 +395,7 @@ let speculative_number_bitwise_xor vid lval rval =
   in
   let wd_value = Value.xor lval rval in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 (* simplified: comparison *)
 let number_less_than vid lval rval next_bid mem =
@@ -436,7 +436,7 @@ let number_less_than vid lval rval next_bid mem =
   in
 
   let assertion = Value.eq value result in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 let speculative_number_equal vid lval rval next_bid mem =
   let value = Value.init vid in
@@ -471,7 +471,7 @@ let speculative_number_equal vid lval rval next_bid mem =
   in
 
   let assertion = Value.eq value result in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 (* simplified: memory *)
 let allocate_raw vid cid size next_bid ct =
@@ -480,7 +480,7 @@ let allocate_raw vid cid size next_bid ct =
   let pointer = Memory.allocate next_bid size in
   (* assume AllocateRaw doesn't change the control *)
   let assertion = Bool.ands [ Value.eq value pointer; Bool.eq control ct ] in
-  (value, control, assertion, Bool.fl)
+  (value, control, assertion, Bool.fl, Bool.fl)
 
 let load_element vid tag_value header_size repr bid ind mem =
   let fixed_off = header_size - tag_value in
@@ -518,7 +518,7 @@ let store_field ptr pos mt value mem =
     Memory.store_as
       (TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer)
       repr store_cond value !mem;
-  (Value.empty, Control.empty, Bool.tr, ub_cond)
+  (Value.empty, Control.empty, Bool.tr, ub_cond, Bool.fl)
 
 (* simplified: type-conversion *)
 (* well-defined condition
@@ -538,7 +538,7 @@ let change_bit_to_tagged vid pval next_bid mem =
   in
   let wd_value = Bool.ite (Value.eq Value.tr pval) true_ false_ in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 (* well-defined condition 
  * - IsInt32(pval) /\ IsWellDefined(pval) 
@@ -553,7 +553,7 @@ let change_int31_to_taggedsigned vid pval =
   in
   let wd_value = Value.Int32.to_tagged_signed pval in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 (* Well-defined condition =
  *  IsInt32(pval) /\ WellDefined(pval)
@@ -574,7 +574,7 @@ let change_int32_to_tagged vid pval next_bid mem =
 
   let wd_value = Bool.ite is_in_smi_range smi obj in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 (* well-defined condition:
  * - int64(pval) 
@@ -596,7 +596,7 @@ let change_int64_to_tagged vid pval next_bid mem =
 
   let wd_value = Bool.ite is_in_smi_range smi obj in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 (* Well-defined condition =
  *  IsFloat64(pval) /\ WellDefined(pval)
@@ -629,7 +629,7 @@ let checked_float64_to_int32 _hint vid pval =
   let wd_value = value32 in
   let assertion = Value.eq value wd_value in
 
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 (* Well-defined condition =
  *  IsTaggedSigned(pval) /\ WellDefined(pval)
@@ -646,7 +646,7 @@ let checked_tagged_signed_to_int32 vid pval =
   let wd_value = Value.TaggedSigned.to_int32 pval in
   let assertion = Value.eq value wd_value in
 
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 let number_to_int32 vid pval next_bid mem =
   let value = Value.init vid in
@@ -664,7 +664,7 @@ let number_to_int32 vid pval next_bid mem =
     i |> Value.Int32.to_float64 |> HeapNumber.from_float64 next_bid wd_cond mem
   in
   let assertion = Value.eq value to_int32 in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 let speculative_to_number vid pval next_bid mem =
   let value = Value.init vid in
@@ -691,7 +691,7 @@ let speculative_to_number vid pval next_bid mem =
     |> HeapNumber.from_float64 next_bid (Bool.not deopt_cond) mem
   in
   let assertion = Value.eq value to_number in
-  (value, Control.empty, assertion, deopt_cond)
+  (value, Control.empty, assertion, deopt_cond, deopt_cond)
 
 let to_boolean vid pval mem =
   let value = Value.init vid in
@@ -730,7 +730,7 @@ let to_boolean vid pval mem =
          (Bool.ite (Z3.FuncDecl.apply uif [ pval ]) Value.tr Value.fl))
   in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 let truncate_tagged_to_bit vid pval mem =
   let value = Value.init vid in
@@ -776,4 +776,4 @@ let truncate_tagged_to_bit vid pval mem =
   in
 
   let assertion = Value.eq value res in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)

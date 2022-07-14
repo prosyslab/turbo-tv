@@ -8,7 +8,7 @@ module HeapNumber = Objects.HeapNumber
 let float64_constant vid c =
   let value = Value.init vid in
   let assertion = Value.eq value (c |> Value.cast Type.float64) in
-  (value, Control.empty, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl, Bool.fl)
 
 (* well-defined condition: INT32_MIN <= c <= INT32_MAX
  * behavior: ite well-defined value=c value=UB *)
@@ -22,19 +22,19 @@ let int32_constant vid c =
       ]
   in
   let assertion = Value.eq value (c |> Value.cast Type.int32) in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 (* behavior: value=c *)
 let int64_constant vid c =
   let value = Value.init vid in
   let assertion = Value.eq value (c |> Value.cast Type.int64) in
-  (value, Control.empty, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl, Bool.fl)
 
 (* behavior: value=c *)
 let external_constant vid c =
   let value = Value.init vid in
   let assertion = Value.eq value (c |> Value.cast Type.pointer) in
-  (value, Control.empty, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl, Bool.fl)
 
 (* behavior: value=c *)
 let number_constant vid c next_bid mem =
@@ -42,7 +42,7 @@ let number_constant vid c next_bid mem =
   let wd_value = HeapNumber.allocate next_bid in
   HeapNumber.store wd_value (HeapNumber.from_number_string c) Bool.tr mem;
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl, Bool.fl)
 
 (* common: control *)
 (* retrieve the value at [idx] from [incoming]
@@ -57,7 +57,11 @@ let projection vid idx incoming =
   let wd_cond = 0 <= idx && idx < 2 && idx <= Composed.size_of incoming in
   let wd_value = incoming |> Composed.select idx in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, if wd_cond then Bool.fl else Bool.tr)
+  ( value,
+    Control.empty,
+    assertion,
+    (if wd_cond then Bool.fl else Bool.tr),
+    Bool.fl )
 
 (* well-defined condition:
  * - Bool(cond) ^ Bool(precond)
@@ -70,7 +74,7 @@ let branch cid cond precond =
   let for_false = Bool.and_ precond (Value.is_false cond) in
   let wd_value = ControlTuple.from_tf for_true for_false in
   let assertion = ControlTuple.eq control wd_value in
-  (Value.empty, control, assertion, Bool.fl)
+  (Value.empty, control, assertion, Bool.fl, Bool.fl)
 
 (* well-defined condition:
  * - Bool(FalseCond(cond))
@@ -81,7 +85,7 @@ let if_false cid cond =
   let control = Control.init cid in
   let false_cond = cond |> ControlTuple.false_cond in
   let assertion = Bool.eq control false_cond in
-  (Value.empty, control, assertion, Bool.fl)
+  (Value.empty, control, assertion, Bool.fl, Bool.fl)
 
 (* well-defined condition:
  *  - Bool(TrueCond(cond))
@@ -92,7 +96,7 @@ let if_true cid cond =
   let control = Control.init cid in
   let true_cond = cond |> ControlTuple.true_cond in
   let assertion = Bool.eq control true_cond in
-  (Value.empty, control, assertion, Bool.fl)
+  (Value.empty, control, assertion, Bool.fl, Bool.fl)
 
 (* merge every incoming execution condition *)
 let merge cid conds =
@@ -100,7 +104,7 @@ let merge cid conds =
   let control = Control.init cid in
   let merged = Bool.ors conds in
   let assertion = Value.eq control merged in
-  (Value.empty, control, assertion, Bool.fl)
+  (Value.empty, control, assertion, Bool.fl, Bool.fl)
 
 let phi vid incomings repr ctrls =
   let value = Value.init vid in
@@ -124,19 +128,19 @@ let phi vid incomings repr ctrls =
   in
 
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl, Bool.fl)
 
 let select vid cond tr fl =
   let value = Value.init vid in
   let wd_cond = cond |> Value.has_type Type.bool in
   let res = Bool.ite (Value.is_true cond) tr fl in
   let assertion = Value.eq value res in
-  (value, Control.empty, assertion, Bool.not wd_cond)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 let throw cid cond =
   let control = Control.init cid in
   let assertion = Value.eq control cond in
-  (Value.empty, control, assertion, Bool.fl)
+  (Value.empty, control, assertion, Bool.fl, Bool.fl)
 
 (* common: procedure *)
 let parameter vid param mem =
@@ -159,14 +163,14 @@ let parameter vid param mem =
           ];
       ]
   in
-  (value, Control.empty, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl, Bool.fl)
 
 let return vid return_value =
   let value = Value.init vid in
   let assertion = Value.eq value return_value in
-  (value, Control.empty, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl, Bool.fl)
 
 let start cid =
   let control = Control.init cid in
   let assertion = Bool.eq control Bool.tr in
-  (Value.empty, control, assertion, Bool.fl)
+  (Value.empty, control, assertion, Bool.fl, Bool.fl)

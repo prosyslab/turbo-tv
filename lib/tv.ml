@@ -1,5 +1,6 @@
 module Params = State.Params
 module ControlFile = Control.ControlFile
+module DeoptFile = Deopt.DeoptFile
 module UBFile = Ub.UBFile
 module HeapNumber = Objects.HeapNumber
 open Common
@@ -19,24 +20,12 @@ let tag base_is_tagged =
   | "untagged base" -> 0
   | _ -> failwith (Printf.sprintf "invalid input: %s" base_is_tagged)
 
-let update_deopt (opcode : Opcode.t) operands rf control deopt =
-  match opcode with
-  | Deoptimize -> Bool.ands [ control; deopt ]
-  | DeoptimizeIf ->
-      let cond_id = Operands.id_of_nth operands 0 in
-      let cond = RegisterFile.find cond_id rf |> Value.to_bool in
-      Bool.ands [ control; cond; deopt ]
-  | DeoptimizeUnless ->
-      let cond_id = Operands.id_of_nth operands 0 in
-      let cond = RegisterFile.find cond_id rf |> Value.to_bool in
-      Bool.ands [ control; Bool.not cond; deopt ]
-  | _ -> deopt
-
 let rec next program state =
   let pc = State.pc state in
   let cf = State.control_file state in
   let rf = State.register_file state in
   let uf = State.ub_file state in
+  let df = State.deopt_file state in
   let next_bid = ref (State.next_bid state) in
   let mem = ref (State.memory state) in
   let params = State.params state in
@@ -44,11 +33,12 @@ let rec next program state =
   let vid = RegisterFile.vid node_id in
   let cid = ControlFile.cid node_id in
   let uid = UBFile.uid node_id in
+  let did = DeoptFile.did node_id in
 
   let ty, opcode, operands = IR.instr_of pc program in
   let next_pc = match opcode with End -> -1 | _ -> pc + 1 in
 
-  let value, control, assertion, ub =
+  let value, control, assertion, ub, deopt =
     match opcode with
     (* common: constants *)
     | Float64Constant ->
@@ -113,7 +103,7 @@ let rec next program state =
                 rf
             in
             phi vid incoming_values repr incoming_ctrl_tokens
-        | Dead -> (Value.empty, Control.empty, Bool.tr, Bool.fl)
+        | Dead -> (Value.empty, Control.empty, Bool.tr, Bool.fl, Bool.fl)
         | _ ->
             failwith
               (Format.sprintf "Phi is not implemented for incoming opcode: %s"
@@ -137,19 +127,22 @@ let rec next program state =
     | Unreachable ->
         let cid = Operands.id_of_nth operands 0 in
         let ctrl_token = ControlFile.find cid cf in
-        (Value.empty, Control.empty, Bool.tr, ctrl_token)
+        (Value.empty, Control.empty, Bool.tr, ctrl_token, Bool.fl)
     (* common: deoptimization *)
-    | DeoptimizeUnless -> (Value.empty, Bool.tr, Bool.tr, Bool.fl)
+    | DeoptimizeUnless ->
+        let cond_id = Operands.id_of_nth operands 0 in
+        let cond = RegisterFile.find cond_id rf in
+        (Value.empty, Bool.tr, Bool.tr, Bool.fl, cond |> Value.to_bool)
     (* common: dead *)
-    | Dead -> (Value.empty, Control.empty, Bool.tr, Bool.fl)
+    | Dead -> (Value.empty, Control.empty, Bool.tr, Bool.fl, Bool.fl)
     (* common: procedure *)
     | Parameter ->
         let pidx = Operands.const_of_nth operands 0 |> int_of_string in
         if 0 < pidx && pidx <= List.length params then
           let param = List.nth params (pidx - 1) in
           parameter vid param !mem
-        else (Value.empty, Control.empty, Bool.tr, Bool.fl)
-    | Call -> (Value.tr, Control.empty, Bool.tr, Bool.fl)
+        else (Value.empty, Control.empty, Bool.tr, Bool.fl, Bool.fl)
+    | Call -> (Value.tr, Control.empty, Bool.tr, Bool.fl, Bool.fl)
     | Return ->
         let nid = Operands.id_of_nth operands 0 in
         let return_value = RegisterFile.find nid rf in
@@ -168,9 +161,9 @@ let rec next program state =
                    Bool.tr (Value.eq value rv))
                return_values)
         in
-        (value, Control.empty, assertion, Bool.fl)
+        (value, Control.empty, assertion, Bool.fl, Bool.fl)
     (* JS: comparision *)
-    | JSStackCheck -> (Value.empty, Bool.tr, Bool.tr, Bool.fl)
+    | JSStackCheck -> (Value.empty, Bool.tr, Bool.tr, Bool.fl, Bool.fl)
     (* simplified: numeric *)
     | NumberAdd ->
         let lpid = Operands.id_of_nth operands 0 in
@@ -463,7 +456,8 @@ let rec next program state =
         let rval = RegisterFile.find rpid rf in
         word32_or vid lval rval
     (* machine: comparison *)
-    | StackPointerGreaterThan -> (Value.tr, Control.empty, Bool.tr, Bool.fl)
+    | StackPointerGreaterThan ->
+        (Value.tr, Control.empty, Bool.tr, Bool.fl, Bool.fl)
     | Int32LessThan ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -582,15 +576,16 @@ let rec next program state =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         round_float64_to_int32 vid pval
-    | Empty -> (Value.empty, Control.empty, Bool.tr, Bool.fl)
+    | Empty -> (Value.empty, Control.empty, Bool.tr, Bool.fl, Bool.fl)
     | _ ->
         (* let msg =
              Format.sprintf "unsupported instruction: %s" (opcode |> Opcode.to_str)
            in
            print_endline msg; *)
-        (Value.empty, Control.empty, Bool.tr, Bool.fl)
+        (Value.empty, Control.empty, Bool.tr, Bool.fl, Bool.fl)
   in
 
+  let propagated_deopt = Deopt.propagate program opcode operands cf df deopt in
   let propagated_ub =
     let type_is_verified =
       match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
@@ -643,16 +638,19 @@ let rec next program state =
   let updated_rf = RegisterFile.add vid value rf in
   let updated_cf = ControlFile.add cid control cf in
   let updated_uf = UBFile.add uid propagated_ub uf in
-  let updated_deopt =
-    update_deopt opcode operands rf control (State.deopt state)
-  in
+  let updated_deopt = DeoptFile.add did propagated_deopt df in
   let next_state =
-    State.update next_pc !next_bid updated_cf updated_rf updated_uf !mem
-      updated_asrt updated_deopt state
+    State.update next_pc !next_bid updated_cf updated_rf updated_uf
+      updated_deopt !mem updated_asrt state
   in
 
   if State.is_end next_state then
-    { next_state with retval = value; ub = propagated_ub }
+    {
+      next_state with
+      retval = value;
+      ub = propagated_ub;
+      deopt = propagated_deopt;
+    }
   else next program next_state
 
 (* execute the program and retrieve a final state *)
