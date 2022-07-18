@@ -96,24 +96,24 @@ let round_float64_to_int32 vid pval =
   (value, Control.empty, assertion, Bool.fl, Bool.fl)
 
 (* well-defined conditions:
- * (hint = "ShiftOutZero" /\ off = (rval mod 32) -> lval[-off:] = 0)
+ *  (hint = "ShiftOutZero" /\ cnt = (rval mod 32) -> lval[-cnt:] = 0)
  * assertion:
- * value = ite well-defined (lval >> ((rval mod 32)) UB
+ *  value = ite well-defined (lval >> ((rval mod 32)) UB
  *)
 let word32_sar vid hint lval rval =
   let value = Value.init vid in
-  let off = Value.modi rval 32 in
+  let cnt = Value.modi rval 32 in
+  print_endline hint;
   let wd_cond =
-    let hint_is_shift_out_zero = String.equal hint "ShfitOutZero" in
+    let hint_is_shift_out_zero = String.equal hint "ShfitOutZeros" in
     if hint_is_shift_out_zero then
-      let shift_out = Value.mask lval off in
-      let shift_out_is_zero = Value.eq shift_out Value.zero in
-      shift_out_is_zero
+      let shift_out = Value.mask lval cnt in
+      Value.weak_eq shift_out Value.zero
     else Bool.tr
   in
-  let wd_value = Value.ashr lval off in
+  let wd_value = Value.ashr lval cnt in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, wd_cond, Bool.fl)
+  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
 
 (* assertion:
  * value = ite well-defined (lval << rval) UB *)
@@ -406,10 +406,8 @@ let change_uint32_to_uint64 vid pval =
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.fl, Bool.fl)
 
-(* assertion:
- * value = ite well-defined int32(v) UB *)
 let truncate_int64_to_int32 vid pval =
   let value = Value.init vid in
-  let wd_value = Value.maski pval 32 |> Value.cast Type.int32 in
+  let wd_value = pval |> Value.Int64.to_int32 in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.fl, Bool.fl)

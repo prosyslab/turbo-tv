@@ -3,16 +3,18 @@ exception Invalid_opcode
 
 type kind =
   | UNIMPL
-  | V1C1
+  | V1E1C1
   | V1
-  | C1
-  | V1E1
   | E1
+  | C1
+  | V1C1
+  | V1E1
   | B1
   | B1V1
+  | V1V2E1C1
+  | V2
   | CV
   | V1V2
-  | V2
   | V1V2B1
   | B1B2B4V1V2
   | B2
@@ -26,13 +28,13 @@ type kind =
   | V1V2V3
   | V1V2B1V3
   | V1B2B4V2
+  | C1E1
   | B1V1V2
   | Empty
 
 type t =
   (* unimpl *)
   | AbortCSADcheck
-  | Allocate
   | ArgumentsElementsState
   | ArgumentsLength
   | ArgumentsLengthState
@@ -50,16 +52,13 @@ type t =
   | ChangeFloat64ToUint32
   | ChangeFloat64ToUint64
   | ChangeInt64ToBigInt
-  | ChangeTaggedSignedToInt64
   | ChangeTaggedToBit
   | ChangeTaggedToFloat64
   | ChangeTaggedToInt32
   | ChangeTaggedToInt64
   | ChangeTaggedToTaggedSigned
   | ChangeTaggedToUint32
-  | ChangeUint32ToTagged
   | ChangeUint64ToBigInt
-  | ChangeUint64ToTagged
   | CheckBigInt
   | CheckBounds
   | CheckClosure
@@ -84,7 +83,6 @@ type t =
   | CheckedInt32Mul
   | CheckedInt32Sub
   | CheckedInt32ToTaggedSigned
-  | CheckedInt64ToInt32
   | CheckedInt64ToTaggedSigned
   | CheckedTaggedToArrayIndex
   | CheckedTaggedToFloat64
@@ -798,8 +796,9 @@ type t =
   | Word64Select
   | Word64Shr
   | Word64Xor
-  (* v1c1 *)
-  | AllocateRaw
+  (* v1e1c1 *)
+  | Allocate
+  | CheckedInt64ToInt32
   (* v1 *)
   | BitcastFloat32ToInt32
   | BitcastFloat64ToInt64
@@ -817,11 +816,13 @@ type t =
   | ChangeInt64ToFloat64
   | ChangeInt64ToTagged
   | ChangeTaggedSignedToInt32
+  | ChangeTaggedSignedToInt64
   | ChangeUint32ToFloat64
+  | ChangeUint32ToTagged
   | ChangeUint32ToUint64
+  | ChangeUint64ToTagged
   | CheckedTaggedSignedToInt32
   | DeoptimizeIf
-  | DeoptimizeUnless
   | Float64Abs
   | Float64ExtractHighWord32
   | NumberAbs
@@ -836,8 +837,9 @@ type t =
   (* c1 *)
   | IfFalse
   | IfTrue
-  | Throw
   | Unreachable
+  (* v1c1 *)
+  | AllocateRaw
   (* v1e1 *)
   | Branch
   (* b1 *)
@@ -854,6 +856,10 @@ type t =
   | ChangeFloat64ToTagged
   | CheckedFloat64ToInt32
   | Projection
+  (* v1v2e1c1 *)
+  | DeoptimizeUnless
+  (* v2 *)
+  | Return
   (* cv *)
   | End
   | Merge
@@ -895,8 +901,6 @@ type t =
   | Word32Xor
   | Word64Equal
   | Word64Shl
-  (* v2 *)
-  | Return
   (* v1v2b1 *)
   | Load
   (* b1b2b4v1v2 *)
@@ -913,6 +917,8 @@ type t =
   | Store
   (* v1b2b4v2 *)
   | StoreField
+  (* c1e1 *)
+  | Throw
   (* b1v1v2 *)
   | Word32Sar
   | Empty
@@ -920,102 +926,101 @@ type t =
 
 let get_kind opcode =
   match opcode with
-  | AbortCSADcheck | Allocate | ArgumentsElementsState | ArgumentsLength
+  | AbortCSADcheck | ArgumentsElementsState | ArgumentsLength
   | ArgumentsLengthState | AssertType | BeginRegion | BigIntAdd | BigIntNegate
   | BigIntSubtract | BitcastInt32ToFloat32 | BitcastInt64ToFloat64
   | BitcastTaggedToWordForTagAndSmiBits | BitcastWordToTaggedSigned
   | ChangeFloat64ToInt32 | ChangeFloat64ToTaggedPointer | ChangeFloat64ToUint32
-  | ChangeFloat64ToUint64 | ChangeInt64ToBigInt | ChangeTaggedSignedToInt64
-  | ChangeTaggedToBit | ChangeTaggedToFloat64 | ChangeTaggedToInt32
-  | ChangeTaggedToInt64 | ChangeTaggedToTaggedSigned | ChangeTaggedToUint32
-  | ChangeUint32ToTagged | ChangeUint64ToBigInt | ChangeUint64ToTagged
+  | ChangeFloat64ToUint64 | ChangeInt64ToBigInt | ChangeTaggedToBit
+  | ChangeTaggedToFloat64 | ChangeTaggedToInt32 | ChangeTaggedToInt64
+  | ChangeTaggedToTaggedSigned | ChangeTaggedToUint32 | ChangeUint64ToBigInt
   | CheckBigInt | CheckBounds | CheckClosure | CheckEqualsInternalizedString
   | CheckEqualsSymbol | CheckFloat64Hole | CheckHeapObject | CheckIf
   | CheckInternalizedString | CheckMaps | CheckNotTaggedHole | CheckNumber
   | CheckReceiver | CheckReceiverOrNullOrUndefined | CheckSmi | CheckString
   | CheckSymbol | CheckedFloat64ToInt64 | CheckedInt32Add | CheckedInt32Div
   | CheckedInt32Mod | CheckedInt32Mul | CheckedInt32Sub
-  | CheckedInt32ToTaggedSigned | CheckedInt64ToInt32
-  | CheckedInt64ToTaggedSigned | CheckedTaggedToArrayIndex
-  | CheckedTaggedToFloat64 | CheckedTaggedToInt32 | CheckedTaggedToInt64
-  | CheckedTaggedToTaggedPointer | CheckedTaggedToTaggedSigned
-  | CheckedTruncateTaggedToWord32 | CheckedUint32Bounds | CheckedUint32Div
-  | CheckedUint32Mod | CheckedUint32ToInt32 | CheckedUint32ToTaggedSigned
-  | CheckedUint64Bounds | CheckedUint64ToInt32 | CheckedUint64ToTaggedSigned
-  | Checkpoint | Comment | CompareMaps | CompressedHeapConstant
-  | ConvertReceiver | ConvertTaggedHoleToUndefined | DateNow | Dead | DeadValue
-  | DebugBreak | DelayedStringConstant | Deoptimize | EffectPhi
-  | EnsureWritableFastElements | F32x4Abs | F32x4Add | F32x4Ceil
-  | F32x4DemoteF64x2Zero | F32x4Div | F32x4Eq | F32x4ExtractLane | F32x4Floor
-  | F32x4Ge | F32x4Gt | F32x4Le | F32x4Lt | F32x4Max | F32x4Min | F32x4Mul
-  | F32x4Ne | F32x4NearestInt | F32x4Neg | F32x4Pmax | F32x4Pmin | F32x4Qfma
-  | F32x4Qfms | F32x4RecipApprox | F32x4RecipSqrtApprox | F32x4RelaxedMax
-  | F32x4RelaxedMin | F32x4ReplaceLane | F32x4SConvertI32x4 | F32x4Splat
-  | F32x4Sqrt | F32x4Sub | F32x4Trunc | F32x4UConvertI32x4 | F64x2Abs | F64x2Add
-  | F64x2Ceil | F64x2ConvertLowI32x4S | F64x2ConvertLowI32x4U | F64x2Div
-  | F64x2Eq | F64x2ExtractLane | F64x2Floor | F64x2Le | F64x2Lt | F64x2Max
-  | F64x2Min | F64x2Mul | F64x2Ne | F64x2NearestInt | F64x2Neg | F64x2Pmax
-  | F64x2Pmin | F64x2PromoteLowF32x4 | F64x2Qfma | F64x2Qfms | F64x2RelaxedMax
-  | F64x2RelaxedMin | F64x2ReplaceLane | F64x2Splat | F64x2Sqrt | F64x2Sub
-  | F64x2Trunc | FastApiCall | FindOrderedHashMapEntry
-  | FindOrderedHashMapEntryForInt32Key | FinishRegion | Float32Abs | Float32Add
-  | Float32Constant | Float32Div | Float32Equal | Float32LessThan
-  | Float32LessThanOrEqual | Float32Max | Float32Min | Float32Mul | Float32Neg
-  | Float32RoundDown | Float32RoundTiesEven | Float32RoundTruncate
-  | Float32RoundUp | Float32Select | Float32Sqrt | Float32Sub | Float64Acos
-  | Float64Acosh | Float64Add | Float64Asin | Float64Asinh | Float64Atan
-  | Float64Atan2 | Float64Atanh | Float64Cbrt | Float64Cos | Float64Cosh
-  | Float64Div | Float64Exp | Float64Expm1 | Float64ExtractLowWord32
-  | Float64InsertHighWord32 | Float64InsertLowWord32 | Float64Log | Float64Log10
-  | Float64Log1p | Float64Log2 | Float64Max | Float64Min | Float64Mod
-  | Float64Mul | Float64Neg | Float64Pow | Float64RoundDown
-  | Float64RoundTiesAway | Float64RoundTiesEven | Float64RoundTruncate
-  | Float64RoundUp | Float64Select | Float64SilenceNaN | Float64Sin
-  | Float64Sinh | Float64Sqrt | Float64Tan | Float64Tanh | FoldConstant
-  | FrameState | I16x8Abs | I16x8Add | I16x8AddSatS | I16x8AddSatU
-  | I16x8AllTrue | I16x8BitMask | I16x8Eq | I16x8ExtAddPairwiseI8x16S
-  | I16x8ExtAddPairwiseI8x16U | I16x8ExtMulHighI8x16S | I16x8ExtMulHighI8x16U
-  | I16x8ExtMulLowI8x16S | I16x8ExtMulLowI8x16U | I16x8ExtractLaneS
-  | I16x8ExtractLaneU | I16x8GeS | I16x8GeU | I16x8GtS | I16x8GtU | I16x8LeS
-  | I16x8LeU | I16x8LtS | I16x8LtU | I16x8MaxS | I16x8MaxU | I16x8MinS
-  | I16x8MinU | I16x8Mul | I16x8Ne | I16x8Neg | I16x8Q15MulRSatS
-  | I16x8RelaxedLaneSelect | I16x8ReplaceLane | I16x8RoundingAverageU
-  | I16x8SConvertI32x4 | I16x8SConvertI8x16High | I16x8SConvertI8x16Low
-  | I16x8Shl | I16x8ShrS | I16x8ShrU | I16x8Splat | I16x8Sub | I16x8SubSatS
-  | I16x8SubSatU | I16x8UConvertI32x4 | I16x8UConvertI8x16High
-  | I16x8UConvertI8x16Low | I32x4Abs | I32x4Add | I32x4AllTrue | I32x4BitMask
-  | I32x4DotI16x8S | I32x4Eq | I32x4ExtAddPairwiseI16x8S
-  | I32x4ExtAddPairwiseI16x8U | I32x4ExtMulHighI16x8S | I32x4ExtMulHighI16x8U
-  | I32x4ExtMulLowI16x8S | I32x4ExtMulLowI16x8U | I32x4ExtractLane | I32x4GeS
-  | I32x4GeU | I32x4GtS | I32x4GtU | I32x4LeS | I32x4LeU | I32x4LtS | I32x4LtU
-  | I32x4MaxS | I32x4MaxU | I32x4MinS | I32x4MinU | I32x4Mul | I32x4Ne
-  | I32x4Neg | I32x4RelaxedLaneSelect | I32x4RelaxedTruncF32x4S
-  | I32x4RelaxedTruncF32x4U | I32x4RelaxedTruncF64x2SZero
-  | I32x4RelaxedTruncF64x2UZero | I32x4ReplaceLane | I32x4SConvertF32x4
-  | I32x4SConvertI16x8High | I32x4SConvertI16x8Low | I32x4Shl | I32x4ShrS
-  | I32x4ShrU | I32x4Splat | I32x4Sub | I32x4TruncSatF64x2SZero
-  | I32x4TruncSatF64x2UZero | I32x4UConvertF32x4 | I32x4UConvertI16x8High
-  | I32x4UConvertI16x8Low | I64x2Abs | I64x2Add | I64x2AllTrue | I64x2BitMask
-  | I64x2Eq | I64x2ExtMulHighI32x4S | I64x2ExtMulHighI32x4U
-  | I64x2ExtMulLowI32x4S | I64x2ExtMulLowI32x4U | I64x2ExtractLane | I64x2GeS
-  | I64x2GtS | I64x2Mul | I64x2Ne | I64x2Neg | I64x2RelaxedLaneSelect
-  | I64x2ReplaceLane | I64x2ReplaceLaneI32Pair | I64x2SConvertI32x4High
-  | I64x2SConvertI32x4Low | I64x2Shl | I64x2ShrS | I64x2ShrU | I64x2Splat
-  | I64x2SplatI32Pair | I64x2Sub | I64x2UConvertI32x4High
-  | I64x2UConvertI32x4Low | I8x16Abs | I8x16Add | I8x16AddSatS | I8x16AddSatU
-  | I8x16AllTrue | I8x16BitMask | I8x16Eq | I8x16ExtractLaneS
-  | I8x16ExtractLaneU | I8x16GeS | I8x16GeU | I8x16GtS | I8x16GtU | I8x16LeS
-  | I8x16LeU | I8x16LtS | I8x16LtU | I8x16MaxS | I8x16MaxU | I8x16MinS
-  | I8x16MinU | I8x16Ne | I8x16Neg | I8x16Popcnt | I8x16RelaxedLaneSelect
-  | I8x16ReplaceLane | I8x16RoundingAverageU | I8x16SConvertI16x8 | I8x16Shl
-  | I8x16ShrS | I8x16ShrU | I8x16Shuffle | I8x16Splat | I8x16Sub | I8x16SubSatS
-  | I8x16SubSatU | I8x16Swizzle | I8x16UConvertI16x8 | IfDefault | IfException
-  | IfSuccess | IfValue | InductionVariablePhi | InitializeImmutableInObject
-  | Int32AbsWithOverflow | Int32Div | Int32LessThanOrEqual | Int32Mod
-  | Int32MulHigh | Int32MulWithOverflow | Int32PairAdd | Int32PairMul
-  | Int32PairSub | Int32SubWithOverflow | Int64AbsWithOverflow
-  | Int64AddWithOverflow | Int64Div | Int64LessThanOrEqual | Int64Mod | Int64Mul
-  | Int64SubWithOverflow | JSAdd | JSAsyncFunctionEnter | JSAsyncFunctionReject
+  | CheckedInt32ToTaggedSigned | CheckedInt64ToTaggedSigned
+  | CheckedTaggedToArrayIndex | CheckedTaggedToFloat64 | CheckedTaggedToInt32
+  | CheckedTaggedToInt64 | CheckedTaggedToTaggedPointer
+  | CheckedTaggedToTaggedSigned | CheckedTruncateTaggedToWord32
+  | CheckedUint32Bounds | CheckedUint32Div | CheckedUint32Mod
+  | CheckedUint32ToInt32 | CheckedUint32ToTaggedSigned | CheckedUint64Bounds
+  | CheckedUint64ToInt32 | CheckedUint64ToTaggedSigned | Checkpoint | Comment
+  | CompareMaps | CompressedHeapConstant | ConvertReceiver
+  | ConvertTaggedHoleToUndefined | DateNow | Dead | DeadValue | DebugBreak
+  | DelayedStringConstant | Deoptimize | EffectPhi | EnsureWritableFastElements
+  | F32x4Abs | F32x4Add | F32x4Ceil | F32x4DemoteF64x2Zero | F32x4Div | F32x4Eq
+  | F32x4ExtractLane | F32x4Floor | F32x4Ge | F32x4Gt | F32x4Le | F32x4Lt
+  | F32x4Max | F32x4Min | F32x4Mul | F32x4Ne | F32x4NearestInt | F32x4Neg
+  | F32x4Pmax | F32x4Pmin | F32x4Qfma | F32x4Qfms | F32x4RecipApprox
+  | F32x4RecipSqrtApprox | F32x4RelaxedMax | F32x4RelaxedMin | F32x4ReplaceLane
+  | F32x4SConvertI32x4 | F32x4Splat | F32x4Sqrt | F32x4Sub | F32x4Trunc
+  | F32x4UConvertI32x4 | F64x2Abs | F64x2Add | F64x2Ceil | F64x2ConvertLowI32x4S
+  | F64x2ConvertLowI32x4U | F64x2Div | F64x2Eq | F64x2ExtractLane | F64x2Floor
+  | F64x2Le | F64x2Lt | F64x2Max | F64x2Min | F64x2Mul | F64x2Ne
+  | F64x2NearestInt | F64x2Neg | F64x2Pmax | F64x2Pmin | F64x2PromoteLowF32x4
+  | F64x2Qfma | F64x2Qfms | F64x2RelaxedMax | F64x2RelaxedMin | F64x2ReplaceLane
+  | F64x2Splat | F64x2Sqrt | F64x2Sub | F64x2Trunc | FastApiCall
+  | FindOrderedHashMapEntry | FindOrderedHashMapEntryForInt32Key | FinishRegion
+  | Float32Abs | Float32Add | Float32Constant | Float32Div | Float32Equal
+  | Float32LessThan | Float32LessThanOrEqual | Float32Max | Float32Min
+  | Float32Mul | Float32Neg | Float32RoundDown | Float32RoundTiesEven
+  | Float32RoundTruncate | Float32RoundUp | Float32Select | Float32Sqrt
+  | Float32Sub | Float64Acos | Float64Acosh | Float64Add | Float64Asin
+  | Float64Asinh | Float64Atan | Float64Atan2 | Float64Atanh | Float64Cbrt
+  | Float64Cos | Float64Cosh | Float64Div | Float64Exp | Float64Expm1
+  | Float64ExtractLowWord32 | Float64InsertHighWord32 | Float64InsertLowWord32
+  | Float64Log | Float64Log10 | Float64Log1p | Float64Log2 | Float64Max
+  | Float64Min | Float64Mod | Float64Mul | Float64Neg | Float64Pow
+  | Float64RoundDown | Float64RoundTiesAway | Float64RoundTiesEven
+  | Float64RoundTruncate | Float64RoundUp | Float64Select | Float64SilenceNaN
+  | Float64Sin | Float64Sinh | Float64Sqrt | Float64Tan | Float64Tanh
+  | FoldConstant | FrameState | I16x8Abs | I16x8Add | I16x8AddSatS
+  | I16x8AddSatU | I16x8AllTrue | I16x8BitMask | I16x8Eq
+  | I16x8ExtAddPairwiseI8x16S | I16x8ExtAddPairwiseI8x16U
+  | I16x8ExtMulHighI8x16S | I16x8ExtMulHighI8x16U | I16x8ExtMulLowI8x16S
+  | I16x8ExtMulLowI8x16U | I16x8ExtractLaneS | I16x8ExtractLaneU | I16x8GeS
+  | I16x8GeU | I16x8GtS | I16x8GtU | I16x8LeS | I16x8LeU | I16x8LtS | I16x8LtU
+  | I16x8MaxS | I16x8MaxU | I16x8MinS | I16x8MinU | I16x8Mul | I16x8Ne
+  | I16x8Neg | I16x8Q15MulRSatS | I16x8RelaxedLaneSelect | I16x8ReplaceLane
+  | I16x8RoundingAverageU | I16x8SConvertI32x4 | I16x8SConvertI8x16High
+  | I16x8SConvertI8x16Low | I16x8Shl | I16x8ShrS | I16x8ShrU | I16x8Splat
+  | I16x8Sub | I16x8SubSatS | I16x8SubSatU | I16x8UConvertI32x4
+  | I16x8UConvertI8x16High | I16x8UConvertI8x16Low | I32x4Abs | I32x4Add
+  | I32x4AllTrue | I32x4BitMask | I32x4DotI16x8S | I32x4Eq
+  | I32x4ExtAddPairwiseI16x8S | I32x4ExtAddPairwiseI16x8U
+  | I32x4ExtMulHighI16x8S | I32x4ExtMulHighI16x8U | I32x4ExtMulLowI16x8S
+  | I32x4ExtMulLowI16x8U | I32x4ExtractLane | I32x4GeS | I32x4GeU | I32x4GtS
+  | I32x4GtU | I32x4LeS | I32x4LeU | I32x4LtS | I32x4LtU | I32x4MaxS | I32x4MaxU
+  | I32x4MinS | I32x4MinU | I32x4Mul | I32x4Ne | I32x4Neg
+  | I32x4RelaxedLaneSelect | I32x4RelaxedTruncF32x4S | I32x4RelaxedTruncF32x4U
+  | I32x4RelaxedTruncF64x2SZero | I32x4RelaxedTruncF64x2UZero | I32x4ReplaceLane
+  | I32x4SConvertF32x4 | I32x4SConvertI16x8High | I32x4SConvertI16x8Low
+  | I32x4Shl | I32x4ShrS | I32x4ShrU | I32x4Splat | I32x4Sub
+  | I32x4TruncSatF64x2SZero | I32x4TruncSatF64x2UZero | I32x4UConvertF32x4
+  | I32x4UConvertI16x8High | I32x4UConvertI16x8Low | I64x2Abs | I64x2Add
+  | I64x2AllTrue | I64x2BitMask | I64x2Eq | I64x2ExtMulHighI32x4S
+  | I64x2ExtMulHighI32x4U | I64x2ExtMulLowI32x4S | I64x2ExtMulLowI32x4U
+  | I64x2ExtractLane | I64x2GeS | I64x2GtS | I64x2Mul | I64x2Ne | I64x2Neg
+  | I64x2RelaxedLaneSelect | I64x2ReplaceLane | I64x2ReplaceLaneI32Pair
+  | I64x2SConvertI32x4High | I64x2SConvertI32x4Low | I64x2Shl | I64x2ShrS
+  | I64x2ShrU | I64x2Splat | I64x2SplatI32Pair | I64x2Sub
+  | I64x2UConvertI32x4High | I64x2UConvertI32x4Low | I8x16Abs | I8x16Add
+  | I8x16AddSatS | I8x16AddSatU | I8x16AllTrue | I8x16BitMask | I8x16Eq
+  | I8x16ExtractLaneS | I8x16ExtractLaneU | I8x16GeS | I8x16GeU | I8x16GtS
+  | I8x16GtU | I8x16LeS | I8x16LeU | I8x16LtS | I8x16LtU | I8x16MaxS | I8x16MaxU
+  | I8x16MinS | I8x16MinU | I8x16Ne | I8x16Neg | I8x16Popcnt
+  | I8x16RelaxedLaneSelect | I8x16ReplaceLane | I8x16RoundingAverageU
+  | I8x16SConvertI16x8 | I8x16Shl | I8x16ShrS | I8x16ShrU | I8x16Shuffle
+  | I8x16Splat | I8x16Sub | I8x16SubSatS | I8x16SubSatU | I8x16Swizzle
+  | I8x16UConvertI16x8 | IfDefault | IfException | IfSuccess | IfValue
+  | InductionVariablePhi | InitializeImmutableInObject | Int32AbsWithOverflow
+  | Int32Div | Int32LessThanOrEqual | Int32Mod | Int32MulHigh
+  | Int32MulWithOverflow | Int32PairAdd | Int32PairMul | Int32PairSub
+  | Int32SubWithOverflow | Int64AbsWithOverflow | Int64AddWithOverflow
+  | Int64Div | Int64LessThanOrEqual | Int64Mod | Int64Mul | Int64SubWithOverflow
+  | JSAdd | JSAsyncFunctionEnter | JSAsyncFunctionReject
   | JSAsyncFunctionResolve | JSBitwiseAnd | JSBitwiseNot | JSBitwiseOr
   | JSBitwiseXor | JSCall | JSCallForwardVarargs | JSCallRuntime
   | JSCallWithArrayLike | JSCallWithSpread | JSCloneObject | JSConstruct
@@ -1119,24 +1124,28 @@ let get_kind opcode =
   | Word64RolLowerable | Word64Ror | Word64RorLowerable | Word64Sar
   | Word64Select | Word64Shr | Word64Xor ->
       UNIMPL
-  | AllocateRaw -> V1C1
+  | Allocate | CheckedInt64ToInt32 -> V1E1C1
   | BitcastFloat32ToInt32 | BitcastFloat64ToInt64 | BitcastTaggedToWord
   | BitcastWord32ToWord64 | BitcastWordToTagged | BooleanNot | ChangeBitToTagged
   | ChangeFloat32ToFloat64 | ChangeFloat64ToInt64 | ChangeInt31ToTaggedSigned
   | ChangeInt32ToFloat64 | ChangeInt32ToInt64 | ChangeInt32ToTagged
   | ChangeInt64ToFloat64 | ChangeInt64ToTagged | ChangeTaggedSignedToInt32
-  | ChangeUint32ToFloat64 | ChangeUint32ToUint64 | CheckedTaggedSignedToInt32
-  | DeoptimizeIf | DeoptimizeUnless | Float64Abs | Float64ExtractHighWord32
-  | NumberAbs | NumberExpm1 | NumberToInt32 | RoundFloat64ToInt32
-  | SpeculativeToNumber | StackPointerGreaterThan | ToBoolean
-  | TruncateInt64ToInt32 | TruncateTaggedToBit ->
+  | ChangeTaggedSignedToInt64 | ChangeUint32ToFloat64 | ChangeUint32ToTagged
+  | ChangeUint32ToUint64 | ChangeUint64ToTagged | CheckedTaggedSignedToInt32
+  | DeoptimizeIf | Float64Abs | Float64ExtractHighWord32 | NumberAbs
+  | NumberExpm1 | NumberToInt32 | RoundFloat64ToInt32 | SpeculativeToNumber
+  | StackPointerGreaterThan | ToBoolean | TruncateInt64ToInt32
+  | TruncateTaggedToBit ->
       V1
-  | IfFalse | IfTrue | Throw | Unreachable -> C1
+  | IfFalse | IfTrue | Unreachable -> C1
+  | AllocateRaw -> V1C1
   | Branch -> V1E1
   | Call | ExternalConstant | Float64Constant | HeapConstant | Int32Constant
   | Int64Constant | JSStackCheck | NumberConstant | Parameter ->
       B1
   | ChangeFloat64ToTagged | CheckedFloat64ToInt32 | Projection -> B1V1
+  | DeoptimizeUnless -> V1V2E1C1
+  | Return -> V2
   | End | Merge -> CV
   | Float64Equal | Float64LessThan | Float64LessThanOrEqual | Float64Sub
   | Int32Add | Int32AddWithOverflow | Int32LessThan | Int32Mul | Int32Sub
@@ -1149,7 +1158,6 @@ let get_kind opcode =
   | Word32Equal | Word32Or | Word32Shl | Word32Shr | Word32Xor | Word64Equal
   | Word64Shl ->
       V1V2
-  | Return -> V2
   | Load -> V1V2B1
   | LoadElement -> B1B2B4V1V2
   | LoadField -> B1B2B4V1
@@ -1158,22 +1166,25 @@ let get_kind opcode =
   | Select -> V1V2V3
   | Store -> V1V2B1V3
   | StoreField -> V1B2B4V2
+  | Throw -> C1E1
   | Word32Sar -> B1V1V2
   | Empty -> Empty
 
 let split_kind kind =
   match kind with
   | UNIMPL -> [ UNIMPL ]
-  | V1C1 -> [ V1; C1 ]
+  | V1E1C1 -> [ V1; E1; C1 ]
   | V1 -> [ V1 ]
-  | C1 -> [ C1 ]
-  | V1E1 -> [ V1; E1 ]
   | E1 -> [ E1 ]
+  | C1 -> [ C1 ]
+  | V1C1 -> [ V1; C1 ]
+  | V1E1 -> [ V1; E1 ]
   | B1 -> [ B1 ]
   | B1V1 -> [ B1; V1 ]
+  | V1V2E1C1 -> [ V1; V2; E1; C1 ]
+  | V2 -> [ V2 ]
   | CV -> [ CV ]
   | V1V2 -> [ V1; V2 ]
-  | V2 -> [ V2 ]
   | V1V2B1 -> [ V1; V2; B1 ]
   | B1B2B4V1V2 -> [ B1; B2; B4; V1; V2 ]
   | B2 -> [ B2 ]
@@ -1187,6 +1198,7 @@ let split_kind kind =
   | V1V2V3 -> [ V1; V2; V3 ]
   | V1V2B1V3 -> [ V1; V2; B1; V3 ]
   | V1B2B4V2 -> [ V1; B2; B4; V2 ]
+  | C1E1 -> [ C1; E1 ]
   | B1V1V2 -> [ B1; V1; V2 ]
   | Empty -> [ Empty ]
 
@@ -1195,7 +1207,6 @@ let empty = Empty
 let of_str str =
   match str with
   | "AbortCSADcheck" -> AbortCSADcheck
-  | "Allocate" -> Allocate
   | "ArgumentsElementsState" -> ArgumentsElementsState
   | "ArgumentsLength" -> ArgumentsLength
   | "ArgumentsLengthState" -> ArgumentsLengthState
@@ -1213,16 +1224,13 @@ let of_str str =
   | "ChangeFloat64ToUint32" -> ChangeFloat64ToUint32
   | "ChangeFloat64ToUint64" -> ChangeFloat64ToUint64
   | "ChangeInt64ToBigInt" -> ChangeInt64ToBigInt
-  | "ChangeTaggedSignedToInt64" -> ChangeTaggedSignedToInt64
   | "ChangeTaggedToBit" -> ChangeTaggedToBit
   | "ChangeTaggedToFloat64" -> ChangeTaggedToFloat64
   | "ChangeTaggedToInt32" -> ChangeTaggedToInt32
   | "ChangeTaggedToInt64" -> ChangeTaggedToInt64
   | "ChangeTaggedToTaggedSigned" -> ChangeTaggedToTaggedSigned
   | "ChangeTaggedToUint32" -> ChangeTaggedToUint32
-  | "ChangeUint32ToTagged" -> ChangeUint32ToTagged
   | "ChangeUint64ToBigInt" -> ChangeUint64ToBigInt
-  | "ChangeUint64ToTagged" -> ChangeUint64ToTagged
   | "CheckBigInt" -> CheckBigInt
   | "CheckBounds" -> CheckBounds
   | "CheckClosure" -> CheckClosure
@@ -1247,7 +1255,6 @@ let of_str str =
   | "CheckedInt32Mul" -> CheckedInt32Mul
   | "CheckedInt32Sub" -> CheckedInt32Sub
   | "CheckedInt32ToTaggedSigned" -> CheckedInt32ToTaggedSigned
-  | "CheckedInt64ToInt32" -> CheckedInt64ToInt32
   | "CheckedInt64ToTaggedSigned" -> CheckedInt64ToTaggedSigned
   | "CheckedTaggedToArrayIndex" -> CheckedTaggedToArrayIndex
   | "CheckedTaggedToFloat64" -> CheckedTaggedToFloat64
@@ -1961,7 +1968,8 @@ let of_str str =
   | "Word64Select" -> Word64Select
   | "Word64Shr" -> Word64Shr
   | "Word64Xor" -> Word64Xor
-  | "AllocateRaw" -> AllocateRaw
+  | "Allocate" -> Allocate
+  | "CheckedInt64ToInt32" -> CheckedInt64ToInt32
   | "BitcastFloat32ToInt32" -> BitcastFloat32ToInt32
   | "BitcastFloat64ToInt64" -> BitcastFloat64ToInt64
   | "BitcastTaggedToWord" -> BitcastTaggedToWord
@@ -1978,11 +1986,13 @@ let of_str str =
   | "ChangeInt64ToFloat64" -> ChangeInt64ToFloat64
   | "ChangeInt64ToTagged" -> ChangeInt64ToTagged
   | "ChangeTaggedSignedToInt32" -> ChangeTaggedSignedToInt32
+  | "ChangeTaggedSignedToInt64" -> ChangeTaggedSignedToInt64
   | "ChangeUint32ToFloat64" -> ChangeUint32ToFloat64
+  | "ChangeUint32ToTagged" -> ChangeUint32ToTagged
   | "ChangeUint32ToUint64" -> ChangeUint32ToUint64
+  | "ChangeUint64ToTagged" -> ChangeUint64ToTagged
   | "CheckedTaggedSignedToInt32" -> CheckedTaggedSignedToInt32
   | "DeoptimizeIf" -> DeoptimizeIf
-  | "DeoptimizeUnless" -> DeoptimizeUnless
   | "Float64Abs" -> Float64Abs
   | "Float64ExtractHighWord32" -> Float64ExtractHighWord32
   | "NumberAbs" -> NumberAbs
@@ -1996,8 +2006,8 @@ let of_str str =
   | "TruncateTaggedToBit" -> TruncateTaggedToBit
   | "IfFalse" -> IfFalse
   | "IfTrue" -> IfTrue
-  | "Throw" -> Throw
   | "Unreachable" -> Unreachable
+  | "AllocateRaw" -> AllocateRaw
   | "Branch" -> Branch
   | "Call" -> Call
   | "ExternalConstant" -> ExternalConstant
@@ -2011,6 +2021,8 @@ let of_str str =
   | "ChangeFloat64ToTagged" -> ChangeFloat64ToTagged
   | "CheckedFloat64ToInt32" -> CheckedFloat64ToInt32
   | "Projection" -> Projection
+  | "DeoptimizeUnless" -> DeoptimizeUnless
+  | "Return" -> Return
   | "End" -> End
   | "Merge" -> Merge
   | "Float64Equal" -> Float64Equal
@@ -2050,7 +2062,6 @@ let of_str str =
   | "Word32Xor" -> Word32Xor
   | "Word64Equal" -> Word64Equal
   | "Word64Shl" -> Word64Shl
-  | "Return" -> Return
   | "Load" -> Load
   | "LoadElement" -> LoadElement
   | "LoadField" -> LoadField
@@ -2059,13 +2070,13 @@ let of_str str =
   | "Select" -> Select
   | "Store" -> Store
   | "StoreField" -> StoreField
+  | "Throw" -> Throw
   | "Word32Sar" -> Word32Sar
   | _ -> raise Invalid_opcode
 
 let to_str opcode =
   match opcode with
   | AbortCSADcheck -> "AbortCSADcheck"
-  | Allocate -> "Allocate"
   | ArgumentsElementsState -> "ArgumentsElementsState"
   | ArgumentsLength -> "ArgumentsLength"
   | ArgumentsLengthState -> "ArgumentsLengthState"
@@ -2083,16 +2094,13 @@ let to_str opcode =
   | ChangeFloat64ToUint32 -> "ChangeFloat64ToUint32"
   | ChangeFloat64ToUint64 -> "ChangeFloat64ToUint64"
   | ChangeInt64ToBigInt -> "ChangeInt64ToBigInt"
-  | ChangeTaggedSignedToInt64 -> "ChangeTaggedSignedToInt64"
   | ChangeTaggedToBit -> "ChangeTaggedToBit"
   | ChangeTaggedToFloat64 -> "ChangeTaggedToFloat64"
   | ChangeTaggedToInt32 -> "ChangeTaggedToInt32"
   | ChangeTaggedToInt64 -> "ChangeTaggedToInt64"
   | ChangeTaggedToTaggedSigned -> "ChangeTaggedToTaggedSigned"
   | ChangeTaggedToUint32 -> "ChangeTaggedToUint32"
-  | ChangeUint32ToTagged -> "ChangeUint32ToTagged"
   | ChangeUint64ToBigInt -> "ChangeUint64ToBigInt"
-  | ChangeUint64ToTagged -> "ChangeUint64ToTagged"
   | CheckBigInt -> "CheckBigInt"
   | CheckBounds -> "CheckBounds"
   | CheckClosure -> "CheckClosure"
@@ -2117,7 +2125,6 @@ let to_str opcode =
   | CheckedInt32Mul -> "CheckedInt32Mul"
   | CheckedInt32Sub -> "CheckedInt32Sub"
   | CheckedInt32ToTaggedSigned -> "CheckedInt32ToTaggedSigned"
-  | CheckedInt64ToInt32 -> "CheckedInt64ToInt32"
   | CheckedInt64ToTaggedSigned -> "CheckedInt64ToTaggedSigned"
   | CheckedTaggedToArrayIndex -> "CheckedTaggedToArrayIndex"
   | CheckedTaggedToFloat64 -> "CheckedTaggedToFloat64"
@@ -2831,7 +2838,8 @@ let to_str opcode =
   | Word64Select -> "Word64Select"
   | Word64Shr -> "Word64Shr"
   | Word64Xor -> "Word64Xor"
-  | AllocateRaw -> "AllocateRaw"
+  | Allocate -> "Allocate"
+  | CheckedInt64ToInt32 -> "CheckedInt64ToInt32"
   | BitcastFloat32ToInt32 -> "BitcastFloat32ToInt32"
   | BitcastFloat64ToInt64 -> "BitcastFloat64ToInt64"
   | BitcastTaggedToWord -> "BitcastTaggedToWord"
@@ -2848,11 +2856,13 @@ let to_str opcode =
   | ChangeInt64ToFloat64 -> "ChangeInt64ToFloat64"
   | ChangeInt64ToTagged -> "ChangeInt64ToTagged"
   | ChangeTaggedSignedToInt32 -> "ChangeTaggedSignedToInt32"
+  | ChangeTaggedSignedToInt64 -> "ChangeTaggedSignedToInt64"
   | ChangeUint32ToFloat64 -> "ChangeUint32ToFloat64"
+  | ChangeUint32ToTagged -> "ChangeUint32ToTagged"
   | ChangeUint32ToUint64 -> "ChangeUint32ToUint64"
+  | ChangeUint64ToTagged -> "ChangeUint64ToTagged"
   | CheckedTaggedSignedToInt32 -> "CheckedTaggedSignedToInt32"
   | DeoptimizeIf -> "DeoptimizeIf"
-  | DeoptimizeUnless -> "DeoptimizeUnless"
   | Float64Abs -> "Float64Abs"
   | Float64ExtractHighWord32 -> "Float64ExtractHighWord32"
   | NumberAbs -> "NumberAbs"
@@ -2866,8 +2876,8 @@ let to_str opcode =
   | TruncateTaggedToBit -> "TruncateTaggedToBit"
   | IfFalse -> "IfFalse"
   | IfTrue -> "IfTrue"
-  | Throw -> "Throw"
   | Unreachable -> "Unreachable"
+  | AllocateRaw -> "AllocateRaw"
   | Branch -> "Branch"
   | Call -> "Call"
   | ExternalConstant -> "ExternalConstant"
@@ -2881,6 +2891,8 @@ let to_str opcode =
   | ChangeFloat64ToTagged -> "ChangeFloat64ToTagged"
   | CheckedFloat64ToInt32 -> "CheckedFloat64ToInt32"
   | Projection -> "Projection"
+  | DeoptimizeUnless -> "DeoptimizeUnless"
+  | Return -> "Return"
   | End -> "End"
   | Merge -> "Merge"
   | Float64Equal -> "Float64Equal"
@@ -2920,7 +2932,6 @@ let to_str opcode =
   | Word32Xor -> "Word32Xor"
   | Word64Equal -> "Word64Equal"
   | Word64Shl -> "Word64Shl"
-  | Return -> "Return"
   | Load -> "Load"
   | LoadElement -> "LoadElement"
   | LoadField -> "LoadField"
@@ -2929,5 +2940,6 @@ let to_str opcode =
   | Select -> "Select"
   | Store -> "Store"
   | StoreField -> "StoreField"
+  | Throw -> "Throw"
   | Word32Sar -> "Word32Sar"
   | Empty -> failwith "Unreachable"

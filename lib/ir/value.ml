@@ -50,13 +50,12 @@ let empty = from_int 0 |> cast Type.empty
 
 (* type checks *)
 (* [has_type] assumes that [t] is a not any-tagged value *)
-let has_type (ty : Type.t) t =
+let rec has_type (ty : Type.t) t =
   if ty = Type.any_tagged then
     Bool.ors
-      [
-        BitVec.eqb (ty_of t) Type.tagged_pointer;
-        BitVec.eqb (ty_of t) Type.tagged_signed;
-      ]
+      [ t |> has_type Type.tagged_pointer; t |> has_type Type.tagged_signed ]
+  else if ty = Type.tagged_signed then
+    Bool.ands [ BitVec.eqb (ty_of t) ty; BitVec.eqi (BitVec.andi t 1) 0 ]
   else BitVec.eqb (ty_of t) ty
 
 let is_signed_integer t =
@@ -437,6 +436,10 @@ module Int64 = struct
   let to_float64 value =
     value |> from_value |> Float.from_signed_bv |> Float.to_ieee_bv
     |> entype Type.float64
+
+  let to_int32 value =
+    value |> from_value |> BitVec.extract 31 0 |> BitVec.zero_extend 32
+    |> entype Type.int32
 
   let to_tagged_signed value =
     BitVec.shli (BitVec.extract 31 0 value) 1
