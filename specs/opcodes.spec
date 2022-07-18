@@ -1,5 +1,5 @@
 AbortCSADcheck,
-Allocate,
+Allocate,v1,e1,c1
 AllocateRaw,v1,c1
 ArgumentsElementsState,
 ArgumentsLength,
@@ -37,7 +37,7 @@ ChangeInt64ToBigInt,
 ChangeInt64ToFloat64,v1
 ChangeInt64ToTagged,v1
 ChangeTaggedSignedToInt32,v1
-ChangeTaggedSignedToInt64,
+ChangeTaggedSignedToInt64,v1
 ChangeTaggedToBit,
 ChangeTaggedToFloat64,
 ChangeTaggedToInt32,
@@ -45,10 +45,10 @@ ChangeTaggedToInt64,
 ChangeTaggedToTaggedSigned,
 ChangeTaggedToUint32,
 ChangeUint32ToFloat64,v1
-ChangeUint32ToTagged,
+ChangeUint32ToTagged,v1
 ChangeUint32ToUint64,v1
 ChangeUint64ToBigInt,
-ChangeUint64ToTagged,
+ChangeUint64ToTagged,v1
 CheckBigInt,
 CheckBounds,
 CheckClosure,
@@ -74,7 +74,7 @@ CheckedInt32Mod,
 CheckedInt32Mul,
 CheckedInt32Sub,
 CheckedInt32ToTaggedSigned,
-CheckedInt64ToInt32,
+CheckedInt64ToInt32,v1,e1,c1
 CheckedInt64ToTaggedSigned, 
 CheckedTaggedSignedToInt32,v1
 CheckedTaggedToArrayIndex,
@@ -105,7 +105,7 @@ DebugBreak,
 DelayedStringConstant,
 Deoptimize,
 DeoptimizeIf,v1
-DeoptimizeUnless,v1
+DeoptimizeUnless,v1,v2,e1,c1
 EffectPhi,
 End,cv
 EnsureWritableFastElements,
@@ -757,7 +757,7 @@ Switch,
 TaggedIndexConstant,
 TailCall,
 Terminate,
-Throw,c1
+Throw,c1,e1
 ToBoolean,v1
 TransitionAndStoreElement,
 TransitionAndStoreNonNumberElement,
