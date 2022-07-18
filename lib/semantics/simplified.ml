@@ -662,6 +662,18 @@ let checked_float64_to_int32 hint vid pval =
   (value, Control.empty, assertion, Bool.fl, deopt_cond)
 
 (* Deoptimization condition =
+ *  LostPrecision(pval) *)
+let checked_int64_to_int32 vid pval _mem ctrl =
+  let value = Value.init vid in
+  let value32 = pval |> Value.Int64.to_int32 in
+  let deopt_cond =
+    (* lost-precision *)
+    Bool.not (Value.eq pval (value32 |> Value.Int32.to_int64))
+  in
+  let assertion = Value.eq value value32 in
+  (value, ctrl, assertion, Bool.fl, deopt_cond)
+
+(* Deoptimization condition =
  *  IsNotTaggedSigned(pval)
  * Assertion =
  *  value = ite well-defined Int32(pval >> 1) UV *)

@@ -134,6 +134,11 @@ let throw cid cond =
   let assertion = Value.eq control cond in
   (Value.empty, control, assertion, Bool.fl, Bool.fl)
 
+(* common: deoptimization *)
+let deoptimize_unless cond _frame _mem control =
+  let deopt_cond = Bool.ite (Value.is_false cond) Bool.tr Bool.fl in
+  (Value.empty, control, Bool.tr, Bool.fl, deopt_cond)
+
 (* common: procedure *)
 let parameter vid param mem =
   let value = Value.init vid in

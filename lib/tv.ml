@@ -130,8 +130,10 @@ let rec next program state =
     (* common: deoptimization *)
     | DeoptimizeUnless ->
         let cond_id = Operands.id_of_nth operands 0 in
+        let ct_id = Operands.id_of_nth operands 3 in
         let cond = RegisterFile.find cond_id rf in
-        (Value.empty, Bool.tr, Bool.tr, Bool.fl, cond |> Value.to_bool)
+        let ct = ControlFile.find ct_id cf in
+        deoptimize_unless cond () () ct
     (* common: dead *)
     | Dead -> (Value.empty, Control.empty, Bool.tr, Bool.fl, Bool.fl)
     (* common: procedure *)
