@@ -668,12 +668,11 @@ let check_ub_semantic nparams program =
   match status with
   | SATISFIABLE ->
       let model = Option.get (Solver.get_model validator) in
-      Printf.printf "Result: Not Verified\n";
-      Printf.printf "UB: %s\n" (Model.eval model ub |> Expr.to_simplified_string);
-      Printf.printf "CounterExample: \n";
+      Printf.printf "Result: Possible\n";
+      Printf.printf "Example: \n";
       Printer.print_params model (State.memory state) (State.params state);
       Printer.print_counter_example program state model
-  | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
+  | UNSATISFIABLE -> Printf.printf "Result: Not Possible\n"
   | UNKNOWN ->
       let reason = Z3.Solver.get_reason_unknown validator in
       Printf.printf "Result: Unknown\nReason: %s" reason
@@ -681,6 +680,10 @@ let check_ub_semantic nparams program =
 let run nparams src_program tgt_program =
   let src_state = execute "before" src_program nparams in
   let tgt_state = execute "after" tgt_program nparams in
+
+  let src_deopt = State.deopt src_state in
+  let tgt_deopt = State.deopt tgt_state in
+  let deopt = Bool.ors [ src_deopt; tgt_deopt ] in
 
   (* assume return value is either smi or heap number. *)
   let retval_is_same =
@@ -699,21 +702,13 @@ let run nparams src_program tgt_program =
     Bool.eq (to_float64 src_retval src_mem) (to_float64 tgt_retval tgt_mem)
   in
 
-  let src_ub = State.ub src_state in
-  let tgt_ub = State.ub tgt_state in
-  let ub_is_same = Bool.eq src_ub tgt_ub in
-  let is_refined =
-    Bool.ite ub_is_same
-      (Bool.ite (Bool.eq src_ub Bool.tr) Bool.tr retval_is_same)
-      Bool.fl
-  in
-
   let assertion =
     Bool.ands
       [
         State.assertion src_state;
         State.assertion tgt_state;
-        Bool.not is_refined;
+        Bool.not deopt;
+        Bool.not retval_is_same;
       ]
   in
 
@@ -722,14 +717,6 @@ let run nparams src_program tgt_program =
   | SATISFIABLE ->
       let model = Option.get (Solver.get_model validator) in
       Printf.printf "Result: Not Verified \n";
-      Printf.printf "  ub is same: %s\n"
-        (Model.eval model ub_is_same |> Expr.to_string);
-      Printf.printf "    src ub: %s\n"
-        (Model.eval model (State.ub src_state) |> Expr.to_string);
-      Printf.printf "    tgt ub: %s\n"
-        (Model.eval model (State.ub tgt_state) |> Expr.to_string);
-      Printf.printf "  retvar is same: %s\n"
-        (Model.eval model retval_is_same |> Expr.to_string);
       Printf.printf "CounterExample: \n";
       Printer.print_params model (State.memory src_state)
         (State.params src_state);
