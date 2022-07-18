@@ -10,19 +10,11 @@ let float64_constant vid c =
   let assertion = Value.eq value (c |> Value.cast Type.float64) in
   (value, Control.empty, assertion, Bool.fl, Bool.fl)
 
-(* well-defined condition: INT32_MIN <= c <= INT32_MAX
- * behavior: ite well-defined value=c value=UB *)
+(* assertion: value = c *)
 let int32_constant vid c =
   let value = Value.init vid in
-  let wd_cond =
-    Bool.ands
-      [
-        Value.Int32.ge c Value.Int32.min_value;
-        Value.Int32.le c Value.Int32.max_value;
-      ]
-  in
   let assertion = Value.eq value (c |> Value.cast Type.int32) in
-  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl, Bool.fl)
 
 (* behavior: value=c *)
 let int64_constant vid c =
@@ -46,10 +38,10 @@ let number_constant vid c next_bid mem =
 
 (* common: control *)
 (* retrieve the value at [idx] from [incoming]
- * incoming: | --- idx[0] ---| --- idx[1] --- | --- ... --- | 
- * well-defined condition: 
- * - 0 <= idx <= 2 ^ idx <= ||incoming|| 
- * assertion: 
+ * incoming: | --- idx[0] ---| --- idx[1] --- | --- ... --- |
+ * well-defined condition:
+ * - 0 <= idx <= 2 ^ idx <= ||incoming||
+ * assertion:
  *  value = ite well-defined value=incoming[idx] value=UB *)
 let projection vid idx incoming =
   (* currently, idx of projection is assumebed to be less than 2 *)
