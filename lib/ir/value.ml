@@ -289,6 +289,9 @@ module TaggedSigned = struct
     value |> from_value |> BitVec.sign_extend 1 |> BitVec.zero_extend 32
     |> entype Type.int32
 
+  let to_int64 value =
+    value |> from_value |> BitVec.sign_extend 33 |> entype Type.int64
+
   let to_float64 value =
     value |> from_value |> Float.from_signed_bv |> Float.to_ieee_bv
     |> entype Type.float64
@@ -430,17 +433,14 @@ module Int64 = struct
 
   let to_value t = t |> entype Type.int64
 
+  (* conversion *)
+  let to_float64 value =
+    value |> from_value |> Float.from_signed_bv |> Float.to_ieee_bv
+    |> entype Type.float64
+
   let to_tagged_signed value =
     BitVec.shli (BitVec.extract 31 0 value) 1
     |> BitVec.zero_extend 32 |> entype Type.tagged_signed
-
-  let to_string model value =
-    let v_str =
-      value |> from_value |> Model.eval model |> Expr.to_simplified_string
-    in
-    Format.sprintf "Int64(0x%Lx)"
-      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
-      |> Int64.of_string)
 
   let lt lval rval = slt lval rval
 
@@ -450,6 +450,73 @@ module Int64 = struct
         BitVec.sgei (value |> from_value) Constants.smi_min;
         BitVec.slei (value |> from_value) Constants.smi_max;
       ]
+
+  (* pp *)
+  let to_string model value =
+    let v_str =
+      value |> from_value |> Model.eval model |> Expr.to_simplified_string
+    in
+    Format.sprintf "Int64(0x%Lx)"
+      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
+      |> Int64.of_string)
+end
+
+module Uint32 = struct
+  type t = BitVec.t
+
+  let from_value value = BitVec.extract 31 0 value
+
+  (* conversion *)
+  let to_value t = t |> entype Type.uint32
+
+  let to_float64 value =
+    value |> from_value |> Float.from_unsigned_bv |> Float.to_ieee_bv
+    |> entype Type.float64
+
+  let to_tagged_signed value =
+    BitVec.shli (value |> from_value) 1
+    |> BitVec.zero_extend 32 |> entype Type.tagged_signed
+
+  (* method *)
+  let is_in_smi_range value =
+    BitVec.ulei (value |> from_value) Constants.smi_max
+
+  (* pp *)
+  let to_string model value =
+    let v_str =
+      value |> from_value |> Model.eval model |> Expr.to_simplified_string
+    in
+    Format.sprintf "Uint32(0x%x)"
+      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1) |> int_of_string)
+end
+
+module Uint64 = struct
+  type t = BitVec.t
+
+  let from_value value = BitVec.extract 63 0 value
+
+  (* conversion *)
+  let to_value t = t |> entype Type.uint64
+
+  let to_float64 value =
+    value |> from_value |> Float.from_unsigned_bv |> Float.to_ieee_bv
+    |> entype Type.float64
+
+  let to_tagged_signed value =
+    BitVec.shli (BitVec.extract 31 0 value) 1
+    |> BitVec.zero_extend 32 |> entype Type.tagged_signed
+
+  (* method *)
+  let is_in_smi_range value =
+    BitVec.ulei (value |> from_value) Constants.smi_max
+
+  (* pp *)
+  let to_string model value =
+    let v_str =
+      value |> from_value |> Model.eval model |> Expr.to_simplified_string
+    in
+    Format.sprintf "Uint64(0x%x)"
+      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1) |> int_of_string)
 end
 
 module Composed = struct

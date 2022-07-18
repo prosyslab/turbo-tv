@@ -322,6 +322,18 @@ let rec next program state =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         change_int64_to_tagged vid pval next_bid mem
+    | ChangeTaggedSignedToInt64 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        change_tagged_signed_to_int64 vid pval
+    | ChangeUint32ToTagged ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        change_uint32_to_tagged vid pval next_bid mem
+    | ChangeUint64ToTagged ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        change_uint64_to_tagged vid pval next_bid mem
     | CheckedFloat64ToInt32 ->
         let hint = Operands.const_of_nth operands 0 in
         let pid = Operands.id_of_nth operands 1 in

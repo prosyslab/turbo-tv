@@ -585,16 +585,51 @@ let change_int32_to_tagged vid pval next_bid mem =
  *  value = ite well-defined (tagged(pval)) UB *)
 let change_int64_to_tagged vid pval next_bid mem =
   let value = Value.init vid in
-  let data = Value.data_of value in
 
   (* if pval is in smi range, value = TaggedSigned(pval+pval) *)
   let is_in_smi_range = Value.Int64.is_in_smi_range pval in
   let smi = Value.Int64.to_tagged_signed pval in
 
-  let number_value = data |> Float.from_signed_bv |> Float.to_ieee_bv in
-  let obj = number_value |> HeapNumber.from_float64 next_bid Bool.tr mem in
+  let number =
+    pval |> Value.Int64.to_float64
+    |> HeapNumber.from_float64 next_bid is_in_smi_range mem
+  in
 
-  let wd_value = Bool.ite is_in_smi_range smi obj in
+  let wd_value = Bool.ite is_in_smi_range smi number in
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+
+let change_tagged_signed_to_int64 vid pval =
+  let value = Value.init vid in
+  let wd_value = Value.TaggedSigned.to_int64 pval in
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+
+let change_uint32_to_tagged vid pval next_bid mem =
+  let value = Value.init vid in
+
+  let is_in_smi_range = Value.Uint32.is_in_smi_range pval in
+  let smi = Value.Uint32.to_tagged_signed pval in
+  let number =
+    pval |> Value.Uint32.to_float64
+    |> HeapNumber.from_float64 next_bid is_in_smi_range mem
+  in
+
+  let wd_value = Bool.ite is_in_smi_range smi number in
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+
+let change_uint64_to_tagged vid pval next_bid mem =
+  let value = Value.init vid in
+
+  let is_in_smi_range = Value.Uint64.is_in_smi_range pval in
+  let smi = Value.Uint64.to_tagged_signed pval in
+  let number =
+    pval |> Value.Uint64.to_float64
+    |> HeapNumber.from_float64 next_bid is_in_smi_range mem
+  in
+
+  let wd_value = Bool.ite is_in_smi_range smi number in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.fl, Bool.fl)
 
