@@ -1,4 +1,3 @@
-open Err
 open Z3utils
 
 type t = E.expr
@@ -46,32 +45,4 @@ module ControlTuple = struct
     let true_cond_eq = Bool.eq (lexp |> true_cond) (rexp |> true_cond) in
     let false_cond_eq = Bool.eq (lexp |> false_cond) (rexp |> false_cond) in
     Bool.ands [ true_cond_eq; false_cond_eq ]
-end
-
-module ControlFile = struct
-  module C = Map.Make (String)
-
-  let prefix = ref ""
-
-  let cid id = !prefix ^ id
-
-  let init stage =
-    prefix := String.sub stage 0 1 ^ "c";
-    C.empty
-
-  let add key value rf = C.add key value rf
-
-  let find cid cf =
-    let cid = !prefix ^ cid in
-    try C.find cid cf
-    with Not_found ->
-      let cause = cid in
-      let reason = Format.sprintf "Cannot find %s from ControlFile" cause in
-      err (IdNotFound (cause, reason))
-
-  let find_all cids cf = List.map (fun vid -> find vid cf) cids
-
-  let empty = C.empty
-
-  let iter = C.iter
 end

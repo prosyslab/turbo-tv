@@ -14,6 +14,7 @@
   constants
   taggedPointer
   control
+  controlFile
   registerFile
   ub
   state
@@ -23,6 +24,7 @@
   value
   float64
   deopt
+  exprMap
   ;tv
   tv
   ;v8

@@ -1,5 +1,4 @@
 module Params = State.Params
-module ControlFile = Control.ControlFile
 module DeoptFile = Deopt.DeoptFile
 module UBFile = Ub.UBFile
 module HeapNumber = Objects.HeapNumber
@@ -30,10 +29,10 @@ let rec next program state =
   let mem = ref (State.memory state) in
   let params = State.params state in
   let node_id = string_of_int pc in
-  let vid = RegisterFile.vid node_id in
-  let cid = ControlFile.cid node_id in
-  let uid = UBFile.uid node_id in
-  let did = DeoptFile.did node_id in
+  let vid = RegisterFile.get_id node_id rf in
+  let cid = ControlFile.get_id node_id cf in
+  let uid = UBFile.get_id node_id uf in
+  let did = DeoptFile.get_id node_id df in
 
   let ty, opcode, operands = IR.instr_of pc program in
   let next_pc = match opcode with End -> -1 | _ -> pc + 1 in

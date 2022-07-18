@@ -62,16 +62,11 @@ let print_counter_example program state model =
             (operands |> Operands.to_str)
     in
 
-    let prefix = String.sub (State.stage state) 0 1 in
-    RegisterFile.prefix := prefix ^ "v";
-    Control.ControlFile.prefix := prefix ^ "c";
-    Ub.UBFile.prefix := prefix ^ "u";
-
     let value =
       RegisterFile.find (string_of_int pc) rf |> value_to_string model mem
     in
     let control =
-      Control.ControlFile.find (string_of_int pc) cf |> Control.to_string model
+      ControlFile.find (string_of_int pc) cf |> Control.to_string model
     in
     let ub = Ub.UBFile.find (string_of_int pc) uf |> Ub.to_string model in
 

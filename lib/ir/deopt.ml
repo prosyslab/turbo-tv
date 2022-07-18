@@ -1,34 +1,7 @@
-open Control
-open Err
 open Z3utils
+module DeoptFile = ExprMap.Make (Bool)
 
-module DeoptFile = struct
-  module D = Map.Make (String)
-
-  let prefix = ref ""
-
-  let did id = !prefix ^ id
-
-  let init stage =
-    prefix := String.sub stage 0 1 ^ "u";
-    D.empty
-
-  let add key value uf = D.add key value uf
-
-  let find uid uf =
-    let uid = !prefix ^ uid in
-    try D.find uid uf
-    with Not_found ->
-      let cause = uid in
-      let reason = Format.sprintf "Cannot find %s from DeoptFile" cause in
-      err (IdNotFound (cause, reason))
-
-  let find_all uids cf = List.map (fun uid -> find uid cf) uids
-
-  let empty = D.empty
-
-  let iter = D.iter
-end
+let symbol = "d"
 
 let propagate program (opcode : Opcode.t) operands cf df deopt =
   let deopt_from_input =
