@@ -558,7 +558,7 @@ let change_bit_to_tagged vid pval next_bid mem =
 
 (* assertion:
  * value = ite well-defined TaggedSigned(pval) UV *)
-let change_int31_to_taggedsigned vid pval =
+let change_int31_to_tagged_signed vid pval =
   let value = Value.init vid in
   let wd_value = Value.Int32.to_tagged_signed pval in
   let assertion = Value.eq value wd_value in

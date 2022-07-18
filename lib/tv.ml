@@ -313,7 +313,7 @@ let rec next program state =
     | ChangeInt31ToTaggedSigned ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
-        change_int31_to_taggedsigned vid pval
+        change_int31_to_tagged_signed vid pval
     | ChangeInt32ToTagged ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
@@ -454,6 +454,12 @@ let rec next program state =
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
         float64_less_than vid lval rval
+    | Float64LessThanOrEqual ->
+        let lpid = Operands.id_of_nth operands 0 in
+        let rpid = Operands.id_of_nth operands 1 in
+        let lval = RegisterFile.find lpid rf in
+        let rval = RegisterFile.find rpid rf in
+        float64_less_than_or_equal vid lval rval
     | Word32And ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -480,7 +486,7 @@ let rec next program state =
         let rpid = Operands.id_of_nth operands 1 in
         let lval = RegisterFile.find lpid rf in
         let rval = RegisterFile.find rpid rf in
-        int32_less_than vid lval rval
+        int64_less_than vid lval rval
     | Uint32LessThan ->
         let lpid = Operands.id_of_nth operands 0 in
         let rpid = Operands.id_of_nth operands 1 in
@@ -563,26 +569,30 @@ let rec next program state =
         let pval = RegisterFile.find pid rf in
         truncate_int64_to_int32 vid pval
     (* machine: type-conversion *)
-    | ChangeInt32ToFloat64 ->
-        let pid = Operands.id_of_nth operands 0 in
-        let pval = RegisterFile.find pid rf in
-        change_int32_to_float64 vid pval
     | ChangeFloat64ToInt64 ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         change_float64_to_int64 vid pval
+    | ChangeInt32ToFloat64 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        change_int32_to_float64 vid pval
+    | ChangeInt32ToInt64 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        change_int32_to_int64 vid pval
     | ChangeInt64ToFloat64 ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         change_int64_to_float64 vid pval
-    | ChangeUint32ToUint64 ->
-        let pid = Operands.id_of_nth operands 0 in
-        let pval = RegisterFile.find pid rf in
-        change_uint32_to_uint64 vid pval
     | ChangeUint32ToFloat64 ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         change_uint32_to_float64 vid pval
+    | ChangeUint32ToUint64 ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        change_uint32_to_uint64 vid pval
     | RoundFloat64ToInt32 ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in

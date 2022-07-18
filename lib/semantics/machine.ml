@@ -187,7 +187,7 @@ let float64_less_than_or_equal vid lval rval =
   let value = Value.init vid in
   let wd_value = Bool.ite (Float64.le lval rval) Value.tr Value.fl in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl, Bool.fl)
 
 (* assertion:
  *  value = ite well-defined (lval < rval) UB *)
@@ -203,7 +203,7 @@ let int64_less_than vid lval rval =
   let value = Value.init vid in
   let wd_value = Bool.ite (Value.Int64.lt lval rval) Value.tr Value.fl in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl, Bool.fl)
 
 (* assertion:
  *  value = ite well-defined (lval = rval) UB *)
@@ -380,7 +380,7 @@ let change_int32_to_int64 vid pval =
   let value = Value.init vid in
   let wd_value = pval |> Value.Int32.to_int64 in
   let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl)
+  (value, Control.empty, assertion, Bool.fl, Bool.fl)
 
 (* assertion:
  *  value = Float64(v) *)
