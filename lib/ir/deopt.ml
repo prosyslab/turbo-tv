@@ -3,6 +3,10 @@ module DeoptFile = ExprMap.Make (Bool)
 
 let symbol = "d"
 
+let empty = Bool.fl
+
+let to_string model did = did |> Model.eval model |> Expr.to_simplified_string
+
 let propagate program (opcode : Opcode.t) operands cf df deopt =
   let deopt_from_input =
     match opcode with
