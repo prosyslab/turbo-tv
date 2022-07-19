@@ -175,7 +175,7 @@ F64x2Trunc,
 FastApiCall,
 FindOrderedHashMapEntry,
 FindOrderedHashMapEntryForInt32Key,
-FinishRegion,
+FinishRegion,v1,e1
 Float32Abs,
 Float32Add,
 Float32Constant,
@@ -796,7 +796,7 @@ Uint64LessThanOrEqual,v1,v2
 Uint64Mod,
 UnalignedLoad,
 UnalignedStore,
-Unreachable,c1
+Unreachable,e1,c1
 UnsafePointerAdd,
 V128AnyTrue,
 VerifyType,

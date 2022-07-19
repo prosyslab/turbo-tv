@@ -30,6 +30,7 @@ type kind =
   | V1V2B1V3
   | V1B2B4V2
   | C1E1
+  | E1C1
   | B1V1V2
   | Empty
 
@@ -178,7 +179,6 @@ type t =
   | FastApiCall
   | FindOrderedHashMapEntry
   | FindOrderedHashMapEntryForInt32Key
-  | FinishRegion
   | Float32Abs
   | Float32Add
   | Float32Constant
@@ -838,11 +838,11 @@ type t =
   (* c1 *)
   | IfFalse
   | IfTrue
-  | Unreachable
   (* v1c1 *)
   | AllocateRaw
   (* v1e1 *)
   | Branch
+  | FinishRegion
   (* b1 *)
   | Call
   | ExternalConstant
@@ -921,6 +921,8 @@ type t =
   | StoreField
   (* c1e1 *)
   | Throw
+  (* e1c1 *)
+  | Unreachable
   (* b1v1v2 *)
   | Word32Sar
   | Empty
@@ -964,7 +966,7 @@ let get_kind opcode =
   | F64x2Pmin | F64x2PromoteLowF32x4 | F64x2Qfma | F64x2Qfms | F64x2RelaxedMax
   | F64x2RelaxedMin | F64x2ReplaceLane | F64x2Splat | F64x2Sqrt | F64x2Sub
   | F64x2Trunc | FastApiCall | FindOrderedHashMapEntry
-  | FindOrderedHashMapEntryForInt32Key | FinishRegion | Float32Abs | Float32Add
+  | FindOrderedHashMapEntryForInt32Key | Float32Abs | Float32Add
   | Float32Constant | Float32Div | Float32Equal | Float32LessThan
   | Float32LessThanOrEqual | Float32Max | Float32Min | Float32Mul | Float32Neg
   | Float32RoundDown | Float32RoundTiesEven | Float32RoundTruncate
@@ -1138,9 +1140,9 @@ let get_kind opcode =
   | StackPointerGreaterThan | ToBoolean | TruncateInt64ToInt32
   | TruncateTaggedToBit ->
       V1
-  | IfFalse | IfTrue | Unreachable -> C1
+  | IfFalse | IfTrue -> C1
   | AllocateRaw -> V1C1
-  | Branch -> V1E1
+  | Branch | FinishRegion -> V1E1
   | Call | ExternalConstant | Float64Constant | HeapConstant | Int32Constant
   | Int64Constant | JSStackCheck | NumberConstant | Parameter ->
       B1
@@ -1169,6 +1171,7 @@ let get_kind opcode =
   | Store -> V1V2B1V3
   | StoreField -> V1B2B4V2
   | Throw -> C1E1
+  | Unreachable -> E1C1
   | Word32Sar -> B1V1V2
   | Empty -> Empty
 
@@ -1202,6 +1205,7 @@ let split_kind kind =
   | V1V2B1V3 -> [ V1; V2; B1; V3 ]
   | V1B2B4V2 -> [ V1; B2; B4; V2 ]
   | C1E1 -> [ C1; E1 ]
+  | E1C1 -> [ E1; C1 ]
   | B1V1V2 -> [ B1; V1; V2 ]
   | Empty -> [ Empty ]
 
@@ -1352,7 +1356,6 @@ let of_str str =
   | "FastApiCall" -> FastApiCall
   | "FindOrderedHashMapEntry" -> FindOrderedHashMapEntry
   | "FindOrderedHashMapEntryForInt32Key" -> FindOrderedHashMapEntryForInt32Key
-  | "FinishRegion" -> FinishRegion
   | "Float32Abs" -> Float32Abs
   | "Float32Add" -> Float32Add
   | "Float32Constant" -> Float32Constant
@@ -2009,9 +2012,9 @@ let of_str str =
   | "TruncateTaggedToBit" -> TruncateTaggedToBit
   | "IfFalse" -> IfFalse
   | "IfTrue" -> IfTrue
-  | "Unreachable" -> Unreachable
   | "AllocateRaw" -> AllocateRaw
   | "Branch" -> Branch
+  | "FinishRegion" -> FinishRegion
   | "Call" -> Call
   | "ExternalConstant" -> ExternalConstant
   | "Float64Constant" -> Float64Constant
@@ -2074,6 +2077,7 @@ let of_str str =
   | "Store" -> Store
   | "StoreField" -> StoreField
   | "Throw" -> Throw
+  | "Unreachable" -> Unreachable
   | "Word32Sar" -> Word32Sar
   | _ -> raise Invalid_opcode
 
@@ -2222,7 +2226,6 @@ let to_str opcode =
   | FastApiCall -> "FastApiCall"
   | FindOrderedHashMapEntry -> "FindOrderedHashMapEntry"
   | FindOrderedHashMapEntryForInt32Key -> "FindOrderedHashMapEntryForInt32Key"
-  | FinishRegion -> "FinishRegion"
   | Float32Abs -> "Float32Abs"
   | Float32Add -> "Float32Add"
   | Float32Constant -> "Float32Constant"
@@ -2879,9 +2882,9 @@ let to_str opcode =
   | TruncateTaggedToBit -> "TruncateTaggedToBit"
   | IfFalse -> "IfFalse"
   | IfTrue -> "IfTrue"
-  | Unreachable -> "Unreachable"
   | AllocateRaw -> "AllocateRaw"
   | Branch -> "Branch"
+  | FinishRegion -> "FinishRegion"
   | Call -> "Call"
   | ExternalConstant -> "ExternalConstant"
   | Float64Constant -> "Float64Constant"
@@ -2944,5 +2947,6 @@ let to_str opcode =
   | Store -> "Store"
   | StoreField -> "StoreField"
   | Throw -> "Throw"
+  | Unreachable -> "Unreachable"
   | Word32Sar -> "Word32Sar"
   | Empty -> failwith "Unreachable"

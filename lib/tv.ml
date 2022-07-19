@@ -124,7 +124,7 @@ let rec next program state =
         let conds = ControlFile.find_all (operands |> Operands.id_of_all) cf in
         merge cid conds
     | Unreachable ->
-        let cid = Operands.id_of_nth operands 0 in
+        let cid = Operands.id_of_nth operands 1 in
         let ctrl_token = ControlFile.find cid cf in
         (Value.empty, Control.empty, Bool.tr, ctrl_token, Bool.fl)
     (* common: deoptimization *)
@@ -162,6 +162,13 @@ let rec next program state =
                    Bool.tr (Value.eq value rv))
                return_values)
         in
+        (value, Control.empty, assertion, Bool.fl, Bool.fl)
+    (* common : region *)
+    | FinishRegion ->
+        let pid = Operands.id_of_nth operands 0 in
+        let pval = RegisterFile.find pid rf in
+        let value = Value.init vid in
+        let assertion = Value.eq pval value in
         (value, Control.empty, assertion, Bool.fl, Bool.fl)
     (* JS: comparision *)
     | JSStackCheck -> (Value.empty, Bool.tr, Bool.tr, Bool.fl, Bool.fl)
