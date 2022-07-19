@@ -78,7 +78,7 @@ CheckedInt64ToInt32,v1,e1,c1
 CheckedInt64ToTaggedSigned, 
 CheckedTaggedSignedToInt32,v1
 CheckedTaggedToArrayIndex,
-CheckedTaggedToFloat64,
+CheckedTaggedToFloat64,b1,v1,e1,c1
 CheckedTaggedToInt32,
 CheckedTaggedToInt64,
 CheckedTaggedToTaggedPointer,
@@ -610,7 +610,7 @@ NumberIsInteger,
 NumberIsMinusZero,
 NumberIsNaN,
 NumberIsSafeInteger,
-NumberLessThan,v1,v2
+NumberLessThan,
 NumberLessThanOrEqual,
 NumberLog,
 NumberLog10,

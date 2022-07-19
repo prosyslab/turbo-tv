@@ -259,6 +259,12 @@ let rec next program state =
         let rval = RegisterFile.find rpid rf in
         word32_equal vid lval rval
     (* simplified: memory *)
+    | Allocate ->
+        let size_id = Operands.id_of_nth operands 0 in
+        let size_value = RegisterFile.find size_id rf in
+        let ct_id = Operands.id_of_nth operands 2 in
+        let ct = ControlFile.find ct_id cf in
+        allocate_raw vid cid size_value next_bid ct
     | AllocateRaw ->
         let size_id = Operands.id_of_nth operands 0 in
         let size_value = RegisterFile.find size_id rf in
@@ -345,6 +351,11 @@ let rec next program state =
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in
         checked_tagged_signed_to_int32 vid pval
+    | CheckedTaggedToFloat64 ->
+        let hint = Operands.const_of_nth operands 0 in
+        let pid = Operands.id_of_nth operands 1 in
+        let pval = RegisterFile.find pid rf in
+        checked_tagged_to_float64 vid hint pval mem
     | NumberToInt32 ->
         let pid = Operands.id_of_nth operands 0 in
         let pval = RegisterFile.find pid rf in

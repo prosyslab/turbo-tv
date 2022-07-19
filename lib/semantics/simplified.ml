@@ -522,7 +522,7 @@ let store_field ptr pos mt value mem =
   let repr = MachineType.repr mt in
 
   (* ptr must be pointer type *)
-  let ty_check = Value.has_type Type.pointer ptr in
+  let ty_check = Value.has_type Type.tagged_pointer ptr in
 
   (* check index out-of-bounds *)
   let can_access = TaggedPointer.can_access_as pos repr ptr in
@@ -681,6 +681,30 @@ let checked_tagged_signed_to_int32 vid pval =
   let value = Value.init vid in
   let deopt_cond = Bool.not (Value.has_type Type.tagged_signed pval) in
   let wd_value = Value.TaggedSigned.to_int32 pval in
+  let assertion = Value.eq value wd_value in
+  (value, Control.empty, assertion, Bool.fl, deopt_cond)
+
+let checked_tagged_to_float64 vid hint pval mem =
+  let value = Value.init vid in
+  let is_tagged_signed = Value.has_type Type.tagged_signed pval in
+  let is_tagged_pointer = Value.has_type Type.tagged_pointer pval in
+  let is_heap_number = Objects.is_heap_number pval !mem in
+  let is_boolean = Objects.is_boolean pval !mem in
+  let map_check =
+    match hint with
+    | "Number" -> is_heap_number
+    | "NumberOrBoolean" -> Bool.ors [ is_heap_number; is_boolean ]
+    (* TODO: Implement MapInstanceType for NumberOrOddball *)
+    | _ ->
+        failwith
+          (Printf.sprintf "CheckedTaggedToFloat64: Undefined hint %s" hint)
+  in
+  let deopt_cond = Bool.ands [ is_tagged_pointer; Bool.not map_check ] in
+  let wd_value =
+    Bool.ite is_tagged_signed
+      (Value.TaggedSigned.to_float64 pval)
+      (HeapNumber.load pval !mem |> HeapNumber.to_float64)
+  in
   let assertion = Value.eq value wd_value in
   (value, Control.empty, assertion, Bool.fl, deopt_cond)
 

@@ -47,7 +47,7 @@ let can_access pos sz t =
   (* no out-of-bounds *)
   let struct_size = Value.from_bv (size_of t) in
   let out_of_lb = Value.slt pos (0 |> Value.from_int) in
-  let out_of_ub = Value.uge (Value.addi pos sz) struct_size in
+  let out_of_ub = Value.ugt (Value.addi pos sz) struct_size in
   Bool.not (Bool.ors [ out_of_lb; out_of_ub ])
 
 (* can read as [repr] *)
