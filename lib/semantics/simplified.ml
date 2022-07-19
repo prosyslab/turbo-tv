@@ -547,29 +547,28 @@ let checked_tagged_signed_to_int32 pval state =
   let value = Value.TaggedSigned.to_int32 pval in
   state |> State.update ~value ~deopt
 
-let checked_tagged_to_float64 vid hint pval mem =
-  let value = Value.init vid in
+let checked_tagged_to_float64 hint pval mem state =
   let is_tagged_signed = Value.has_type Type.tagged_signed pval in
   let is_tagged_pointer = Value.has_type Type.tagged_pointer pval in
-  let is_heap_number = Objects.is_heap_number pval !mem in
-  let is_boolean = Objects.is_boolean pval !mem in
+  let is_heap_number = Objects.is_heap_number pval mem in
+  let is_boolean = Objects.is_boolean pval mem in
   let map_check =
     match hint with
     | "Number" -> is_heap_number
     | "NumberOrBoolean" -> Bool.ors [ is_heap_number; is_boolean ]
     (* TODO: Implement MapInstanceType for NumberOrOddball *)
+    | "NumberOrOddball" -> Bool.tr
     | _ ->
         failwith
           (Printf.sprintf "CheckedTaggedToFloat64: Undefined hint %s" hint)
   in
-  let deopt_cond = Bool.ands [ is_tagged_pointer; Bool.not map_check ] in
-  let wd_value =
+  let deopt = Bool.ands [ is_tagged_pointer; Bool.not map_check ] in
+  let value =
     Bool.ite is_tagged_signed
       (Value.TaggedSigned.to_float64 pval)
-      (HeapNumber.load pval !mem |> HeapNumber.to_float64)
+      (HeapNumber.load pval mem |> HeapNumber.to_float64)
   in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, deopt_cond)
+  state |> State.update ~value ~deopt
 
 let number_to_int32 pval next_bid mem state =
   let deopt =
