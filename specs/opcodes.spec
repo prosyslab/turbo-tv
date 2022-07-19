@@ -675,7 +675,7 @@ RelocatableInt32Constant,
 RelocatableInt64Constant,
 RestLength,
 Retain,
-Return,v2
+Return,v2,c1
 RoundFloat64ToInt32,v1
 RoundInt32ToFloat32,
 RoundInt64ToFloat32,

@@ -17,16 +17,18 @@ let value_to_string model mem value =
       Format.sprintf "%s => %s"
         (value |> TaggedPointer.to_string model)
         (Objects.to_string model mem value)
-  | "any_tagged" ->
-      let is_tagged_signed =
-        Bool.eq (BitVec.extract 0 0 value) (BitVecVal.from_int ~len:1 0)
-        |> Model.eval model |> Expr.to_simplified_string |> bool_of_string
-      in
-      if is_tagged_signed then value |> Value.TaggedSigned.to_string model
-      else
-        Format.sprintf "%s => %s"
-          (value |> TaggedPointer.to_string model)
-          (Objects.to_string model mem value)
+  | "any_tagged" -> (
+      try
+        let is_tagged_signed =
+          Bool.eq (BitVec.extract 0 0 value) (BitVecVal.from_int ~len:1 0)
+          |> Model.eval model |> Expr.to_simplified_string |> bool_of_string
+        in
+        if is_tagged_signed then value |> Value.TaggedSigned.to_string model
+        else
+          Format.sprintf "%s => %s"
+            (value |> TaggedPointer.to_string model)
+            (Objects.to_string model mem value)
+      with _ -> value |> Model.eval model |> Expr.to_simplified_string)
   | "map_in_header" -> value |> Value.MapInHeader.to_string model
   | "empty" -> "empty"
   | _ -> ty_str ^ (value |> Model.eval model |> Expr.to_simplified_string)
@@ -69,9 +71,9 @@ let print_counter_example program state model =
     let control =
       ControlFile.find (string_of_int pc) cf |> Control.to_string model
     in
-    let ub = Ub.UBFile.find (string_of_int pc) uf |> Ub.to_string model in
+    let ub = State.UBFile.find (string_of_int pc) uf |> Ub.to_string model in
     let deopt =
-      Deopt.DeoptFile.find (string_of_int pc) df |> Deopt.to_string model
+      State.DeoptFile.find (string_of_int pc) df |> Deopt.to_string model
     in
 
     match opcode with
@@ -79,6 +81,11 @@ let print_counter_example program state model =
     | DeoptimizeUnless ->
         Format.printf "#%d:%s => \n  Control: %s\n  UB: %s\n  Deopt: %s\n" pc
           instr_s control ub deopt;
+        aux (pc + 1)
+    | Return ->
+        Format.printf
+          "#%d:%s => \n  Value: %s\n  Control: %s\n  UB: %s\n  Deopt: %s\n" pc
+          instr_s value control ub deopt;
         aux (pc + 1)
     | End ->
         Format.printf "#%d:%s => \n  Value: %s\n  UB: %s\n  Deopt: %s\n\n" pc

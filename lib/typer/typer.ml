@@ -23,10 +23,10 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                     Value.ulei ~width:32 value ub;
                   ]
             | FloatBoundary (lb, ub) ->
-                let number = HeapNumber.load value !mem in
+                let number = HeapNumber.load value mem in
                 Bool.ands
                   [
-                    Objects.is_heap_number value !mem;
+                    Objects.is_heap_number value mem;
                     Float.gef (Float.from_ieee_bv number.value) lb;
                     Float.lef (Float.from_ieee_bv number.value) ub;
                   ]
@@ -44,14 +44,14 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
         Bool.ands (List.rev_map2 (fun v f -> verify v f mem) decomposed fields)
       else failwith "is: wrong number of fields"
   | Range (lb, ub) ->
-      let number = HeapNumber.load value !mem in
+      let number = HeapNumber.load value mem in
       (* assume value is heap number or integer or float64 *)
       Bool.ite
         (* heap number *)
         (Bool.ands
            [
              Value.has_type Type.tagged_pointer value;
-             Objects.is_heap_number value !mem;
+             Objects.is_heap_number value mem;
            ])
         (Bool.ands [ BitVec.gef number.value lb; BitVec.lef number.value ub ])
         (* float or integer *)
