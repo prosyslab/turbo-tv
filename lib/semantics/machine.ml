@@ -8,9 +8,12 @@ let float64_abs pval state =
   let value = Value.absf pval in
   state |> State.update ~value
 
+(* to be fixed *)
 let float64_extract_high_word32 pval state =
-  let hword32 = pval |> Value.data_of |> BitVec.extract 63 32 in
-  let value = Value.cast (Type.from_repr Repr.Word32 |> List.hd) hword32 in
+  let hword32 =
+    pval |> Value.data_of |> BitVec.extract 63 32 |> BitVec.zero_extend 32
+  in
+  let value = Value.entype (Type.from_repr Repr.Word32 |> List.hd) hword32 in
   state |> State.update ~value
 
 let float64_sub lval rval state =
@@ -56,7 +59,7 @@ let round_float64_to_int32 pval state =
  * (hint = "ShiftOutZero") ^ (cnt = (rval mod 32)) -> lval[-cnt:] = 0
  * assertion:
  * value = ite well-defined (lval >> (rval mod 32)) UB *)
-let word32_sar hint lval rval =
+let word32_sar hint lval rval state =
   let cnt = Value.modi rval 32 in
   let shift_out = Value.mask lval cnt in
   let hint_is_shift_out_zero = String.equal hint "ShiftOutZeros" in
@@ -163,12 +166,13 @@ let store ptr pos repr value mem state =
   in
 
   let store_size = repr |> Repr.size_of in
-  mem :=
-    Memory.store
-      (ptr |> TaggedPointer.to_raw_pointer)
-      store_size wd_cond value !mem;
-
-  state
+  let mem =
+    mem
+    |> Memory.store
+         (ptr |> TaggedPointer.to_raw_pointer)
+         store_size wd_cond value
+  in
+  state |> State.update ~mem
 
 (* well-defined condition:
  *   IsPointer(ptr) \/

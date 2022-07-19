@@ -9,12 +9,12 @@ let number_abs nptr next_bid mem state =
       (Bool.ands
          [
            nptr |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number nptr !mem;
+           Objects.is_heap_number nptr mem;
          ])
   in
   (* https://tc39.es/ecma262/#sec-math.abs *)
-  let value =
-    let n = HeapNumber.load nptr !mem in
+  let value, next_bid, mem =
+    let n = HeapNumber.load nptr mem in
     (* nan -> nan *)
     Bool.ite (HeapNumber.is_nan n) Float64.nan
       (* -0 -> 0 *)
@@ -29,7 +29,7 @@ let number_abs nptr next_bid mem state =
                (n.value |> Value.entype Type.float64))))
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
-  state |> State.update ~value ~deopt
+  state |> State.update ~value ~deopt ~next_bid ~mem
 
 let number_add lval rval next_bid mem state =
   let deopt =
@@ -38,14 +38,14 @@ let number_add lval rval next_bid mem state =
          [
            lval |> Value.has_type Type.tagged_pointer;
            rval |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number lval !mem;
-           Objects.is_heap_number rval !mem;
+           Objects.is_heap_number lval mem;
+           Objects.is_heap_number rval mem;
          ])
   in
   (* https://tc39.es/ecma262/#sec-numeric-types-number-add *)
-  let value =
-    let lnum = HeapNumber.load lval !mem in
-    let rnum = HeapNumber.load rval !mem in
+  let value, next_bid, mem =
+    let lnum = HeapNumber.load lval mem in
+    let rnum = HeapNumber.load rval mem in
     (* if lnum or rnum is nan, return nan *)
     Bool.ite
       (Bool.ors [ HeapNumber.is_nan lnum; HeapNumber.is_nan rnum ])
@@ -79,7 +79,7 @@ let number_add lval rval next_bid mem state =
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
 
-  state |> State.update ~value ~deopt
+  state |> State.update ~value ~deopt ~next_bid ~mem
 
 let number_expm1 nptr next_bid mem state =
   let deopt =
@@ -87,12 +87,12 @@ let number_expm1 nptr next_bid mem state =
       (Bool.ands
          [
            nptr |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number nptr !mem;
+           Objects.is_heap_number nptr mem;
          ])
   in
   (* https://tc39.es/ecma262/#sec-math.expm1 *)
-  let value =
-    let num = HeapNumber.load nptr !mem in
+  let value, next_bid, mem =
+    let num = HeapNumber.load nptr mem in
     let bv_sort = BV.mk_sort ctx 64 in
     let expm_decl =
       Z3.FuncDecl.mk_func_decl_s ctx "unknown_number_expm1" [ bv_sort ] bv_sort
@@ -114,7 +114,7 @@ let number_expm1 nptr next_bid mem state =
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
 
-  state |> State.update ~value ~deopt
+  state |> State.update ~value ~deopt ~next_bid ~mem
 
 let number_max lval rval next_bid mem state =
   let deopt =
@@ -123,14 +123,14 @@ let number_max lval rval next_bid mem state =
          [
            lval |> Value.has_type Type.tagged_pointer;
            rval |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number lval !mem;
-           Objects.is_heap_number rval !mem;
+           Objects.is_heap_number lval mem;
+           Objects.is_heap_number rval mem;
          ])
   in
   (* https://tc39.es/ecma262/#sec-math.max *)
-  let value =
-    let lnum = HeapNumber.load lval !mem in
-    let rnum = HeapNumber.load rval !mem in
+  let value, next_bid, mem =
+    let lnum = HeapNumber.load lval mem in
+    let rnum = HeapNumber.load rval mem in
     Bool.ite
       (* if lnum or rnum is nan, return nan *)
       (Bool.ors [ HeapNumber.is_nan lnum; HeapNumber.is_nan rnum ])
@@ -150,7 +150,7 @@ let number_max lval rval next_bid mem state =
                (lnum |> HeapNumber.to_float64))))
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
-  state |> State.update ~value ~deopt
+  state |> State.update ~value ~deopt ~next_bid ~mem
 
 let number_min lval rval next_bid mem state =
   let deopt =
@@ -159,14 +159,14 @@ let number_min lval rval next_bid mem state =
          [
            lval |> Value.has_type Type.tagged_pointer;
            rval |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number lval !mem;
-           Objects.is_heap_number rval !mem;
+           Objects.is_heap_number lval mem;
+           Objects.is_heap_number rval mem;
          ])
   in
   (* https://tc39.es/ecma262/#sec-math.min *)
-  let value =
-    let lnum = HeapNumber.load lval !mem in
-    let rnum = HeapNumber.load rval !mem in
+  let value, next_bid, mem =
+    let lnum = HeapNumber.load lval mem in
+    let rnum = HeapNumber.load rval mem in
     Bool.ite
       (* if lnum or rnum is nan, return nan *)
       (Bool.ors [ HeapNumber.is_nan lnum; HeapNumber.is_nan rnum ])
@@ -186,7 +186,7 @@ let number_min lval rval next_bid mem state =
                (rnum |> HeapNumber.to_float64))))
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
-  state |> State.update ~value ~deopt
+  state |> State.update ~value ~deopt ~next_bid ~mem
 
 let number_multiply lval rval next_bid mem state =
   let deopt =
@@ -195,14 +195,14 @@ let number_multiply lval rval next_bid mem state =
          [
            lval |> Value.has_type Type.tagged_pointer;
            rval |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number lval !mem;
-           Objects.is_heap_number rval !mem;
+           Objects.is_heap_number lval mem;
+           Objects.is_heap_number rval mem;
          ])
   in
   (* https://tc39.es/ecma262/#sec-math.multiply *)
-  let value =
-    let lnum = HeapNumber.load lval !mem in
-    let rnum = HeapNumber.load rval !mem in
+  let value, next_bid, mem =
+    let lnum = HeapNumber.load lval mem in
+    let rnum = HeapNumber.load rval mem in
 
     let if_l_is_inf_or_ninf l r =
       Bool.ite
@@ -245,15 +245,15 @@ let number_multiply lval rval next_bid mem state =
                      (rnum |> HeapNumber.to_float64))))))
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
-  state |> State.update ~value ~deopt
+  state |> State.update ~value ~deopt ~next_bid ~mem
 
 let speculative_number_add lval rval next_bid mem state =
-  let deopt = Number.are_numbers [ lval; rval ] !mem in
+  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
   state |> number_add lval rval next_bid mem |> State.update ~deopt
 
 let speculative_number_multiply lval rval next_bid mem state =
   (* [TODO] handle deoptimization *)
-  let deopt = Number.are_numbers [ lval; rval ] !mem in
+  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
   state |> number_multiply lval rval next_bid mem |> State.update ~deopt
 
 (* well-defined condition:
@@ -272,8 +272,8 @@ let speculative_safe_integer_add lval rval next_bid mem state =
           Bool.ands
             [
               value |> Value.has_type Type.tagged_pointer;
-              Objects.is_heap_number value !mem;
-              HeapNumber.is_safe_integer (HeapNumber.load value !mem);
+              Objects.is_heap_number value mem;
+              HeapNumber.is_safe_integer (HeapNumber.load value mem);
             ];
         ]
     in
@@ -281,7 +281,7 @@ let speculative_safe_integer_add lval rval next_bid mem state =
   in
   let added_f64 =
     let value_to_float64 value =
-      let number = HeapNumber.load value !mem in
+      let number = HeapNumber.load value mem in
       Bool.ite
         (value |> Value.has_type Type.tagged_signed)
         (Value.TaggedSigned.to_float64 value)
@@ -291,10 +291,10 @@ let speculative_safe_integer_add lval rval next_bid mem state =
     let rf = rval |> value_to_float64 in
     Float64.add lf rf
   in
-  let value =
+  let value, next_bid, mem =
     added_f64 |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
-  state |> State.update ~value ~deopt
+  state |> State.update ~value ~deopt ~next_bid ~mem
 
 (* well-defined condition:
  * - IsTaggedPointer(lval) /\ IsTaggedPointer(rval)
@@ -304,25 +304,25 @@ let speculative_safe_integer_add lval rval next_bid mem state =
  * assertion:
  *  value = ite well-defined (lval-rval) UB *)
 let speculative_safe_integer_subtract lval rval next_bid mem state =
-  let lnum = HeapNumber.load lval !mem in
-  let rnum = HeapNumber.load rval !mem in
+  let lnum = HeapNumber.load lval mem in
+  let rnum = HeapNumber.load rval mem in
   let deopt =
     Bool.not
       (Bool.ands
          [
            lval |> Value.has_type Type.tagged_pointer;
            rval |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number lval !mem;
-           Objects.is_heap_number rval !mem;
+           Objects.is_heap_number lval mem;
+           Objects.is_heap_number rval mem;
            HeapNumber.is_safe_integer lnum;
            HeapNumber.is_safe_integer rnum;
          ])
   in
-  let value =
+  let value, next_bid, mem =
     Float64.sub lnum.value rnum.value
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
-  state |> State.update ~value ~deopt
+  state |> State.update ~value ~deopt ~next_bid ~mem
 
 (* simplified: bitwise *)
 (* well-defined condition:
@@ -335,26 +335,17 @@ let boolean_not pval state =
   state |> State.update ~value ~deopt
 
 let speculative_number_bitwise_or lval rval next_bid mem state =
-  let deopt =
-    Bool.not
-      (Bool.ands
-         [
-           lval |> Value.has_type Type.tagged_pointer;
-           rval |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number lval !mem;
-           Objects.is_heap_number rval !mem;
-         ])
-  in
-  let value =
-    let lnum = HeapNumber.load lval !mem in
-    let rnum = HeapNumber.load rval !mem in
+  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+  let value, next_bid, mem =
+    let lnum = HeapNumber.load lval mem in
+    let rnum = HeapNumber.load rval mem in
     Value.Int32.or_
       (lnum |> HeapNumber.to_float64 |> Float64.to_int32)
       (rnum |> HeapNumber.to_float64 |> Float64.to_int32)
     |> Value.Int32.to_float64
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
-  state |> State.update ~value ~deopt
+  state |> State.update ~value ~deopt ~next_bid ~mem
 
 let speculative_number_bitwise_xor lval rval state =
   let deopt =
@@ -371,15 +362,16 @@ let number_equal lnum rnum mem state =
   let value = Bool.ite (Number.eq lnum rnum mem) Value.tr Value.fl in
   state |> State.update ~value
 
-let speculative_number_equal id lval rval mem state =
+let speculative_number_equal lval rval mem state =
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
   state |> number_equal lval rval mem |> State.update ~deopt
 
 (* simplified: memory *)
-let allocate_raw size next_bid control state =
-  let value = Memory.allocate next_bid size in
+let allocate_raw size control state =
+  let bid = State.next_bid state in
+  let next_bid, value = Memory.allocate bid size in
   (* assume AllocateRaw doesn't change the control *)
-  state |> State.update ~value ~control
+  state |> State.update ~value ~control ~next_bid
 
 let load_element tag_value header_size repr bid ind mem state =
   let fixed_off = header_size - tag_value in
@@ -410,14 +402,16 @@ let store_field ptr pos mt value mem state =
 
   (* check index out-of-bounds *)
   let can_access = TaggedPointer.can_access_as pos repr ptr in
-  let ub = Bool.not (Bool.ands [ ty_check; can_access ]) in
-  let store_cond = Bool.not ub in
+  let _ub = Bool.not (Bool.ands [ ty_check; can_access ]) in
+  let store_cond = Bool.not _ub in
 
-  mem :=
-    Memory.store_as
-      (TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer)
-      repr store_cond value !mem;
-  state |> State.update ~ub
+  let mem =
+    mem
+    |> Memory.store_as
+         (TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer)
+         repr store_cond value
+  in
+  state |> State.update ~mem
 
 (* simplified: type-conversion *)
 (* well-defined condition
@@ -427,17 +421,17 @@ let store_field ptr pos mt value mem state =
 (* [TODO] fix this *)
 let change_bit_to_tagged pval next_bid mem state =
   let deopt = Bool.not (Value.has_type Type.bool pval) in
-  let true_ =
+  let true_, next_bid, mem =
     Value.from_f64string "1.0" |> Value.cast Type.float64
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
-  let false_ =
+  let false_, next_bid, mem =
     Value.from_f64string "0.0" |> Value.cast Type.float64
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
   let value = Bool.ite (Value.eq Value.tr pval) true_ false_ in
 
-  state |> State.update ~value ~deopt
+  state |> State.update ~value ~deopt ~next_bid ~mem
 
 (* assertion:
  * value = ite well-defined TaggedSigned(pval) UV *)
@@ -456,11 +450,13 @@ let change_int32_to_tagged pval next_bid mem state =
   let smi = Value.Int32.to_tagged_signed pval in
 
   let number_value = data |> Float.from_signed_bv |> Float.to_ieee_bv in
-  let obj = number_value |> HeapNumber.from_float64 next_bid Bool.tr mem in
+  let obj, next_bid, mem =
+    number_value |> HeapNumber.from_float64 next_bid Bool.tr mem
+  in
 
   let value = Bool.ite is_in_smi_range smi obj in
 
-  state |> State.update ~value
+  state |> State.update ~value ~next_bid ~mem
 
 (* assertion:
  *  value = ite well-defined (tagged(pval)) UB *)
@@ -469,43 +465,42 @@ let change_int64_to_tagged pval next_bid mem state =
   let is_in_smi_range = Value.Int64.is_in_smi_range pval in
   let smi = Value.Int64.to_tagged_signed pval in
 
-  let number =
+  let number, next_bid, mem =
     pval |> Value.Int64.to_float64
     |> HeapNumber.from_float64 next_bid is_in_smi_range mem
   in
 
   let value = Bool.ite is_in_smi_range smi number in
 
-  state |> State.update ~value
+  state |> State.update ~value ~next_bid ~mem
 
 let change_tagged_signed_to_int64 pval state =
   let value = Value.TaggedSigned.to_int64 pval in
-
   state |> State.update ~value
 
 let change_uint32_to_tagged pval next_bid mem state =
   let is_in_smi_range = Value.Uint32.is_in_smi_range pval in
   let smi = Value.Uint32.to_tagged_signed pval in
-  let number =
+  let number, next_bid, mem =
     pval |> Value.Uint32.to_float64
     |> HeapNumber.from_float64 next_bid is_in_smi_range mem
   in
 
   let value = Bool.ite is_in_smi_range smi number in
 
-  state |> State.update ~value
+  state |> State.update ~value ~next_bid ~mem
 
 let change_uint64_to_tagged pval next_bid mem state =
   let is_in_smi_range = Value.Uint64.is_in_smi_range pval in
   let smi = Value.Uint64.to_tagged_signed pval in
-  let number =
+  let number, next_bid, mem =
     pval |> Value.Uint64.to_float64
     |> HeapNumber.from_float64 next_bid is_in_smi_range mem
   in
 
   let value = Bool.ite is_in_smi_range smi number in
 
-  state |> State.update ~value
+  state |> State.update ~value ~next_bid ~mem
 
 (* Deoptimization condition =
  *  LostPrecision(pval)
@@ -557,17 +552,17 @@ let number_to_int32 pval next_bid mem state =
     Bool.ands
       [
         pval |> Value.has_type Type.tagged_pointer;
-        Objects.is_heap_number pval !mem;
+        Objects.is_heap_number pval mem;
       ]
   in
   (* https://tc39.es/ecma262/#sec-toint32 *)
-  let value =
-    let num = HeapNumber.load pval !mem in
+  let value, next_bid, mem =
+    let num = HeapNumber.load pval mem in
     let i = num |> HeapNumber.to_float64 |> Float64.to_int32 in
     i |> Value.Int32.to_float64
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
-  state |> State.update ~value ~deopt
+  state |> State.update ~value ~deopt ~next_bid ~mem
 
 let speculative_to_number pval next_bid mem state =
   (* assumption: [pval] is heap number or smi *)
@@ -579,19 +574,19 @@ let speculative_to_number pval next_bid mem state =
            Bool.ands
              [
                pval |> Value.has_type Type.tagged_pointer;
-               Objects.is_heap_number pval !mem;
-               HeapNumber.is_safe_integer (HeapNumber.load pval !mem);
+               Objects.is_heap_number pval mem;
+               HeapNumber.is_safe_integer (HeapNumber.load pval mem);
              ];
          ])
   in
-  let value =
+  let value, next_bid, mem =
     Bool.ite
       (pval |> Value.has_type Type.tagged_signed)
       (Value.TaggedSigned.to_float64 pval)
-      (HeapNumber.load pval !mem |> HeapNumber.to_float64)
+      (HeapNumber.load pval mem |> HeapNumber.to_float64)
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
-  state |> State.update ~value ~deopt
+  state |> State.update ~value ~deopt ~next_bid ~mem
 
 let to_boolean pval mem state =
   let uif =
@@ -600,13 +595,13 @@ let to_boolean pval mem state =
   in
 
   let value =
-    let number = HeapNumber.load pval !mem in
+    let number = HeapNumber.load pval mem in
     Bool.ite
       (Value.has_type Type.tagged_signed pval)
       (* smi *)
       (Bool.ite (Value.TaggedSigned.is_zero pval) Value.fl Value.tr)
       (Bool.ite
-         (Objects.is_heap_number pval !mem)
+         (Objects.is_heap_number pval mem)
          (* heap number *)
          (Bool.ite
             (Bool.ors
@@ -630,7 +625,7 @@ let truncate_tagged_to_bit pval mem state =
       Bool.mk_sort
   in
   let value =
-    let number = HeapNumber.load pval !mem in
+    let number = HeapNumber.load pval mem in
     Bool.ite
       (* if [pval] is smi, return [pval] != 0 *)
       (pval |> Value.has_type Type.tagged_signed)
@@ -640,7 +635,7 @@ let truncate_tagged_to_bit pval mem state =
          (Bool.ands
             [
               pval |> Value.has_type Type.tagged_pointer;
-              Objects.is_heap_number pval !mem;
+              Objects.is_heap_number pval mem;
             ])
          (Bool.ite
             (Bool.ors

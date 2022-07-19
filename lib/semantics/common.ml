@@ -25,12 +25,16 @@ let external_constant c state =
   state |> State.update ~value
 
 (* behavior: value=c *)
-let number_constant c mem state =
-  let next_bid = ref (State.next_bid state) in
-  let ptr = HeapNumber.allocate next_bid in
-  HeapNumber.store ptr (HeapNumber.from_number_string c) Bool.tr mem;
+let number_constant c state =
+  let bid = State.next_bid state in
+  let next_bid, ptr = HeapNumber.allocate bid in
+  let mem =
+    State.memory state
+    |> HeapNumber.store ptr (HeapNumber.from_number_string c) Bool.tr
+  in
+
   let value = ptr in
-  state |> State.update ~value
+  state |> State.update ~value ~next_bid ~mem
 
 (* common: control *)
 (* retrieve the value at [idx] from [incoming]
@@ -89,11 +93,11 @@ let phi incomings repr ctrls state =
   let ty = Type.from_repr repr |> List.hd in
   let rec mk_value values conds =
     match values with
+    | [ h ] -> Bool.ite (List.hd conds) h Value.empty
     | h :: [ t ] -> Bool.ite (List.hd conds) h t
     | h :: t when List.length t > 1 ->
         Bool.ite (List.hd conds) h (mk_value t (List.tl conds))
     (* length of incoming is larger than 1 *)
-    | [ _ ] -> failwith "unreachable"
     | _ -> failwith "unreachable"
   in
 
@@ -114,6 +118,8 @@ let select cond tr fl state =
 
 let throw control state = state |> State.update ~control
 
+let unreachable control state = state |> State.update ~ub:control
+
 (* common: deoptimization *)
 let deoptimize _frame _mem control state =
   state |> State.update ~control ~deopt:Bool.tr
@@ -123,6 +129,19 @@ let deoptimize_unless cond _frame _mem control state =
   state |> State.update ~control ~deopt
 
 (* common: procedure *)
+let end_ retvals _retmems retctrls state =
+  let rec mk_value values conds =
+    match values with
+    | [ h ] -> Bool.ite (List.hd conds) h Value.empty
+    | h :: [ t ] -> Bool.ite (List.hd conds) h t
+    | h :: t when List.length t > 1 ->
+        Bool.ite (List.hd conds) h (mk_value t (List.tl conds))
+    | _ -> failwith "unreachable"
+  in
+  let value = mk_value retvals retctrls in
+  let control = Bool.ors retctrls in
+  state |> State.update ~value ~control ~final:true
+
 let parameter param state =
   (* assume parameter is tagged signed or heap number
      [TODO] allow parameter to point random address after implement the other object types
@@ -145,8 +164,15 @@ let parameter param state =
   let value = param in
   state |> State.update ~value
 
-let return return_value state =
-  let value = return_value in
-  state |> State.update ~value
+let return return_value return_control state =
+  state |> State.update ~value:return_value ~control:return_control
 
 let start state = state |> State.update ~control:Bool.tr
+
+(* temporary *)
+let js_stack_check = start
+
+let call state = state |> State.update ~value:Value.tr
+
+let stack_pointer_greater_than = call
+(* temporary-over *)
