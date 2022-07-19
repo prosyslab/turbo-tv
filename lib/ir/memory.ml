@@ -4,9 +4,7 @@ type t = Array.t
 
 let init name = Array.init name (BitVec.mk_sort 64) (BitVec.mk_sort 8)
 
-let allocate bid size =
-  bid := !bid + 1;
-  TaggedPointer.init !bid size
+let allocate bid size = (bid + 1, TaggedPointer.init bid size)
 
 (* Load [value] at block of [ptr] with the size [sz]*)
 let load ptr sz mem =

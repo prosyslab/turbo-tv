@@ -1,5 +1,4 @@
 open Z3utils
-module UBFile = ExprMap.Make (Bool)
 
 type t = Bool.t
 

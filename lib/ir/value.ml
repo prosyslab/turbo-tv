@@ -324,9 +324,11 @@ module Bool = struct
     let v_str =
       value |> from_value |> Model.eval model |> Expr.to_simplified_string
     in
-    Format.sprintf "Bool(0x%x)"
-      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
-      |> Int32.of_string |> Int32.to_int)
+    try
+      Format.sprintf "Bool(0x%x)"
+        ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
+        |> Int32.of_string |> Int32.to_int)
+    with _ -> v_str
 end
 
 module MapInHeader = struct
@@ -420,9 +422,11 @@ module Int32 = struct
     let v_str =
       value |> from_value |> Model.eval model |> Expr.to_simplified_string
     in
-    Format.sprintf "Int32(0x%lx)"
-      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
-      |> Int32.of_string)
+    try
+      Format.sprintf "Int32(0x%lx)"
+        ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
+        |> Int32.of_string)
+    with _ -> v_str
 end
 
 module Int64 = struct
@@ -459,9 +463,11 @@ module Int64 = struct
     let v_str =
       value |> from_value |> Model.eval model |> Expr.to_simplified_string
     in
-    Format.sprintf "Int64(0x%Lx)"
-      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
-      |> Int64.of_string)
+    try
+      Format.sprintf "Int64(0x%Lx)"
+        ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
+        |> Int64.of_string)
+    with _ -> v_str
 end
 
 module Uint32 = struct

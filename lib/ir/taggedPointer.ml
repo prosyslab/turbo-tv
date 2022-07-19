@@ -58,13 +58,17 @@ let can_access_as pos repr t =
 let to_string model t =
   let bid =
     let bid_str = bid_of t |> Model.eval model |> Expr.to_string in
-    "0" ^ String.sub bid_str 1 (String.length bid_str - 1)
-    |> Int32.of_string |> Int32.unsigned_to_int |> Option.get
+    try
+      "0" ^ String.sub bid_str 1 (String.length bid_str - 1)
+      |> Int32.of_string |> Int32.unsigned_to_int |> Option.get |> string_of_int
+    with _ -> bid_str
   in
   let offset =
     let off_str = off_of t |> Model.eval model |> Expr.to_string in
-    "0" ^ String.sub off_str 1 (String.length off_str - 1)
-    |> Int32.of_string |> Int32.unsigned_to_int |> Option.get
+    try
+      "0" ^ String.sub off_str 1 (String.length off_str - 1)
+      |> Int32.of_string |> Int32.unsigned_to_int |> Option.get |> string_of_int
+    with _ -> off_str
   in
 
-  Format.sprintf "TaggedPointer(bid: %d, offset: %d)" bid offset
+  Format.sprintf "TaggedPointer(bid: %s, offset: %s)" bid offset

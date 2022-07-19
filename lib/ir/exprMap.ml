@@ -1,7 +1,7 @@
-open Err
-
 module type Expr = sig
   type t
+
+  val empty : t
 end
 
 module Make (V : Expr) = struct
@@ -28,11 +28,7 @@ module Make (V : Expr) = struct
   let find n t =
     let m = expr_map t in
     let id = get_id n t in
-    try M.find id m
-    with Not_found ->
-      let cause = id in
-      let reason = Format.sprintf "Cannot find %s from ExprMap" cause in
-      err (IdNotFound (cause, reason))
+    try M.find id m with Not_found -> V.empty
 
   let find_all ids t = List.map (fun id -> find id t) ids
 
