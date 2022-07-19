@@ -1,7 +1,11 @@
 open Z3utils
 module DeoptFile = ExprMap.Make (Bool)
 
+type t = Bool.t
+
 let symbol = "d"
+
+let init name = Bool.init name
 
 let empty = Bool.fl
 

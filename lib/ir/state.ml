@@ -54,20 +54,6 @@ let init nparams stage : t =
     deopt = Bool.fl;
   }
 
-let update pc next_bid control_file register_file ub_file deopt_file memory
-    assertion t =
-  {
-    t with
-    pc;
-    next_bid;
-    control_file;
-    register_file;
-    ub_file;
-    deopt_file;
-    memory;
-    assertion;
-  }
-
 (* getter *)
 let stage t = t.stage
 
@@ -94,5 +80,13 @@ let retval t = t.retval
 let assertion t = t.assertion
 
 let deopt t = t.deopt
+
+let update ?value ?control ?ub ?deopt t =
+  let pc = pc t |> string_of_int in
+  let register_file = RegisterFile.add pc value (register_file t) in
+  let control_file = ControlFile.add pc control (control_file t) in
+  let ub_file = UBFile.add pc ub (ub_file t) in
+  let deopt_file = DeoptFile.add pc deopt (deopt_file t) in
+  { t with register_file; control_file; ub_file; deopt_file }
 
 let is_end t = t.pc = -1

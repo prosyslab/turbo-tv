@@ -11,6 +11,7 @@
   ;ir
   IR
   objects
+  number
   constants
   taggedPointer
   control
@@ -25,6 +26,7 @@
   float64
   deopt
   exprMap
+  output
   ;tv
   tv
   ;v8

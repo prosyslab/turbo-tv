@@ -19,8 +19,11 @@ module Make (V : Expr) = struct
     { expr_map = M.empty; prefix = String.sub stage 0 1 ^ symbol }
 
   let add key value t =
-    let new_expr_map = M.add key value (expr_map t) in
-    { t with expr_map = new_expr_map }
+    match value with
+    | None -> t
+    | Some v ->
+        let expr_map = M.add (prefix t ^ key) v (expr_map t) in
+        { expr_map; prefix = t.prefix }
 
   let find n t =
     let m = expr_map t in

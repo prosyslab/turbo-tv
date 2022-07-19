@@ -122,6 +122,8 @@ let gt lval rval =
 
 let is_integer value = eq value (value |> round |> from_float)
 
+let is_zero value = Float.is_zero (value |> to_float)
+
 let is_minus_zero value = Float.is_minus_zero (value |> to_float)
 
 let is_nan value = Float.is_nan (value |> to_float)
