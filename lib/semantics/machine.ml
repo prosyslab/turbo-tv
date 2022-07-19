@@ -4,258 +4,143 @@ module Composed = Value.Composed
 module Repr = MachineType.Repr
 
 (* machine: arithmetic *)
+let float64_abs pval state =
+  let value = Value.absf pval in
+  state |> State.update ~value
+
+let float64_extract_high_word32 pval state =
+  let hword32 = pval |> Value.data_of |> BitVec.extract 63 32 in
+  let value = Value.cast (Type.from_repr Repr.Word32 |> List.hd) hword32 in
+  state |> State.update ~value
+
+let float64_sub lval rval state =
+  let value = Value.subf lval rval in
+  state |> State.update ~value
+
+let int32_add lval rval state =
+  let value = Value.Int32.add lval rval in
+  state |> State.update ~value
 
 (* assertion:
- * value = ite well-defined FloatAbs(pval) UB *)
-let float64_abs vid pval =
-  let value = Value.init vid in
-  let wd_value = Value.absf pval in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
-
-(* assertion:
- * value = ite well-defined pval[0:32] UB *)
-let float64_extract_high_word32 vid pval =
-  let value = Value.init vid in
-  let wd_value =
-    let hword32 = pval |> Value.data_of |> BitVec.extract 63 32 in
-    Value.cast (Type.from_repr Repr.Word32 |> List.hd) hword32
+ * value = ((lval + rval) mod 2**32) :: (lval + rval > smi_max) *)
+let int32_add_with_overflow lval rval state =
+  let added = Value.Int32.add lval rval in
+  let res = Value.andi added Constants.int32_mask in
+  let ovf =
+    Bool.ite (Value.ugti added Constants.int32_mask) Value.tr Value.fl
   in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+  let value = Composed.from_values [ res; ovf ] in
+  state |> State.update ~value
 
-(* assertion:
- * value = ite well-defined (lval-rval) UB *)
-let float64_sub vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Value.subf lval rval in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let int32_mul lval rval state =
+  let value = Value.Int32.mul lval rval in
+  state |> State.update ~value
 
-(* assertion:
- * value = ite well-defined ((lval+rval) mod 2**32) UB *)
-let int32_add vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Value.Int32.add lval rval in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let int32_sub lval rval state =
+  let value = Value.andi (Value.sub lval rval) Constants.smi_mask in
+  state |> State.update ~value
 
-(* assertion:
- * value = ite well-defined ((lval+rval) mod 2**32)::(lval+rval > smi_max) UB *)
-let int32_add_with_overflow vid lval rval =
-  let value = Composed.init vid 2 in
-  let wd_value =
-    let added = Value.Int32.add lval rval in
-    let res = Value.andi added Constants.int32_mask in
-    let ovf =
-      Bool.ite (Value.ugti added Constants.int32_mask) Value.tr Value.fl
-    in
-    Composed.from_values [ res; ovf ]
-  in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let int64_add lval rval state =
+  let value = Value.add lval rval in
+  state |> State.update ~value
 
-(* assertion:
- *  value = ite well-defined (lval < rval) UB *)
-let int32_mul vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Value.Int32.mul lval rval in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let int64_sub lval rval state =
+  let value = Value.sub lval rval in
+  state |> State.update ~value
 
-(* assertion:
- * value = ite well-defined ((lval-rval) mod 2**32) UB *)
-let int32_sub vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Value.andi (Value.sub lval rval) Constants.smi_mask in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
-
-(* assertion:
- * value = ite well-defined ((lval+rval) mod 2**64) UB *)
-let int64_add vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Value.add lval rval in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
-
-(* assertion:
- * value = ite well-defined (lval-rval) UB *)
-let int64_sub vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Value.sub lval rval in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
-
-(* assertion:
- * value = ite well-defined (Round(lval, rtz)) undefined *)
-let round_float64_to_int32 vid pval =
-  let value = Value.init vid in
-  let wd_value = pval |> Float64.to_int32 in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let round_float64_to_int32 pval state =
+  let value = Float64.to_int32 pval in
+  state |> State.update ~value
 
 (* well-defined conditions:
- *  (hint = "ShiftOutZero" /\ cnt = (rval mod 32) -> lval[-cnt:] = 0)
+ * (hint = "ShiftOutZero") ^ (cnt = (rval mod 32)) -> lval[-cnt:] = 0
  * assertion:
- *  value = ite well-defined (lval >> ((rval mod 32)) UB
- *)
-let word32_sar vid hint lval rval =
-  let value = Value.init vid in
+ * value = ite well-defined (lval >> (rval mod 32)) UB *)
+let word32_sar hint lval rval =
   let cnt = Value.modi rval 32 in
-  print_endline hint;
+  let shift_out = Value.mask lval cnt in
+  let hint_is_shift_out_zero = String.equal hint "ShiftOutZeros" in
   let wd_cond =
-    let hint_is_shift_out_zero = String.equal hint "ShfitOutZeros" in
-    if hint_is_shift_out_zero then
-      let shift_out = Value.mask lval cnt in
-      Value.weak_eq shift_out Value.zero
+    if hint_is_shift_out_zero then Value.weak_eq shift_out Value.zero
     else Bool.tr
   in
-  let wd_value = Value.ashr lval cnt in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.not wd_cond, Bool.fl)
+  let value = Value.ashr lval cnt in
+  let ub = Bool.not wd_cond in
+  state |> State.update ~value ~ub
 
-(* assertion:
- * value = ite well-defined (lval << rval) UB *)
-let word32_shl vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Value.shl lval rval in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let word32_shl lval rval state =
+  let value = Value.shl lval rval in
+  state |> State.update ~value
 
-(* assertion:
- * value = ite well-defined (lval >> rval) UB *)
-let word32_shr vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Value.lshr lval rval in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let word32_shr lval rval state =
+  let value = Value.lshr lval rval in
+  state |> State.update ~value
 
-(* assertion:
- * value = ite well-defined (lval xor rval) UB *)
-let word32_xor vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Value.xor lval rval in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let word32_xor lval rval state =
+  let value = Value.xor lval rval in
+  state |> State.update ~value
 
-(* assertion:
- * value = ite well-defined (lval << rval) UB *)
-let word64_shl vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Value.shl lval rval in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let word64_shl lval rval state =
+  let value = Value.shl lval rval in
+  state |> State.update ~value
 
 (* machine: logic *)
-(* assertion:
- * value = ite well-defined (lval & rval) UB *)
-let word32_and vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Value.and_ lval rval in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let word32_and lval rval state =
+  let value = Value.and_ lval rval in
+  state |> State.update ~value
 
-(* assertion:
- * value = ite well-defined (lval | rval) UB *)
-let word32_or vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Value.or_ lval rval in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let word32_or lval rval state =
+  let value = Value.or_ lval rval in
+  state |> State.update ~value
 
 (* machine: comparison *)
-(* assertion:
- *  value = ite well-defined (lval = rval) UB *)
-let float64_equal vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Bool.ite (Float64.eq lval rval) Value.tr Value.fl in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let float64_equal lval rval state =
+  let value = Bool.ite (Float64.eq lval rval) Value.tr Value.fl in
+  state |> State.update ~value
 
-(* assertion:
- *  value = ite well-defined (lval < rval) UB *)
-let float64_less_than vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Bool.ite (Float64.lt lval rval) Value.tr Value.fl in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let float64_less_than lval rval state =
+  let value = Bool.ite (Float64.lt lval rval) Value.tr Value.fl in
+  state |> State.update ~value
 
-(* assertion:
- *  value = ite well-defined (lval <= rval) UB *)
-let float64_less_than_or_equal vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Bool.ite (Float64.le lval rval) Value.tr Value.fl in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let float64_less_than_or_equal lval rval state =
+  let value = Bool.ite (Float64.le lval rval) Value.tr Value.fl in
+  state |> State.update ~value
 
-(* assertion:
- *  value = ite well-defined (lval < rval) UB *)
-let int32_less_than vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Bool.ite (Value.Int32.lt lval rval) Value.tr Value.fl in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let int32_less_than lval rval state =
+  let value = Bool.ite (Value.Int32.lt lval rval) Value.tr Value.fl in
+  state |> State.update ~value
 
-(* assertion:
- *  value = ite well-defined (lval < rval) UB *)
-let int64_less_than vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Bool.ite (Value.Int64.lt lval rval) Value.tr Value.fl in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let int64_less_than lval rval state =
+  let value = Bool.ite (Value.Int64.lt lval rval) Value.tr Value.fl in
+  state |> State.update ~value
 
-(* assertion:
- *  value = ite well-defined (lval = rval) UB *)
-let word32_equal vid lval rval =
-  let value = Value.init vid in
-  let wd_value =
+let word32_equal lval rval state =
+  let value =
     Bool.ite (Value.weak_eq ~repr:Repr.Word32 lval rval) Value.tr Value.fl
   in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+  state |> State.update ~value
 
-(* assertion:
- *  value = ite well-defined (lval = rval) UB *)
-let word64_equal vid lval rval =
-  let value = Value.init vid in
-  let wd_value =
+let word64_equal lval rval state =
+  let value =
     Bool.ite (Value.weak_eq ~repr:Repr.Word64 lval rval) Value.tr Value.fl
   in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+  state |> State.update ~value
 
-(* assertion:
- * value = ite well-defined (lval < rval) UB *)
-let uint32_less_than vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Bool.ite (Value.ult lval rval) Value.tr Value.fl in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let uint32_less_than lval rval state =
+  let value = Bool.ite (Value.ult lval rval) Value.tr Value.fl in
+  state |> State.update ~value
 
-(* assertion:
- * value = ite well-defined (lval <= rval) UB *)
-let uint32_less_than_or_equal vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Bool.ite (Value.ule lval rval) Value.tr Value.fl in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let uint32_less_than_or_equal lval rval state =
+  let value = Bool.ite (Value.ule lval rval) Value.tr Value.fl in
+  state |> State.update ~value
 
-(* assertion:
- * value = ite well-defined (lval < rval) UB *)
-let uint64_less_than vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Bool.ite (Value.ult lval rval) Value.tr Value.fl in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let uint64_less_than lval rval state =
+  let value = Bool.ite (Value.ult lval rval) Value.tr Value.fl in
+  state |> State.update ~value
 
-(* assertion:
- * value = ite well-defined (lval <= rval) UB *)
-let uint64_less_than_or_equal vid lval rval =
-  let value = Value.init vid in
-  let wd_value = Bool.ite (Value.ule lval rval) Value.tr Value.fl in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let uint64_less_than_or_equal lval rval state =
+  let value = Bool.ite (Value.ule lval rval) Value.tr Value.fl in
+  state |> State.update ~value
 
 (* machine: memory *)
 (* well-defined condition:
@@ -263,7 +148,7 @@ let uint64_less_than_or_equal vid lval rval =
  *   (IsTaggedPointer(ptr) /\ CanAccess(ptr, pos, repr))
  * assertion:
  *   mem = ite well-defined Store(ptr, pos, repr, mem) mem *)
-let store ptr pos repr value mem =
+let store ptr pos repr value mem state =
   (* ptr must be pointer type & well-defined *)
   let wd_cond =
     (* ptr must be a pointer or tagged pointer *)
@@ -283,15 +168,14 @@ let store ptr pos repr value mem =
       (ptr |> TaggedPointer.to_raw_pointer)
       store_size wd_cond value !mem;
 
-  (Value.empty, Control.empty, Bool.tr, Bool.fl, Bool.fl)
+  state
 
 (* well-defined condition:
  *   IsPointer(ptr) \/
  *   (IsTaggedPointer(ptr) /\ CanAccess(ptr, pos, repr))
  * assertion:
  *   value = (Mem[pos+size]) *)
-let load vid ptr pos repr mem =
-  let value = Value.init vid in
+let load ptr pos repr mem state =
   let _wd_cond =
     (* ptr must be a pointer or tagged pointer *)
     let ptr_is_pointer = Value.has_type Type.pointer ptr in
@@ -308,106 +192,62 @@ let load vid ptr pos repr mem =
      e.g. Repr.Word8-> [Type.int8; Type.uint8]
      In this case, we pick the head of the type candidates.*)
   let ty = Type.from_repr repr |> List.hd in
-  let wd_value =
+  let value =
     Memory.load_as
       (TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer)
       repr mem
     |> Value.zero_extend_data |> Value.entype ty
   in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+  state |> State.update ~value
 
 (* machine: type-conversion *)
-(* assertion:
- * value = ite well-defined int32(v) UB *)
-let bitcast_float32_to_int32 vid v =
-  let value = Value.init vid in
-  let wd_value = v |> Value.cast Type.int32 in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let bitcast_float32_to_int32 v state =
+  let value = v |> Value.cast Type.int32 in
+  state |> State.update ~value
 
-(* assertion:
- * value = ite well-defined int64(v) UB *)
-let bitcast_float64_to_int64 vid v =
-  let value = Value.init vid in
-  let wd_value = v |> Value.cast Type.int64 in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let bitcast_float64_to_int64 v state =
+  let value = v |> Value.cast Type.int64 in
+  state |> State.update ~value
 
-(* assertion:
- * value = ite well-defined word(v) UB *)
-let bitcast_tagged_to_word vid v =
-  let value = Value.init vid in
+let bitcast_tagged_to_word v state =
   let ty = Type.from_repr Repr.Word64 |> List.hd in
-  let assertion = Value.eq value (v |> Value.cast ty) in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+  let value = v |> Value.cast ty in
+  state |> State.update ~value
 
-(* assertion:
- *  value = ite well-defined word64(v) UB *)
-let bitcast_word32_to_word64 vid v =
-  let value = Value.init vid in
+let bitcast_word32_to_word64 v state =
   let ty = Type.from_repr Repr.Word64 |> List.hd in
-  let assertion = Value.eq value (v |> Value.cast ty) in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+  let value = v |> Value.cast ty in
+  state |> State.update ~value
 
-(* assertion:
- * value = ite well-defined tagged(v) UB *)
-let bitcast_word_to_tagged vid v =
-  let value = Value.init vid in
+let bitcast_word_to_tagged v state =
   let ty = Type.from_repr Repr.Tagged |> List.hd in
-  let assertion = Value.eq value (v |> Value.cast ty) in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+  let value = v |> Value.cast ty in
+  state |> State.update ~value
 
-(* assertion:
- *  value = ite well-defined int64(v) UB *)
-let change_float64_to_int64 vid pval =
-  let value = Value.init vid in
-  let wd_value = pval |> Float64.to_int64 in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let change_float64_to_int64 pval state =
+  let value = pval |> Float64.to_int64 in
+  state |> State.update ~value
 
-(* assertion:
- *  value = Float64(v) *)
-let change_int32_to_float64 vid pval =
-  let value = Value.init vid in
-  let wd_value = pval |> Value.Int32.to_float64 in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let change_int32_to_float64 pval state =
+  let value = pval |> Value.Int32.to_float64 in
+  state |> State.update ~value
 
-(* assertion:
- *  value = Int64(v) *)
-let change_int32_to_int64 vid pval =
-  let value = Value.init vid in
-  let wd_value = pval |> Value.Int32.to_int64 in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let change_int32_to_int64 pval state =
+  let value = pval |> Value.Int32.to_int64 in
+  state |> State.update ~value
 
-(* assertion:
- *  value = Float64(v) *)
-let change_int64_to_float64 vid pval =
-  let value = Value.init vid in
-  let wd_value = pval |> Value.int64_to_float64 in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let change_int64_to_float64 pval state =
+  let value = pval |> Value.int64_to_float64 in
+  state |> State.update ~value
 
-(* assertion:
- *  value = ite well-defined float64(v) UB *)
-let change_uint32_to_float64 vid pval =
-  let value = Value.init vid in
-  let wd_value = pval |> Value.cast Type.float64 in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let change_uint32_to_float64 pval state =
+  let value = pval |> Value.cast Type.float64 in
+  state |> State.update ~value
 
-(* assertion:
- *  value = ite well-defined uint64(v) UB *)
-let change_uint32_to_uint64 vid pval =
-  let value = Value.init vid in
-  let wd_value = pval |> Value.cast Type.uint64 in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let change_uint32_to_uint64 pval state =
+  let value = pval |> Value.cast Type.uint64 in
+  state |> State.update ~value
 
-let truncate_int64_to_int32 vid pval =
-  let value = Value.init vid in
-  let wd_value = pval |> Value.Int64.to_int32 in
-  let assertion = Value.eq value wd_value in
-  (value, Control.empty, assertion, Bool.fl, Bool.fl)
+let truncate_int64_to_int32 pval state =
+  let value = pval |> Value.Int64.to_int32 in
+  state |> State.update ~value
