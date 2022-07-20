@@ -19,13 +19,16 @@ let tag base_is_tagged =
   | "untagged base" -> 0
   | _ -> failwith (Printf.sprintf "invalid input: %s" base_is_tagged)
 
-let encode program state =
-  let pc = State.pc state in
-  let cf = State.control_file state in
-  let rf = State.register_file state in
-  let next_bid = State.next_bid state in
-  let mem = State.memory state in
-  let params = State.params state in
+let encode program
+    ({
+       State.pc;
+       control_file = cf;
+       register_file = rf;
+       memory = mem;
+       params;
+       next_bid;
+       _;
+     } as state) =
   let nop state = state in
 
   let _, opcode, operands = IR.instr_of pc program in
