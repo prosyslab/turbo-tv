@@ -535,7 +535,7 @@ let encode program state =
   | BitcastFloat32ToInt32 ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
-      bitcast_float64_to_int64 pval
+      bitcast_float32_to_int32 pval
   | BitcastFloat64ToInt64 ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
