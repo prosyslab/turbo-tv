@@ -697,7 +697,24 @@ let execute stage program nparams =
 let check_ub_semantic nparams program =
   let state = execute "test" program nparams in
   let ub = State.ub state in
-  let precond = Bool.not (State.deopt state) in
+  let mem = State.memory state in
+  (* params are tagged /\ not deopt *)
+  let precond =
+    let params = State.params state in
+    let params_are_smi_or_heapnumber =
+      Bool.ors
+        [
+          params |> Value.have_type Type.tagged_signed;
+          Bool.ands
+            [
+              params |> Value.have_type Type.tagged_pointer;
+              params |> Objects.are_heap_nubmer mem;
+            ];
+        ]
+    in
+
+    Bool.ands [ params_are_smi_or_heapnumber; Bool.not (State.deopt state) ]
+  in
   let assertion = Bool.ands [ State.assertion state; precond; ub ] in
   let status = Solver.check validator assertion in
 
@@ -717,9 +734,28 @@ let run nparams src_program tgt_program =
   let src_state = execute "before" src_program nparams in
   let tgt_state = execute "after" tgt_program nparams in
 
-  let src_deopt = State.deopt src_state in
-  let tgt_deopt = State.deopt tgt_state in
-  let deopt = Bool.ors [ src_deopt; tgt_deopt ] in
+  (* params are tagged /\ not deopt *)
+  let precond =
+    let params = State.params src_state in
+    let mem = State.memory src_state in
+    let params_are_smi_or_heapnumber =
+      Bool.ors
+        [
+          params |> Value.have_type Type.tagged_signed;
+          Bool.ands
+            [
+              params |> Value.have_type Type.tagged_pointer;
+              params |> Objects.are_heap_nubmer mem;
+            ];
+        ]
+    in
+    let no_deopt =
+      let src_deopt = State.deopt src_state in
+      let tgt_deopt = State.deopt tgt_state in
+      Bool.not (Bool.ors [ src_deopt; tgt_deopt ])
+    in
+    Bool.ands [ params_are_smi_or_heapnumber; no_deopt ]
+  in
 
   (* assume return value is either smi or heap number. *)
   let retval_is_same =
@@ -743,7 +779,7 @@ let run nparams src_program tgt_program =
       [
         State.assertion src_state;
         State.assertion tgt_state;
-        Bool.not deopt;
+        precond;
         Bool.not retval_is_same;
       ]
   in

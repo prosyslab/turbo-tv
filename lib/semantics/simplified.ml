@@ -9,7 +9,7 @@ let number_abs nptr next_bid mem state =
       (Bool.ands
          [
            nptr |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number nptr mem;
+           nptr |> Objects.is_heap_number mem;
          ])
   in
   (* https://tc39.es/ecma262/#sec-math.abs *)
@@ -38,8 +38,8 @@ let number_add lval rval next_bid mem state =
          [
            lval |> Value.has_type Type.tagged_pointer;
            rval |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number lval mem;
-           Objects.is_heap_number rval mem;
+           lval |> Objects.is_heap_number mem;
+           rval |> Objects.is_heap_number mem;
          ])
   in
   (* https://tc39.es/ecma262/#sec-numeric-types-number-add *)
@@ -87,7 +87,7 @@ let number_expm1 nptr next_bid mem state =
       (Bool.ands
          [
            nptr |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number nptr mem;
+           nptr |> Objects.is_heap_number mem;
          ])
   in
   (* https://tc39.es/ecma262/#sec-math.expm1 *)
@@ -123,8 +123,8 @@ let number_max lval rval next_bid mem state =
          [
            lval |> Value.has_type Type.tagged_pointer;
            rval |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number lval mem;
-           Objects.is_heap_number rval mem;
+           lval |> Objects.is_heap_number mem;
+           rval |> Objects.is_heap_number mem;
          ])
   in
   (* https://tc39.es/ecma262/#sec-math.max *)
@@ -159,8 +159,8 @@ let number_min lval rval next_bid mem state =
          [
            lval |> Value.has_type Type.tagged_pointer;
            rval |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number lval mem;
-           Objects.is_heap_number rval mem;
+           lval |> Objects.is_heap_number mem;
+           rval |> Objects.is_heap_number mem;
          ])
   in
   (* https://tc39.es/ecma262/#sec-math.min *)
@@ -195,8 +195,8 @@ let number_multiply lval rval next_bid mem state =
          [
            lval |> Value.has_type Type.tagged_pointer;
            rval |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number lval mem;
-           Objects.is_heap_number rval mem;
+           lval |> Objects.is_heap_number mem;
+           rval |> Objects.is_heap_number mem;
          ])
   in
   (* https://tc39.es/ecma262/#sec-math.multiply *)
@@ -272,7 +272,7 @@ let speculative_safe_integer_add lval rval next_bid mem state =
           Bool.ands
             [
               value |> Value.has_type Type.tagged_pointer;
-              Objects.is_heap_number value mem;
+              value |> Objects.is_heap_number mem;
               HeapNumber.is_safe_integer (HeapNumber.load value mem);
             ];
         ]
@@ -312,8 +312,8 @@ let speculative_safe_integer_subtract lval rval next_bid mem state =
          [
            lval |> Value.has_type Type.tagged_pointer;
            rval |> Value.has_type Type.tagged_pointer;
-           Objects.is_heap_number lval mem;
-           Objects.is_heap_number rval mem;
+           lval |> Objects.is_heap_number mem;
+           rval |> Objects.is_heap_number mem;
            HeapNumber.is_safe_integer lnum;
            HeapNumber.is_safe_integer rnum;
          ])
@@ -550,7 +550,7 @@ let checked_tagged_signed_to_int32 pval state =
 let checked_tagged_to_float64 hint pval mem state =
   let is_tagged_signed = Value.has_type Type.tagged_signed pval in
   let is_tagged_pointer = Value.has_type Type.tagged_pointer pval in
-  let is_heap_number = Objects.is_heap_number pval mem in
+  let is_heap_number = pval |> Objects.is_heap_number mem in
   let is_boolean = Objects.is_boolean pval mem in
   let map_check =
     match hint with
@@ -575,7 +575,7 @@ let number_to_int32 pval next_bid mem state =
     Bool.ands
       [
         pval |> Value.has_type Type.tagged_pointer;
-        Objects.is_heap_number pval mem;
+        pval |> Objects.is_heap_number mem;
       ]
   in
   (* https://tc39.es/ecma262/#sec-toint32 *)
@@ -597,7 +597,7 @@ let speculative_to_number pval next_bid mem state =
            Bool.ands
              [
                pval |> Value.has_type Type.tagged_pointer;
-               Objects.is_heap_number pval mem;
+               pval |> Objects.is_heap_number mem;
                HeapNumber.is_safe_integer (HeapNumber.load pval mem);
              ];
          ])
@@ -620,12 +620,12 @@ let to_boolean pval mem state =
   let value =
     let number = HeapNumber.load pval mem in
     Bool.ite
-      (Value.has_type Type.tagged_signed pval)
       (* smi *)
+      (Value.has_type Type.tagged_signed pval)
       (Bool.ite (Value.TaggedSigned.is_zero pval) Value.fl Value.tr)
       (Bool.ite
-         (Objects.is_heap_number pval mem)
          (* heap number *)
+         (pval |> Objects.is_heap_number mem)
          (Bool.ite
             (Bool.ors
                [
@@ -658,7 +658,7 @@ let truncate_tagged_to_bit pval mem state =
          (Bool.ands
             [
               pval |> Value.has_type Type.tagged_pointer;
-              Objects.is_heap_number pval mem;
+              pval |> Objects.is_heap_number mem;
             ])
          (Bool.ite
             (Bool.ors

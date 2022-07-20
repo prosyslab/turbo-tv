@@ -49,7 +49,6 @@ let from_bv bv =
 let empty = from_int 0 |> cast Type.empty
 
 (* type checks *)
-(* [has_type] assumes that [t] is a not any-tagged value *)
 let rec has_type (ty : Type.t) t =
   if ty = Type.any_tagged then
     Bool.ors
@@ -57,6 +56,8 @@ let rec has_type (ty : Type.t) t =
   else if ty = Type.tagged_signed then
     Bool.ands [ BitVec.eqb (ty_of t) ty; BitVec.eqi (BitVec.andi t 1) 0 ]
   else BitVec.eqb (ty_of t) ty
+
+let have_type t ts = Bool.ands (List.map (has_type t) ts)
 
 let is_signed_integer t =
   Bool.ors (List.map (fun ty -> has_type ty t) Type.int_types)

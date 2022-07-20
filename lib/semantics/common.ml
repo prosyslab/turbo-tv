@@ -143,24 +143,6 @@ let end_ retvals _retmems retctrls state =
   state |> State.update ~value ~control ~final:true
 
 let parameter param state =
-  (* assume parameter is tagged signed or heap number
-     [TODO] allow parameter to point random address after implement the other object types
-  *)
-  (* let assertion =
-       Bool.ands
-         [
-           Value.eq value param;
-           Bool.ors
-             [
-               Value.has_type Type.tagged_signed param;
-               Bool.ands
-                 [
-                   Value.has_type Type.tagged_pointer param;
-                   Objects.is_heap_number param mem;
-                 ];
-             ];
-         ]
-     in *)
   let value = param in
   state |> State.update ~value
 

@@ -105,23 +105,26 @@ module HeapNumber = struct
     Format.sprintf "HeapNumber(%s)" f_str
 end
 
-let map_of ptr mem = Memory.load (ptr |> TaggedPointer.to_raw_pointer) 4 mem
+let map_of mem ptr = Memory.load (ptr |> TaggedPointer.to_raw_pointer) 4 mem
 
-let has_map_of map ptr mem = Value.eq (map_of ptr mem) map
+let has_map_of map mem ptr = Value.eq (map_of ptr mem) map
 
-let is_big_int ptr mem = Value.eq (map_of ptr mem) Objmap.big_int_map
+let is_big_int mem ptr = has_map_of ptr Objmap.big_int_map mem
 
-let is_boolean ptr mem = Value.eq (map_of ptr mem) Objmap.boolean_map
+let is_boolean mem ptr = has_map_of ptr Objmap.boolean_map mem
 
-let is_fixed_array ptr mem = Value.eq (map_of ptr mem) Objmap.fixed_array_map
+let is_fixed_array mem ptr = has_map_of ptr Objmap.fixed_array_map mem
 
-let is_fixed_double_array ptr mem =
-  Value.eq (map_of ptr mem) Objmap.fixed_double_array_map
+let is_fixed_double_array mem ptr =
+  has_map_of ptr Objmap.fixed_double_array_map mem
 
-let is_weak_fixed_array ptr mem =
-  Value.eq (map_of ptr mem) Objmap.weak_fixed_array_map
+let is_weak_fixed_array mem ptr = has_map_of ptr Objmap.weak_fixed_array_map mem
 
-let is_heap_number ptr mem = has_map_of Objmap.heap_number_map ptr mem
+let is_heap_number mem ptr = has_map_of Objmap.heap_number_map ptr mem
+
+let are_heap_nubmer mem ptrs =
+  Bool.ands
+    (List.map (fun ptr -> has_map_of Objmap.heap_number_map ptr mem) ptrs)
 
 let to_string model mem ptr =
   let map = map_of ptr mem in
