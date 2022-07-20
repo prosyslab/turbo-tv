@@ -83,6 +83,22 @@ let word32_xor lval rval state =
   let value = Value.xor lval rval in
   state |> State.update ~value
 
+(* well-defined conditions:
+ * (hint = "ShiftOutZero") ^ (cnt = (rval mod 64)) -> lval[-cnt:] = 0
+ * assertion:
+ * value = ite well-defined (lval >> (rval mod 64)) UB *)
+let word64_sar hint lval rval state =
+  let cnt = Value.modi rval 64 in
+  let shift_out = Value.mask lval cnt in
+  let hint_is_shift_out_zero = String.equal hint "ShiftOutZeros" in
+  let wd_cond =
+    if hint_is_shift_out_zero then Value.weak_eq shift_out Value.zero
+    else Bool.tr
+  in
+  let value = Value.ashr lval cnt in
+  let ub = Bool.not wd_cond in
+  state |> State.update ~value ~ub
+
 let word64_shl lval rval state =
   let value = Value.shl lval rval in
   state |> State.update ~value

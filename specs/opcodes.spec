@@ -859,7 +859,7 @@ Word64Rol,
 Word64RolLowerable,
 Word64Ror,
 Word64RorLowerable,
-Word64Sar,
+Word64Sar,b1,v1,v2
 Word64Select,
 Word64Shl,v1,v2
 Word64Shr,

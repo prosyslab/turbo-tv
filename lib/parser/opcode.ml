@@ -794,7 +794,6 @@ type t =
   | Word64RolLowerable
   | Word64Ror
   | Word64RorLowerable
-  | Word64Sar
   | Word64Select
   | Word64Shr
   | Word64Xor
@@ -926,6 +925,7 @@ type t =
   | Unreachable
   (* b1v1v2 *)
   | Word32Sar
+  | Word64Sar
   | Empty
 [@@deriving equal]
 
@@ -1125,8 +1125,8 @@ let get_kind opcode =
   | Word64AtomicOr | Word64AtomicStore | Word64AtomicSub | Word64AtomicXor
   | Word64Clz | Word64ClzLowerable | Word64Ctz | Word64CtzLowerable | Word64Or
   | Word64Popcnt | Word64ReverseBits | Word64ReverseBytes | Word64Rol
-  | Word64RolLowerable | Word64Ror | Word64RorLowerable | Word64Sar
-  | Word64Select | Word64Shr | Word64Xor ->
+  | Word64RolLowerable | Word64Ror | Word64RorLowerable | Word64Select
+  | Word64Shr | Word64Xor ->
       UNIMPL
   | Allocate | CheckedInt64ToInt32 -> V1E1C1
   | BitcastFloat32ToInt32 | BitcastFloat64ToInt64 | BitcastTaggedToWord
@@ -1173,7 +1173,7 @@ let get_kind opcode =
   | StoreField -> V1B2B4V2
   | Throw -> C1E1
   | Unreachable -> E1C1
-  | Word32Sar -> B1V1V2
+  | Word32Sar | Word64Sar -> B1V1V2
   | Empty -> Empty
 
 let split_kind kind =
@@ -1972,7 +1972,6 @@ let of_str str =
   | "Word64RolLowerable" -> Word64RolLowerable
   | "Word64Ror" -> Word64Ror
   | "Word64RorLowerable" -> Word64RorLowerable
-  | "Word64Sar" -> Word64Sar
   | "Word64Select" -> Word64Select
   | "Word64Shr" -> Word64Shr
   | "Word64Xor" -> Word64Xor
@@ -2081,6 +2080,7 @@ let of_str str =
   | "Throw" -> Throw
   | "Unreachable" -> Unreachable
   | "Word32Sar" -> Word32Sar
+  | "Word64Sar" -> Word64Sar
   | _ -> raise Invalid_opcode
 
 let to_str opcode =
@@ -2842,7 +2842,6 @@ let to_str opcode =
   | Word64RolLowerable -> "Word64RolLowerable"
   | Word64Ror -> "Word64Ror"
   | Word64RorLowerable -> "Word64RorLowerable"
-  | Word64Sar -> "Word64Sar"
   | Word64Select -> "Word64Select"
   | Word64Shr -> "Word64Shr"
   | Word64Xor -> "Word64Xor"
@@ -2951,4 +2950,5 @@ let to_str opcode =
   | Throw -> "Throw"
   | Unreachable -> "Unreachable"
   | Word32Sar -> "Word32Sar"
+  | Word64Sar -> "Word64Sar"
   | Empty -> failwith "Unreachable"
