@@ -29,6 +29,13 @@ let encode program state =
   let nop state = state in
 
   let _, opcode, operands = IR.instr_of pc program in
+  let encode_binary op =
+    let lpid = Operands.id_of_nth operands 0 in
+    let rpid = Operands.id_of_nth operands 1 in
+    let lval = RegisterFile.find lpid rf in
+    let rval = RegisterFile.find rpid rf in
+    op lval rval next_bid mem
+  in
   state
   |>
   match opcode with
@@ -153,12 +160,7 @@ let encode program state =
   (* JS: comparision *)
   | JSStackCheck -> js_stack_check
   (* simplified: numeric *)
-  | NumberAdd ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      number_add lval rval next_bid mem
+  | NumberAdd -> encode_binary number_add
   | NumberAbs ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
