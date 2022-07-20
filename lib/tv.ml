@@ -29,13 +29,28 @@ let encode program state =
   let nop state = state in
 
   let _, opcode, operands = IR.instr_of pc program in
-  let encode_binary op =
+  let encode_machine_unary op =
+    let pid = Operands.id_of_nth operands 0 in
+    let pval = RegisterFile.find pid rf in
+    op pval
+  in
+
+  let encode_machine_binary op =
     let lpid = Operands.id_of_nth operands 0 in
     let rpid = Operands.id_of_nth operands 1 in
     let lval = RegisterFile.find lpid rf in
     let rval = RegisterFile.find rpid rf in
-    op lval rval next_bid mem
+    op lval rval
   in
+  let encode_machine_binary_with_hint op =
+    let hint = Operands.const_of_nth operands 0 in
+    let lpid = Operands.id_of_nth operands 1 in
+    let rpid = Operands.id_of_nth operands 2 in
+    let lval = RegisterFile.find lpid rf in
+    let rval = RegisterFile.find rpid rf in
+    op hint lval rval
+  in
+
   state
   |>
   match opcode with
@@ -155,7 +170,12 @@ let encode program state =
   (* JS: comparision *)
   | JSStackCheck -> js_stack_check
   (* simplified: numeric *)
-  | NumberAdd -> encode_binary number_add
+  | NumberAdd ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      number_add lval rval next_bid mem
   | NumberAbs ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -351,168 +371,36 @@ let encode program state =
       let pval = RegisterFile.find pid rf in
       truncate_tagged_to_bit pval mem
   (* machine: arithmetic *)
-  | Float64Abs ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      float64_abs pval
-  | Float64ExtractHighWord32 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      float64_extract_high_word32 pval
-  | Float64Sub ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      float64_sub lval rval
-  | Int32Add ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      int32_add lval rval
-  | Int32AddWithOverflow ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      int32_add_with_overflow lval rval
-  | Int32Mul ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      int32_mul lval rval
-  | Int32Sub ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      int32_sub lval rval
-  | Int64Add ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      int64_add lval rval
-  | Int64Sub ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      int64_sub lval rval
-  | Word32Sar ->
-      let hint = Operands.const_of_nth operands 0 in
-      let lpid = Operands.id_of_nth operands 1 in
-      let rpid = Operands.id_of_nth operands 2 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      word32_sar hint lval rval
-  | Word32Shl ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      word32_shl lval rval
-  | Word32Shr ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      word32_shr lval rval
-  | Word32Xor ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      word32_xor lval rval
-  | Word64Shl ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      word64_shl lval rval
+  | Float64Abs -> encode_machine_unary float64_abs
+  | Float64ExtractHighWord32 -> encode_machine_unary float64_extract_high_word32
+  | Float64Sub -> encode_machine_binary float64_sub
+  | Int32Add -> encode_machine_binary int32_add
+  | Int32AddWithOverflow -> encode_machine_binary int32_add_with_overflow
+  | Int32Mul -> encode_machine_binary int32_mul
+  | Int32Sub -> encode_machine_binary int32_sub
+  | Int64Add -> encode_machine_binary int64_add
+  | Int64Sub -> encode_machine_binary int64_sub
+  | Word32Sar -> encode_machine_binary_with_hint word32_sar
+  | Word32Shl -> encode_machine_binary word32_shl
+  | Word32Shr -> encode_machine_binary word32_shr
+  | Word32Xor -> encode_machine_binary word32_xor
+  | Word64Shl -> encode_machine_binary word64_shl
   (* machine: logic *)
-  | Float64Equal ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      float64_equal lval rval
-  | Float64LessThan ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      float64_less_than lval rval
-  | Float64LessThanOrEqual ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      float64_less_than_or_equal lval rval
-  | Word32And ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      word32_and lval rval
-  | Word32Or ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      word32_or lval rval
+  | Float64Equal -> encode_machine_binary float64_equal
+  | Float64LessThan -> encode_machine_binary float64_less_than
+  | Float64LessThanOrEqual -> encode_machine_binary float64_less_than_or_equal
+  | Word32And -> encode_machine_binary word32_and
+  | Word32Or -> encode_machine_binary word32_or
   (* machine: comparison *)
   | StackPointerGreaterThan -> stack_pointer_greater_than
-  | Int32LessThan ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      int32_less_than lval rval
-  | Int64LessThan ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      int64_less_than lval rval
-  | Uint32LessThan ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      uint32_less_than lval rval
-  | Uint32LessThanOrEqual ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      uint32_less_than_or_equal lval rval
-  | Uint64LessThan ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      uint64_less_than lval rval
-  | Uint64LessThanOrEqual ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      uint64_less_than_or_equal lval rval
-  | Word32Equal ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      word32_equal lval rval
-  | Word64Equal ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      word64_equal lval rval
+  | Int32LessThan -> encode_machine_binary int32_less_than
+  | Int64LessThan -> encode_machine_binary int64_less_than
+  | Uint32LessThan -> encode_machine_binary uint32_less_than
+  | Uint32LessThanOrEqual -> encode_machine_binary uint32_less_than_or_equal
+  | Uint64LessThan -> encode_machine_binary uint64_less_than
+  | Uint64LessThanOrEqual -> encode_machine_binary uint64_less_than_or_equal
+  | Word32Equal -> encode_machine_binary word32_equal
+  | Word64Equal -> encode_machine_binary word64_equal
   (* machine: memory *)
   | Store ->
       let ptr_id = Operands.id_of_nth operands 0 in
@@ -534,59 +422,20 @@ let encode program state =
       let repr = Operands.const_of_nth operands 2 |> Repr.of_rs_string in
       load ptr pos repr mem
   (* machine: bitcast *)
-  | BitcastFloat32ToInt32 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      bitcast_float32_to_int32 pval
-  | BitcastFloat64ToInt64 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      bitcast_float64_to_int64 pval
-  | BitcastTaggedToWord ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      bitcast_tagged_to_word pval
-  | BitcastWord32ToWord64 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      bitcast_word32_to_word64 pval
-  | BitcastWordToTagged ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      bitcast_word_to_tagged pval
-  | TruncateInt64ToInt32 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      truncate_int64_to_int32 pval
+  | BitcastFloat32ToInt32 -> encode_machine_unary bitcast_float32_to_int32
+  | BitcastFloat64ToInt64 -> encode_machine_unary bitcast_float64_to_int64
+  | BitcastTaggedToWord -> encode_machine_unary bitcast_tagged_to_word
+  | BitcastWord32ToWord64 -> encode_machine_unary bitcast_word32_to_word64
+  | BitcastWordToTagged -> encode_machine_unary bitcast_word_to_tagged
+  | TruncateInt64ToInt32 -> encode_machine_unary truncate_int64_to_int32
   (* machine: type-conversion *)
-  | ChangeFloat64ToInt64 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      change_float64_to_int64 pval
-  | ChangeInt32ToFloat64 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      change_int32_to_float64 pval
-  | ChangeInt32ToInt64 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      change_int32_to_int64 pval
-  | ChangeInt64ToFloat64 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      change_int64_to_float64 pval
-  | ChangeUint32ToFloat64 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      change_uint32_to_float64 pval
-  | ChangeUint32ToUint64 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      change_uint32_to_uint64 pval
-  | RoundFloat64ToInt32 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      round_float64_to_int32 pval
+  | ChangeFloat64ToInt64 -> encode_machine_unary change_float64_to_int64
+  | ChangeInt32ToFloat64 -> encode_machine_unary change_int32_to_float64
+  | ChangeInt32ToInt64 -> encode_machine_unary change_int32_to_int64
+  | ChangeInt64ToFloat64 -> encode_machine_unary change_int64_to_float64
+  | ChangeUint32ToFloat64 -> encode_machine_unary change_uint32_to_float64
+  | ChangeUint32ToUint64 -> encode_machine_unary change_uint32_to_uint64
+  | RoundFloat64ToInt32 -> encode_machine_unary round_float64_to_int32
   | Empty -> nop
   | _ -> nop
 
