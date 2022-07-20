@@ -20,7 +20,7 @@ let is_number value mem =
                 (Bool.ands
                    [
                      value |> Value.has_type Type.tagged_pointer;
-                     Objects.is_heap_number value mem;
+                     value |> Objects.is_heap_number mem;
                    ])
                 Bool.tr Bool.fl))))
 

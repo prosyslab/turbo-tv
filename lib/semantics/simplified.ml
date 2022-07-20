@@ -548,10 +548,10 @@ let checked_tagged_signed_to_int32 pval state =
   state |> State.update ~value ~deopt
 
 let checked_tagged_to_float64 hint pval mem state =
-  let is_tagged_signed = Value.has_type Type.tagged_signed pval in
-  let is_tagged_pointer = Value.has_type Type.tagged_pointer pval in
+  let is_tagged_signed = pval |> Value.has_type Type.tagged_signed in
+  let is_tagged_pointer = pval |> Value.has_type Type.tagged_pointer in
   let is_heap_number = pval |> Objects.is_heap_number mem in
-  let is_boolean = Objects.is_boolean pval mem in
+  let is_boolean = pval |> Objects.is_boolean mem in
   let map_check =
     match hint with
     | "Number" -> is_heap_number

@@ -26,7 +26,7 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                 let number = HeapNumber.load value mem in
                 Bool.ands
                   [
-                    Objects.is_heap_number value mem;
+                    value |> Objects.is_heap_number mem;
                     Float.gef (Float.from_ieee_bv number.value) lb;
                     Float.lef (Float.from_ieee_bv number.value) ub;
                   ]
@@ -50,8 +50,8 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
         (* heap number *)
         (Bool.ands
            [
-             Value.has_type Type.tagged_pointer value;
-             Objects.is_heap_number value mem;
+             value |> Value.has_type Type.tagged_pointer;
+             value |> Objects.is_heap_number mem;
            ])
         (Bool.ands [ BitVec.gef number.value lb; BitVec.lef number.value ub ])
         (* float or integer *)
