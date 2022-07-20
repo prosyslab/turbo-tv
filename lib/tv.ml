@@ -145,6 +145,11 @@ let encode program state =
       let retvals = RegisterFile.find_all (operands |> Operands.id_of_all) rf in
       let retctrls = ControlFile.find_all (operands |> Operands.id_of_all) cf in
       end_ retvals () retctrls
+  (* common: region *)
+  | FinishRegion ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      finish_region pval
   (* JS: comparision *)
   | JSStackCheck -> js_stack_check
   (* simplified: numeric *)

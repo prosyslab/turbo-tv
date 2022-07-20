@@ -151,6 +151,9 @@ let return return_value return_control state =
 
 let start state = state |> State.update ~control:Bool.tr
 
+(* common: region *)
+let finish_region pval state = state |> State.update ~value:pval
+
 (* temporary *)
 let js_stack_check = start
 
