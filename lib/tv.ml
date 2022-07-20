@@ -599,17 +599,22 @@ let run nparams src_program tgt_program =
   (* params are tagged /\ not deopt *)
   let precond =
     let params = State.params src_state in
-    let mem = State.memory src_state in
+    let mem = Memory.init "mem" in
     let params_are_smi_or_heapnumber =
-      Bool.ors
-        [
-          params |> Value.have_type Type.tagged_signed;
-          Bool.ands
+      List.mapi
+        (fun bid param ->
+          Bool.ors
             [
-              params |> Value.have_type Type.tagged_pointer;
-              params |> Objects.are_heap_nubmer mem;
-            ];
-        ]
+              param |> Value.has_type Type.tagged_signed;
+              Bool.ands
+                [
+                  param |> Value.has_type Type.tagged_pointer;
+                  param |> Objects.is_heap_number mem;
+                  BitVec.eqi (param |> TaggedPointer.bid_of) bid;
+                ];
+            ])
+        params
+      |> Bool.ands
     in
     let no_deopt =
       let src_deopt = State.deopt src_state in

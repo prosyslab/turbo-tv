@@ -43,7 +43,7 @@ let init nparams stage : t =
     stage;
     pc = 0;
     final = false;
-    next_bid = 0;
+    next_bid = nparams;
     register_file = RegisterFile.init stage RegisterFile.symbol;
     control_file = ControlFile.init stage ControlFile.symbol;
     ub_file = UBFile.init stage Ub.symbol;
