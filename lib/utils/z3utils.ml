@@ -405,6 +405,50 @@ module BitVec = struct
 
   let zero_extend len bv = BV.mk_zero_ext ctx len bv
 
+  (* ((x << 24) & 0xff000000) |
+   * ((x <<  8) & 0x00ff0000) |
+   * ((x >>  8) & 0x0000ff00) |
+   * ((x >> 24) & 0x000000ff) *)
+  let swap32 bv =
+    let len = 32 in
+    let mask1 = BitVecVal.from_int ~len 0xff000000 in
+    let mask2 = BitVecVal.from_int ~len 0x00ff0000 in
+    let mask3 = BitVecVal.from_int ~len 0x0000ff00 in
+    let mask4 = BitVecVal.from_int ~len 0x000000ff in
+    let b1 = andb (shli bv 24) mask1 in
+    let b2 = andb (shli bv 8) mask2 in
+    let b3 = andb (lshri bv 8) mask3 in
+    let b4 = andb (lshri bv 24) mask4 in
+    orb b1 b2 |> orb b3 |> orb b4
+
+  (* ((x << 56) & 0xff00000000000000) |
+   * ((x << 40) & 0x00ff000000000000) |
+   * ((x << 24) & 0x0000ff0000000000) |
+   * ((x <<  8) & 0x000000ff00000000) |
+   * ((x >>  8) & 0x00000000ff000000) |
+   * ((x >> 24) & 0x0000000000ff0000) |
+   * ((x >> 40) & 0x000000000000ff00) |
+   * ((x >> 56) & 0x00000000000000ff) *)
+  let swap64 bv =
+    let len = 64 in
+    let mask1 = BitVecVal.from_istring ~len "0xff00000000000000" in
+    let mask2 = BitVecVal.from_int ~len 0x00ff000000000000 in
+    let mask3 = BitVecVal.from_int ~len 0x0000ff0000000000 in
+    let mask4 = BitVecVal.from_int ~len 0x000000ff00000000 in
+    let mask5 = BitVecVal.from_int ~len 0x00000000ff000000 in
+    let mask6 = BitVecVal.from_int ~len 0x0000000000ff0000 in
+    let mask7 = BitVecVal.from_int ~len 0x000000000000ff00 in
+    let mask8 = BitVecVal.from_int ~len 0x00000000000000ff in
+    let b1 = andb (shli bv 56) mask1 in
+    let b2 = andb (shli bv 40) mask2 in
+    let b3 = andb (shli bv 24) mask3 in
+    let b4 = andb (shli bv 8) mask4 in
+    let b5 = andb (lshri bv 8) mask5 in
+    let b6 = andb (lshri bv 24) mask6 in
+    let b7 = andb (lshri bv 40) mask7 in
+    let b8 = andb (lshri bv 56) mask8 in
+    orb b1 b2 |> orb b3 |> orb b4 |> orb b5 |> orb b6 |> orb b7 |> orb b8
+
   (* Bi-BitVec operation *)
   let concat lbv rbv = BV.mk_concat ctx lbv rbv
 

@@ -768,7 +768,6 @@ type t =
   | Word32PairShr
   | Word32Popcnt
   | Word32ReverseBits
-  | Word32ReverseBytes
   | Word32Rol
   | Word32Ror
   | Word32Select
@@ -789,7 +788,6 @@ type t =
   | Word64Or
   | Word64Popcnt
   | Word64ReverseBits
-  | Word64ReverseBytes
   | Word64Rol
   | Word64RolLowerable
   | Word64Ror
@@ -835,6 +833,8 @@ type t =
   | ToBoolean
   | TruncateInt64ToInt32
   | TruncateTaggedToBit
+  | Word32ReverseBytes
+  | Word64ReverseBytes
   (* c1 *)
   | IfFalse
   | IfTrue
@@ -1119,14 +1119,13 @@ let get_kind opcode =
   | Word32AtomicPairStore | Word32AtomicPairSub | Word32AtomicPairXor
   | Word32AtomicStore | Word32AtomicSub | Word32AtomicXor | Word32Clz
   | Word32Ctz | Word32PairSar | Word32PairShl | Word32PairShr | Word32Popcnt
-  | Word32ReverseBits | Word32ReverseBytes | Word32Rol | Word32Ror
-  | Word32Select | Word64And | Word64AtomicAdd | Word64AtomicAnd
-  | Word64AtomicCompareExchange | Word64AtomicExchange | Word64AtomicLoad
-  | Word64AtomicOr | Word64AtomicStore | Word64AtomicSub | Word64AtomicXor
-  | Word64Clz | Word64ClzLowerable | Word64Ctz | Word64CtzLowerable | Word64Or
-  | Word64Popcnt | Word64ReverseBits | Word64ReverseBytes | Word64Rol
-  | Word64RolLowerable | Word64Ror | Word64RorLowerable | Word64Select
-  | Word64Shr | Word64Xor ->
+  | Word32ReverseBits | Word32Rol | Word32Ror | Word32Select | Word64And
+  | Word64AtomicAdd | Word64AtomicAnd | Word64AtomicCompareExchange
+  | Word64AtomicExchange | Word64AtomicLoad | Word64AtomicOr | Word64AtomicStore
+  | Word64AtomicSub | Word64AtomicXor | Word64Clz | Word64ClzLowerable
+  | Word64Ctz | Word64CtzLowerable | Word64Or | Word64Popcnt | Word64ReverseBits
+  | Word64Rol | Word64RolLowerable | Word64Ror | Word64RorLowerable
+  | Word64Select | Word64Shr | Word64Xor ->
       UNIMPL
   | Allocate | CheckedInt64ToInt32 -> V1E1C1
   | BitcastFloat32ToInt32 | BitcastFloat64ToInt64 | BitcastTaggedToWord
@@ -1139,7 +1138,7 @@ let get_kind opcode =
   | DeoptimizeIf | Float64Abs | Float64ExtractHighWord32 | NumberAbs
   | NumberExpm1 | NumberToInt32 | RoundFloat64ToInt32 | SpeculativeToNumber
   | StackPointerGreaterThan | ToBoolean | TruncateInt64ToInt32
-  | TruncateTaggedToBit ->
+  | TruncateTaggedToBit | Word32ReverseBytes | Word64ReverseBytes ->
       V1
   | IfFalse | IfTrue -> C1
   | AllocateRaw -> V1C1
@@ -1946,7 +1945,6 @@ let of_str str =
   | "Word32PairShr" -> Word32PairShr
   | "Word32Popcnt" -> Word32Popcnt
   | "Word32ReverseBits" -> Word32ReverseBits
-  | "Word32ReverseBytes" -> Word32ReverseBytes
   | "Word32Rol" -> Word32Rol
   | "Word32Ror" -> Word32Ror
   | "Word32Select" -> Word32Select
@@ -1967,7 +1965,6 @@ let of_str str =
   | "Word64Or" -> Word64Or
   | "Word64Popcnt" -> Word64Popcnt
   | "Word64ReverseBits" -> Word64ReverseBits
-  | "Word64ReverseBytes" -> Word64ReverseBytes
   | "Word64Rol" -> Word64Rol
   | "Word64RolLowerable" -> Word64RolLowerable
   | "Word64Ror" -> Word64Ror
@@ -2011,6 +2008,8 @@ let of_str str =
   | "ToBoolean" -> ToBoolean
   | "TruncateInt64ToInt32" -> TruncateInt64ToInt32
   | "TruncateTaggedToBit" -> TruncateTaggedToBit
+  | "Word32ReverseBytes" -> Word32ReverseBytes
+  | "Word64ReverseBytes" -> Word64ReverseBytes
   | "IfFalse" -> IfFalse
   | "IfTrue" -> IfTrue
   | "AllocateRaw" -> AllocateRaw
@@ -2816,7 +2815,6 @@ let to_str opcode =
   | Word32PairShr -> "Word32PairShr"
   | Word32Popcnt -> "Word32Popcnt"
   | Word32ReverseBits -> "Word32ReverseBits"
-  | Word32ReverseBytes -> "Word32ReverseBytes"
   | Word32Rol -> "Word32Rol"
   | Word32Ror -> "Word32Ror"
   | Word32Select -> "Word32Select"
@@ -2837,7 +2835,6 @@ let to_str opcode =
   | Word64Or -> "Word64Or"
   | Word64Popcnt -> "Word64Popcnt"
   | Word64ReverseBits -> "Word64ReverseBits"
-  | Word64ReverseBytes -> "Word64ReverseBytes"
   | Word64Rol -> "Word64Rol"
   | Word64RolLowerable -> "Word64RolLowerable"
   | Word64Ror -> "Word64Ror"
@@ -2881,6 +2878,8 @@ let to_str opcode =
   | ToBoolean -> "ToBoolean"
   | TruncateInt64ToInt32 -> "TruncateInt64ToInt32"
   | TruncateTaggedToBit -> "TruncateTaggedToBit"
+  | Word32ReverseBytes -> "Word32ReverseBytes"
+  | Word64ReverseBytes -> "Word64ReverseBytes"
   | IfFalse -> "IfFalse"
   | IfTrue -> "IfTrue"
   | AllocateRaw -> "AllocateRaw"

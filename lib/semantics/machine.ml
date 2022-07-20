@@ -103,6 +103,14 @@ let word64_shl lval rval state =
   let value = Value.shl lval rval in
   state |> State.update ~value
 
+let word32_reverse_bytes v state =
+  let value = v |> Value.swap32 in
+  state |> State.update ~value
+
+let word64_reverse_bytes v state =
+  let value = v |> Value.swap64 in
+  state |> State.update ~value
+
 (* machine: logic *)
 let word32_and lval rval state =
   let value = Value.and_ lval rval in

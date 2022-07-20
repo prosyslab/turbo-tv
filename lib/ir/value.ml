@@ -154,6 +154,14 @@ let mask value bitlen = mod_ value (shl (from_int 1) bitlen)
 
 let maski value bitlen = andi value (Int.shift_left 1 bitlen - 1)
 
+let swap32 value =
+  let ty = ty_of value in
+  BitVec.swap32 (data_of value) |> entype ty
+
+let swap64 value =
+  let ty = ty_of value in
+  BitVec.swap64 (data_of value) |> entype ty
+
 (* compare two values and return bool *)
 let eq lval rval = BitVec.eqb lval rval
 

@@ -394,6 +394,8 @@ let encode program
   | Word32Xor -> encode_machine_binary word32_xor
   | Word64Sar -> encode_machine_binary_with_hint word64_sar
   | Word64Shl -> encode_machine_binary word64_shl
+  | Word32ReverseBytes -> encode_machine_unary word32_reverse_bytes
+  | Word64ReverseBytes -> encode_machine_unary word64_reverse_bytes
   (* machine: logic *)
   | Float64Equal -> encode_machine_binary float64_equal
   | Float64LessThan -> encode_machine_binary float64_less_than
