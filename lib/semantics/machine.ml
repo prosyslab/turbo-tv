@@ -20,6 +20,14 @@ let float64_sub lval rval state =
   let value = Value.subf lval rval in
   state |> State.update ~value
 
+let float64_round_down pval state =
+  let value = pval |> Float64.round_down in
+  state |> State.update ~value
+
+let float64_round_up pval state =
+  let value = pval |> Float64.round_up in
+  state |> State.update ~value
+
 let int32_add lval rval state =
   let value = Value.Int32.add lval rval in
   state |> State.update ~value

@@ -411,6 +411,8 @@ let encode program
   | Float64Abs -> encode_machine_unary float64_abs
   | Float64ExtractHighWord32 -> encode_machine_unary float64_extract_high_word32
   | Float64Sub -> encode_machine_binary float64_sub
+  | Float64RoundDown -> encode_machine_unary float64_round_down
+  | Float64RoundUp -> encode_machine_unary float64_round_up
   | Int32Add -> encode_machine_binary int32_add
   | Int32AddWithOverflow -> encode_machine_binary int32_add_with_overflow
   | Int32Mul -> encode_machine_binary int32_mul
