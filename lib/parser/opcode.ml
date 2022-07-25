@@ -29,6 +29,7 @@ type kind =
   | V2C1
   | V1V2V3
   | V1V2B1V3
+  | B1B2B4V1V2V3E1C1
   | V1B2B4V2
   | C1E1
   | E1C1
@@ -90,8 +91,6 @@ type t =
   | CheckedTaggedToArrayIndex
   | CheckedTaggedToInt32
   | CheckedTaggedToInt64
-  | CheckedTaggedToTaggedPointer
-  | CheckedTaggedToTaggedSigned
   | CheckedTruncateTaggedToWord32
   | CheckedUint32Bounds
   | CheckedUint32Div
@@ -684,7 +683,6 @@ type t =
   | StateValues
   | StaticAssert
   | StoreDataViewElement
-  | StoreElement
   | StoreLane
   | StoreMessage
   | StoreSignedSmallElement
@@ -798,6 +796,8 @@ type t =
   (* v1e1c1 *)
   | Allocate
   | CheckedInt64ToInt32
+  | CheckedTaggedToTaggedPointer
+  | CheckedTaggedToTaggedSigned
   (* v1 *)
   | BitcastFloat32ToInt32
   | BitcastFloat64ToInt64
@@ -821,7 +821,6 @@ type t =
   | ChangeUint32ToUint64
   | ChangeUint64ToTagged
   | CheckedTaggedSignedToInt32
-  | DeoptimizeIf
   | Float64Abs
   | Float64ExtractHighWord32
   | NumberAbs
@@ -860,6 +859,7 @@ type t =
   (* b1v1e1c1 *)
   | CheckedTaggedToFloat64
   (* v1v2e1c1 *)
+  | DeoptimizeIf
   | DeoptimizeUnless
   (* cv *)
   | End
@@ -917,6 +917,8 @@ type t =
   | Select
   (* v1v2b1v3 *)
   | Store
+  (* b1b2b4v1v2v3e1c1 *)
+  | StoreElement
   (* v1b2b4v2 *)
   | StoreField
   (* c1e1 *)
@@ -947,7 +949,6 @@ let get_kind opcode =
   | CheckedInt32Mod | CheckedInt32Mul | CheckedInt32Sub
   | CheckedInt32ToTaggedSigned | CheckedInt64ToTaggedSigned
   | CheckedTaggedToArrayIndex | CheckedTaggedToInt32 | CheckedTaggedToInt64
-  | CheckedTaggedToTaggedPointer | CheckedTaggedToTaggedSigned
   | CheckedTruncateTaggedToWord32 | CheckedUint32Bounds | CheckedUint32Div
   | CheckedUint32Mod | CheckedUint32ToInt32 | CheckedUint32ToTaggedSigned
   | CheckedUint64Bounds | CheckedUint64ToInt32 | CheckedUint64ToTaggedSigned
@@ -1094,18 +1095,18 @@ let get_kind opcode =
   | SpeculativeNumberLessThanOrEqual | SpeculativeNumberModulus
   | SpeculativeNumberShiftLeft | SpeculativeNumberShiftRight
   | SpeculativeNumberShiftRightLogical | SpeculativeNumberSubtract | StackSlot
-  | Start | StateValues | StaticAssert | StoreDataViewElement | StoreElement
-  | StoreLane | StoreMessage | StoreSignedSmallElement | StoreToObject
-  | StoreTypedElement | StringCharCodeAt | StringCodePointAt | StringConcat
-  | StringEqual | StringFromCodePointAt | StringFromSingleCharCode
-  | StringFromSingleCodePoint | StringIndexOf | StringLength | StringLessThan
-  | StringLessThanOrEqual | StringSubstring | StringToLowerCaseIntl
-  | StringToNumber | StringToUpperCaseIntl | Switch | TaggedIndexConstant
-  | TailCall | Terminate | TransitionAndStoreElement
-  | TransitionAndStoreNonNumberElement | TransitionAndStoreNumberElement
-  | TransitionElementsKind | TrapIf | TrapUnless | TruncateBigIntToWord64
-  | TruncateFloat32ToInt32 | TruncateFloat32ToUint32 | TruncateFloat64ToFloat32
-  | TruncateFloat64ToInt64 | TruncateFloat64ToUint32 | TruncateFloat64ToWord32
+  | Start | StateValues | StaticAssert | StoreDataViewElement | StoreLane
+  | StoreMessage | StoreSignedSmallElement | StoreToObject | StoreTypedElement
+  | StringCharCodeAt | StringCodePointAt | StringConcat | StringEqual
+  | StringFromCodePointAt | StringFromSingleCharCode | StringFromSingleCodePoint
+  | StringIndexOf | StringLength | StringLessThan | StringLessThanOrEqual
+  | StringSubstring | StringToLowerCaseIntl | StringToNumber
+  | StringToUpperCaseIntl | Switch | TaggedIndexConstant | TailCall | Terminate
+  | TransitionAndStoreElement | TransitionAndStoreNonNumberElement
+  | TransitionAndStoreNumberElement | TransitionElementsKind | TrapIf
+  | TrapUnless | TruncateBigIntToWord64 | TruncateFloat32ToInt32
+  | TruncateFloat32ToUint32 | TruncateFloat64ToFloat32 | TruncateFloat64ToInt64
+  | TruncateFloat64ToUint32 | TruncateFloat64ToWord32
   | TruncateTaggedPointerToBit | TruncateTaggedToFloat64
   | TruncateTaggedToWord32 | TryTruncateFloat32ToInt64
   | TryTruncateFloat32ToUint64 | TryTruncateFloat64ToInt64
@@ -1127,7 +1128,9 @@ let get_kind opcode =
   | Word64Rol | Word64RolLowerable | Word64Ror | Word64RorLowerable
   | Word64Select | Word64Shr | Word64Xor ->
       UNIMPL
-  | Allocate | CheckedInt64ToInt32 -> V1E1C1
+  | Allocate | CheckedInt64ToInt32 | CheckedTaggedToTaggedPointer
+  | CheckedTaggedToTaggedSigned ->
+      V1E1C1
   | BitcastFloat32ToInt32 | BitcastFloat64ToInt64 | BitcastTaggedToWord
   | BitcastWord32ToWord64 | BitcastWordToTagged | BooleanNot | ChangeBitToTagged
   | ChangeFloat32ToFloat64 | ChangeFloat64ToInt64 | ChangeInt31ToTaggedSigned
@@ -1135,8 +1138,8 @@ let get_kind opcode =
   | ChangeInt64ToFloat64 | ChangeInt64ToTagged | ChangeTaggedSignedToInt32
   | ChangeTaggedSignedToInt64 | ChangeUint32ToFloat64 | ChangeUint32ToTagged
   | ChangeUint32ToUint64 | ChangeUint64ToTagged | CheckedTaggedSignedToInt32
-  | DeoptimizeIf | Float64Abs | Float64ExtractHighWord32 | NumberAbs
-  | NumberExpm1 | NumberToInt32 | RoundFloat64ToInt32 | SpeculativeToNumber
+  | Float64Abs | Float64ExtractHighWord32 | NumberAbs | NumberExpm1
+  | NumberToInt32 | RoundFloat64ToInt32 | SpeculativeToNumber
   | StackPointerGreaterThan | ToBoolean | TruncateInt64ToInt32
   | TruncateTaggedToBit | Word32ReverseBytes | Word64ReverseBytes ->
       V1
@@ -1148,7 +1151,7 @@ let get_kind opcode =
       B1
   | ChangeFloat64ToTagged | CheckedFloat64ToInt32 | Projection -> B1V1
   | CheckedTaggedToFloat64 -> B1V1E1C1
-  | DeoptimizeUnless -> V1V2E1C1
+  | DeoptimizeIf | DeoptimizeUnless -> V1V2E1C1
   | End | Merge -> CV
   | Float64Equal | Float64LessThan | Float64LessThanOrEqual | Float64Sub
   | Int32Add | Int32AddWithOverflow | Int32LessThan | Int32Mul | Int32Sub
@@ -1169,6 +1172,7 @@ let get_kind opcode =
   | Return -> V2C1
   | Select -> V1V2V3
   | Store -> V1V2B1V3
+  | StoreElement -> B1B2B4V1V2V3E1C1
   | StoreField -> V1B2B4V2
   | Throw -> C1E1
   | Unreachable -> E1C1
@@ -1204,6 +1208,7 @@ let split_kind kind =
   | V2C1 -> [ V2; C1 ]
   | V1V2V3 -> [ V1; V2; V3 ]
   | V1V2B1V3 -> [ V1; V2; B1; V3 ]
+  | B1B2B4V1V2V3E1C1 -> [ B1; B2; B4; V1; V2; V3; E1; C1 ]
   | V1B2B4V2 -> [ V1; B2; B4; V2 ]
   | C1E1 -> [ C1; E1 ]
   | E1C1 -> [ E1; C1 ]
@@ -1267,8 +1272,6 @@ let of_str str =
   | "CheckedTaggedToArrayIndex" -> CheckedTaggedToArrayIndex
   | "CheckedTaggedToInt32" -> CheckedTaggedToInt32
   | "CheckedTaggedToInt64" -> CheckedTaggedToInt64
-  | "CheckedTaggedToTaggedPointer" -> CheckedTaggedToTaggedPointer
-  | "CheckedTaggedToTaggedSigned" -> CheckedTaggedToTaggedSigned
   | "CheckedTruncateTaggedToWord32" -> CheckedTruncateTaggedToWord32
   | "CheckedUint32Bounds" -> CheckedUint32Bounds
   | "CheckedUint32Div" -> CheckedUint32Div
@@ -1861,7 +1864,6 @@ let of_str str =
   | "StateValues" -> StateValues
   | "StaticAssert" -> StaticAssert
   | "StoreDataViewElement" -> StoreDataViewElement
-  | "StoreElement" -> StoreElement
   | "StoreLane" -> StoreLane
   | "StoreMessage" -> StoreMessage
   | "StoreSignedSmallElement" -> StoreSignedSmallElement
@@ -1974,6 +1976,8 @@ let of_str str =
   | "Word64Xor" -> Word64Xor
   | "Allocate" -> Allocate
   | "CheckedInt64ToInt32" -> CheckedInt64ToInt32
+  | "CheckedTaggedToTaggedPointer" -> CheckedTaggedToTaggedPointer
+  | "CheckedTaggedToTaggedSigned" -> CheckedTaggedToTaggedSigned
   | "BitcastFloat32ToInt32" -> BitcastFloat32ToInt32
   | "BitcastFloat64ToInt64" -> BitcastFloat64ToInt64
   | "BitcastTaggedToWord" -> BitcastTaggedToWord
@@ -1996,7 +2000,6 @@ let of_str str =
   | "ChangeUint32ToUint64" -> ChangeUint32ToUint64
   | "ChangeUint64ToTagged" -> ChangeUint64ToTagged
   | "CheckedTaggedSignedToInt32" -> CheckedTaggedSignedToInt32
-  | "DeoptimizeIf" -> DeoptimizeIf
   | "Float64Abs" -> Float64Abs
   | "Float64ExtractHighWord32" -> Float64ExtractHighWord32
   | "NumberAbs" -> NumberAbs
@@ -2028,6 +2031,7 @@ let of_str str =
   | "CheckedFloat64ToInt32" -> CheckedFloat64ToInt32
   | "Projection" -> Projection
   | "CheckedTaggedToFloat64" -> CheckedTaggedToFloat64
+  | "DeoptimizeIf" -> DeoptimizeIf
   | "DeoptimizeUnless" -> DeoptimizeUnless
   | "End" -> End
   | "Merge" -> Merge
@@ -2075,6 +2079,7 @@ let of_str str =
   | "Return" -> Return
   | "Select" -> Select
   | "Store" -> Store
+  | "StoreElement" -> StoreElement
   | "StoreField" -> StoreField
   | "Throw" -> Throw
   | "Unreachable" -> Unreachable
@@ -2137,8 +2142,6 @@ let to_str opcode =
   | CheckedTaggedToArrayIndex -> "CheckedTaggedToArrayIndex"
   | CheckedTaggedToInt32 -> "CheckedTaggedToInt32"
   | CheckedTaggedToInt64 -> "CheckedTaggedToInt64"
-  | CheckedTaggedToTaggedPointer -> "CheckedTaggedToTaggedPointer"
-  | CheckedTaggedToTaggedSigned -> "CheckedTaggedToTaggedSigned"
   | CheckedTruncateTaggedToWord32 -> "CheckedTruncateTaggedToWord32"
   | CheckedUint32Bounds -> "CheckedUint32Bounds"
   | CheckedUint32Div -> "CheckedUint32Div"
@@ -2731,7 +2734,6 @@ let to_str opcode =
   | StateValues -> "StateValues"
   | StaticAssert -> "StaticAssert"
   | StoreDataViewElement -> "StoreDataViewElement"
-  | StoreElement -> "StoreElement"
   | StoreLane -> "StoreLane"
   | StoreMessage -> "StoreMessage"
   | StoreSignedSmallElement -> "StoreSignedSmallElement"
@@ -2844,6 +2846,8 @@ let to_str opcode =
   | Word64Xor -> "Word64Xor"
   | Allocate -> "Allocate"
   | CheckedInt64ToInt32 -> "CheckedInt64ToInt32"
+  | CheckedTaggedToTaggedPointer -> "CheckedTaggedToTaggedPointer"
+  | CheckedTaggedToTaggedSigned -> "CheckedTaggedToTaggedSigned"
   | BitcastFloat32ToInt32 -> "BitcastFloat32ToInt32"
   | BitcastFloat64ToInt64 -> "BitcastFloat64ToInt64"
   | BitcastTaggedToWord -> "BitcastTaggedToWord"
@@ -2866,7 +2870,6 @@ let to_str opcode =
   | ChangeUint32ToUint64 -> "ChangeUint32ToUint64"
   | ChangeUint64ToTagged -> "ChangeUint64ToTagged"
   | CheckedTaggedSignedToInt32 -> "CheckedTaggedSignedToInt32"
-  | DeoptimizeIf -> "DeoptimizeIf"
   | Float64Abs -> "Float64Abs"
   | Float64ExtractHighWord32 -> "Float64ExtractHighWord32"
   | NumberAbs -> "NumberAbs"
@@ -2898,6 +2901,7 @@ let to_str opcode =
   | CheckedFloat64ToInt32 -> "CheckedFloat64ToInt32"
   | Projection -> "Projection"
   | CheckedTaggedToFloat64 -> "CheckedTaggedToFloat64"
+  | DeoptimizeIf -> "DeoptimizeIf"
   | DeoptimizeUnless -> "DeoptimizeUnless"
   | End -> "End"
   | Merge -> "Merge"
@@ -2945,6 +2949,7 @@ let to_str opcode =
   | Return -> "Return"
   | Select -> "Select"
   | Store -> "Store"
+  | StoreElement -> "StoreElement"
   | StoreField -> "StoreField"
   | Throw -> "Throw"
   | Unreachable -> "Unreachable"

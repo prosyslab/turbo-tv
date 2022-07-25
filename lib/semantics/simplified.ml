@@ -394,6 +394,16 @@ let load_typed_element array_type base extern ind mem state =
   let repr = MachineType.repr machine_type in
   state |> load_element taggedness header_size repr bid ind mem
 
+(* V2E1C1 -> E1 *)
+let store_element tag_value header_size repr bid ind value mem control state =
+  let fixed_off = header_size - tag_value in
+  let off =
+    BitVec.addi
+      (BitVec.shli ind (MachineType.Repr.element_size_log2_of repr))
+      fixed_off
+  in
+  state |> Machine.store bid off repr value mem |> State.update ~control
+
 let store_field ptr pos mt value mem state =
   let repr = MachineType.repr mt in
 
@@ -525,7 +535,6 @@ let checked_float64_to_int32 hint pval state =
     Bool.ors [ lost_precision; is_minus_zero ]
   in
   let value = value32 in
-
   state |> State.update ~value ~deopt
 
 (* Deoptimization condition =
@@ -569,6 +578,12 @@ let checked_tagged_to_float64 hint pval mem state =
       (HeapNumber.load pval mem |> HeapNumber.to_float64)
   in
   state |> State.update ~value ~deopt
+
+let checked_tagged_to_tagged_pointer pval _checkpoint control state =
+  let deopt_cond =
+    Bool.ite (pval |> Value.has_type Type.tagged_signed) Value.tr Value.fl
+  in
+  state |> Common.deoptimize_if deopt_cond () () control
 
 let number_to_int32 pval next_bid mem state =
   let deopt =

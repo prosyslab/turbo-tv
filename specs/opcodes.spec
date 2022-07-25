@@ -81,8 +81,8 @@ CheckedTaggedToArrayIndex,
 CheckedTaggedToFloat64,b1,v1,e1,c1
 CheckedTaggedToInt32,
 CheckedTaggedToInt64,
-CheckedTaggedToTaggedPointer,
-CheckedTaggedToTaggedSigned,
+CheckedTaggedToTaggedPointer,v1,e1,c1
+CheckedTaggedToTaggedSigned,v1,e1,c1
 CheckedTruncateTaggedToWord32,
 CheckedUint32Bounds,
 CheckedUint32Div,
@@ -104,7 +104,7 @@ DeadValue,
 DebugBreak,
 DelayedStringConstant,
 Deoptimize,
-DeoptimizeIf,v1
+DeoptimizeIf,v1,v2,e1,c1
 DeoptimizeUnless,v1,v2,e1,c1
 EffectPhi,
 End,cv
@@ -731,7 +731,7 @@ StateValues,
 StaticAssert,
 Store,v1,v2,b1,v3
 StoreDataViewElement,
-StoreElement,
+StoreElement,b1,b2,b4,v1,v2,v3,e1,c1
 StoreField,v1,b2,b4,v2
 StoreLane,
 StoreMessage,

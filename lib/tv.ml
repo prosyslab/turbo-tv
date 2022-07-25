@@ -144,6 +144,14 @@ let encode program
       let control = ControlFile.find cid cf in
       unreachable control
   (* common: deoptimization *)
+  | DeoptimizeIf ->
+      let cond_id = Operands.id_of_nth operands 0 in
+      (* let frame_id = Operands.id_of_nth operands 1 in
+         let eff_id = Operands.id_of_nth operands 2 in *)
+      let ctrl_id = Operands.id_of_nth operands 3 in
+      let deopt_cond = RegisterFile.find cond_id rf in
+      let ctrl = ControlFile.find ctrl_id cf in
+      deoptimize_if deopt_cond () () ctrl
   | DeoptimizeUnless ->
       let cond_id = Operands.id_of_nth operands 0 in
       let ct_id = Operands.id_of_nth operands 3 in
@@ -306,6 +314,21 @@ let encode program
       let ind_id = Operands.id_of_nth operands 3 in
       let ind = RegisterFile.find ind_id rf in
       load_typed_element array_type base extern ind mem
+  | StoreElement ->
+      let base_is_tagged = Operands.const_of_nth operands 0 in
+      let tag_value = tag base_is_tagged in
+      let header_size = Operands.const_of_nth operands 1 |> int_of_string in
+      let machine_type = Operands.const_of_nth operands 2 in
+      let repr = MachineType.Repr.of_rs_string machine_type in
+      let bid_id = Operands.id_of_nth operands 3 in
+      let bid = RegisterFile.find bid_id rf in
+      let ind_id = Operands.id_of_nth operands 4 in
+      let ind = RegisterFile.find ind_id rf in
+      let value_id = Operands.id_of_nth operands 5 in
+      let value = RegisterFile.find value_id rf in
+      let ctrl_id = Operands.id_of_nth operands 7 in
+      let ctrl = ControlFile.find ctrl_id cf in
+      store_element tag_value header_size repr bid ind value mem ctrl
   | StoreField ->
       let ptr_id = Operands.id_of_nth operands 0 in
       let ptr = RegisterFile.find ptr_id rf in
@@ -362,6 +385,12 @@ let encode program
       let pid = Operands.id_of_nth operands 1 in
       let pval = RegisterFile.find pid rf in
       checked_tagged_to_float64 hint pval mem
+  | CheckedTaggedToTaggedPointer ->
+      let pid = Operands.id_of_nth operands 0 in
+      let cid = Operands.id_of_nth operands 2 in
+      let pval = RegisterFile.find pid rf in
+      let ctrl = ControlFile.find cid cf in
+      checked_tagged_to_tagged_pointer pval () ctrl
   | NumberToInt32 ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in

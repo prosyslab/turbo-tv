@@ -124,6 +124,10 @@ let unreachable control state = state |> State.update ~ub:control
 let deoptimize _frame _mem control state =
   state |> State.update ~control ~deopt:Bool.tr
 
+let deoptimize_if cond _frame _mem control state =
+  let deopt = Bool.ite (Value.is_true cond) Bool.tr Bool.fl in
+  state |> State.update ~control ~deopt
+
 let deoptimize_unless cond _frame _mem control state =
   let deopt = Bool.ite (Value.is_false cond) Bool.tr Bool.fl in
   state |> State.update ~control ~deopt
