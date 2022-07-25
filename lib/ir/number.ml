@@ -2,7 +2,6 @@ open Z3utils
 module HeapNumber = Objects.HeapNumber
 
 (* Number ::= TaggedSigned | HeapNumber | Int32 | Uint32 | Float64 *)
-
 let is_number value mem =
   Bool.ite
     (value |> Value.has_type Type.int32)
@@ -27,6 +26,21 @@ let is_number value mem =
 let are_numbers values mem =
   Bool.ands (values |> List.rev_map (fun value -> is_number value mem))
 
+let is_integer mem number =
+  let heap_number = HeapNumber.load number mem in
+  Bool.ite
+    (Bool.ors
+       [
+         number |> Value.has_type Type.int32;
+         number |> Value.has_type Type.uint32;
+         number |> Value.has_type Type.tagged_signed;
+       ])
+    Bool.tr
+    (Bool.ite
+       (number |> Value.has_type Type.float64)
+       (number |> Float64.is_integer)
+       (heap_number |> HeapNumber.is_integer))
+
 let to_float64 mem number =
   let heap_number = HeapNumber.load number mem in
   Bool.ite
@@ -42,6 +56,31 @@ let to_float64 mem number =
              (number |> Value.has_type Type.tagged_signed)
              (number |> Value.TaggedSigned.to_float64)
              (heap_number |> HeapNumber.to_float64))))
+
+let ceil mem number =
+  let number_f64 = number |> to_float64 mem in
+  Bool.ite
+    (* [number] is integer -> [number] *)
+    (Bool.ors
+       [
+         number_f64 |> Float64.is_integer;
+         number_f64 |> Float64.is_nan;
+         number_f64 |> Float64.is_zero;
+         number_f64 |> Float64.is_minus_zero;
+         number_f64 |> Float64.is_inf;
+         number_f64 |> Float64.is_ninf;
+       ])
+    number
+    (* -1 < [number] < -0 -> -0 *)
+    (Bool.ite
+       (Bool.ands
+          [
+            Float64.lt number_f64 Float64.minus_zero;
+            Float64.gt number_f64 (Float64.from_float (Float.from_float (-1.0)));
+          ])
+       Float64.minus_zero
+       (* else round([number],up) *)
+       (Float64.round_up number_f64))
 
 let eq lnum rnum mem =
   let lnum_f64 = lnum |> to_float64 mem in

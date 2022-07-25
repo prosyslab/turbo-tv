@@ -227,11 +227,11 @@ Float64Mod,
 Float64Mul,
 Float64Neg,
 Float64Pow,
-Float64RoundDown,
+Float64RoundDown,v1
 Float64RoundTiesAway,
 Float64RoundTiesEven,
 Float64RoundTruncate,
-Float64RoundUp,
+Float64RoundUp,v1
 Float64Select,
 Float64SilenceNaN,
 Float64Sin,
@@ -592,7 +592,7 @@ NumberBitwiseAnd,
 NumberBitwiseOr,
 NumberBitwiseXor,
 NumberCbrt,
-NumberCeil,
+NumberCeil,v1
 NumberClz32,
 NumberConstant,b1
 NumberCos,

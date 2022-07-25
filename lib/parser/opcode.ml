@@ -224,11 +224,9 @@ type t =
   | Float64Mul
   | Float64Neg
   | Float64Pow
-  | Float64RoundDown
   | Float64RoundTiesAway
   | Float64RoundTiesEven
   | Float64RoundTruncate
-  | Float64RoundUp
   | Float64Select
   | Float64SilenceNaN
   | Float64Sin
@@ -567,7 +565,6 @@ type t =
   | NumberBitwiseOr
   | NumberBitwiseXor
   | NumberCbrt
-  | NumberCeil
   | NumberClz32
   | NumberCos
   | NumberCosh
@@ -823,7 +820,10 @@ type t =
   | CheckedTaggedSignedToInt32
   | Float64Abs
   | Float64ExtractHighWord32
+  | Float64RoundDown
+  | Float64RoundUp
   | NumberAbs
+  | NumberCeil
   | NumberExpm1
   | NumberToInt32
   | RoundFloat64ToInt32
@@ -978,54 +978,54 @@ let get_kind opcode =
   | Float64Div | Float64Exp | Float64Expm1 | Float64ExtractLowWord32
   | Float64InsertHighWord32 | Float64InsertLowWord32 | Float64Log | Float64Log10
   | Float64Log1p | Float64Log2 | Float64Max | Float64Min | Float64Mod
-  | Float64Mul | Float64Neg | Float64Pow | Float64RoundDown
-  | Float64RoundTiesAway | Float64RoundTiesEven | Float64RoundTruncate
-  | Float64RoundUp | Float64Select | Float64SilenceNaN | Float64Sin
-  | Float64Sinh | Float64Sqrt | Float64Tan | Float64Tanh | FoldConstant
-  | FrameState | I16x8Abs | I16x8Add | I16x8AddSatS | I16x8AddSatU
-  | I16x8AllTrue | I16x8BitMask | I16x8Eq | I16x8ExtAddPairwiseI8x16S
-  | I16x8ExtAddPairwiseI8x16U | I16x8ExtMulHighI8x16S | I16x8ExtMulHighI8x16U
-  | I16x8ExtMulLowI8x16S | I16x8ExtMulLowI8x16U | I16x8ExtractLaneS
-  | I16x8ExtractLaneU | I16x8GeS | I16x8GeU | I16x8GtS | I16x8GtU | I16x8LeS
-  | I16x8LeU | I16x8LtS | I16x8LtU | I16x8MaxS | I16x8MaxU | I16x8MinS
-  | I16x8MinU | I16x8Mul | I16x8Ne | I16x8Neg | I16x8Q15MulRSatS
-  | I16x8RelaxedLaneSelect | I16x8ReplaceLane | I16x8RoundingAverageU
-  | I16x8SConvertI32x4 | I16x8SConvertI8x16High | I16x8SConvertI8x16Low
-  | I16x8Shl | I16x8ShrS | I16x8ShrU | I16x8Splat | I16x8Sub | I16x8SubSatS
-  | I16x8SubSatU | I16x8UConvertI32x4 | I16x8UConvertI8x16High
-  | I16x8UConvertI8x16Low | I32x4Abs | I32x4Add | I32x4AllTrue | I32x4BitMask
-  | I32x4DotI16x8S | I32x4Eq | I32x4ExtAddPairwiseI16x8S
-  | I32x4ExtAddPairwiseI16x8U | I32x4ExtMulHighI16x8S | I32x4ExtMulHighI16x8U
-  | I32x4ExtMulLowI16x8S | I32x4ExtMulLowI16x8U | I32x4ExtractLane | I32x4GeS
-  | I32x4GeU | I32x4GtS | I32x4GtU | I32x4LeS | I32x4LeU | I32x4LtS | I32x4LtU
-  | I32x4MaxS | I32x4MaxU | I32x4MinS | I32x4MinU | I32x4Mul | I32x4Ne
-  | I32x4Neg | I32x4RelaxedLaneSelect | I32x4RelaxedTruncF32x4S
-  | I32x4RelaxedTruncF32x4U | I32x4RelaxedTruncF64x2SZero
-  | I32x4RelaxedTruncF64x2UZero | I32x4ReplaceLane | I32x4SConvertF32x4
-  | I32x4SConvertI16x8High | I32x4SConvertI16x8Low | I32x4Shl | I32x4ShrS
-  | I32x4ShrU | I32x4Splat | I32x4Sub | I32x4TruncSatF64x2SZero
-  | I32x4TruncSatF64x2UZero | I32x4UConvertF32x4 | I32x4UConvertI16x8High
-  | I32x4UConvertI16x8Low | I64x2Abs | I64x2Add | I64x2AllTrue | I64x2BitMask
-  | I64x2Eq | I64x2ExtMulHighI32x4S | I64x2ExtMulHighI32x4U
-  | I64x2ExtMulLowI32x4S | I64x2ExtMulLowI32x4U | I64x2ExtractLane | I64x2GeS
-  | I64x2GtS | I64x2Mul | I64x2Ne | I64x2Neg | I64x2RelaxedLaneSelect
-  | I64x2ReplaceLane | I64x2ReplaceLaneI32Pair | I64x2SConvertI32x4High
-  | I64x2SConvertI32x4Low | I64x2Shl | I64x2ShrS | I64x2ShrU | I64x2Splat
-  | I64x2SplatI32Pair | I64x2Sub | I64x2UConvertI32x4High
-  | I64x2UConvertI32x4Low | I8x16Abs | I8x16Add | I8x16AddSatS | I8x16AddSatU
-  | I8x16AllTrue | I8x16BitMask | I8x16Eq | I8x16ExtractLaneS
-  | I8x16ExtractLaneU | I8x16GeS | I8x16GeU | I8x16GtS | I8x16GtU | I8x16LeS
-  | I8x16LeU | I8x16LtS | I8x16LtU | I8x16MaxS | I8x16MaxU | I8x16MinS
-  | I8x16MinU | I8x16Ne | I8x16Neg | I8x16Popcnt | I8x16RelaxedLaneSelect
-  | I8x16ReplaceLane | I8x16RoundingAverageU | I8x16SConvertI16x8 | I8x16Shl
-  | I8x16ShrS | I8x16ShrU | I8x16Shuffle | I8x16Splat | I8x16Sub | I8x16SubSatS
-  | I8x16SubSatU | I8x16Swizzle | I8x16UConvertI16x8 | IfDefault | IfException
-  | IfSuccess | IfValue | InductionVariablePhi | InitializeImmutableInObject
-  | Int32AbsWithOverflow | Int32Div | Int32LessThanOrEqual | Int32Mod
-  | Int32MulHigh | Int32MulWithOverflow | Int32PairAdd | Int32PairMul
-  | Int32PairSub | Int32SubWithOverflow | Int64AbsWithOverflow
-  | Int64AddWithOverflow | Int64Div | Int64LessThanOrEqual | Int64Mod | Int64Mul
-  | Int64SubWithOverflow | JSAdd | JSAsyncFunctionEnter | JSAsyncFunctionReject
+  | Float64Mul | Float64Neg | Float64Pow | Float64RoundTiesAway
+  | Float64RoundTiesEven | Float64RoundTruncate | Float64Select
+  | Float64SilenceNaN | Float64Sin | Float64Sinh | Float64Sqrt | Float64Tan
+  | Float64Tanh | FoldConstant | FrameState | I16x8Abs | I16x8Add | I16x8AddSatS
+  | I16x8AddSatU | I16x8AllTrue | I16x8BitMask | I16x8Eq
+  | I16x8ExtAddPairwiseI8x16S | I16x8ExtAddPairwiseI8x16U
+  | I16x8ExtMulHighI8x16S | I16x8ExtMulHighI8x16U | I16x8ExtMulLowI8x16S
+  | I16x8ExtMulLowI8x16U | I16x8ExtractLaneS | I16x8ExtractLaneU | I16x8GeS
+  | I16x8GeU | I16x8GtS | I16x8GtU | I16x8LeS | I16x8LeU | I16x8LtS | I16x8LtU
+  | I16x8MaxS | I16x8MaxU | I16x8MinS | I16x8MinU | I16x8Mul | I16x8Ne
+  | I16x8Neg | I16x8Q15MulRSatS | I16x8RelaxedLaneSelect | I16x8ReplaceLane
+  | I16x8RoundingAverageU | I16x8SConvertI32x4 | I16x8SConvertI8x16High
+  | I16x8SConvertI8x16Low | I16x8Shl | I16x8ShrS | I16x8ShrU | I16x8Splat
+  | I16x8Sub | I16x8SubSatS | I16x8SubSatU | I16x8UConvertI32x4
+  | I16x8UConvertI8x16High | I16x8UConvertI8x16Low | I32x4Abs | I32x4Add
+  | I32x4AllTrue | I32x4BitMask | I32x4DotI16x8S | I32x4Eq
+  | I32x4ExtAddPairwiseI16x8S | I32x4ExtAddPairwiseI16x8U
+  | I32x4ExtMulHighI16x8S | I32x4ExtMulHighI16x8U | I32x4ExtMulLowI16x8S
+  | I32x4ExtMulLowI16x8U | I32x4ExtractLane | I32x4GeS | I32x4GeU | I32x4GtS
+  | I32x4GtU | I32x4LeS | I32x4LeU | I32x4LtS | I32x4LtU | I32x4MaxS | I32x4MaxU
+  | I32x4MinS | I32x4MinU | I32x4Mul | I32x4Ne | I32x4Neg
+  | I32x4RelaxedLaneSelect | I32x4RelaxedTruncF32x4S | I32x4RelaxedTruncF32x4U
+  | I32x4RelaxedTruncF64x2SZero | I32x4RelaxedTruncF64x2UZero | I32x4ReplaceLane
+  | I32x4SConvertF32x4 | I32x4SConvertI16x8High | I32x4SConvertI16x8Low
+  | I32x4Shl | I32x4ShrS | I32x4ShrU | I32x4Splat | I32x4Sub
+  | I32x4TruncSatF64x2SZero | I32x4TruncSatF64x2UZero | I32x4UConvertF32x4
+  | I32x4UConvertI16x8High | I32x4UConvertI16x8Low | I64x2Abs | I64x2Add
+  | I64x2AllTrue | I64x2BitMask | I64x2Eq | I64x2ExtMulHighI32x4S
+  | I64x2ExtMulHighI32x4U | I64x2ExtMulLowI32x4S | I64x2ExtMulLowI32x4U
+  | I64x2ExtractLane | I64x2GeS | I64x2GtS | I64x2Mul | I64x2Ne | I64x2Neg
+  | I64x2RelaxedLaneSelect | I64x2ReplaceLane | I64x2ReplaceLaneI32Pair
+  | I64x2SConvertI32x4High | I64x2SConvertI32x4Low | I64x2Shl | I64x2ShrS
+  | I64x2ShrU | I64x2Splat | I64x2SplatI32Pair | I64x2Sub
+  | I64x2UConvertI32x4High | I64x2UConvertI32x4Low | I8x16Abs | I8x16Add
+  | I8x16AddSatS | I8x16AddSatU | I8x16AllTrue | I8x16BitMask | I8x16Eq
+  | I8x16ExtractLaneS | I8x16ExtractLaneU | I8x16GeS | I8x16GeU | I8x16GtS
+  | I8x16GtU | I8x16LeS | I8x16LeU | I8x16LtS | I8x16LtU | I8x16MaxS | I8x16MaxU
+  | I8x16MinS | I8x16MinU | I8x16Ne | I8x16Neg | I8x16Popcnt
+  | I8x16RelaxedLaneSelect | I8x16ReplaceLane | I8x16RoundingAverageU
+  | I8x16SConvertI16x8 | I8x16Shl | I8x16ShrS | I8x16ShrU | I8x16Shuffle
+  | I8x16Splat | I8x16Sub | I8x16SubSatS | I8x16SubSatU | I8x16Swizzle
+  | I8x16UConvertI16x8 | IfDefault | IfException | IfSuccess | IfValue
+  | InductionVariablePhi | InitializeImmutableInObject | Int32AbsWithOverflow
+  | Int32Div | Int32LessThanOrEqual | Int32Mod | Int32MulHigh
+  | Int32MulWithOverflow | Int32PairAdd | Int32PairMul | Int32PairSub
+  | Int32SubWithOverflow | Int64AbsWithOverflow | Int64AddWithOverflow
+  | Int64Div | Int64LessThanOrEqual | Int64Mod | Int64Mul | Int64SubWithOverflow
+  | JSAdd | JSAsyncFunctionEnter | JSAsyncFunctionReject
   | JSAsyncFunctionResolve | JSBitwiseAnd | JSBitwiseNot | JSBitwiseOr
   | JSBitwiseXor | JSCall | JSCallForwardVarargs | JSCallRuntime
   | JSCallWithArrayLike | JSCallWithSpread | JSCloneObject | JSConstruct
@@ -1064,32 +1064,32 @@ let get_kind opcode =
   | NewArgumentsElements | NewConsString | NewDoubleElements
   | NewSmiOrObjectElements | NumberAcos | NumberAcosh | NumberAsin | NumberAsinh
   | NumberAtan | NumberAtan2 | NumberAtanh | NumberBitwiseAnd | NumberBitwiseOr
-  | NumberBitwiseXor | NumberCbrt | NumberCeil | NumberClz32 | NumberCos
-  | NumberCosh | NumberDivide | NumberEqual | NumberExp | NumberFloor
-  | NumberFround | NumberImul | NumberIsFinite | NumberIsFloat64Hole
-  | NumberIsInteger | NumberIsMinusZero | NumberIsNaN | NumberIsSafeInteger
-  | NumberLessThan | NumberLessThanOrEqual | NumberLog | NumberLog10
-  | NumberLog1p | NumberLog2 | NumberModulus | NumberPow | NumberRound
-  | NumberSameValue | NumberShiftLeft | NumberShiftRight
-  | NumberShiftRightLogical | NumberSign | NumberSilenceNaN | NumberSin
-  | NumberSinh | NumberSqrt | NumberSubtract | NumberTan | NumberTanh
-  | NumberToBoolean | NumberToString | NumberToUint32 | NumberToUint8Clamped
-  | NumberTrunc | ObjectId | ObjectIsArrayBufferView | ObjectIsBigInt
-  | ObjectIsCallable | ObjectIsConstructor | ObjectIsDetectableCallable
-  | ObjectIsFiniteNumber | ObjectIsInteger | ObjectIsMinusZero | ObjectIsNaN
-  | ObjectIsNonCallable | ObjectIsNumber | ObjectIsReceiver
-  | ObjectIsSafeInteger | ObjectIsSmi | ObjectIsString | ObjectIsSymbol
-  | ObjectIsUndetectable | ObjectState | OsrValue | PlainPrimitiveToFloat64
-  | PlainPrimitiveToNumber | PlainPrimitiveToWord32 | Plug | PointerConstant
-  | ProtectedLoad | ProtectedStore | RelocatableInt32Constant
-  | RelocatableInt64Constant | RestLength | Retain | RoundInt32ToFloat32
-  | RoundInt64ToFloat32 | RoundInt64ToFloat64 | RoundUint32ToFloat32
-  | RoundUint64ToFloat32 | RoundUint64ToFloat64 | RuntimeAbort | S128And
-  | S128AndNot | S128Const | S128Not | S128Or | S128Select | S128Xor | S128Zero
-  | SLVerifierHint | SameValue | SameValueNumbersOnly | SignExtendWord16ToInt32
-  | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
-  | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
-  | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
+  | NumberBitwiseXor | NumberCbrt | NumberClz32 | NumberCos | NumberCosh
+  | NumberDivide | NumberEqual | NumberExp | NumberFloor | NumberFround
+  | NumberImul | NumberIsFinite | NumberIsFloat64Hole | NumberIsInteger
+  | NumberIsMinusZero | NumberIsNaN | NumberIsSafeInteger | NumberLessThan
+  | NumberLessThanOrEqual | NumberLog | NumberLog10 | NumberLog1p | NumberLog2
+  | NumberModulus | NumberPow | NumberRound | NumberSameValue | NumberShiftLeft
+  | NumberShiftRight | NumberShiftRightLogical | NumberSign | NumberSilenceNaN
+  | NumberSin | NumberSinh | NumberSqrt | NumberSubtract | NumberTan
+  | NumberTanh | NumberToBoolean | NumberToString | NumberToUint32
+  | NumberToUint8Clamped | NumberTrunc | ObjectId | ObjectIsArrayBufferView
+  | ObjectIsBigInt | ObjectIsCallable | ObjectIsConstructor
+  | ObjectIsDetectableCallable | ObjectIsFiniteNumber | ObjectIsInteger
+  | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable | ObjectIsNumber
+  | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi | ObjectIsString
+  | ObjectIsSymbol | ObjectIsUndetectable | ObjectState | OsrValue
+  | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber | PlainPrimitiveToWord32
+  | Plug | PointerConstant | ProtectedLoad | ProtectedStore
+  | RelocatableInt32Constant | RelocatableInt64Constant | RestLength | Retain
+  | RoundInt32ToFloat32 | RoundInt64ToFloat32 | RoundInt64ToFloat64
+  | RoundUint32ToFloat32 | RoundUint64ToFloat32 | RoundUint64ToFloat64
+  | RuntimeAbort | S128And | S128AndNot | S128Const | S128Not | S128Or
+  | S128Select | S128Xor | S128Zero | SLVerifierHint | SameValue
+  | SameValueNumbersOnly | SignExtendWord16ToInt32 | SignExtendWord16ToInt64
+  | SignExtendWord32ToInt64 | SignExtendWord8ToInt32 | SignExtendWord8ToInt64
+  | Simd128ReverseBytes | SpeculativeBigIntAdd | SpeculativeBigIntAsIntN
+  | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
   | SpeculativeBigIntSubtract | SpeculativeNumberBitwiseAnd
   | SpeculativeNumberDivide | SpeculativeNumberLessThan
   | SpeculativeNumberLessThanOrEqual | SpeculativeNumberModulus
@@ -1138,10 +1138,11 @@ let get_kind opcode =
   | ChangeInt64ToFloat64 | ChangeInt64ToTagged | ChangeTaggedSignedToInt32
   | ChangeTaggedSignedToInt64 | ChangeUint32ToFloat64 | ChangeUint32ToTagged
   | ChangeUint32ToUint64 | ChangeUint64ToTagged | CheckedTaggedSignedToInt32
-  | Float64Abs | Float64ExtractHighWord32 | NumberAbs | NumberExpm1
-  | NumberToInt32 | RoundFloat64ToInt32 | SpeculativeToNumber
-  | StackPointerGreaterThan | ToBoolean | TruncateInt64ToInt32
-  | TruncateTaggedToBit | Word32ReverseBytes | Word64ReverseBytes ->
+  | Float64Abs | Float64ExtractHighWord32 | Float64RoundDown | Float64RoundUp
+  | NumberAbs | NumberCeil | NumberExpm1 | NumberToInt32 | RoundFloat64ToInt32
+  | SpeculativeToNumber | StackPointerGreaterThan | ToBoolean
+  | TruncateInt64ToInt32 | TruncateTaggedToBit | Word32ReverseBytes
+  | Word64ReverseBytes ->
       V1
   | IfFalse | IfTrue -> C1
   | AllocateRaw -> V1C1
@@ -1405,11 +1406,9 @@ let of_str str =
   | "Float64Mul" -> Float64Mul
   | "Float64Neg" -> Float64Neg
   | "Float64Pow" -> Float64Pow
-  | "Float64RoundDown" -> Float64RoundDown
   | "Float64RoundTiesAway" -> Float64RoundTiesAway
   | "Float64RoundTiesEven" -> Float64RoundTiesEven
   | "Float64RoundTruncate" -> Float64RoundTruncate
-  | "Float64RoundUp" -> Float64RoundUp
   | "Float64Select" -> Float64Select
   | "Float64SilenceNaN" -> Float64SilenceNaN
   | "Float64Sin" -> Float64Sin
@@ -1748,7 +1747,6 @@ let of_str str =
   | "NumberBitwiseOr" -> NumberBitwiseOr
   | "NumberBitwiseXor" -> NumberBitwiseXor
   | "NumberCbrt" -> NumberCbrt
-  | "NumberCeil" -> NumberCeil
   | "NumberClz32" -> NumberClz32
   | "NumberCos" -> NumberCos
   | "NumberCosh" -> NumberCosh
@@ -2002,7 +2000,10 @@ let of_str str =
   | "CheckedTaggedSignedToInt32" -> CheckedTaggedSignedToInt32
   | "Float64Abs" -> Float64Abs
   | "Float64ExtractHighWord32" -> Float64ExtractHighWord32
+  | "Float64RoundDown" -> Float64RoundDown
+  | "Float64RoundUp" -> Float64RoundUp
   | "NumberAbs" -> NumberAbs
+  | "NumberCeil" -> NumberCeil
   | "NumberExpm1" -> NumberExpm1
   | "NumberToInt32" -> NumberToInt32
   | "RoundFloat64ToInt32" -> RoundFloat64ToInt32
@@ -2275,11 +2276,9 @@ let to_str opcode =
   | Float64Mul -> "Float64Mul"
   | Float64Neg -> "Float64Neg"
   | Float64Pow -> "Float64Pow"
-  | Float64RoundDown -> "Float64RoundDown"
   | Float64RoundTiesAway -> "Float64RoundTiesAway"
   | Float64RoundTiesEven -> "Float64RoundTiesEven"
   | Float64RoundTruncate -> "Float64RoundTruncate"
-  | Float64RoundUp -> "Float64RoundUp"
   | Float64Select -> "Float64Select"
   | Float64SilenceNaN -> "Float64SilenceNaN"
   | Float64Sin -> "Float64Sin"
@@ -2618,7 +2617,6 @@ let to_str opcode =
   | NumberBitwiseOr -> "NumberBitwiseOr"
   | NumberBitwiseXor -> "NumberBitwiseXor"
   | NumberCbrt -> "NumberCbrt"
-  | NumberCeil -> "NumberCeil"
   | NumberClz32 -> "NumberClz32"
   | NumberCos -> "NumberCos"
   | NumberCosh -> "NumberCosh"
@@ -2872,7 +2870,10 @@ let to_str opcode =
   | CheckedTaggedSignedToInt32 -> "CheckedTaggedSignedToInt32"
   | Float64Abs -> "Float64Abs"
   | Float64ExtractHighWord32 -> "Float64ExtractHighWord32"
+  | Float64RoundDown -> "Float64RoundDown"
+  | Float64RoundUp -> "Float64RoundUp"
   | NumberAbs -> "NumberAbs"
+  | NumberCeil -> "NumberCeil"
   | NumberExpm1 -> "NumberExpm1"
   | NumberToInt32 -> "NumberToInt32"
   | RoundFloat64ToInt32 -> "RoundFloat64ToInt32"

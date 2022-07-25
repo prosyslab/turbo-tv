@@ -81,6 +81,10 @@ let number_add lval rval next_bid mem state =
 
   state |> State.update ~value ~deopt ~next_bid ~mem
 
+let number_ceil number mem state =
+  let value = number |> Number.ceil mem in
+  state |> State.update ~value
+
 let number_expm1 nptr next_bid mem state =
   let deopt =
     Bool.not
