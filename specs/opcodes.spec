@@ -603,7 +603,7 @@ NumberExp,
 NumberExpm1,v1
 NumberFloor,
 NumberFround,
-NumberImul,
+NumberImul,v1,v2
 NumberIsFinite,
 NumberIsFloat64Hole,
 NumberIsInteger,
@@ -625,7 +625,7 @@ NumberRound,
 NumberSameValue,
 NumberShiftLeft,
 NumberShiftRight,
-NumberShiftRightLogical,
+NumberShiftRightLogical,v1,v2
 NumberSign,
 NumberSilenceNaN,
 NumberSin,
@@ -637,7 +637,7 @@ NumberTanh,
 NumberToBoolean,
 NumberToInt32,v1
 NumberToString,
-NumberToUint32,
+NumberToUint32,v1
 NumberToUint8Clamped,
 NumberTrunc,
 ObjectId,
@@ -719,7 +719,7 @@ SpeculativeNumberModulus,
 SpeculativeNumberMultiply,v1,v2
 SpeculativeNumberShiftLeft,
 SpeculativeNumberShiftRight,
-SpeculativeNumberShiftRightLogical,
+SpeculativeNumberShiftRightLogical,v1,v2,e1,c1
 SpeculativeNumberSubtract,v1,v2,e1,c1
 SpeculativeSafeIntegerAdd,v1,v2
 SpeculativeSafeIntegerSubtract,v1,v2

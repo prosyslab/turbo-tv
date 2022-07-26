@@ -489,21 +489,28 @@ module Uint32 = struct
   let from_value value = BitVec.extract 31 0 value
 
   (* conversion *)
-  let to_value t = t |> entype Type.uint32
+  let to_value t = t |> BitVec.zero_extend 32 |> entype Type.uint32
 
   let to_float64 value =
     value |> from_value |> Float.from_unsigned_bv |> Float.to_ieee_bv
     |> entype Type.float64
+
+  let to_int32 value = value |> cast Type.int32
 
   let to_tagged_signed value =
     BitVec.shli (value |> from_value) 1
     |> BitVec.zero_extend 32 |> entype Type.tagged_signed
 
   (* arith *)
-  let modulo lval rval = BitVec.modb (lval |> from_value) (rval |> from_value)
+  let modulo lval rval =
+    BitVec.modb (lval |> from_value) (rval |> from_value) |> to_value
+
+  let mul lval rval =
+    BitVec.mulb (lval |> from_value) (rval |> from_value) |> to_value
 
   (* bitwise *)
-  let lshr lval rval = BitVec.lshrb (lval |> from_value) (rval |> from_value)
+  let lshr lval rval =
+    BitVec.lshrb (lval |> from_value) (rval |> from_value) |> to_value
 
   (* method *)
   let is_in_smi_range value =

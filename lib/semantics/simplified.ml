@@ -83,8 +83,11 @@ let number_expm1 nptr next_bid mem state =
          (Z3.FuncDecl.apply expm_decl [ num.value ] |> Value.entype Type.float64))
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
-
   state |> State.update ~value ~deopt ~next_bid ~mem
+
+let number_imul lval rval mem state =
+  let value = Number.imul lval rval mem in
+  state |> State.update ~value
 
 let number_max lval rval next_bid mem state =
   let deopt =

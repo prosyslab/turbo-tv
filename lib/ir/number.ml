@@ -143,8 +143,13 @@ let add lnum rnum mem =
                    (* else, n+n *)
                    (Float64.add lnum_f64 rnum_f64))))))
 
+let imul lnum rnum mem =
+  (* https://tc39.es/ecma262/#sec-math.imul *)
+  Value.Uint32.mul (lnum |> to_uint32 mem) (rnum |> to_uint32 mem)
+  |> Value.Uint32.to_int32
+
 let multiply lnum rnum mem =
-  (* https://tc39.es/ecma262/#sec-math.multiply *)
+  (* https://tc39.es/ecma262/#sec-numeric-types-number-multiply *)
   let lnum_f64 = lnum |> to_float64 mem in
   let rnum_f64 = rnum |> to_float64 mem in
 
