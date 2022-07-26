@@ -409,6 +409,15 @@ let encode program
       let pval = RegisterFile.find pid rf in
       let ctrl = ControlFile.find cid cf in
       checked_tagged_to_tagged_pointer pval () ctrl
+  | CheckedTaggedToTaggedSigned ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      checked_tagged_to_tagged_signed pval
+  | CheckedTruncateTaggedToWord32 ->
+      let hint = Operands.const_of_nth operands 0 in
+      let pid = Operands.id_of_nth operands 1 in
+      let pval = RegisterFile.find pid rf in
+      checked_truncate_tagged_to_word32 hint pval mem
   | NumberToInt32 ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -487,6 +496,7 @@ let encode program
   | BitcastTaggedToWord -> encode_machine_unary bitcast_tagged_to_word
   | BitcastWord32ToWord64 -> encode_machine_unary bitcast_word32_to_word64
   | BitcastWordToTagged -> encode_machine_unary bitcast_word_to_tagged
+  | TruncateFloat64ToWord32 -> encode_machine_unary truncate_float64_to_word32
   | TruncateInt64ToInt32 -> encode_machine_unary truncate_int64_to_int32
   (* machine: type-conversion *)
   | ChangeFloat64ToInt64 -> encode_machine_unary change_float64_to_int64

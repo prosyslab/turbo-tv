@@ -2,6 +2,18 @@ open Z3utils
 module HeapNumber = Objects.HeapNumber
 module Repr = MachineType.Repr
 
+(* helper functions *)
+let check_map_for_heap_number_or_oddball_to_float64 hint pval mem =
+  let is_heap_number = pval |> Objects.is_heap_number mem in
+  let is_boolean = pval |> Objects.is_boolean mem in
+  match hint with
+  | "Number" -> is_heap_number
+  | "NumberOrBoolean" -> Bool.ors [ is_heap_number; is_boolean ]
+  (* TODO: Implement MapInstanceType for NumberOrOddball *)
+  | "NumberOrOddball" -> Bool.tr
+  | _ ->
+      failwith (Printf.sprintf "CheckedTaggedToFloat64: Undefined hint %s" hint)
+
 (* simplified: numeric *)
 let number_abs nptr next_bid mem state =
   let deopt =
@@ -470,17 +482,8 @@ let checked_tagged_signed_to_int32 pval state =
 let checked_tagged_to_float64 hint pval mem state =
   let is_tagged_signed = pval |> Value.has_type Type.tagged_signed in
   let is_tagged_pointer = pval |> Value.has_type Type.tagged_pointer in
-  let is_heap_number = pval |> Objects.is_heap_number mem in
-  let is_boolean = pval |> Objects.is_boolean mem in
   let map_check =
-    match hint with
-    | "Number" -> is_heap_number
-    | "NumberOrBoolean" -> Bool.ors [ is_heap_number; is_boolean ]
-    (* TODO: Implement MapInstanceType for NumberOrOddball *)
-    | "NumberOrOddball" -> Bool.tr
-    | _ ->
-        failwith
-          (Printf.sprintf "CheckedTaggedToFloat64: Undefined hint %s" hint)
+    check_map_for_heap_number_or_oddball_to_float64 hint pval mem
   in
   let deopt = Bool.ands [ is_tagged_pointer; Bool.not map_check ] in
   let value =
@@ -495,6 +498,26 @@ let checked_tagged_to_tagged_pointer pval _checkpoint control state =
     Bool.ite (pval |> Value.has_type Type.tagged_signed) Value.tr Value.fl
   in
   state |> Common.deoptimize_if deopt_cond () () control
+
+let checked_tagged_to_tagged_signed pval state =
+  let deopt =
+    Bool.ite (pval |> Value.has_type Type.tagged_signed) Value.fl Value.tr
+  in
+  state |> State.update ~value:pval ~deopt
+
+let checked_truncate_tagged_to_word32 hint pval mem state =
+  let is_tagged_signed = pval |> Value.has_type Type.tagged_signed in
+  let is_tagged_pointer = pval |> Value.has_type Type.tagged_pointer in
+  let map_check =
+    check_map_for_heap_number_or_oddball_to_float64 hint pval mem
+  in
+  let deopt = Bool.ands [ is_tagged_pointer; Bool.not map_check ] in
+  let value =
+    Bool.ite is_tagged_signed
+      (Value.TaggedSigned.to_int32 pval)
+      (HeapNumber.load pval mem |> HeapNumber.to_float64 |> Float64.to_int32)
+  in
+  state |> State.update ~value ~deopt
 
 let number_to_int32 pval next_bid mem state =
   let deopt =

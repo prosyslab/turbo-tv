@@ -91,7 +91,6 @@ type t =
   | CheckedTaggedToArrayIndex
   | CheckedTaggedToInt32
   | CheckedTaggedToInt64
-  | CheckedTruncateTaggedToWord32
   | CheckedUint32Bounds
   | CheckedUint32Div
   | CheckedUint32Mod
@@ -856,6 +855,7 @@ type t =
   | Projection
   (* b1v1e1c1 *)
   | CheckedTaggedToFloat64
+  | CheckedTruncateTaggedToWord32
   (* v1v2e1c1 *)
   | DeoptimizeIf
   | DeoptimizeUnless
@@ -1270,7 +1270,6 @@ let of_str str =
   | "CheckedTaggedToArrayIndex" -> CheckedTaggedToArrayIndex
   | "CheckedTaggedToInt32" -> CheckedTaggedToInt32
   | "CheckedTaggedToInt64" -> CheckedTaggedToInt64
-  | "CheckedTruncateTaggedToWord32" -> CheckedTruncateTaggedToWord32
   | "CheckedUint32Bounds" -> CheckedUint32Bounds
   | "CheckedUint32Div" -> CheckedUint32Div
   | "CheckedUint32Mod" -> CheckedUint32Mod
@@ -2027,6 +2026,7 @@ let of_str str =
   | "CheckedFloat64ToInt32" -> CheckedFloat64ToInt32
   | "Projection" -> Projection
   | "CheckedTaggedToFloat64" -> CheckedTaggedToFloat64
+  | "CheckedTruncateTaggedToWord32" -> CheckedTruncateTaggedToWord32
   | "DeoptimizeIf" -> DeoptimizeIf
   | "DeoptimizeUnless" -> DeoptimizeUnless
   | "SpeculativeNumberSubtract" -> SpeculativeNumberSubtract
@@ -2140,7 +2140,6 @@ let to_str opcode =
   | CheckedTaggedToArrayIndex -> "CheckedTaggedToArrayIndex"
   | CheckedTaggedToInt32 -> "CheckedTaggedToInt32"
   | CheckedTaggedToInt64 -> "CheckedTaggedToInt64"
-  | CheckedTruncateTaggedToWord32 -> "CheckedTruncateTaggedToWord32"
   | CheckedUint32Bounds -> "CheckedUint32Bounds"
   | CheckedUint32Div -> "CheckedUint32Div"
   | CheckedUint32Mod -> "CheckedUint32Mod"
@@ -2897,6 +2896,7 @@ let to_str opcode =
   | CheckedFloat64ToInt32 -> "CheckedFloat64ToInt32"
   | Projection -> "Projection"
   | CheckedTaggedToFloat64 -> "CheckedTaggedToFloat64"
+  | CheckedTruncateTaggedToWord32 -> "CheckedTruncateTaggedToWord32"
   | DeoptimizeIf -> "DeoptimizeIf"
   | DeoptimizeUnless -> "DeoptimizeUnless"
   | SpeculativeNumberSubtract -> "SpeculativeNumberSubtract"

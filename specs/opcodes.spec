@@ -83,7 +83,7 @@ CheckedTaggedToInt32,
 CheckedTaggedToInt64,
 CheckedTaggedToTaggedPointer,v1,e1,c1
 CheckedTaggedToTaggedSigned,v1,e1,c1
-CheckedTruncateTaggedToWord32,
+CheckedTruncateTaggedToWord32,b1,v1,e1,c1
 CheckedUint32Bounds,
 CheckedUint32Div,
 CheckedUint32Mod,

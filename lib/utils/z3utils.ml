@@ -119,6 +119,8 @@ module Float = struct
 
   let rtp_mode = Fl.RoundingMode.mk_rtp ctx
 
+  let rtz_mode = Fl.RoundingMode.mk_rtz ctx
+
   let single_sort = Fl.mk_sort_single ctx
 
   let double_sort = Fl.mk_sort_double ctx
