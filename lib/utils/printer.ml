@@ -8,6 +8,7 @@ let value_to_string model mem value =
   | "int32" -> value |> Value.Int32.to_string model
   (* | "uint32" -> value |> Uint32.to_string *)
   | "int64" -> value |> Value.Int64.to_string model
+  | "uint32" -> value |> Value.Uint32.to_string model
   (* | "uint64" -> value |> Uint64.to_string *)
   | "float64" -> value |> Float64.to_string model
   | "pointer" ->
