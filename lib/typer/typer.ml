@@ -44,17 +44,12 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
         Bool.ands (List.rev_map2 (fun v f -> verify v f mem) decomposed fields)
       else failwith "is: wrong number of fields"
   | Range (lb, ub) ->
-      let number = HeapNumber.load value mem in
-      (* assume value is heap number or integer or float64 *)
-      Bool.ite
-        (* heap number *)
-        (Bool.ands
-           [
-             value |> Value.has_type Type.tagged_pointer;
-             value |> Objects.is_heap_number mem;
-           ])
-        (Bool.ands [ BitVec.gef number.value lb; BitVec.lef number.value ub ])
-        (* float or integer *)
-        (Bool.ands [ Value.gef value lb; Value.lef value ub ])
+      (* assume value is a number *)
+      let num_f64 = value |> Number.to_float64 mem in
+      Bool.ands
+        [
+          Float64.ge num_f64 (lb |> Float.from_float |> Float64.from_float);
+          Float64.le num_f64 (ub |> Float.from_float |> Float64.from_float);
+        ]
   (* for now, handle only numeric types *)
   | _ -> Bool.tr
