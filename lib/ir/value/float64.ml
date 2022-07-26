@@ -170,4 +170,6 @@ let to_string model value =
       (evaluated |> is_minus_zero |> Expr.to_simplified_string)
       't'
   then "Float64(-0)"
-  else Format.sprintf "Float64(%s)" (evaluated |> Real.to_decimal_string)
+  else
+    Format.sprintf "Float64(%s)"
+      (evaluated |> to_float |> Model.eval model |> Real.to_decimal_string)
