@@ -304,6 +304,8 @@ module TaggedSigned = struct
     value |> from_value |> Float.from_signed_bv |> Float.to_ieee_bv
     |> entype Type.float64
 
+  let to_uint32 value = value |> to_int32 |> cast Type.uint32
+
   let is_zero value =
     BitVec.eqb (value |> from_value) (BitVecVal.zero ~len:31 ())
 
@@ -379,6 +381,8 @@ module Int32 = struct
   let to_tagged_signed value =
     BitVec.shli (value |> from_value) 1
     |> BitVec.zero_extend 32 |> entype Type.tagged_signed
+
+  let to_uint32 value = value |> cast Type.uint32
 
   (* Int32 V x Int32 V *)
   let add lval rval =
@@ -494,6 +498,12 @@ module Uint32 = struct
   let to_tagged_signed value =
     BitVec.shli (value |> from_value) 1
     |> BitVec.zero_extend 32 |> entype Type.tagged_signed
+
+  (* arith *)
+  let modulo lval rval = BitVec.modb (lval |> from_value) (rval |> from_value)
+
+  (* bitwise *)
+  let lshr lval rval = BitVec.lshrb (lval |> from_value) (rval |> from_value)
 
   (* method *)
   let is_in_smi_range value =

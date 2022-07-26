@@ -49,6 +49,8 @@ let to_int64 value = value |> to_intx 64
 
 let to_tagged_signed value = value |> to_int32 |> Value.Int32.to_tagged_signed
 
+let to_uint32 value = value |> to_int32 |> Value.Int32.to_uint32
+
 (* constants *)
 let nan = Float.nan () |> from_float
 
@@ -85,8 +87,7 @@ let neg value =
   let f = value |> to_float in
   Z3utils.Float.neg f |> from_float
 
-let round_down value =
-  Float.round Float.rtn_mode (value |> to_float) |> from_float
+let round_down = floor
 
 let round_up value =
   Float.round Float.rtp_mode (value |> to_float) |> from_float

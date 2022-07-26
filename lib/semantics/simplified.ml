@@ -257,6 +257,11 @@ let boolean_not pval state =
   let value = Bool.ite (Value.eq Value.fl pval) Value.tr Value.fl in
   state |> State.update ~value ~deopt
 
+(* 2V -> 1V *)
+let number_shift_right_logical lval rval mem state =
+  let value = Number.unsigned_right_shift lval rval mem in
+  state |> State.update ~value
+
 let speculative_number_bitwise_or lval rval next_bid mem state =
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
   let value, next_bid, mem =
@@ -279,6 +284,13 @@ let speculative_number_bitwise_xor lval rval state =
   let value = Value.xor lval rval in
 
   state |> State.update ~value ~deopt
+
+(* 2V1E1C -> 1V *)
+let speculative_number_shift_right_logical lval rval _eff control mem state =
+  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+  state
+  |> number_shift_right_logical lval rval mem
+  |> State.update ~control ~deopt
 
 (* simplified: comparison *)
 let number_equal lnum rnum mem state =
@@ -535,6 +547,11 @@ let number_to_int32 pval next_bid mem state =
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
   state |> State.update ~value ~deopt ~next_bid ~mem
+
+(* pure: 1V -> 1V *)
+let number_to_uint32 pval mem state =
+  let value = pval |> Number.to_uint32 mem in
+  state |> State.update ~value
 
 let speculative_to_number pval next_bid mem state =
   (* assumption: [pval] is heap number or smi *)

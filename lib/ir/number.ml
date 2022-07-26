@@ -42,6 +42,20 @@ let to_float64 mem number =
              (number |> Value.TaggedSigned.to_float64)
              (heap_number |> HeapNumber.to_float64))))
 
+let to_uint32 mem number =
+  let number_f64 = HeapNumber.load number mem |> HeapNumber.to_float64 in
+  (* https://tc39.es/ecma262/#sec-touint32 *)
+  Bool.ite
+    (number |> Value.has_type Type.int32)
+    (number |> Value.Int32.to_uint32)
+    (Bool.ite
+       (number |> Value.has_type Type.tagged_signed)
+       (number |> Value.TaggedSigned.to_uint32)
+       (Bool.ite
+          (number |> Value.has_type Type.uint32)
+          number
+          (number_f64 |> Float64.to_uint32)))
+
 (* type check *)
 let is_integer mem number =
   let heap_number = HeapNumber.load number mem in
@@ -173,6 +187,16 @@ let multiply lnum rnum mem =
 let subtract lnum rnum mem =
   (* https://tc39.es/ecma262/#sec-numeric-types-number-subtract *)
   add lnum (rnum |> unary_minus mem) mem
+
+(* bitwise *)
+let unsigned_right_shift x y mem =
+  (* https://tc39.es/ecma262/#sec-numeric-types-number-unsignedRightShift *)
+  let lnum = x |> to_uint32 mem in
+  let rnum = y |> to_uint32 mem in
+  let shift_count =
+    Value.Uint32.modulo rnum (32 |> Value.from_int |> Value.cast Type.uint32)
+  in
+  Value.Uint32.lshr lnum shift_count
 
 (* methods *)
 let ceil mem number =

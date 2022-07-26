@@ -265,6 +265,12 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       boolean_not pval
+  | NumberShiftRightLogical ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      number_shift_right_logical lval rval mem
   | SpeculativeNumberBitwiseOr ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
@@ -277,6 +283,14 @@ let encode program
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
       speculative_number_bitwise_xor lval rval
+  | SpeculativeNumberShiftRightLogical ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let ctrl_id = Operands.id_of_nth operands 3 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      let ctrl = ControlFile.find ctrl_id cf in
+      speculative_number_shift_right_logical lval rval () ctrl mem
   (* simplified: comparison *)
   | SpeculativeNumberEqual ->
       let lpid = Operands.id_of_nth operands 0 in
@@ -422,6 +436,10 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       number_to_int32 pval next_bid mem
+  | NumberToUint32 ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      number_to_uint32 pval mem
   | SpeculativeToNumber ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
