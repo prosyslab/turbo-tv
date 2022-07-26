@@ -249,7 +249,7 @@ let ltf lval rval =
 
 let tr = addi empty 1 |> cast Type.bool
 
-let is_true value = eq tr value
+let is_true value = weak_eq tr value
 
 let fl = empty |> cast Type.bool
 
@@ -311,9 +311,10 @@ module TaggedSigned = struct
 
   let to_string model value =
     let v_str =
-      value |> from_value |> Model.eval model |> Expr.to_simplified_string
+      value |> from_value |> BitVec.sign_extend 1 |> Model.eval model
+      |> Expr.to_simplified_string
     in
-    Format.sprintf "TaggedSigned(0x%x)"
+    Format.sprintf "TaggedSigned(%d)"
       ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
       |> Int32.of_string |> Int32.to_int)
 end
@@ -436,9 +437,9 @@ module Int32 = struct
       value |> from_value |> Model.eval model |> Expr.to_simplified_string
     in
     try
-      Format.sprintf "Int32(0x%lx)"
+      Format.sprintf "Int32(%d)"
         ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
-        |> Int32.of_string)
+        |> Int32.of_string |> Int32.to_int)
     with _ -> v_str
 end
 

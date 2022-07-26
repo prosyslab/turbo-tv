@@ -78,7 +78,7 @@ let print_counter_example program state model =
     in
 
     match opcode with
-    | Start | Branch | Merge | IfFalse | IfTrue | JSStackCheck
+    | Start | Branch | Merge | IfFalse | IfTrue | JSStackCheck | DeoptimizeIf
     | DeoptimizeUnless ->
         Format.printf "#%d:%s => \n  Control: %s\n  UB: %s\n  Deopt: %s\n" pc
           instr_s control ub deopt;
