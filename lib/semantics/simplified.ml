@@ -31,55 +31,9 @@ let number_abs nptr next_bid mem state =
   in
   state |> State.update ~value ~deopt ~next_bid ~mem
 
-let number_add lval rval next_bid mem state =
-  let deopt =
-    Bool.not
-      (Bool.ands
-         [
-           lval |> Value.has_type Type.tagged_pointer;
-           rval |> Value.has_type Type.tagged_pointer;
-           lval |> Objects.is_heap_number mem;
-           rval |> Objects.is_heap_number mem;
-         ])
-  in
-  (* https://tc39.es/ecma262/#sec-numeric-types-number-add *)
-  let value, next_bid, mem =
-    let lnum = HeapNumber.load lval mem in
-    let rnum = HeapNumber.load rval mem in
-    (* if lnum or rnum is nan, return nan *)
-    Bool.ite
-      (Bool.ors [ HeapNumber.is_nan lnum; HeapNumber.is_nan rnum ])
-      Float64.nan
-      (* inf+ninf = nan *)
-      (Bool.ite
-         (Bool.ands [ HeapNumber.is_inf lnum; HeapNumber.is_ninf rnum ])
-         Float64.nan
-         (* ninf+inf = nan *)
-         (Bool.ite
-            (Bool.ands [ HeapNumber.is_ninf lnum; HeapNumber.is_inf rnum ])
-            Float64.nan
-            (* lnum is inf or -inf, return lnum*)
-            (Bool.ite
-               (Bool.ors [ HeapNumber.is_inf lnum; HeapNumber.is_ninf lnum ])
-               (lnum.value |> Value.entype Type.float64)
-               (* rnum is inf or -inf, return rnum*)
-               (Bool.ite
-                  (Bool.ors [ HeapNumber.is_inf rnum; HeapNumber.is_ninf rnum ])
-                  (rnum.value |> Value.entype Type.float64)
-                  (* -0 + -0 = -0 *)
-                  (Bool.ite
-                     (Bool.ands
-                        [
-                          HeapNumber.is_minus_zero lnum;
-                          HeapNumber.is_minus_zero rnum;
-                        ])
-                     Float64.minus_zero
-                     (* else, n+n *)
-                     (Float64.add lnum.value rnum.value))))))
-    |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
-  in
-
-  state |> State.update ~value ~deopt ~next_bid ~mem
+let number_add lval rval mem state =
+  let value = Number.add lval rval mem in
+  state |> State.update ~value
 
 let number_ceil number mem state =
   let value = number |> Number.ceil mem in
@@ -193,72 +147,30 @@ let number_min lval rval next_bid mem state =
   state |> State.update ~value ~deopt ~next_bid ~mem
 
 let number_multiply lval rval next_bid mem state =
-  let deopt =
-    Bool.not
-      (Bool.ands
-         [
-           lval |> Value.has_type Type.tagged_pointer;
-           rval |> Value.has_type Type.tagged_pointer;
-           lval |> Objects.is_heap_number mem;
-           rval |> Objects.is_heap_number mem;
-         ])
-  in
-  (* https://tc39.es/ecma262/#sec-math.multiply *)
-  let value, next_bid, mem =
-    let lnum = HeapNumber.load lval mem in
-    let rnum = HeapNumber.load rval mem in
+  let value = Number.multiply lval rval mem in
+  state |> State.update ~value ~next_bid ~mem
 
-    let if_l_is_inf_or_ninf l r =
-      Bool.ite
-        (Bool.ors [ HeapNumber.is_zero r; HeapNumber.is_minus_zero r ])
-        Float64.nan
-        (Bool.ite (HeapNumber.is_positive r)
-           (l |> HeapNumber.to_float64)
-           (l |> HeapNumber.to_float64 |> Float64.neg))
-    in
+let number_subtract lval rval mem state =
+  let value = Number.subtract lval rval mem in
+  state |> State.update ~value
 
-    let if_minus_zero n =
-      Bool.ite
-        (Bool.ors [ HeapNumber.is_minus_zero n; HeapNumber.is_negative n ])
-        Float64.zero Float64.minus_zero
-    in
-
-    Bool.ite
-      (* if lnum or rnum is nan, return nan *)
-      (Bool.ors [ HeapNumber.is_nan lnum; HeapNumber.is_nan rnum ])
-      Float64.nan
-      (* if lnum is inf or -inf *)
-      (Bool.ite
-         (Bool.ors [ HeapNumber.is_inf lnum; HeapNumber.is_ninf lnum ])
-         (if_l_is_inf_or_ninf lnum rnum)
-         (* if rnum is inf or -inf *)
-         (Bool.ite
-            (Bool.ors [ HeapNumber.is_inf rnum; HeapNumber.is_ninf rnum ])
-            (if_l_is_inf_or_ninf rnum lnum)
-            (* if lnum is -0 *)
-            (Bool.ite
-               (HeapNumber.is_minus_zero lnum)
-               (if_minus_zero rnum)
-               (* if rnum is -0 *)
-               (Bool.ite
-                  (HeapNumber.is_minus_zero rnum)
-                  (if_minus_zero lnum)
-                  (* else, return lnum * rnum *)
-                  (Float64.mul
-                     (lnum |> HeapNumber.to_float64)
-                     (rnum |> HeapNumber.to_float64))))))
-    |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
-  in
-  state |> State.update ~value ~deopt ~next_bid ~mem
-
-let speculative_number_add lval rval next_bid mem state =
+(* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
+ * value: Float64(lval + rval) *)
+let speculative_number_add lval rval mem state =
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
-  state |> number_add lval rval next_bid mem |> State.update ~deopt
+  state |> number_add lval rval mem |> State.update ~deopt
 
+(* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
+ * value: Float64(lval x rval) *)
 let speculative_number_multiply lval rval next_bid mem state =
-  (* [TODO] handle deoptimization *)
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
   state |> number_multiply lval rval next_bid mem |> State.update ~deopt
+
+(* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
+ * value: Float64(lval - rval) *)
+let speculative_number_subtract lval rval _effect control mem state =
+  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+  state |> number_subtract lval rval mem |> State.update ~deopt ~control
 
 (* well-defined condition:
  * (IsTaggedSigned(lval) /\ IsTaggedSigned(rval))
@@ -300,13 +212,8 @@ let speculative_safe_integer_add lval rval next_bid mem state =
   in
   state |> State.update ~value ~deopt ~next_bid ~mem
 
-(* well-defined condition:
- * - IsTaggedPointer(lval) /\ IsTaggedPointer(rval)
- * - PointsNumberObject(lval) /\ PointsNumberObject(rval)
- * - IsSafeInteger(lval) /\ IsSafeInteger(rval)
- * - IsWellDefined(lval) /\ IsWellDefined(rval)
- * assertion:
- *  value = ite well-defined (lval-rval) UB *)
+(* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
+ * value: Float64(lval - rval) *)
 let speculative_safe_integer_subtract lval rval next_bid mem state =
   let lnum = HeapNumber.load lval mem in
   let rnum = HeapNumber.load rval mem in
@@ -617,7 +524,6 @@ let speculative_to_number pval next_bid mem state =
              [
                pval |> Value.has_type Type.tagged_pointer;
                pval |> Objects.is_heap_number mem;
-               HeapNumber.is_safe_integer (HeapNumber.load pval mem);
              ];
          ])
   in

@@ -85,9 +85,11 @@ let neg value =
   let f = value |> to_float in
   Z3utils.Float.neg f |> from_float
 
-let round_down value = Float.round Float.rtn_mode (value |> to_float)
+let round_down value =
+  Float.round Float.rtn_mode (value |> to_float) |> from_float
 
-let round_up value = Float.round Float.rtp_mode (value |> to_float)
+let round_up value =
+  Float.round Float.rtp_mode (value |> to_float) |> from_float
 
 let sub lval rval =
   let lf = lval |> to_float in
@@ -122,7 +124,7 @@ let gt lval rval =
 
 (* methods *)
 
-let is_integer value = eq value (value |> round_down |> from_float)
+let is_integer value = eq value (value |> round_down)
 
 let is_zero value = Float.is_zero (value |> to_float)
 

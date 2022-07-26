@@ -103,7 +103,7 @@ Dead,
 DeadValue,
 DebugBreak,
 DelayedStringConstant,
-Deoptimize,
+Deoptimize,v1,e1,c1
 DeoptimizeIf,v1,v2,e1,c1
 DeoptimizeUnless,v1,v2,e1,c1
 EffectPhi,
@@ -631,7 +631,7 @@ NumberSilenceNaN,
 NumberSin,
 NumberSinh,
 NumberSqrt,
-NumberSubtract,
+NumberSubtract,v1,v2
 NumberTan,
 NumberTanh,
 NumberToBoolean,
@@ -720,7 +720,7 @@ SpeculativeNumberMultiply,v1,v2
 SpeculativeNumberShiftLeft,
 SpeculativeNumberShiftRight,
 SpeculativeNumberShiftRightLogical,
-SpeculativeNumberSubtract,
+SpeculativeNumberSubtract,v1,v2,e1,c1
 SpeculativeSafeIntegerAdd,v1,v2
 SpeculativeSafeIntegerSubtract,v1,v2
 SpeculativeToNumber,v1
@@ -771,7 +771,7 @@ TruncateFloat32ToUint32,
 TruncateFloat64ToFloat32,
 TruncateFloat64ToInt64,
 TruncateFloat64ToUint32,
-TruncateFloat64ToWord32,
+TruncateFloat64ToWord32,v1
 TruncateInt64ToInt32,v1
 TruncateTaggedPointerToBit,
 TruncateTaggedToBit,v1
