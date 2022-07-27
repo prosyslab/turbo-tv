@@ -150,8 +150,21 @@ let parameter param state =
   let value = param in
   state |> State.update ~value
 
-let return return_value return_control state =
-  state |> State.update ~value:return_value ~control:return_control
+let return return_value return_control next_bid mem state =
+  let heap_number, next_bid, mem =
+    return_value |> HeapNumber.from_float64 next_bid Bool.tr mem
+  in
+  (* return heap number or smi *)
+  let value =
+    Bool.ite
+      (return_value |> Value.has_type Type.float64)
+      heap_number
+      (Bool.ite
+         (return_value |> Value.has_type Type.tagged_pointer)
+         return_value
+         (return_value |> Value.cast Type.tagged_signed))
+  in
+  state |> State.update ~value ~next_bid ~mem ~control:return_control
 
 let start state = state |> State.update ~control:Bool.tr
 
