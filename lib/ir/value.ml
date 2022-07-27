@@ -39,8 +39,6 @@ let init name = BitVec.init ~len name
 
 let from_int i = BitVecVal.from_int ~len i |> cast Type.const
 
-let from_istring s = BitVecVal.from_istring ~len s |> cast Type.const
-
 let from_f64string s = BitVecVal.from_f64string s |> entype Type.const
 
 let from_bv bv =
@@ -55,6 +53,8 @@ let rec has_type (ty : Type.t) t =
       [ t |> has_type Type.tagged_pointer; t |> has_type Type.tagged_signed ]
   else if ty = Type.tagged_signed then
     Bool.ands [ BitVec.eqb (ty_of t) ty; BitVec.eqi (BitVec.andi t 1) 0 ]
+  else if ty = Type.tagged_pointer then
+    Bool.ands [ BitVec.eqb (ty_of t) ty; BitVec.eqi (BitVec.andi t 1) 1 ]
   else BitVec.eqb (ty_of t) ty
 
 let have_type t ts = Bool.ands (List.map (has_type t) ts)
