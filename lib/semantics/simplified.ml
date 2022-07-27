@@ -47,8 +47,8 @@ let number_add lval rval mem state =
   let value = Number.add lval rval mem in
   state |> State.update ~value
 
-let number_ceil number mem state =
-  let value = number |> Number.ceil mem in
+let number_ceil pval mem state =
+  let value = pval |> Number.ceil mem in
   state |> State.update ~value
 
 let number_expm1 nptr next_bid mem state =
@@ -79,11 +79,15 @@ let number_expm1 nptr next_bid mem state =
       (num |> HeapNumber.to_float64)
       (* if num is -inf, return -1 *)
       (Bool.ite (HeapNumber.is_ninf num)
-         (Float.from_float (-1.0) |> Float64.from_float)
+         (Float64.from_numeral (-1.0))
          (Z3.FuncDecl.apply expm_decl [ num.value ] |> Value.entype Type.float64))
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
   state |> State.update ~value ~deopt ~next_bid ~mem
+
+let number_floor pval mem state =
+  let value = pval |> Number.floor mem in
+  state |> State.update ~value
 
 let number_imul lval rval mem state =
   let value = Number.imul lval rval mem in
@@ -164,6 +168,18 @@ let number_min lval rval next_bid mem state =
 let number_multiply lval rval next_bid mem state =
   let value = Number.multiply lval rval mem in
   state |> State.update ~value ~next_bid ~mem
+
+let number_round pval mem state =
+  let value = pval |> Number.round mem in
+  state |> State.update ~value
+
+let number_sign pval mem state =
+  let value = pval |> Number.sign mem in
+  state |> State.update ~value
+
+let number_sin pval mem state =
+  let value = pval |> Number.sin mem in
+  state |> State.update ~value
 
 let number_subtract lval rval mem state =
   let value = Number.subtract lval rval mem in
@@ -431,7 +447,7 @@ let change_uint32_to_tagged pval next_bid mem state =
   let smi = Value.Uint32.to_tagged_signed pval in
   let number, next_bid, mem =
     pval |> Value.Uint32.to_float64
-    |> HeapNumber.from_float64 next_bid is_in_smi_range mem
+    |> HeapNumber.from_float64 next_bid (Bool.not is_in_smi_range) mem
   in
 
   let value = Bool.ite is_in_smi_range smi number in
@@ -443,11 +459,9 @@ let change_uint64_to_tagged pval next_bid mem state =
   let smi = Value.Uint64.to_tagged_signed pval in
   let number, next_bid, mem =
     pval |> Value.Uint64.to_float64
-    |> HeapNumber.from_float64 next_bid is_in_smi_range mem
+    |> HeapNumber.from_float64 next_bid (Bool.not is_in_smi_range) mem
   in
-
   let value = Bool.ite is_in_smi_range smi number in
-
   state |> State.update ~value ~next_bid ~mem
 
 (* Deoptimization condition =

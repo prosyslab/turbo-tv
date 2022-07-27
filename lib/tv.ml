@@ -45,6 +45,7 @@ let encode program
     let rval = RegisterFile.find rpid rf in
     op lval rval
   in
+
   let encode_machine_binary_with_hint op =
     let hint = Operands.const_of_nth operands 0 in
     let lpid = Operands.id_of_nth operands 1 in
@@ -67,13 +68,16 @@ let encode program
   | HeapConstant | ExternalConstant ->
       let addr_re = Re.Pcre.regexp "(0x[0-9a-f]+)" in
       let operand = Operands.const_of_nth operands 0 in
-      let c = Re.Group.get (Re.exec addr_re operand) 1 |> Value.from_istring in
+      let c =
+        Re.Group.get (Re.exec addr_re operand) 1
+        |> BitVecVal.from_istring |> Value.entype Type.pointer
+      in
       external_constant c
   | Int32Constant ->
-      let c = Operands.const_of_nth operands 0 |> Value.from_istring in
+      let c = Operands.const_of_nth operands 0 |> Value.Int32.str_to_value in
       int32_constant c
   | Int64Constant ->
-      let c = Operands.const_of_nth operands 0 |> Value.from_istring in
+      let c = Operands.const_of_nth operands 0 |> Value.Int64.str_to_value in
       int64_constant c
   | NumberConstant ->
       let c_str = Operands.const_of_nth operands 0 in
@@ -173,7 +177,7 @@ let encode program
       let cid = Operands.id_of_nth operands 1 in
       let retval = RegisterFile.find pid rf in
       let retctrl = ControlFile.find cid cf in
-      return retval retctrl
+      return retval retctrl next_bid mem
   | End ->
       let retvals = RegisterFile.find_all (operands |> Operands.id_of_all) rf in
       let retctrls = ControlFile.find_all (operands |> Operands.id_of_all) cf in
@@ -210,6 +214,10 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       number_expm1 pval next_bid mem
+  | NumberFloor ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      number_expm1 pval next_bid mem
   | NumberMax ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
@@ -228,6 +236,18 @@ let encode program
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
       number_multiply lval rval next_bid mem
+  | NumberRound ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      number_round pval mem
+  | NumberSign ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      number_sign pval mem
+  | NumberSin ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      number_sign pval mem
   | NumberSubtract ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
@@ -535,21 +555,16 @@ let encode program
 
 let propagate program state =
   let pc = State.pc state in
-  let rf = State.register_file state in
   let cf = State.control_file state in
   let uf = State.ub_file state in
   let df = State.deopt_file state in
-  let ty, opcode, operands = IR.instr_of pc program in
-  let mem = State.memory state in
-
-  let value = RegisterFile.find (pc |> string_of_int) rf in
+  let _, opcode, operands = IR.instr_of pc program in
   let ub = UBFile.find (pc |> string_of_int) uf in
   let deopt = DeoptFile.find (pc |> string_of_int) df in
 
-  let type_is_verified =
-    match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
-  in
-
+  (* let type_is_verified =
+       match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
+     in *)
   let ub_from_input, deopt_from_input =
     match opcode with
     | End ->
@@ -623,7 +638,7 @@ let propagate program state =
         let deopts = DeoptFile.find_all pids df in
         (Bool.ors ubs, Bool.ors deopts)
   in
-  let ub = Bool.ors [ ub; Bool.not type_is_verified; ub_from_input ] in
+  let ub = Bool.ors [ ub; ub_from_input ] in
   let deopt = Bool.ors [ deopt; deopt_from_input ] in
   state |> State.update ~ub ~deopt
 
@@ -707,19 +722,17 @@ let run nparams src_program tgt_program =
     Bool.ands [ params_are_smi_or_heapnumber; no_deopt ]
   in
 
-  (* assume return value is either smi or heap number. *)
   let retval_is_same =
     let src_retval = State.retval src_state in
     let tgt_retval = State.retval tgt_state in
     let src_mem = State.memory src_state in
     let tgt_mem = State.memory tgt_state in
+    (* assume it only returns smi or heap number pointer *)
     let to_float64 value mem =
       Bool.ite
-        (value |> Value.has_type Type.tagged_signed)
-        (* if smi *)
-        (value |> Value.TaggedSigned.to_float64)
-        (* else if heap number *)
+        (value |> Value.has_type Type.tagged_pointer)
         (HeapNumber.load value mem |> HeapNumber.to_float64)
+        (value |> Value.TaggedSigned.to_float64)
     in
     Bool.eq (to_float64 src_retval src_mem) (to_float64 tgt_retval tgt_mem)
   in

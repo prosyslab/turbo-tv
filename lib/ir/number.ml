@@ -102,10 +102,9 @@ let eq lnum rnum mem =
 
 (* unary arith *)
 let unary_minus mem number =
-  Bool.ite (* https://tc39.es/ecma262/#sec-numeric-types-number-unaryMinus *)
-    (number |> is_nan mem)
-    Float64.nan
-    (number |> to_float64 mem |> Float64.neg)
+  let num_f64 = number |> to_float64 mem in
+  (* https://tc39.es/ecma262/#sec-numeric-types-number-unaryMinus *)
+  Bool.ite (num_f64 |> Float64.is_nan) Float64.nan (num_f64 |> Float64.neg)
 
 (* binary arith *)
 let add lnum rnum mem =
@@ -208,7 +207,7 @@ let ceil mem number =
   let number_f64 = number |> to_float64 mem in
   (* https://tc39.es/ecma262/#sec-math.ceil *)
   Bool.ite
-    (* [number] is integer -> [number] *)
+    (* integer, nan, zero, minus zero, inf, ninf -> [number] *)
     (Bool.ors
        [
          number_f64 |> Float64.is_integer;
@@ -218,14 +217,112 @@ let ceil mem number =
          number_f64 |> Float64.is_inf;
          number_f64 |> Float64.is_ninf;
        ])
-    number
+    number_f64
     (* -1 < [number] < -0 -> -0 *)
     (Bool.ite
        (Bool.ands
           [
             Float64.lt number_f64 Float64.minus_zero;
-            Float64.gt number_f64 (Float64.from_float (Float.from_float (-1.0)));
+            Float64.gt number_f64 (Float64.from_numeral (-1.0));
           ])
        Float64.minus_zero
-       (* else round([number],up) *)
-       (Float64.round_up number_f64))
+       (* else round to positive inf *)
+       (Float64.ceil number_f64))
+
+let floor mem number =
+  let number_f64 = number |> to_float64 mem in
+  (* https://tc39.es/ecma262/#sec-math.floor *)
+  Bool.ite
+    (* integer, nan, zero, minus zero, inf, ninf -> [number] *)
+    (Bool.ors
+       [
+         number_f64 |> Float64.is_integer;
+         number_f64 |> Float64.is_nan;
+         number_f64 |> Float64.is_zero;
+         number_f64 |> Float64.is_minus_zero;
+         number_f64 |> Float64.is_inf;
+         number_f64 |> Float64.is_ninf;
+       ])
+    number_f64
+    (* 0 < [number] < 1 -> 0 *)
+    (Bool.ite
+       (Bool.ands
+          [
+            Float64.gt number_f64 Float64.zero;
+            Float64.lt number_f64 (Float64.from_numeral 1.0);
+          ])
+       Float64.zero
+       (* else round to negative inf *)
+       (Float64.floor number_f64))
+
+let round mem number =
+  (* https://tc39.es/ecma262/#sec-math.round *)
+  let n_f64 = number |> to_float64 mem in
+  Bool.ite
+    (* nan, inf, ninf, integer -> [number]  *)
+    (Bool.ors
+       [
+         n_f64 |> Float64.is_nan;
+         n_f64 |> Float64.is_inf;
+         n_f64 |> Float64.is_ninf;
+         n_f64 |> Float64.is_integer;
+       ])
+    n_f64
+    (Bool.ite
+       (* 0 < [number] < 0.5 -> 0 *)
+       (Bool.ands
+          [
+            Float64.lt n_f64 (0.5 |> Float64.from_numeral);
+            Float64.gt n_f64 Float64.zero;
+          ])
+       Float64.zero
+       (Bool.ite
+          (* -0.5 <= [number] < -0 -> -0 *)
+          (Bool.ands
+             [
+               Float64.lt n_f64 Float64.minus_zero;
+               Float64.ge n_f64 (Float64.from_numeral (-0.5));
+             ])
+          Float64.minus_zero
+          (Bool.ite
+             (* tie -> [number] + 0.5 ; half up *)
+             (Float64.mul n_f64 (Float64.from_numeral 2.0) |> Float64.is_integer)
+             (Float64.add n_f64 (Float64.from_numeral 0.5))
+             (* else round to nearest *)
+             (n_f64 |> Float64.round_nearest_to_even))))
+
+let sign mem number =
+  let n_f64 = number |> to_float64 mem in
+  (* https://tc39.es/ecma262/#sec-math.sign *)
+  Bool.ite
+    (* [number] is nan, zero or minus_zero -> [number] *)
+    (Bool.ors
+       [
+         n_f64 |> Float64.is_nan;
+         n_f64 |> Float64.is_zero;
+         n_f64 |> Float64.is_minus_zero;
+       ])
+    n_f64
+    (Bool.ite
+       (* [number] < -0 -> -1 else 1 *)
+       (Float64.lt n_f64 Float64.minus_zero)
+       (Float64.neg Float64.one) Float64.one)
+
+let sin mem number =
+  let n_f64 = number |> to_float64 mem in
+  let bv_sort = BV.mk_sort ctx 64 in
+  let uif = Z3.FuncDecl.mk_func_decl_s ctx "sin" [ bv_sort ] bv_sort in
+  (* https://tc39.es/ecma262/#sec-math.sin *)
+  Bool.ite
+    (* [number] is nan, zero or minus_zero -> [number] *)
+    (Bool.ors
+       [
+         n_f64 |> Float64.is_nan;
+         n_f64 |> Float64.is_zero;
+         n_f64 |> Float64.is_minus_zero;
+       ])
+    n_f64
+    (Bool.ite
+       (Bool.ors [ n_f64 |> Float64.is_inf; n_f64 |> Float64.is_ninf ])
+       Float64.nan
+       (Z3.FuncDecl.apply uif [ number ] |> Value.entype Type.float64))
