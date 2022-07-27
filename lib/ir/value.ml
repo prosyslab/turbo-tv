@@ -247,13 +247,13 @@ let ltf lval rval =
 
 (* constant values *)
 
-let tr = addi empty 1 |> cast Type.bool
-
-let is_true value = weak_eq tr value
-
 let fl = empty |> cast Type.bool
 
 let is_false value = weak_eq fl value
+
+let tr = addi empty 1 |> cast Type.bool
+
+let is_true value = Bool.not (is_false value)
 
 let to_bool value = Bool.ite (eq value fl) Bool.fl Bool.tr
 
@@ -371,6 +371,8 @@ module Int32 = struct
 
   let to_value t = t |> BitVec.zero_extend 32 |> entype Type.int32
 
+  let str_to_value s = BitVecVal.from_istring ~len:32 s |> to_value
+
   (* type-conversion *)
   let to_float64 value =
     value |> from_value |> BitVec.sign_extend 32 |> Float.from_signed_bv
@@ -395,6 +397,9 @@ module Int32 = struct
     let li = lval |> from_value in
     let ri = rval |> from_value in
     BitVec.mulb li ri |> to_value
+
+  let sub lval rval =
+    BitVec.subb (lval |> from_value) (rval |> from_value) |> to_value
 
   let or_ lval rval =
     let li = lval |> from_value in
@@ -440,47 +445,6 @@ module Int32 = struct
       Format.sprintf "Int32(%d)"
         ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
         |> Int32.of_string |> Int32.to_int)
-    with _ -> v_str
-end
-
-module Int64 = struct
-  type t = BitVec.t
-
-  let from_value value = BitVec.extract 63 0 value
-
-  let to_value t = t |> entype Type.int64
-
-  (* conversion *)
-  let to_float64 value =
-    value |> from_value |> Float.from_signed_bv |> Float.to_ieee_bv
-    |> entype Type.float64
-
-  let to_int32 value =
-    value |> from_value |> BitVec.extract 31 0 |> BitVec.zero_extend 32
-    |> entype Type.int32
-
-  let to_tagged_signed value =
-    BitVec.shli (BitVec.extract 31 0 value) 1
-    |> BitVec.zero_extend 32 |> entype Type.tagged_signed
-
-  let lt lval rval = slt lval rval
-
-  let is_in_smi_range value =
-    Z3utils.Bool.ands
-      [
-        BitVec.sgei (value |> from_value) Constants.smi_min;
-        BitVec.slei (value |> from_value) Constants.smi_max;
-      ]
-
-  (* pp *)
-  let to_string model value =
-    let v_str =
-      value |> from_value |> Model.eval model |> Expr.to_simplified_string
-    in
-    try
-      Format.sprintf "Int64(0x%Lx)"
-        ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
-        |> Int64.of_string)
     with _ -> v_str
 end
 
@@ -551,8 +515,56 @@ module Uint64 = struct
     let v_str =
       value |> from_value |> Model.eval model |> Expr.to_simplified_string
     in
-    Format.sprintf "Uint64(0x%x)"
-      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1) |> int_of_string)
+    Format.sprintf "Uint64(0x%Lx)"
+      ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
+      |> Int64.of_string)
+end
+
+module Int64 = struct
+  type t = BitVec.t
+
+  let from_value value = BitVec.extract 63 0 value
+
+  let to_value t = t |> entype Type.int64
+
+  let str_to_value s = BitVecVal.from_istring s |> to_value
+
+  (* conversion *)
+  let to_float64 value =
+    value |> from_value |> Float.from_signed_bv |> Float.to_ieee_bv
+    |> entype Type.float64
+
+  let to_int32 value =
+    value |> from_value |> BitVec.extract 31 0 |> BitVec.zero_extend 32
+    |> entype Type.int32
+
+  let to_tagged_signed value =
+    BitVec.shli (BitVec.extract 31 0 value) 1
+    |> BitVec.zero_extend 32 |> entype Type.tagged_signed
+
+  let is_in_smi_range value =
+    Z3utils.Bool.ands
+      [
+        BitVec.sgei (value |> from_value) Constants.smi_min;
+        BitVec.slei (value |> from_value) Constants.smi_max;
+      ]
+
+  let lt lval rval = slt lval rval
+
+  let add lval rval = add lval rval |> cast Type.int64
+
+  let sub lval rval = sub lval rval |> cast Type.int64
+
+  (* pp *)
+  let to_string model value =
+    let v_str =
+      value |> from_value |> Model.eval model |> Expr.to_simplified_string
+    in
+    try
+      Format.sprintf "Int64(0x%Lx)"
+        ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
+        |> Int64.of_string)
+    with _ -> v_str
 end
 
 module Composed = struct

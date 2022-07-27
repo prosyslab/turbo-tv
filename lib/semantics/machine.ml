@@ -48,11 +48,11 @@ let int32_mul lval rval state =
   state |> State.update ~value
 
 let int32_sub lval rval state =
-  let value = Value.andi (Value.sub lval rval) Constants.smi_mask in
+  let value = Value.Int32.sub lval rval in
   state |> State.update ~value
 
 let int64_add lval rval state =
-  let value = Value.add lval rval in
+  let value = Value.Int64.add lval rval in
   state |> State.update ~value
 
 let int64_sub lval rval state =

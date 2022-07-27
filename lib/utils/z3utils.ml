@@ -172,8 +172,6 @@ module Float = struct
 
   let round rm exp = Fl.mk_round_to_integral ctx rm exp
 
-  let floor exp = round rtn_mode exp
-
   let eq lexp rexp = Fl.mk_eq ctx lexp rexp
 
   let gt lexp rexp = Fl.mk_gt ctx lexp rexp

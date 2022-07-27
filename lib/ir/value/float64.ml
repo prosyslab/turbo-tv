@@ -3,6 +3,8 @@ open Z3utils
 (* conversion *)
 let from_float f = f |> Z3utils.Float.to_ieee_bv |> Value.entype Type.float64
 
+let from_numeral f = f |> Float.from_float |> from_float
+
 let to_float value = value |> Value.data_of |> Z3utils.Float.from_ieee_bv
 
 let to_intx width value =
@@ -76,7 +78,9 @@ let add lval rval =
   let rf = rval |> to_float in
   Z3utils.Float.add lf rf |> from_float
 
-let floor value = Float.floor (value |> to_float) |> from_float
+let ceil value = Float.round Float.rtp_mode (value |> to_float) |> from_float
+
+let floor value = Float.round Float.rtn_mode (value |> to_float) |> from_float
 
 let mul lval rval =
   let lf = lval |> to_float in
@@ -89,8 +93,10 @@ let neg value =
 
 let round_down = floor
 
-let round_up value =
-  Float.round Float.rtp_mode (value |> to_float) |> from_float
+let round_up = ceil
+
+let round_nearest_to_even value =
+  Float.round Float.rne_mode (value |> to_float) |> from_float
 
 let sub lval rval =
   let lf = lval |> to_float in
@@ -125,7 +131,7 @@ let gt lval rval =
 
 (* methods *)
 
-let is_integer value = eq value (value |> round_down)
+let is_integer value = eq value (value |> floor)
 
 let is_zero value = Float.is_zero (value |> to_float)
 
