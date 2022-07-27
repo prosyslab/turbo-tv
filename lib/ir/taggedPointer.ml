@@ -15,7 +15,7 @@ let bid_len = 32
 
 let off_len = 16
 
-let len = Value.ty_len + +size_len + bid_len + off_len
+let len = Value.ty_len + size_len + bid_len + off_len
 
 (* getter *)
 let size_of t =

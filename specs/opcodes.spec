@@ -601,7 +601,7 @@ NumberDivide,
 NumberEqual,
 NumberExp,
 NumberExpm1,v1
-NumberFloor,
+NumberFloor,v1
 NumberFround,
 NumberImul,v1,v2
 NumberIsFinite,
@@ -621,14 +621,14 @@ NumberMin,v1,v2
 NumberModulus,
 NumberMultiply,v1,v2
 NumberPow,
-NumberRound,
+NumberRound,v1
 NumberSameValue,
 NumberShiftLeft,
 NumberShiftRight,
 NumberShiftRightLogical,v1,v2
-NumberSign,
+NumberSign,v1
 NumberSilenceNaN,
-NumberSin,
+NumberSin,v1
 NumberSinh,
 NumberSqrt,
 NumberSubtract,v1,v2

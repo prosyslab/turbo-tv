@@ -569,7 +569,6 @@ type t =
   | NumberDivide
   | NumberEqual
   | NumberExp
-  | NumberFloor
   | NumberFround
   | NumberIsFinite
   | NumberIsFloat64Hole
@@ -585,13 +584,10 @@ type t =
   | NumberLog2
   | NumberModulus
   | NumberPow
-  | NumberRound
   | NumberSameValue
   | NumberShiftLeft
   | NumberShiftRight
-  | NumberSign
   | NumberSilenceNaN
-  | NumberSin
   | NumberSinh
   | NumberSqrt
   | NumberTan
@@ -817,6 +813,10 @@ type t =
   | NumberAbs
   | NumberCeil
   | NumberExpm1
+  | NumberFloor
+  | NumberRound
+  | NumberSign
+  | NumberSin
   | NumberToInt32
   | NumberToUint32
   | RoundFloat64ToInt32
@@ -1064,30 +1064,29 @@ let get_kind opcode =
   | NewSmiOrObjectElements | NumberAcos | NumberAcosh | NumberAsin | NumberAsinh
   | NumberAtan | NumberAtan2 | NumberAtanh | NumberBitwiseAnd | NumberBitwiseOr
   | NumberBitwiseXor | NumberCbrt | NumberClz32 | NumberCos | NumberCosh
-  | NumberDivide | NumberEqual | NumberExp | NumberFloor | NumberFround
-  | NumberIsFinite | NumberIsFloat64Hole | NumberIsInteger | NumberIsMinusZero
-  | NumberIsNaN | NumberIsSafeInteger | NumberLessThan | NumberLessThanOrEqual
-  | NumberLog | NumberLog10 | NumberLog1p | NumberLog2 | NumberModulus
-  | NumberPow | NumberRound | NumberSameValue | NumberShiftLeft
-  | NumberShiftRight | NumberSign | NumberSilenceNaN | NumberSin | NumberSinh
-  | NumberSqrt | NumberTan | NumberTanh | NumberToBoolean | NumberToString
-  | NumberToUint8Clamped | NumberTrunc | ObjectId | ObjectIsArrayBufferView
-  | ObjectIsBigInt | ObjectIsCallable | ObjectIsConstructor
-  | ObjectIsDetectableCallable | ObjectIsFiniteNumber | ObjectIsInteger
-  | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable | ObjectIsNumber
-  | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi | ObjectIsString
-  | ObjectIsSymbol | ObjectIsUndetectable | ObjectState | OsrValue
-  | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber | PlainPrimitiveToWord32
-  | Plug | PointerConstant | ProtectedLoad | ProtectedStore
-  | RelocatableInt32Constant | RelocatableInt64Constant | RestLength | Retain
-  | RoundInt32ToFloat32 | RoundInt64ToFloat32 | RoundInt64ToFloat64
-  | RoundUint32ToFloat32 | RoundUint64ToFloat32 | RoundUint64ToFloat64
-  | RuntimeAbort | S128And | S128AndNot | S128Const | S128Not | S128Or
-  | S128Select | S128Xor | S128Zero | SLVerifierHint | SameValue
-  | SameValueNumbersOnly | SignExtendWord16ToInt32 | SignExtendWord16ToInt64
-  | SignExtendWord32ToInt64 | SignExtendWord8ToInt32 | SignExtendWord8ToInt64
-  | Simd128ReverseBytes | SpeculativeBigIntAdd | SpeculativeBigIntAsIntN
-  | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
+  | NumberDivide | NumberEqual | NumberExp | NumberFround | NumberIsFinite
+  | NumberIsFloat64Hole | NumberIsInteger | NumberIsMinusZero | NumberIsNaN
+  | NumberIsSafeInteger | NumberLessThan | NumberLessThanOrEqual | NumberLog
+  | NumberLog10 | NumberLog1p | NumberLog2 | NumberModulus | NumberPow
+  | NumberSameValue | NumberShiftLeft | NumberShiftRight | NumberSilenceNaN
+  | NumberSinh | NumberSqrt | NumberTan | NumberTanh | NumberToBoolean
+  | NumberToString | NumberToUint8Clamped | NumberTrunc | ObjectId
+  | ObjectIsArrayBufferView | ObjectIsBigInt | ObjectIsCallable
+  | ObjectIsConstructor | ObjectIsDetectableCallable | ObjectIsFiniteNumber
+  | ObjectIsInteger | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable
+  | ObjectIsNumber | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi
+  | ObjectIsString | ObjectIsSymbol | ObjectIsUndetectable | ObjectState
+  | OsrValue | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber
+  | PlainPrimitiveToWord32 | Plug | PointerConstant | ProtectedLoad
+  | ProtectedStore | RelocatableInt32Constant | RelocatableInt64Constant
+  | RestLength | Retain | RoundInt32ToFloat32 | RoundInt64ToFloat32
+  | RoundInt64ToFloat64 | RoundUint32ToFloat32 | RoundUint64ToFloat32
+  | RoundUint64ToFloat64 | RuntimeAbort | S128And | S128AndNot | S128Const
+  | S128Not | S128Or | S128Select | S128Xor | S128Zero | SLVerifierHint
+  | SameValue | SameValueNumbersOnly | SignExtendWord16ToInt32
+  | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
+  | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
+  | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
   | SpeculativeBigIntSubtract | SpeculativeNumberBitwiseAnd
   | SpeculativeNumberDivide | SpeculativeNumberLessThan
   | SpeculativeNumberLessThanOrEqual | SpeculativeNumberModulus
@@ -1135,7 +1134,8 @@ let get_kind opcode =
   | ChangeTaggedSignedToInt64 | ChangeUint32ToFloat64 | ChangeUint32ToTagged
   | ChangeUint32ToUint64 | ChangeUint64ToTagged | CheckedTaggedSignedToInt32
   | Float64Abs | Float64ExtractHighWord32 | Float64RoundDown | Float64RoundUp
-  | NumberAbs | NumberCeil | NumberExpm1 | NumberToInt32 | NumberToUint32
+  | NumberAbs | NumberCeil | NumberExpm1 | NumberFloor | NumberRound
+  | NumberSign | NumberSin | NumberToInt32 | NumberToUint32
   | RoundFloat64ToInt32 | SpeculativeToNumber | StackPointerGreaterThan
   | ToBoolean | TruncateFloat64ToWord32 | TruncateInt64ToInt32
   | TruncateTaggedToBit | Word32ReverseBytes | Word64ReverseBytes ->
@@ -1749,7 +1749,6 @@ let of_str str =
   | "NumberDivide" -> NumberDivide
   | "NumberEqual" -> NumberEqual
   | "NumberExp" -> NumberExp
-  | "NumberFloor" -> NumberFloor
   | "NumberFround" -> NumberFround
   | "NumberIsFinite" -> NumberIsFinite
   | "NumberIsFloat64Hole" -> NumberIsFloat64Hole
@@ -1765,13 +1764,10 @@ let of_str str =
   | "NumberLog2" -> NumberLog2
   | "NumberModulus" -> NumberModulus
   | "NumberPow" -> NumberPow
-  | "NumberRound" -> NumberRound
   | "NumberSameValue" -> NumberSameValue
   | "NumberShiftLeft" -> NumberShiftLeft
   | "NumberShiftRight" -> NumberShiftRight
-  | "NumberSign" -> NumberSign
   | "NumberSilenceNaN" -> NumberSilenceNaN
-  | "NumberSin" -> NumberSin
   | "NumberSinh" -> NumberSinh
   | "NumberSqrt" -> NumberSqrt
   | "NumberTan" -> NumberTan
@@ -1995,6 +1991,10 @@ let of_str str =
   | "NumberAbs" -> NumberAbs
   | "NumberCeil" -> NumberCeil
   | "NumberExpm1" -> NumberExpm1
+  | "NumberFloor" -> NumberFloor
+  | "NumberRound" -> NumberRound
+  | "NumberSign" -> NumberSign
+  | "NumberSin" -> NumberSin
   | "NumberToInt32" -> NumberToInt32
   | "NumberToUint32" -> NumberToUint32
   | "RoundFloat64ToInt32" -> RoundFloat64ToInt32
@@ -2619,7 +2619,6 @@ let to_str opcode =
   | NumberDivide -> "NumberDivide"
   | NumberEqual -> "NumberEqual"
   | NumberExp -> "NumberExp"
-  | NumberFloor -> "NumberFloor"
   | NumberFround -> "NumberFround"
   | NumberIsFinite -> "NumberIsFinite"
   | NumberIsFloat64Hole -> "NumberIsFloat64Hole"
@@ -2635,13 +2634,10 @@ let to_str opcode =
   | NumberLog2 -> "NumberLog2"
   | NumberModulus -> "NumberModulus"
   | NumberPow -> "NumberPow"
-  | NumberRound -> "NumberRound"
   | NumberSameValue -> "NumberSameValue"
   | NumberShiftLeft -> "NumberShiftLeft"
   | NumberShiftRight -> "NumberShiftRight"
-  | NumberSign -> "NumberSign"
   | NumberSilenceNaN -> "NumberSilenceNaN"
-  | NumberSin -> "NumberSin"
   | NumberSinh -> "NumberSinh"
   | NumberSqrt -> "NumberSqrt"
   | NumberTan -> "NumberTan"
@@ -2865,6 +2861,10 @@ let to_str opcode =
   | NumberAbs -> "NumberAbs"
   | NumberCeil -> "NumberCeil"
   | NumberExpm1 -> "NumberExpm1"
+  | NumberFloor -> "NumberFloor"
+  | NumberRound -> "NumberRound"
+  | NumberSign -> "NumberSign"
+  | NumberSin -> "NumberSin"
   | NumberToInt32 -> "NumberToInt32"
   | NumberToUint32 -> "NumberToUint32"
   | RoundFloat64ToInt32 -> "RoundFloat64ToInt32"
