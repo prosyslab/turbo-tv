@@ -80,6 +80,9 @@ let add lval rval =
 
 let ceil value = Float.round Float.rtp_mode (value |> to_float) |> from_float
 
+let div lval rval =
+  Z3utils.Float.div (lval |> to_float) (rval |> to_float) |> from_float
+
 let floor value = Float.round Float.rtn_mode (value |> to_float) |> from_float
 
 let mul lval rval =

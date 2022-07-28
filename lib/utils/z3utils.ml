@@ -190,6 +190,8 @@ module Float = struct
 
   let sub lexp rexp = Fl.mk_sub ctx rne_mode lexp rexp
 
+  let div lexp rexp = Fl.mk_div ctx rne_mode lexp rexp
+
   let mul lexp rexp = Fl.mk_mul ctx rne_mode lexp rexp
 
   let abs exp = Fl.mk_abs ctx exp

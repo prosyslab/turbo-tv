@@ -142,6 +142,57 @@ let add lnum rnum mem =
                    (* else, n+n *)
                    (Float64.add lnum_f64 rnum_f64))))))
 
+let divide lnum rnum mem =
+  (* https://tc39.es/ecma262/#sec-numeric-types-number-divide *)
+  let lnum_f64 = lnum |> to_float64 mem in
+  let rnum_f64 = rnum |> to_float64 mem in
+  (* if lnum or rnum is nan, return nan *)
+  Bool.ite
+    (Bool.ors [ Float64.is_nan lnum_f64; Float64.is_nan rnum_f64 ])
+    Float64.nan
+    (Bool.ite
+       (* inf / inf, inf / ninf, ninf / inf, ninf / ninf = nan *)
+       (Bool.ors [ Float64.is_inf lnum_f64; Float64.is_ninf lnum_f64 ])
+       (Bool.ite
+          (Bool.ors [ Float64.is_inf rnum_f64; Float64.is_ninf rnum_f64 ])
+          Float64.nan
+          (Bool.ite
+             (Bool.ors
+                [ Float64.is_zero rnum_f64; Float64.is_positive rnum_f64 ])
+             lnum_f64 (Float64.neg lnum_f64)))
+       (Bool.ite (Float64.is_inf rnum_f64)
+          (Bool.ite
+             (Bool.ors
+                [ Float64.is_zero lnum_f64; Float64.is_positive lnum_f64 ])
+             Float64.zero Float64.minus_zero)
+          (Bool.ite (Float64.is_ninf rnum_f64)
+             (Bool.ite
+                (Bool.ors
+                   [ Float64.is_zero lnum_f64; Float64.is_positive lnum_f64 ])
+                Float64.minus_zero Float64.zero)
+             (Bool.ite
+                (Bool.ors
+                   [ Float64.is_zero lnum_f64; Float64.is_minus_zero lnum_f64 ])
+                (Bool.ite
+                   (Bool.ors
+                      [
+                        Float64.is_zero rnum_f64; Float64.is_minus_zero rnum_f64;
+                      ])
+                   Float64.nan
+                   (Bool.ite
+                      (Float64.is_positive rnum_f64)
+                      lnum_f64 (Float64.neg lnum_f64)))
+                (Bool.ite (Float64.is_zero rnum_f64)
+                   (Bool.ite
+                      (Float64.is_positive lnum_f64)
+                      Float64.inf Float64.ninf)
+                   (Bool.ite
+                      (Float64.is_minus_zero rnum_f64)
+                      (Bool.ite
+                         (Float64.is_positive lnum_f64)
+                         Float64.ninf Float64.inf)
+                      (Float64.div lnum_f64 rnum_f64)))))))
+
 let imul lnum rnum mem =
   (* https://tc39.es/ecma262/#sec-math.imul *)
   Value.Uint32.mul (lnum |> to_uint32 mem) (rnum |> to_uint32 mem)

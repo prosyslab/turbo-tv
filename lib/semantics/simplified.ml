@@ -51,6 +51,10 @@ let number_ceil pval mem state =
   let value = pval |> Number.ceil mem in
   state |> State.update ~value
 
+let number_divide lval rval mem state =
+  let value = Number.divide lval rval mem in
+  state |> State.update ~value
+
 let number_expm1 nptr next_bid mem state =
   let deopt =
     Bool.not
@@ -190,6 +194,12 @@ let number_subtract lval rval mem state =
 let speculative_number_add lval rval mem state =
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
   state |> number_add lval rval mem |> State.update ~deopt
+
+(* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
+ * value: Float64(lval / rval) *)
+let speculative_number_divide lval rval _eff control mem state =
+  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+  state |> number_divide lval rval mem |> State.update ~deopt ~control
 
 (* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
  * value: Float64(lval x rval) *)
