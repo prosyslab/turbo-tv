@@ -249,15 +249,19 @@ let ltf lval rval =
 
 let fl = empty |> cast Type.bool
 
-let is_false value = weak_eq fl value
+let is_false value = eq fl value
 
 let tr = addi empty 1 |> cast Type.bool
 
-let is_true value = Bool.not (is_false value)
+let is_true value = eq tr value
 
 let to_bool value = Bool.ite (eq value fl) Bool.fl Bool.tr
 
 let zero = BitVecVal.zero () |> entype Type.const
+
+let undefined = empty |> cast Type.undefined
+
+let is_undefined value = eq undefined value
 
 (* IEEE-754 *)
 let inf = BitVecVal.inf () |> entype Type.float64

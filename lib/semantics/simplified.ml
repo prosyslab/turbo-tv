@@ -337,12 +337,38 @@ let speculative_number_shift_right_logical lval rval _eff control mem state =
 
 (* simplified: comparison *)
 let number_equal lnum rnum mem state =
-  let value = Bool.ite (Number.eq lnum rnum mem) Value.tr Value.fl in
+  let value = Number.equal lnum rnum mem in
+  state |> State.update ~value
+
+let number_less_than lnum rnum mem state =
+  let value =
+    Bool.ite (Value.is_true (Number.less_than lnum rnum mem)) Value.tr Value.fl
+  in
+  state |> State.update ~value
+
+let number_less_than_or_equal lnum rnum mem state =
+  (* https://tc39.es/ecma262/#sec-relational-operators-runtime-semantics-evaluation *)
+  let value =
+    let r = Number.less_than rnum lnum mem in
+    Bool.ite
+      (Bool.ors [ r |> Value.is_true; r |> Value.is_undefined ])
+      Value.fl Value.tr
+  in
   state |> State.update ~value
 
 let speculative_number_equal lval rval mem state =
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
   state |> number_equal lval rval mem |> State.update ~deopt
+
+let speculative_number_less_than lval rval _eff control mem state =
+  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+  state |> number_less_than lval rval mem |> State.update ~deopt ~control
+
+let speculative_number_less_than_or_equal lval rval _eff control mem state =
+  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+  state
+  |> number_less_than_or_equal lval rval mem
+  |> State.update ~deopt ~control
 
 (* simplified: memory *)
 let allocate_raw size control state =

@@ -77,28 +77,39 @@ let is_nan mem number =
   n_f64 |> Float64.is_nan
 
 (* comparison *)
-let eq lnum rnum mem =
+let equal lnum rnum mem =
   let lnum_f64 = lnum |> to_float64 mem in
   let rnum_f64 = rnum |> to_float64 mem in
   (* https://tc39.es/ecma262/#sec-numeric-types-number-equal *)
   Bool.ite
-    (* lnum = nan \/ rnum = nan -> false *)
-    (Bool.ors [ Float64.is_nan lnum_f64; Float64.is_nan rnum_f64 ])
-    Bool.fl
-    (* lnum = rnum -> true *)
     (Bool.ite
-       (Float64.eq lnum_f64 rnum_f64)
-       Bool.tr
+       (* lnum = nan \/ rnum = nan -> false *)
+       (Bool.ors [ Float64.is_nan lnum_f64; Float64.is_nan rnum_f64 ])
+       Bool.fl
+       (* lnum = rnum -> true *)
        (Bool.ite
-          (* lnum = -0 /\ rnum = 0 -> true *)
-          (Bool.ands
-             [ Float64.is_minus_zero lnum_f64; Float64.is_zero rnum_f64 ])
+          (Float64.eq lnum_f64 rnum_f64)
           Bool.tr
-          (* lnum = 0 /\ rnum = -0 -> true *)
           (Bool.ite
+             (* lnum = -0 /\ rnum = 0 -> true *)
              (Bool.ands
-                [ Float64.is_minus_zero rnum_f64; Float64.is_zero lnum ])
-             Bool.tr Bool.fl)))
+                [ Float64.is_minus_zero lnum_f64; Float64.is_zero rnum_f64 ])
+             Bool.tr
+             (* lnum = 0 /\ rnum = -0 -> true *)
+             (Bool.ite
+                (Bool.ands
+                   [ Float64.is_minus_zero rnum_f64; Float64.is_zero lnum ])
+                Bool.tr Bool.fl))))
+    Value.tr Value.fl
+
+let less_than lnum rnum mem =
+  (* https://tc39.es/ecma262/#sec-numeric-types-number-lessThan *)
+  let lnum_f64 = lnum |> to_float64 mem in
+  let rnum_f64 = rnum |> to_float64 mem in
+  Bool.ite
+    (Bool.ors [ lnum_f64 |> Float64.is_nan; rnum_f64 |> Float64.is_nan ])
+    Value.undefined
+    (Bool.ite (Float64.lt lnum_f64 rnum_f64) Value.tr Value.fl)
 
 (* unary arith *)
 let unary_minus mem number =

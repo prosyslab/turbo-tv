@@ -566,8 +566,6 @@ type t =
   | NumberClz32
   | NumberCos
   | NumberCosh
-  | NumberDivide
-  | NumberEqual
   | NumberExp
   | NumberFround
   | NumberIsFinite
@@ -576,13 +574,10 @@ type t =
   | NumberIsMinusZero
   | NumberIsNaN
   | NumberIsSafeInteger
-  | NumberLessThan
-  | NumberLessThanOrEqual
   | NumberLog
   | NumberLog10
   | NumberLog1p
   | NumberLog2
-  | NumberModulus
   | NumberPow
   | NumberSameValue
   | NumberShiftLeft
@@ -595,7 +590,6 @@ type t =
   | NumberToBoolean
   | NumberToString
   | NumberToUint8Clamped
-  | NumberTrunc
   | ObjectId
   | ObjectIsArrayBufferView
   | ObjectIsBigInt
@@ -657,10 +651,6 @@ type t =
   | SpeculativeBigIntNegate
   | SpeculativeBigIntSubtract
   | SpeculativeNumberBitwiseAnd
-  | SpeculativeNumberDivide
-  | SpeculativeNumberLessThan
-  | SpeculativeNumberLessThanOrEqual
-  | SpeculativeNumberModulus
   | SpeculativeNumberShiftLeft
   | SpeculativeNumberShiftRight
   | StackSlot
@@ -819,6 +809,7 @@ type t =
   | NumberSin
   | NumberToInt32
   | NumberToUint32
+  | NumberTrunc
   | RoundFloat64ToInt32
   | SpeculativeToNumber
   | StackPointerGreaterThan
@@ -856,6 +847,10 @@ type t =
   (* v1v2e1c1 *)
   | DeoptimizeIf
   | DeoptimizeUnless
+  | SpeculativeNumberDivide
+  | SpeculativeNumberLessThan
+  | SpeculativeNumberLessThanOrEqual
+  | SpeculativeNumberModulus
   | SpeculativeNumberShiftRightLogical
   | SpeculativeNumberSubtract
   (* cv *)
@@ -875,9 +870,14 @@ type t =
   | Int64LessThan
   | Int64Sub
   | NumberAdd
+  | NumberDivide
+  | NumberEqual
   | NumberImul
+  | NumberLessThan
+  | NumberLessThanOrEqual
   | NumberMax
   | NumberMin
+  | NumberModulus
   | NumberMultiply
   | NumberShiftRightLogical
   | NumberSubtract
@@ -1064,32 +1064,29 @@ let get_kind opcode =
   | NewSmiOrObjectElements | NumberAcos | NumberAcosh | NumberAsin | NumberAsinh
   | NumberAtan | NumberAtan2 | NumberAtanh | NumberBitwiseAnd | NumberBitwiseOr
   | NumberBitwiseXor | NumberCbrt | NumberClz32 | NumberCos | NumberCosh
-  | NumberDivide | NumberEqual | NumberExp | NumberFround | NumberIsFinite
-  | NumberIsFloat64Hole | NumberIsInteger | NumberIsMinusZero | NumberIsNaN
-  | NumberIsSafeInteger | NumberLessThan | NumberLessThanOrEqual | NumberLog
-  | NumberLog10 | NumberLog1p | NumberLog2 | NumberModulus | NumberPow
+  | NumberExp | NumberFround | NumberIsFinite | NumberIsFloat64Hole
+  | NumberIsInteger | NumberIsMinusZero | NumberIsNaN | NumberIsSafeInteger
+  | NumberLog | NumberLog10 | NumberLog1p | NumberLog2 | NumberPow
   | NumberSameValue | NumberShiftLeft | NumberShiftRight | NumberSilenceNaN
   | NumberSinh | NumberSqrt | NumberTan | NumberTanh | NumberToBoolean
-  | NumberToString | NumberToUint8Clamped | NumberTrunc | ObjectId
-  | ObjectIsArrayBufferView | ObjectIsBigInt | ObjectIsCallable
-  | ObjectIsConstructor | ObjectIsDetectableCallable | ObjectIsFiniteNumber
-  | ObjectIsInteger | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable
-  | ObjectIsNumber | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi
-  | ObjectIsString | ObjectIsSymbol | ObjectIsUndetectable | ObjectState
-  | OsrValue | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber
-  | PlainPrimitiveToWord32 | Plug | PointerConstant | ProtectedLoad
-  | ProtectedStore | RelocatableInt32Constant | RelocatableInt64Constant
-  | RestLength | Retain | RoundInt32ToFloat32 | RoundInt64ToFloat32
-  | RoundInt64ToFloat64 | RoundUint32ToFloat32 | RoundUint64ToFloat32
-  | RoundUint64ToFloat64 | RuntimeAbort | S128And | S128AndNot | S128Const
-  | S128Not | S128Or | S128Select | S128Xor | S128Zero | SLVerifierHint
-  | SameValue | SameValueNumbersOnly | SignExtendWord16ToInt32
-  | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
-  | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
-  | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
+  | NumberToString | NumberToUint8Clamped | ObjectId | ObjectIsArrayBufferView
+  | ObjectIsBigInt | ObjectIsCallable | ObjectIsConstructor
+  | ObjectIsDetectableCallable | ObjectIsFiniteNumber | ObjectIsInteger
+  | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable | ObjectIsNumber
+  | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi | ObjectIsString
+  | ObjectIsSymbol | ObjectIsUndetectable | ObjectState | OsrValue
+  | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber | PlainPrimitiveToWord32
+  | Plug | PointerConstant | ProtectedLoad | ProtectedStore
+  | RelocatableInt32Constant | RelocatableInt64Constant | RestLength | Retain
+  | RoundInt32ToFloat32 | RoundInt64ToFloat32 | RoundInt64ToFloat64
+  | RoundUint32ToFloat32 | RoundUint64ToFloat32 | RoundUint64ToFloat64
+  | RuntimeAbort | S128And | S128AndNot | S128Const | S128Not | S128Or
+  | S128Select | S128Xor | S128Zero | SLVerifierHint | SameValue
+  | SameValueNumbersOnly | SignExtendWord16ToInt32 | SignExtendWord16ToInt64
+  | SignExtendWord32ToInt64 | SignExtendWord8ToInt32 | SignExtendWord8ToInt64
+  | Simd128ReverseBytes | SpeculativeBigIntAdd | SpeculativeBigIntAsIntN
+  | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
   | SpeculativeBigIntSubtract | SpeculativeNumberBitwiseAnd
-  | SpeculativeNumberDivide | SpeculativeNumberLessThan
-  | SpeculativeNumberLessThanOrEqual | SpeculativeNumberModulus
   | SpeculativeNumberShiftLeft | SpeculativeNumberShiftRight | StackSlot | Start
   | StateValues | StaticAssert | StoreDataViewElement | StoreLane | StoreMessage
   | StoreSignedSmallElement | StoreToObject | StoreTypedElement
@@ -1135,7 +1132,7 @@ let get_kind opcode =
   | ChangeUint32ToUint64 | ChangeUint64ToTagged | CheckedTaggedSignedToInt32
   | Float64Abs | Float64ExtractHighWord32 | Float64RoundDown | Float64RoundUp
   | NumberAbs | NumberCeil | NumberExpm1 | NumberFloor | NumberRound
-  | NumberSign | NumberSin | NumberToInt32 | NumberToUint32
+  | NumberSign | NumberSin | NumberToInt32 | NumberToUint32 | NumberTrunc
   | RoundFloat64ToInt32 | SpeculativeToNumber | StackPointerGreaterThan
   | ToBoolean | TruncateFloat64ToWord32 | TruncateInt64ToInt32
   | TruncateTaggedToBit | Word32ReverseBytes | Word64ReverseBytes ->
@@ -1148,14 +1145,17 @@ let get_kind opcode =
       B1
   | ChangeFloat64ToTagged | CheckedFloat64ToInt32 | Projection -> B1V1
   | CheckedTaggedToFloat64 | CheckedTruncateTaggedToWord32 -> B1V1E1C1
-  | DeoptimizeIf | DeoptimizeUnless | SpeculativeNumberShiftRightLogical
+  | DeoptimizeIf | DeoptimizeUnless | SpeculativeNumberDivide
+  | SpeculativeNumberLessThan | SpeculativeNumberLessThanOrEqual
+  | SpeculativeNumberModulus | SpeculativeNumberShiftRightLogical
   | SpeculativeNumberSubtract ->
       V1V2E1C1
   | End | Merge -> CV
   | Float64Equal | Float64LessThan | Float64LessThanOrEqual | Float64Sub
   | Int32Add | Int32AddWithOverflow | Int32LessThan | Int32Mul | Int32Sub
-  | Int64Add | Int64LessThan | Int64Sub | NumberAdd | NumberImul | NumberMax
-  | NumberMin | NumberMultiply | NumberShiftRightLogical | NumberSubtract
+  | Int64Add | Int64LessThan | Int64Sub | NumberAdd | NumberDivide | NumberEqual
+  | NumberImul | NumberLessThan | NumberLessThanOrEqual | NumberMax | NumberMin
+  | NumberModulus | NumberMultiply | NumberShiftRightLogical | NumberSubtract
   | ReferenceEqual | SpeculativeNumberAdd | SpeculativeNumberBitwiseOr
   | SpeculativeNumberBitwiseXor | SpeculativeNumberEqual
   | SpeculativeNumberMultiply | SpeculativeSafeIntegerAdd
@@ -1746,8 +1746,6 @@ let of_str str =
   | "NumberClz32" -> NumberClz32
   | "NumberCos" -> NumberCos
   | "NumberCosh" -> NumberCosh
-  | "NumberDivide" -> NumberDivide
-  | "NumberEqual" -> NumberEqual
   | "NumberExp" -> NumberExp
   | "NumberFround" -> NumberFround
   | "NumberIsFinite" -> NumberIsFinite
@@ -1756,13 +1754,10 @@ let of_str str =
   | "NumberIsMinusZero" -> NumberIsMinusZero
   | "NumberIsNaN" -> NumberIsNaN
   | "NumberIsSafeInteger" -> NumberIsSafeInteger
-  | "NumberLessThan" -> NumberLessThan
-  | "NumberLessThanOrEqual" -> NumberLessThanOrEqual
   | "NumberLog" -> NumberLog
   | "NumberLog10" -> NumberLog10
   | "NumberLog1p" -> NumberLog1p
   | "NumberLog2" -> NumberLog2
-  | "NumberModulus" -> NumberModulus
   | "NumberPow" -> NumberPow
   | "NumberSameValue" -> NumberSameValue
   | "NumberShiftLeft" -> NumberShiftLeft
@@ -1775,7 +1770,6 @@ let of_str str =
   | "NumberToBoolean" -> NumberToBoolean
   | "NumberToString" -> NumberToString
   | "NumberToUint8Clamped" -> NumberToUint8Clamped
-  | "NumberTrunc" -> NumberTrunc
   | "ObjectId" -> ObjectId
   | "ObjectIsArrayBufferView" -> ObjectIsArrayBufferView
   | "ObjectIsBigInt" -> ObjectIsBigInt
@@ -1837,10 +1831,6 @@ let of_str str =
   | "SpeculativeBigIntNegate" -> SpeculativeBigIntNegate
   | "SpeculativeBigIntSubtract" -> SpeculativeBigIntSubtract
   | "SpeculativeNumberBitwiseAnd" -> SpeculativeNumberBitwiseAnd
-  | "SpeculativeNumberDivide" -> SpeculativeNumberDivide
-  | "SpeculativeNumberLessThan" -> SpeculativeNumberLessThan
-  | "SpeculativeNumberLessThanOrEqual" -> SpeculativeNumberLessThanOrEqual
-  | "SpeculativeNumberModulus" -> SpeculativeNumberModulus
   | "SpeculativeNumberShiftLeft" -> SpeculativeNumberShiftLeft
   | "SpeculativeNumberShiftRight" -> SpeculativeNumberShiftRight
   | "StackSlot" -> StackSlot
@@ -1997,6 +1987,7 @@ let of_str str =
   | "NumberSin" -> NumberSin
   | "NumberToInt32" -> NumberToInt32
   | "NumberToUint32" -> NumberToUint32
+  | "NumberTrunc" -> NumberTrunc
   | "RoundFloat64ToInt32" -> RoundFloat64ToInt32
   | "SpeculativeToNumber" -> SpeculativeToNumber
   | "StackPointerGreaterThan" -> StackPointerGreaterThan
@@ -2027,6 +2018,10 @@ let of_str str =
   | "CheckedTruncateTaggedToWord32" -> CheckedTruncateTaggedToWord32
   | "DeoptimizeIf" -> DeoptimizeIf
   | "DeoptimizeUnless" -> DeoptimizeUnless
+  | "SpeculativeNumberDivide" -> SpeculativeNumberDivide
+  | "SpeculativeNumberLessThan" -> SpeculativeNumberLessThan
+  | "SpeculativeNumberLessThanOrEqual" -> SpeculativeNumberLessThanOrEqual
+  | "SpeculativeNumberModulus" -> SpeculativeNumberModulus
   | "SpeculativeNumberShiftRightLogical" -> SpeculativeNumberShiftRightLogical
   | "SpeculativeNumberSubtract" -> SpeculativeNumberSubtract
   | "End" -> End
@@ -2044,9 +2039,14 @@ let of_str str =
   | "Int64LessThan" -> Int64LessThan
   | "Int64Sub" -> Int64Sub
   | "NumberAdd" -> NumberAdd
+  | "NumberDivide" -> NumberDivide
+  | "NumberEqual" -> NumberEqual
   | "NumberImul" -> NumberImul
+  | "NumberLessThan" -> NumberLessThan
+  | "NumberLessThanOrEqual" -> NumberLessThanOrEqual
   | "NumberMax" -> NumberMax
   | "NumberMin" -> NumberMin
+  | "NumberModulus" -> NumberModulus
   | "NumberMultiply" -> NumberMultiply
   | "NumberShiftRightLogical" -> NumberShiftRightLogical
   | "NumberSubtract" -> NumberSubtract
@@ -2616,8 +2616,6 @@ let to_str opcode =
   | NumberClz32 -> "NumberClz32"
   | NumberCos -> "NumberCos"
   | NumberCosh -> "NumberCosh"
-  | NumberDivide -> "NumberDivide"
-  | NumberEqual -> "NumberEqual"
   | NumberExp -> "NumberExp"
   | NumberFround -> "NumberFround"
   | NumberIsFinite -> "NumberIsFinite"
@@ -2626,13 +2624,10 @@ let to_str opcode =
   | NumberIsMinusZero -> "NumberIsMinusZero"
   | NumberIsNaN -> "NumberIsNaN"
   | NumberIsSafeInteger -> "NumberIsSafeInteger"
-  | NumberLessThan -> "NumberLessThan"
-  | NumberLessThanOrEqual -> "NumberLessThanOrEqual"
   | NumberLog -> "NumberLog"
   | NumberLog10 -> "NumberLog10"
   | NumberLog1p -> "NumberLog1p"
   | NumberLog2 -> "NumberLog2"
-  | NumberModulus -> "NumberModulus"
   | NumberPow -> "NumberPow"
   | NumberSameValue -> "NumberSameValue"
   | NumberShiftLeft -> "NumberShiftLeft"
@@ -2645,7 +2640,6 @@ let to_str opcode =
   | NumberToBoolean -> "NumberToBoolean"
   | NumberToString -> "NumberToString"
   | NumberToUint8Clamped -> "NumberToUint8Clamped"
-  | NumberTrunc -> "NumberTrunc"
   | ObjectId -> "ObjectId"
   | ObjectIsArrayBufferView -> "ObjectIsArrayBufferView"
   | ObjectIsBigInt -> "ObjectIsBigInt"
@@ -2707,10 +2701,6 @@ let to_str opcode =
   | SpeculativeBigIntNegate -> "SpeculativeBigIntNegate"
   | SpeculativeBigIntSubtract -> "SpeculativeBigIntSubtract"
   | SpeculativeNumberBitwiseAnd -> "SpeculativeNumberBitwiseAnd"
-  | SpeculativeNumberDivide -> "SpeculativeNumberDivide"
-  | SpeculativeNumberLessThan -> "SpeculativeNumberLessThan"
-  | SpeculativeNumberLessThanOrEqual -> "SpeculativeNumberLessThanOrEqual"
-  | SpeculativeNumberModulus -> "SpeculativeNumberModulus"
   | SpeculativeNumberShiftLeft -> "SpeculativeNumberShiftLeft"
   | SpeculativeNumberShiftRight -> "SpeculativeNumberShiftRight"
   | StackSlot -> "StackSlot"
@@ -2867,6 +2857,7 @@ let to_str opcode =
   | NumberSin -> "NumberSin"
   | NumberToInt32 -> "NumberToInt32"
   | NumberToUint32 -> "NumberToUint32"
+  | NumberTrunc -> "NumberTrunc"
   | RoundFloat64ToInt32 -> "RoundFloat64ToInt32"
   | SpeculativeToNumber -> "SpeculativeToNumber"
   | StackPointerGreaterThan -> "StackPointerGreaterThan"
@@ -2897,6 +2888,10 @@ let to_str opcode =
   | CheckedTruncateTaggedToWord32 -> "CheckedTruncateTaggedToWord32"
   | DeoptimizeIf -> "DeoptimizeIf"
   | DeoptimizeUnless -> "DeoptimizeUnless"
+  | SpeculativeNumberDivide -> "SpeculativeNumberDivide"
+  | SpeculativeNumberLessThan -> "SpeculativeNumberLessThan"
+  | SpeculativeNumberLessThanOrEqual -> "SpeculativeNumberLessThanOrEqual"
+  | SpeculativeNumberModulus -> "SpeculativeNumberModulus"
   | SpeculativeNumberShiftRightLogical -> "SpeculativeNumberShiftRightLogical"
   | SpeculativeNumberSubtract -> "SpeculativeNumberSubtract"
   | End -> "End"
@@ -2914,9 +2909,14 @@ let to_str opcode =
   | Int64LessThan -> "Int64LessThan"
   | Int64Sub -> "Int64Sub"
   | NumberAdd -> "NumberAdd"
+  | NumberDivide -> "NumberDivide"
+  | NumberEqual -> "NumberEqual"
   | NumberImul -> "NumberImul"
+  | NumberLessThan -> "NumberLessThan"
+  | NumberLessThanOrEqual -> "NumberLessThanOrEqual"
   | NumberMax -> "NumberMax"
   | NumberMin -> "NumberMin"
+  | NumberModulus -> "NumberModulus"
   | NumberMultiply -> "NumberMultiply"
   | NumberShiftRightLogical -> "NumberShiftRightLogical"
   | NumberSubtract -> "NumberSubtract"

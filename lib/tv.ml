@@ -350,24 +350,52 @@ let encode program
       let ctrl = ControlFile.find ctrl_id cf in
       speculative_number_shift_right_logical lval rval () ctrl mem
   (* simplified: comparison *)
-  | SpeculativeNumberEqual ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      speculative_number_equal lval rval mem
   | NumberEqual ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
       number_equal lval rval mem
+  | NumberLessThan ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      number_less_than lval rval mem
+  | NumberLessThanOrEqual ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      number_less_than_or_equal lval rval mem
   | ReferenceEqual ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
       word32_equal lval rval
+  | SpeculativeNumberEqual ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      speculative_number_equal lval rval mem
+  | SpeculativeNumberLessThan ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let ctrl_id = Operands.id_of_nth operands 3 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      let ctrl = ControlFile.find ctrl_id cf in
+      speculative_number_less_than lval rval () ctrl mem
+  | SpeculativeNumberLessThanOrEqual ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let ctrl_id = Operands.id_of_nth operands 3 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      let ctrl = ControlFile.find ctrl_id cf in
+      speculative_number_less_than_or_equal lval rval () ctrl mem
   (* simplified: memory *)
   | Allocate ->
       let size_id = Operands.id_of_nth operands 0 in
