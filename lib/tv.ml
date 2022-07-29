@@ -242,6 +242,12 @@ let encode program
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
       number_multiply lval rval next_bid mem
+  | NumberModulus ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      number_modulus lval rval mem
   | NumberRound ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -260,6 +266,10 @@ let encode program
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
       number_subtract lval rval mem
+  | NumberTrunc ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      number_trunc pval mem
   | SpeculativeNumberAdd ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
@@ -274,6 +284,14 @@ let encode program
       let rval = RegisterFile.find rpid rf in
       let ctrl = ControlFile.find ctrl_id cf in
       speculative_number_divide lval rval () ctrl mem
+  | SpeculativeNumberModulus ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let ctrl_id = Operands.id_of_nth operands 3 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      let ctrl = ControlFile.find ctrl_id cf in
+      speculative_number_modulus lval rval () ctrl mem
   | SpeculativeNumberMultiply ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in

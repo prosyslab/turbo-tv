@@ -94,6 +94,11 @@ let neg value =
   let f = value |> to_float in
   Z3utils.Float.neg f |> from_float
 
+let rem lval rval =
+  Z3utils.Float.rem (lval |> to_float) (rval |> to_float) |> from_float
+
+let trunc value = Float.round Float.rtz_mode (value |> to_float) |> from_float
+
 let round_down = floor
 
 let round_up = ceil

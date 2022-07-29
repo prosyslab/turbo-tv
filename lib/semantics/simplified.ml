@@ -169,6 +169,10 @@ let number_min lval rval next_bid mem state =
   in
   state |> State.update ~value ~deopt ~next_bid ~mem
 
+let number_modulus lval rval mem state =
+  let value = Number.remainder lval rval mem in
+  state |> State.update ~value
+
 let number_multiply lval rval next_bid mem state =
   let value = Number.multiply lval rval mem in
   state |> State.update ~value ~next_bid ~mem
@@ -189,6 +193,10 @@ let number_subtract lval rval mem state =
   let value = Number.subtract lval rval mem in
   state |> State.update ~value
 
+let number_trunc pval mem state =
+  let value = Number.trunc pval mem in
+  state |> State.update ~value
+
 (* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
  * value: Float64(lval + rval) *)
 let speculative_number_add lval rval mem state =
@@ -200,6 +208,12 @@ let speculative_number_add lval rval mem state =
 let speculative_number_divide lval rval _eff control mem state =
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
   state |> number_divide lval rval mem |> State.update ~deopt ~control
+
+(* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
+ * value: Float64(lval x rval) *)
+let speculative_number_modulus lval rval _eff control mem state =
+  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+  state |> number_modulus lval rval mem |> State.update ~deopt ~control
 
 (* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
  * value: Float64(lval x rval) *)
