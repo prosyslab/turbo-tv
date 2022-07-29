@@ -46,6 +46,16 @@ let encode program
     op lval rval
   in
 
+  let encode_machine_ovf op =
+    let lpid = Operands.id_of_nth operands 0 in
+    let rpid = Operands.id_of_nth operands 1 in
+    let cid = Operands.id_of_nth operands 2 in
+    let lval = RegisterFile.find lpid rf in
+    let rval = RegisterFile.find rpid rf in
+    let ctrl = ControlFile.find cid cf in
+    op lval rval ctrl
+  in
+
   let encode_machine_binary_with_hint op =
     let hint = Operands.const_of_nth operands 0 in
     let lpid = Operands.id_of_nth operands 1 in
@@ -551,8 +561,17 @@ let encode program
   | Float64RoundDown -> encode_machine_unary float64_round_down
   | Float64RoundUp -> encode_machine_unary float64_round_up
   | Int32Add -> encode_machine_binary int32_add
-  | Int32AddWithOverflow -> encode_machine_binary int32_add_with_overflow
+  | Int32AddWithOverflow -> encode_machine_ovf int32_add_with_overflow
+  | Int32Div ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let ctrl_id = Operands.id_of_nth operands 2 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      let ctrl = ControlFile.find ctrl_id cf in
+      int32_div lval rval ctrl
   | Int32Mul -> encode_machine_binary int32_mul
+  | Int32MulWithOverflow -> encode_machine_ovf int32_mul_with_overflow
   | Int32Sub -> encode_machine_binary int32_sub
   | Int64Add -> encode_machine_binary int64_add
   | Int64Sub -> encode_machine_binary int64_sub

@@ -359,9 +359,15 @@ module BitVec = struct
   (* arithmetic operation *)
   let addb lbv rbv = BV.mk_add ctx lbv rbv
 
+  let add_no_overflow lbv rbv sign = BV.mk_add_no_overflow ctx lbv rbv sign
+
+  let add_no_underflow lbv rbv = BV.mk_add_no_underflow ctx lbv rbv
+
   let addi lbv rval =
     let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
     BV.mk_add ctx lbv rbv
+
+  let sdivb lbv rbv = BV.mk_sdiv ctx lbv rbv
 
   let subb lbv rbv = BV.mk_sub ctx lbv rbv
 
@@ -384,6 +390,10 @@ module BitVec = struct
   let muli lbv rval =
     let rbv = BitVecVal.from_int ~len:(length_of lbv) rval in
     BV.mk_mul ctx lbv rbv
+
+  let mul_no_overflow lbv rbv sign = BV.mk_mul_no_overflow ctx lbv rbv sign
+
+  let mul_no_underflow lbv rbv = BV.mk_mul_no_underflow ctx lbv rbv
 
   let neg bv = BV.mk_neg ctx bv
 

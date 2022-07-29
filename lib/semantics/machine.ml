@@ -34,18 +34,29 @@ let int32_add lval rval state =
 
 (* assertion:
  * value = ((lval + rval) mod 2**32) :: (lval + rval > smi_max) *)
-let int32_add_with_overflow lval rval state =
+let int32_add_with_overflow lval rval control state =
   let added = Value.Int32.add lval rval in
-  let res = Value.andi added Constants.int32_mask in
   let ovf =
-    Bool.ite (Value.ugti added Constants.int32_mask) Value.tr Value.fl
+    Bool.ite (Value.Int32.add_would_overflow lval rval) Value.tr Value.fl
   in
-  let value = Composed.from_values [ res; ovf ] in
-  state |> State.update ~value
+  let value = Composed.from_values [ added; ovf ] in
+  state |> State.update ~value ~control
+
+let int32_div lval rval control state =
+  let value = Value.Int32.div lval rval in
+  state |> State.update ~value ~control
 
 let int32_mul lval rval state =
   let value = Value.Int32.mul lval rval in
   state |> State.update ~value
+
+let int32_mul_with_overflow lval rval control state =
+  let multiplied = Value.Int32.mul lval rval in
+  let ovf =
+    Bool.ite (Value.Int32.mul_would_overflow lval rval) Value.tr Value.fl
+  in
+  let value = Composed.from_values [ multiplied; ovf ] in
+  state |> State.update ~value ~control
 
 let int32_sub lval rval state =
   let value = Value.Int32.sub lval rval in
