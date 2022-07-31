@@ -16,6 +16,7 @@ type kind =
   | V2
   | CV
   | V1V2
+  | V1V2C1
   | V1V2B1
   | B1B2B4V1V2
   | B2
@@ -401,15 +402,12 @@ type t =
   | InductionVariablePhi
   | InitializeImmutableInObject
   | Int32AbsWithOverflow
-  | Int32Div
   | Int32LessThanOrEqual
   | Int32Mod
   | Int32MulHigh
-  | Int32MulWithOverflow
   | Int32PairAdd
   | Int32PairMul
   | Int32PairSub
-  | Int32SubWithOverflow
   | Int64AbsWithOverflow
   | Int64AddWithOverflow
   | Int64Div
@@ -599,7 +597,6 @@ type t =
   | ObjectIsFiniteNumber
   | ObjectIsInteger
   | ObjectIsMinusZero
-  | ObjectIsNaN
   | ObjectIsNonCallable
   | ObjectIsNumber
   | ObjectIsReceiver
@@ -705,7 +702,6 @@ type t =
   | TypeOf
   | TypedObjectState
   | TypedStateValues
-  | Uint32Div
   | Uint32Mod
   | Uint32MulHigh
   | Uint64Div
@@ -810,6 +806,7 @@ type t =
   | NumberToInt32
   | NumberToUint32
   | NumberTrunc
+  | ObjectIsNaN
   | RoundFloat64ToInt32
   | SpeculativeToNumber
   | StackPointerGreaterThan
@@ -862,7 +859,6 @@ type t =
   | Float64LessThanOrEqual
   | Float64Sub
   | Int32Add
-  | Int32AddWithOverflow
   | Int32LessThan
   | Int32Mul
   | Int32Sub
@@ -901,6 +897,12 @@ type t =
   | Word32Xor
   | Word64Equal
   | Word64Shl
+  (* v1v2c1 *)
+  | Int32AddWithOverflow
+  | Int32Div
+  | Int32MulWithOverflow
+  | Int32SubWithOverflow
+  | Uint32Div
   (* v1v2b1 *)
   | Load
   (* b1b2b4v1v2 *)
@@ -1020,16 +1022,15 @@ let get_kind opcode =
   | I8x16Splat | I8x16Sub | I8x16SubSatS | I8x16SubSatU | I8x16Swizzle
   | I8x16UConvertI16x8 | IfDefault | IfException | IfSuccess | IfValue
   | InductionVariablePhi | InitializeImmutableInObject | Int32AbsWithOverflow
-  | Int32Div | Int32LessThanOrEqual | Int32Mod | Int32MulHigh
-  | Int32MulWithOverflow | Int32PairAdd | Int32PairMul | Int32PairSub
-  | Int32SubWithOverflow | Int64AbsWithOverflow | Int64AddWithOverflow
-  | Int64Div | Int64LessThanOrEqual | Int64Mod | Int64Mul | Int64SubWithOverflow
-  | JSAdd | JSAsyncFunctionEnter | JSAsyncFunctionReject
-  | JSAsyncFunctionResolve | JSBitwiseAnd | JSBitwiseNot | JSBitwiseOr
-  | JSBitwiseXor | JSCall | JSCallForwardVarargs | JSCallRuntime
-  | JSCallWithArrayLike | JSCallWithSpread | JSCloneObject | JSConstruct
-  | JSConstructForwardVarargs | JSConstructWithArrayLike | JSConstructWithSpread
-  | JSCreate | JSCreateArguments | JSCreateArray | JSCreateArrayFromIterable
+  | Int32LessThanOrEqual | Int32Mod | Int32MulHigh | Int32PairAdd | Int32PairMul
+  | Int32PairSub | Int64AbsWithOverflow | Int64AddWithOverflow | Int64Div
+  | Int64LessThanOrEqual | Int64Mod | Int64Mul | Int64SubWithOverflow | JSAdd
+  | JSAsyncFunctionEnter | JSAsyncFunctionReject | JSAsyncFunctionResolve
+  | JSBitwiseAnd | JSBitwiseNot | JSBitwiseOr | JSBitwiseXor | JSCall
+  | JSCallForwardVarargs | JSCallRuntime | JSCallWithArrayLike
+  | JSCallWithSpread | JSCloneObject | JSConstruct | JSConstructForwardVarargs
+  | JSConstructWithArrayLike | JSConstructWithSpread | JSCreate
+  | JSCreateArguments | JSCreateArray | JSCreateArrayFromIterable
   | JSCreateArrayIterator | JSCreateAsyncFunctionObject | JSCreateBlockContext
   | JSCreateBoundFunction | JSCreateCatchContext | JSCreateClosure
   | JSCreateCollectionIterator | JSCreateEmptyLiteralArray
@@ -1072,20 +1073,19 @@ let get_kind opcode =
   | NumberToString | NumberToUint8Clamped | ObjectId | ObjectIsArrayBufferView
   | ObjectIsBigInt | ObjectIsCallable | ObjectIsConstructor
   | ObjectIsDetectableCallable | ObjectIsFiniteNumber | ObjectIsInteger
-  | ObjectIsMinusZero | ObjectIsNaN | ObjectIsNonCallable | ObjectIsNumber
-  | ObjectIsReceiver | ObjectIsSafeInteger | ObjectIsSmi | ObjectIsString
-  | ObjectIsSymbol | ObjectIsUndetectable | ObjectState | OsrValue
-  | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber | PlainPrimitiveToWord32
-  | Plug | PointerConstant | ProtectedLoad | ProtectedStore
-  | RelocatableInt32Constant | RelocatableInt64Constant | RestLength | Retain
-  | RoundInt32ToFloat32 | RoundInt64ToFloat32 | RoundInt64ToFloat64
-  | RoundUint32ToFloat32 | RoundUint64ToFloat32 | RoundUint64ToFloat64
-  | RuntimeAbort | S128And | S128AndNot | S128Const | S128Not | S128Or
-  | S128Select | S128Xor | S128Zero | SLVerifierHint | SameValue
-  | SameValueNumbersOnly | SignExtendWord16ToInt32 | SignExtendWord16ToInt64
-  | SignExtendWord32ToInt64 | SignExtendWord8ToInt32 | SignExtendWord8ToInt64
-  | Simd128ReverseBytes | SpeculativeBigIntAdd | SpeculativeBigIntAsIntN
-  | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
+  | ObjectIsMinusZero | ObjectIsNonCallable | ObjectIsNumber | ObjectIsReceiver
+  | ObjectIsSafeInteger | ObjectIsSmi | ObjectIsString | ObjectIsSymbol
+  | ObjectIsUndetectable | ObjectState | OsrValue | PlainPrimitiveToFloat64
+  | PlainPrimitiveToNumber | PlainPrimitiveToWord32 | Plug | PointerConstant
+  | ProtectedLoad | ProtectedStore | RelocatableInt32Constant
+  | RelocatableInt64Constant | RestLength | Retain | RoundInt32ToFloat32
+  | RoundInt64ToFloat32 | RoundInt64ToFloat64 | RoundUint32ToFloat32
+  | RoundUint64ToFloat32 | RoundUint64ToFloat64 | RuntimeAbort | S128And
+  | S128AndNot | S128Const | S128Not | S128Or | S128Select | S128Xor | S128Zero
+  | SLVerifierHint | SameValue | SameValueNumbersOnly | SignExtendWord16ToInt32
+  | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
+  | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
+  | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
   | SpeculativeBigIntSubtract | SpeculativeNumberBitwiseAnd
   | SpeculativeNumberShiftLeft | SpeculativeNumberShiftRight | StackSlot | Start
   | StateValues | StaticAssert | StoreDataViewElement | StoreLane | StoreMessage
@@ -1103,9 +1103,9 @@ let get_kind opcode =
   | TruncateTaggedToFloat64 | TruncateTaggedToWord32 | TryTruncateFloat32ToInt64
   | TryTruncateFloat32ToUint64 | TryTruncateFloat64ToInt64
   | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf | TypedObjectState
-  | TypedStateValues | Uint32Div | Uint32Mod | Uint32MulHigh | Uint64Div
-  | Uint64Mod | UnalignedLoad | UnalignedStore | UnsafePointerAdd | V128AnyTrue
-  | VerifyType | Word32AtomicAdd | Word32AtomicAnd | Word32AtomicCompareExchange
+  | TypedStateValues | Uint32Mod | Uint32MulHigh | Uint64Div | Uint64Mod
+  | UnalignedLoad | UnalignedStore | UnsafePointerAdd | V128AnyTrue | VerifyType
+  | Word32AtomicAdd | Word32AtomicAnd | Word32AtomicCompareExchange
   | Word32AtomicExchange | Word32AtomicLoad | Word32AtomicOr
   | Word32AtomicPairAdd | Word32AtomicPairAnd | Word32AtomicPairCompareExchange
   | Word32AtomicPairExchange | Word32AtomicPairLoad | Word32AtomicPairOr
@@ -1133,9 +1133,10 @@ let get_kind opcode =
   | Float64Abs | Float64ExtractHighWord32 | Float64RoundDown | Float64RoundUp
   | NumberAbs | NumberCeil | NumberExpm1 | NumberFloor | NumberRound
   | NumberSign | NumberSin | NumberToInt32 | NumberToUint32 | NumberTrunc
-  | RoundFloat64ToInt32 | SpeculativeToNumber | StackPointerGreaterThan
-  | ToBoolean | TruncateFloat64ToWord32 | TruncateInt64ToInt32
-  | TruncateTaggedToBit | Word32ReverseBytes | Word64ReverseBytes ->
+  | ObjectIsNaN | RoundFloat64ToInt32 | SpeculativeToNumber
+  | StackPointerGreaterThan | ToBoolean | TruncateFloat64ToWord32
+  | TruncateInt64ToInt32 | TruncateTaggedToBit | Word32ReverseBytes
+  | Word64ReverseBytes ->
       V1
   | IfFalse | IfTrue -> C1
   | AllocateRaw -> V1C1
@@ -1152,9 +1153,9 @@ let get_kind opcode =
       V1V2E1C1
   | End | Merge -> CV
   | Float64Equal | Float64LessThan | Float64LessThanOrEqual | Float64Sub
-  | Int32Add | Int32AddWithOverflow | Int32LessThan | Int32Mul | Int32Sub
-  | Int64Add | Int64LessThan | Int64Sub | NumberAdd | NumberDivide | NumberEqual
-  | NumberImul | NumberLessThan | NumberLessThanOrEqual | NumberMax | NumberMin
+  | Int32Add | Int32LessThan | Int32Mul | Int32Sub | Int64Add | Int64LessThan
+  | Int64Sub | NumberAdd | NumberDivide | NumberEqual | NumberImul
+  | NumberLessThan | NumberLessThanOrEqual | NumberMax | NumberMin
   | NumberModulus | NumberMultiply | NumberShiftRightLogical | NumberSubtract
   | ReferenceEqual | SpeculativeNumberAdd | SpeculativeNumberBitwiseOr
   | SpeculativeNumberBitwiseXor | SpeculativeNumberEqual
@@ -1163,6 +1164,9 @@ let get_kind opcode =
   | Uint64LessThan | Uint64LessThanOrEqual | Word32And | Word32Equal | Word32Or
   | Word32Shl | Word32Shr | Word32Xor | Word64Equal | Word64Shl ->
       V1V2
+  | Int32AddWithOverflow | Int32Div | Int32MulWithOverflow
+  | Int32SubWithOverflow | Uint32Div ->
+      V1V2C1
   | Load -> V1V2B1
   | LoadElement -> B1B2B4V1V2
   | LoadField -> B1B2B4V1
@@ -1194,6 +1198,7 @@ let split_kind kind =
   | V2 -> [ V2 ]
   | CV -> [ CV ]
   | V1V2 -> [ V1; V2 ]
+  | V1V2C1 -> [ V1; V2; C1 ]
   | V1V2B1 -> [ V1; V2; B1 ]
   | B1B2B4V1V2 -> [ B1; B2; B4; V1; V2 ]
   | B2 -> [ B2 ]
@@ -1581,15 +1586,12 @@ let of_str str =
   | "InductionVariablePhi" -> InductionVariablePhi
   | "InitializeImmutableInObject" -> InitializeImmutableInObject
   | "Int32AbsWithOverflow" -> Int32AbsWithOverflow
-  | "Int32Div" -> Int32Div
   | "Int32LessThanOrEqual" -> Int32LessThanOrEqual
   | "Int32Mod" -> Int32Mod
   | "Int32MulHigh" -> Int32MulHigh
-  | "Int32MulWithOverflow" -> Int32MulWithOverflow
   | "Int32PairAdd" -> Int32PairAdd
   | "Int32PairMul" -> Int32PairMul
   | "Int32PairSub" -> Int32PairSub
-  | "Int32SubWithOverflow" -> Int32SubWithOverflow
   | "Int64AbsWithOverflow" -> Int64AbsWithOverflow
   | "Int64AddWithOverflow" -> Int64AddWithOverflow
   | "Int64Div" -> Int64Div
@@ -1779,7 +1781,6 @@ let of_str str =
   | "ObjectIsFiniteNumber" -> ObjectIsFiniteNumber
   | "ObjectIsInteger" -> ObjectIsInteger
   | "ObjectIsMinusZero" -> ObjectIsMinusZero
-  | "ObjectIsNaN" -> ObjectIsNaN
   | "ObjectIsNonCallable" -> ObjectIsNonCallable
   | "ObjectIsNumber" -> ObjectIsNumber
   | "ObjectIsReceiver" -> ObjectIsReceiver
@@ -1885,7 +1886,6 @@ let of_str str =
   | "TypeOf" -> TypeOf
   | "TypedObjectState" -> TypedObjectState
   | "TypedStateValues" -> TypedStateValues
-  | "Uint32Div" -> Uint32Div
   | "Uint32Mod" -> Uint32Mod
   | "Uint32MulHigh" -> Uint32MulHigh
   | "Uint64Div" -> Uint64Div
@@ -1988,6 +1988,7 @@ let of_str str =
   | "NumberToInt32" -> NumberToInt32
   | "NumberToUint32" -> NumberToUint32
   | "NumberTrunc" -> NumberTrunc
+  | "ObjectIsNaN" -> ObjectIsNaN
   | "RoundFloat64ToInt32" -> RoundFloat64ToInt32
   | "SpeculativeToNumber" -> SpeculativeToNumber
   | "StackPointerGreaterThan" -> StackPointerGreaterThan
@@ -2031,7 +2032,6 @@ let of_str str =
   | "Float64LessThanOrEqual" -> Float64LessThanOrEqual
   | "Float64Sub" -> Float64Sub
   | "Int32Add" -> Int32Add
-  | "Int32AddWithOverflow" -> Int32AddWithOverflow
   | "Int32LessThan" -> Int32LessThan
   | "Int32Mul" -> Int32Mul
   | "Int32Sub" -> Int32Sub
@@ -2070,6 +2070,11 @@ let of_str str =
   | "Word32Xor" -> Word32Xor
   | "Word64Equal" -> Word64Equal
   | "Word64Shl" -> Word64Shl
+  | "Int32AddWithOverflow" -> Int32AddWithOverflow
+  | "Int32Div" -> Int32Div
+  | "Int32MulWithOverflow" -> Int32MulWithOverflow
+  | "Int32SubWithOverflow" -> Int32SubWithOverflow
+  | "Uint32Div" -> Uint32Div
   | "Load" -> Load
   | "LoadElement" -> LoadElement
   | "LoadField" -> LoadField
@@ -2451,15 +2456,12 @@ let to_str opcode =
   | InductionVariablePhi -> "InductionVariablePhi"
   | InitializeImmutableInObject -> "InitializeImmutableInObject"
   | Int32AbsWithOverflow -> "Int32AbsWithOverflow"
-  | Int32Div -> "Int32Div"
   | Int32LessThanOrEqual -> "Int32LessThanOrEqual"
   | Int32Mod -> "Int32Mod"
   | Int32MulHigh -> "Int32MulHigh"
-  | Int32MulWithOverflow -> "Int32MulWithOverflow"
   | Int32PairAdd -> "Int32PairAdd"
   | Int32PairMul -> "Int32PairMul"
   | Int32PairSub -> "Int32PairSub"
-  | Int32SubWithOverflow -> "Int32SubWithOverflow"
   | Int64AbsWithOverflow -> "Int64AbsWithOverflow"
   | Int64AddWithOverflow -> "Int64AddWithOverflow"
   | Int64Div -> "Int64Div"
@@ -2649,7 +2651,6 @@ let to_str opcode =
   | ObjectIsFiniteNumber -> "ObjectIsFiniteNumber"
   | ObjectIsInteger -> "ObjectIsInteger"
   | ObjectIsMinusZero -> "ObjectIsMinusZero"
-  | ObjectIsNaN -> "ObjectIsNaN"
   | ObjectIsNonCallable -> "ObjectIsNonCallable"
   | ObjectIsNumber -> "ObjectIsNumber"
   | ObjectIsReceiver -> "ObjectIsReceiver"
@@ -2755,7 +2756,6 @@ let to_str opcode =
   | TypeOf -> "TypeOf"
   | TypedObjectState -> "TypedObjectState"
   | TypedStateValues -> "TypedStateValues"
-  | Uint32Div -> "Uint32Div"
   | Uint32Mod -> "Uint32Mod"
   | Uint32MulHigh -> "Uint32MulHigh"
   | Uint64Div -> "Uint64Div"
@@ -2858,6 +2858,7 @@ let to_str opcode =
   | NumberToInt32 -> "NumberToInt32"
   | NumberToUint32 -> "NumberToUint32"
   | NumberTrunc -> "NumberTrunc"
+  | ObjectIsNaN -> "ObjectIsNaN"
   | RoundFloat64ToInt32 -> "RoundFloat64ToInt32"
   | SpeculativeToNumber -> "SpeculativeToNumber"
   | StackPointerGreaterThan -> "StackPointerGreaterThan"
@@ -2901,7 +2902,6 @@ let to_str opcode =
   | Float64LessThanOrEqual -> "Float64LessThanOrEqual"
   | Float64Sub -> "Float64Sub"
   | Int32Add -> "Int32Add"
-  | Int32AddWithOverflow -> "Int32AddWithOverflow"
   | Int32LessThan -> "Int32LessThan"
   | Int32Mul -> "Int32Mul"
   | Int32Sub -> "Int32Sub"
@@ -2940,6 +2940,11 @@ let to_str opcode =
   | Word32Xor -> "Word32Xor"
   | Word64Equal -> "Word64Equal"
   | Word64Shl -> "Word64Shl"
+  | Int32AddWithOverflow -> "Int32AddWithOverflow"
+  | Int32Div -> "Int32Div"
+  | Int32MulWithOverflow -> "Int32MulWithOverflow"
+  | Int32SubWithOverflow -> "Int32SubWithOverflow"
+  | Uint32Div -> "Uint32Div"
   | Load -> "Load"
   | LoadElement -> "LoadElement"
   | LoadField -> "LoadField"

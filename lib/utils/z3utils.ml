@@ -369,7 +369,13 @@ module BitVec = struct
 
   let sdivb lbv rbv = BV.mk_sdiv ctx lbv rbv
 
+  let udivb lbv rbv = BV.mk_udiv ctx lbv rbv
+
   let subb lbv rbv = BV.mk_sub ctx lbv rbv
+
+  let sub_no_overflow lbv rbv = BV.mk_sub_no_overflow ctx lbv rbv
+
+  let sub_no_underflow lbv rbv sign = BV.mk_sub_no_underflow ctx lbv rbv sign
 
   let subi lbv rval =
     BV.mk_sub ctx lbv (BitVecVal.from_int ~len:(length_of lbv) rval)

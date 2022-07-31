@@ -356,6 +356,18 @@ let number_less_than_or_equal lnum rnum mem state =
   in
   state |> State.update ~value
 
+let object_is_nan pval mem state =
+  let value =
+    let is_smi = Value.has_type Type.tagged_signed pval in
+    Bool.ite is_smi Value.fl
+      (let is_heap_number = Objects.is_heap_number mem pval in
+       Bool.ite is_heap_number
+         (let number = HeapNumber.load pval mem in
+          HeapNumber.is_nan number)
+         Value.fl)
+  in
+  state |> State.update ~value
+
 let speculative_number_equal lval rval mem state =
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
   state |> number_equal lval rval mem |> State.update ~deopt

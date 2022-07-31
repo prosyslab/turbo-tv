@@ -426,6 +426,15 @@ module Int32 = struct
   let sub lval rval =
     BitVec.subb (lval |> from_value) (rval |> from_value) |> to_value
 
+  (* assume turbofan consider 'overflow' as overflow \/ underflow *)
+  let sub_would_overflow lval rval =
+    Z3utils.Bool.not
+      (Z3utils.Bool.ands
+         [
+           BitVec.sub_no_overflow lval rval;
+           BitVec.sub_no_underflow lval rval true;
+         ])
+
   let or_ lval rval =
     let li = lval |> from_value in
     let ri = rval |> from_value in
@@ -494,6 +503,9 @@ module Uint32 = struct
   (* arith *)
   let modulo lval rval =
     BitVec.modb (lval |> from_value) (rval |> from_value) |> to_value
+
+  let div lval rval =
+    BitVec.udivb (lval |> from_value) (rval |> from_value) |> to_value
 
   let mul lval rval =
     BitVec.mulb (lval |> from_value) (rval |> from_value) |> to_value

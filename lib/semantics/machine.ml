@@ -62,6 +62,14 @@ let int32_sub lval rval state =
   let value = Value.Int32.sub lval rval in
   state |> State.update ~value
 
+let int32_sub_with_overflow lval rval control state =
+  let subtracted = Value.Int32.sub lval rval in
+  let ovf =
+    Bool.ite (Value.Int32.sub_would_overflow lval rval) Value.tr Value.fl
+  in
+  let value = Composed.from_values [ subtracted; ovf ] in
+  state |> State.update ~value ~control
+
 let int64_add lval rval state =
   let value = Value.Int64.add lval rval in
   state |> State.update ~value
@@ -73,6 +81,10 @@ let int64_sub lval rval state =
 let round_float64_to_int32 pval state =
   let value = Float64.to_int32 pval in
   state |> State.update ~value
+
+let uint32_div lval rval control state =
+  let value = Value.Int32.div lval rval in
+  state |> State.update ~value ~control
 
 (* well-defined conditions:
  * (hint = "ShiftOutZero") ^ (cnt = (rval mod 32)) -> lval[-cnt:] = 0

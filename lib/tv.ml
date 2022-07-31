@@ -378,6 +378,10 @@ let encode program
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
       number_less_than_or_equal lval rval mem
+  | ObjectIsNaN ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      object_is_nan pval mem
   | ReferenceEqual ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
@@ -573,8 +577,17 @@ let encode program
   | Int32Mul -> encode_machine_binary int32_mul
   | Int32MulWithOverflow -> encode_machine_ovf int32_mul_with_overflow
   | Int32Sub -> encode_machine_binary int32_sub
+  | Int32SubWithOverflow -> encode_machine_ovf int32_sub_with_overflow
   | Int64Add -> encode_machine_binary int64_add
   | Int64Sub -> encode_machine_binary int64_sub
+  | Uint32Div ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let ctrl_id = Operands.id_of_nth operands 2 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      let ctrl = ControlFile.find ctrl_id cf in
+      uint32_div lval rval ctrl
   | Word32Sar -> encode_machine_binary_with_hint word32_sar
   | Word32Shl -> encode_machine_binary word32_shl
   | Word32Shr -> encode_machine_binary word32_shr
