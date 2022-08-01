@@ -38,17 +38,38 @@ type t = {
   deopt : Bool.t;
 }
 
+let default_constants =
+  [ "undefined"; "the_hole"; "null"; "String[0]: #"; "false"; "true" ]
+
 let init nparams stage : t =
+  let embed_default_constants mem rf =
+    List.fold_left
+      (fun (mem, rf, next_bid) name ->
+        let next_bid, ptr =
+          Memory.allocate next_bid (BitVecVal.from_int ~len:Value.len 1)
+        in
+        let updated_mem =
+          Memory.store
+            (ptr |> TaggedPointer.to_raw_pointer)
+            next_bid Bool.tr (BitVecVal.from_int 0) mem
+        in
+        (updated_mem, RegisterFile.add name (Some ptr) rf, next_bid))
+      (mem, rf, nparams) default_constants
+  in
+  let memory, register_file, next_bid =
+    embed_default_constants (Memory.init "mem")
+      (RegisterFile.init stage RegisterFile.symbol)
+  in
   {
     stage;
     pc = 0;
     final = false;
-    next_bid = nparams;
-    register_file = RegisterFile.init stage RegisterFile.symbol;
+    next_bid;
+    register_file;
     control_file = ControlFile.init stage ControlFile.symbol;
     ub_file = UBFile.init stage Ub.symbol;
     deopt_file = DeoptFile.init stage Deopt.symbol;
-    memory = Memory.init "mem";
+    memory;
     params = Params.init nparams;
     retval = Value.empty;
     ub = Bool.fl;

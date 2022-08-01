@@ -9,9 +9,9 @@ type t = Value.t
    64-69: ty
 *)
 (* High |-ty-|-size-|--bid--|-offset-(1)-| Low *)
-let size_len = 16
+let size_len = 32
 
-let bid_len = 32
+let bid_len = 16
 
 let off_len = 16
 
@@ -70,5 +70,4 @@ let to_string model t =
       |> Int32.of_string |> Int32.unsigned_to_int |> Option.get |> string_of_int
     with _ -> off_str
   in
-
   Format.sprintf "TaggedPointer(bid: %s, offset: %s)" bid offset

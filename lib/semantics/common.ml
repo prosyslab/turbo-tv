@@ -9,6 +9,8 @@ let float64_constant c state =
   let value = c |> Value.cast Type.float64 in
   state |> State.update ~value
 
+let heap_constant c state = state |> State.update ~value:c
+
 (* assertion: value = c *)
 let int32_constant c state =
   let value = c |> Value.cast Type.int32 in

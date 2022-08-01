@@ -98,7 +98,20 @@ let encode program
         |> Value.from_f64string |> Value.cast Type.float64
       in
       float64_constant c
-  | HeapConstant | ExternalConstant ->
+  | HeapConstant ->
+      let addr_name_re = Re.Pcre.regexp "(0x[0-9a-f]+) <([^>]*)>" in
+      let operand = Operands.const_of_nth operands 0 in
+      let addr_name = Re.exec addr_name_re operand in
+      let ptr =
+        Re.Group.get addr_name 1 |> BitVecVal.from_istring
+        |> Value.entype Type.pointer
+      in
+      let name = Re.Group.get addr_name 2 in
+      (* if constant is default constant, use pre-defined value in register file *)
+      if List.mem name State.default_constants then
+        heap_constant (RegisterFile.find name rf)
+      else heap_constant ptr
+  | ExternalConstant ->
       let addr_re = Re.Pcre.regexp "(0x[0-9a-f]+)" in
       let operand = Operands.const_of_nth operands 0 in
       let c =
@@ -223,6 +236,9 @@ let encode program
   (* JS: comparision *)
   | JSStackCheck -> js_stack_check
   (* simplified: numeric *)
+  | CheckedInt32Add -> encode_checked_simplified_binary checked_int32_add
+  | CheckedInt32Mul ->
+      encode_checked_simplified_binary_with_hint checked_int32_mul
   | NumberAdd ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
@@ -232,7 +248,7 @@ let encode program
   | NumberAbs ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
-      number_abs pval next_bid mem
+      number_abs pval mem
   | NumberCeil ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -783,17 +799,25 @@ let check_ub_semantic nparams program =
   let precond =
     let params = State.params state in
     let params_are_smi_or_heapnumber =
-      Bool.ors
-        [
-          params |> Value.have_type Type.tagged_signed;
-          Bool.ands
+      List.mapi
+        (fun bid param ->
+          Bool.ors
             [
-              params |> Value.have_type Type.tagged_pointer;
-              params |> Objects.are_heap_nubmer mem;
-            ];
-        ]
+              param |> Value.has_type Type.tagged_signed;
+              Bool.ands
+                [
+                  param |> Value.has_type Type.tagged_pointer;
+                  param |> Objects.is_heap_number mem;
+                  BitVec.eqi (param |> TaggedPointer.bid_of) bid;
+                ];
+              Bool.ors
+                (List.map (Value.eq param)
+                   (RegisterFile.find_all State.default_constants
+                      state.register_file));
+            ])
+        params
+      |> Bool.ands
     in
-
     Bool.ands [ params_are_smi_or_heapnumber; Bool.not (State.deopt state) ]
   in
   let assertion = Bool.ands [ State.assertion state; precond; ub ] in
@@ -831,6 +855,10 @@ let run nparams src_program tgt_program =
                   param |> Objects.is_heap_number mem;
                   BitVec.eqi (param |> TaggedPointer.bid_of) bid;
                 ];
+              Bool.ors
+                (List.map (Value.eq param)
+                   (RegisterFile.find_all State.default_constants
+                      src_state.register_file));
             ])
         params
       |> Bool.ands
