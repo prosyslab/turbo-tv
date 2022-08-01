@@ -57,8 +57,6 @@ let rec has_type (ty : Type.t) t =
     Bool.ands [ BitVec.eqb (ty_of t) ty; BitVec.eqi (BitVec.andi t 1) 1 ]
   else BitVec.eqb (ty_of t) ty
 
-let have_type t ts = Bool.ands (List.map (has_type t) ts)
-
 let is_signed_integer t =
   Bool.ors (List.map (fun ty -> has_type ty t) Type.int_types)
 
@@ -258,9 +256,7 @@ let is_false value = weak_eq fl value
 
 let tr = addi empty 1 |> cast Type.bool
 
-let is_true value = weak_eq tr value
-
-let to_bool value = Bool.ite (eq value fl) Bool.fl Bool.tr
+let is_true value = Bool.not (is_false value)
 
 let zero = BitVecVal.zero () |> entype Type.const
 
@@ -459,6 +455,12 @@ module Int32 = struct
     let li = lval |> from_value in
     let ri = rval |> from_value in
     BitVec.sgeb li ri
+
+  let is_negative value = BitVec.slti (value |> from_value) 0
+
+  let is_positive value = BitVec.sgti (value |> from_value) 0
+
+  let is_zero value = BitVec.eqi (value |> from_value) 0
 
   (* constant *)
   let min_value =

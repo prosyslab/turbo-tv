@@ -65,6 +65,29 @@ let encode program
     op hint lval rval
   in
 
+  let encode_checked_simplified_binary_with_hint op =
+    let hint = Operands.const_of_nth operands 0 in
+    let lpid = Operands.id_of_nth operands 1 in
+    let rpid = Operands.id_of_nth operands 2 in
+    let _eid = Operands.id_of_nth operands 3 in
+    let cid = Operands.id_of_nth operands 4 in
+    let lval = RegisterFile.find lpid rf in
+    let rval = RegisterFile.find rpid rf in
+    let ctrl = ControlFile.find cid cf in
+    op hint lval rval () ctrl
+  in
+
+  let encode_checked_simplified_binary op =
+    let lpid = Operands.id_of_nth operands 0 in
+    let rpid = Operands.id_of_nth operands 1 in
+    let _eid = Operands.id_of_nth operands 2 in
+    let cid = Operands.id_of_nth operands 3 in
+    let lval = RegisterFile.find lpid rf in
+    let rval = RegisterFile.find rpid rf in
+    let ctrl = ControlFile.find cid cf in
+    op lval rval () ctrl
+  in
+
   state
   |>
   match opcode with

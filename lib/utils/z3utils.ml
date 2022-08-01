@@ -315,6 +315,11 @@ module BitVec = struct
   let ugti lbv rval =
     BV.mk_ugt ctx lbv (BitVecVal.from_int ~len:(length_of lbv) rval)
 
+  let sgtb lbv rbv = BV.mk_sgt ctx lbv rbv
+
+  let sgti lbv rval =
+    BV.mk_sgt ctx lbv (BitVecVal.from_int ~len:(length_of lbv) rval)
+
   let sgeb lbv rbv = BV.mk_sge ctx lbv rbv
 
   let sgei lbv rval =

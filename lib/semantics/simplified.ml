@@ -15,33 +15,30 @@ let check_map_for_heap_number_or_oddball_to_float64 hint pval mem =
       failwith (Printf.sprintf "CheckedTaggedToFloat64: Undefined hint %s" hint)
 
 (* simplified: numeric *)
-let number_abs nptr next_bid mem state =
+let checked_int32_add lval rval _eff control state =
+  let deopt = Value.Int32.add_would_overflow lval rval in
+  state |> Machine.int32_add lval rval |> State.update ~deopt ~control
+
+let checked_int32_mul mode lval rval _eff control state =
   let deopt =
-    Bool.not
-      (Bool.ands
-         [
-           nptr |> Value.has_type Type.tagged_pointer;
-           nptr |> Objects.is_heap_number mem;
-         ])
+    let check_overflow = Value.Int32.mul_would_overflow lval rval in
+    let check_minus_zero =
+      if mode = "check-for-minus-zero" then
+        let mul_is_zero = Value.Int32.mul lval rval |> Value.Int32.is_zero in
+        let one_is_negative =
+          Bool.ors
+            [ Value.Int32.is_negative lval; Value.Int32.is_negative rval ]
+        in
+        Bool.ands [ mul_is_zero; one_is_negative ]
+      else Bool.fl
+    in
+    Bool.ors [ check_overflow; check_minus_zero ]
   in
-  (* https://tc39.es/ecma262/#sec-math.abs *)
-  let value, next_bid, mem =
-    let n = HeapNumber.load nptr mem in
-    (* nan -> nan *)
-    Bool.ite (HeapNumber.is_nan n) Float64.nan
-      (* -0 -> 0 *)
-      (Bool.ite
-         (HeapNumber.is_minus_zero n)
-         Float64.zero
-         (* ninf -> inf *)
-         (Bool.ite (HeapNumber.is_ninf n) Float64.inf
-            (* n < 0 -> -n *)
-            (Bool.ite (HeapNumber.is_negative n)
-               (Float64.neg (n.value |> Value.entype Type.float64))
-               (n.value |> Value.entype Type.float64))))
-    |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
-  in
-  state |> State.update ~value ~deopt ~next_bid ~mem
+  state |> Machine.int32_mul lval rval |> State.update ~deopt ~control
+
+let number_abs nptr mem state =
+  let value = nptr |> Number.abs mem in
+  state |> State.update ~value
 
 let number_add lval rval mem state =
   let value = Number.add lval rval mem in
@@ -653,41 +650,42 @@ let speculative_to_number pval next_bid mem state =
   in
   state |> State.update ~value ~deopt ~next_bid ~mem
 
-let to_boolean pval mem state =
+let to_boolean pval mem (state : State.t) =
   let uif =
     let value_sort = BV.mk_sort ctx Value.len in
     Z3.FuncDecl.mk_func_decl_s ctx "to_boolean" [ value_sort ] Bool.mk_sort
   in
-
+  (* https://tc39.es/ecma262/#sec-toboolean *)
   let value =
-    let number = HeapNumber.load pval mem in
     Bool.ite
-      (* smi *)
-      (Value.has_type Type.tagged_signed pval)
-      (Bool.ite (Value.TaggedSigned.is_zero pval) Value.fl Value.tr)
+      (Number.is_number pval mem)
+      (* number *)
+      (Bool.ite (pval |> Number.to_boolean mem) Value.tr Value.fl)
       (Bool.ite
-         (* heap number *)
-         (pval |> Objects.is_heap_number mem)
+         (* undefined *)
+         (Value.eq pval (RegisterFile.find "undefined" state.register_file))
+         Value.fl
          (Bool.ite
-            (Bool.ors
-               [
-                 HeapNumber.is_minus_zero number;
-                 HeapNumber.is_zero number;
-                 HeapNumber.is_nan number;
-               ])
-            Value.fl Value.tr)
-         (* currently only handle the number;
-            look: https://tc39.es/ecma262/#sec-toboolean *)
-         (Bool.ite (Z3.FuncDecl.apply uif [ pval ]) Value.tr Value.fl))
+            (* boolean *)
+            (pval |> Value.has_type Type.bool)
+            pval
+            (Bool.ite
+               (Value.eq pval (RegisterFile.find "true" state.register_file))
+               Value.tr
+               (Bool.ite
+                  (Value.eq pval
+                     (RegisterFile.find "false" state.register_file))
+                  Value.fl
+                  (* currently only handle the undefined, boolean and number *)
+                  (Bool.ite (Z3.FuncDecl.apply uif [ pval ]) Value.fl Value.fl)))))
   in
 
   state |> State.update ~value
 
-let truncate_tagged_to_bit pval mem state =
+let truncate_tagged_to_bit pval mem (state : State.t) =
   let uif =
     let value_sort = BV.mk_sort ctx Value.len in
-    Z3.FuncDecl.mk_func_decl_s ctx "truncate_tagged_to_bit" [ value_sort ]
-      Bool.mk_sort
+    Z3.FuncDecl.mk_func_decl_s ctx "to_boolean" [ value_sort ] Bool.mk_sort
   in
   let value =
     let number = HeapNumber.load pval mem in
@@ -710,9 +708,20 @@ let truncate_tagged_to_bit pval mem state =
                  HeapNumber.is_nan number;
                ])
             Value.fl Value.tr)
-         (* otherwise, pass it to uif
-            [TODO] handle other objects
-            (look: LowerTruncateTaggedToBit@src/compiler/effect-control-linearizer.cc) *)
-         (Bool.ite (Z3.FuncDecl.apply uif [ pval ]) Value.tr Value.fl))
+         (Bool.ite
+            (* if [pval] is undefined, return false *)
+            (Value.eq pval (RegisterFile.find "undefined" state.register_file))
+            Value.fl
+            (Bool.ite
+               (* if [pval] is true, return true *)
+               (Value.eq pval (RegisterFile.find "true" state.register_file))
+               Value.tr
+               (Bool.ite
+                  (* if [pval] is false, return true *)
+                  (Value.eq pval
+                     (RegisterFile.find "false" state.register_file))
+                  Value.fl
+                  (* currently only handle the undefined, boolean and number *)
+                  (Bool.ite (Z3.FuncDecl.apply uif [ pval ]) Value.tr Value.fl)))))
   in
   state |> State.update ~value
