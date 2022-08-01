@@ -237,6 +237,7 @@ let encode program
   | JSStackCheck -> js_stack_check
   (* simplified: numeric *)
   | CheckedInt32Add -> encode_checked_simplified_binary checked_int32_add
+  | CheckedInt32Div -> encode_checked_simplified_binary checked_int32_div
   | CheckedInt32Mul ->
       encode_checked_simplified_binary_with_hint checked_int32_mul
   | NumberAdd ->
@@ -417,10 +418,6 @@ let encode program
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
       number_less_than_or_equal lval rval mem
-  | ObjectIsNaN ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      object_is_nan pval mem
   | ReferenceEqual ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
@@ -519,6 +516,15 @@ let encode program
       let value_id = Operands.id_of_nth operands 3 in
       let value = RegisterFile.find value_id rf in
       store_field ptr pos machine_type value mem
+  (* simplified: type-check *)
+  | NumberIsNaN ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      number_is_nan pval mem
+  | ObjectIsNaN ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      object_is_nan pval mem
   (* simplified: type-conversion *)
   | ChangeBitToTagged ->
       let pid = Operands.id_of_nth operands 0 in
@@ -577,6 +583,10 @@ let encode program
       let pid = Operands.id_of_nth operands 1 in
       let pval = RegisterFile.find pid rf in
       checked_truncate_tagged_to_word32 hint pval mem
+  | NumberToBoolean ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      number_to_boolean pval mem
   | NumberToInt32 ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -644,6 +654,7 @@ let encode program
   (* machine: comparison *)
   | StackPointerGreaterThan -> stack_pointer_greater_than
   | Int32LessThan -> encode_machine_binary int32_less_than
+  | Int32LessThanOrEqual -> encode_machine_binary int32_less_than_or_equal
   | Int64LessThan -> encode_machine_binary int64_less_than
   | Uint32LessThan -> encode_machine_binary uint32_less_than
   | Uint32LessThanOrEqual -> encode_machine_binary uint32_less_than_or_equal

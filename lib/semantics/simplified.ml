@@ -19,6 +19,26 @@ let checked_int32_add lval rval _eff control state =
   let deopt = Value.Int32.add_would_overflow lval rval in
   state |> Machine.int32_add lval rval |> State.update ~deopt ~control
 
+let checked_int32_div lval rval _eff control state =
+  let deopt =
+    let division_by_zero = Value.Int32.is_zero rval in
+    let minus_zero =
+      Bool.ands [ Value.Int32.is_zero lval; Value.Int32.is_negative rval ]
+    in
+    let overflow =
+      Bool.ands
+        [
+          Value.Int32.eq Value.Int32.min_value lval;
+          Value.Int32.eq rval (Value.Int32.str_to_value "-1");
+        ]
+    in
+    let lost_precision =
+      Bool.ands [ Value.Int32.eq (Value.Int32.mod_ lval rval) Value.Int32.zero ]
+    in
+    Bool.ors [ division_by_zero; minus_zero; overflow; lost_precision ]
+  in
+  state |> Machine.int32_div lval rval control |> State.update ~deopt ~control
+
 let checked_int32_mul mode lval rval _eff control state =
   let deopt =
     let check_overflow = Value.Int32.mul_would_overflow lval rval in
@@ -353,18 +373,6 @@ let number_less_than_or_equal lnum rnum mem state =
   in
   state |> State.update ~value
 
-let object_is_nan pval mem state =
-  let value =
-    let is_smi = pval |> Value.has_type Type.tagged_signed in
-    Bool.ite is_smi Value.fl
-      (let is_heap_number = pval |> Objects.is_heap_number mem in
-       Bool.ite is_heap_number
-         (let number = HeapNumber.load pval mem in
-          Bool.ite (HeapNumber.is_nan number) Value.tr Value.fl)
-         Value.fl)
-  in
-  state |> State.update ~value
-
 let speculative_number_equal lval rval mem state =
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
   state |> number_equal lval rval mem |> State.update ~deopt
@@ -435,6 +443,24 @@ let store_field ptr pos mt value mem state =
          repr store_cond value
   in
   state |> State.update ~mem
+
+(* simplified: type-check *)
+let number_is_nan pval mem state =
+  let value = Bool.ite (pval |> Number.is_nan mem) Value.tr Value.fl in
+  state |> State.update ~value
+
+(* requires audit *)
+let object_is_nan pval mem state =
+  let value =
+    let is_smi = pval |> Value.has_type Type.tagged_signed in
+    Bool.ite is_smi Value.fl
+      (let is_heap_number = pval |> Objects.is_heap_number mem in
+       Bool.ite is_heap_number
+         (let number = HeapNumber.load pval mem in
+          Bool.ite (HeapNumber.is_nan number) Value.tr Value.fl)
+         Value.fl)
+  in
+  state |> State.update ~value
 
 (* simplified: type-conversion *)
 (* well-defined condition
@@ -604,6 +630,10 @@ let checked_truncate_tagged_to_word32 hint pval mem state =
       (HeapNumber.load pval mem |> HeapNumber.to_float64 |> Float64.to_int32)
   in
   state |> State.update ~value ~deopt
+
+let number_to_boolean pval mem state =
+  let value = pval |> Number.to_boolean mem in
+  state |> State.update ~value
 
 let number_to_int32 pval next_bid mem state =
   let deopt =

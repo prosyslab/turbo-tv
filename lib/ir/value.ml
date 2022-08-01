@@ -410,6 +410,9 @@ module Int32 = struct
   let div lval rval =
     BitVec.sdivb (lval |> from_value) (rval |> from_value) |> to_value
 
+  let mod_ lval rval =
+    BitVec.modb (lval |> from_value) (rval |> from_value) |> to_value
+
   let mul lval rval =
     let li = lval |> from_value in
     let ri = rval |> from_value in
@@ -435,6 +438,8 @@ module Int32 = struct
            BitVec.sub_no_overflow lval rval;
            BitVec.sub_no_underflow lval rval true;
          ])
+
+  let eq lval rval = Z3utils.Bool.eq (lval |> from_value) (rval |> from_value)
 
   let or_ lval rval =
     let li = lval |> from_value in
@@ -463,6 +468,8 @@ module Int32 = struct
   let is_zero value = BitVec.eqi (value |> from_value) 0
 
   (* constant *)
+  let zero = BitVecVal.from_int ~len:32 0 |> to_value
+
   let min_value =
     BitVecVal.from_int ~len:32 (Int32.min_int |> Int32.to_int) |> to_value
 

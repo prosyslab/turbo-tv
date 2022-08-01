@@ -68,10 +68,10 @@ CheckString,
 CheckSymbol,
 CheckedFloat64ToInt32,b1,v1
 CheckedFloat64ToInt64,
-CheckedInt32Add,
-CheckedInt32Div,
+CheckedInt32Add,v1,v2,e1,c1
+CheckedInt32Div,v1,v2,e1,c1
 CheckedInt32Mod,
-CheckedInt32Mul,
+CheckedInt32Mul,b1,v1,v2,e1,c1
 CheckedInt32Sub,
 CheckedInt32ToTaggedSigned,
 CheckedInt64ToInt32,v1,e1,c1
@@ -417,7 +417,7 @@ Int32AddWithOverflow,v1,v2,c1
 Int32Constant,b1
 Int32Div,v1,v2,c1
 Int32LessThan,v1,v2
-Int32LessThanOrEqual,
+Int32LessThanOrEqual,v1,v2
 Int32Mod,
 Int32Mul,v1,v2
 Int32MulHigh,
@@ -608,7 +608,7 @@ NumberIsFinite,
 NumberIsFloat64Hole,
 NumberIsInteger,
 NumberIsMinusZero,
-NumberIsNaN,
+NumberIsNaN,v1
 NumberIsSafeInteger,
 NumberLessThan,v1,v2
 NumberLessThanOrEqual,v1,v2
@@ -634,7 +634,7 @@ NumberSqrt,
 NumberSubtract,v1,v2
 NumberTan,
 NumberTanh,
-NumberToBoolean,
+NumberToBoolean,v1
 NumberToInt32,v1
 NumberToString,
 NumberToUint32,v1

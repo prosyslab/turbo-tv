@@ -168,6 +168,10 @@ let int32_less_than lval rval state =
   let value = Bool.ite (Value.Int32.lt lval rval) Value.tr Value.fl in
   state |> State.update ~value
 
+let int32_less_than_or_equal lval rval state =
+  let value = Bool.ite (Value.Int32.le lval rval) Value.tr Value.fl in
+  state |> State.update ~value
+
 let int64_less_than lval rval state =
   let value = Bool.ite (Value.Int64.lt lval rval) Value.tr Value.fl in
   state |> State.update ~value
