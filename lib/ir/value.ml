@@ -254,11 +254,11 @@ let ltf lval rval =
 
 let fl = empty |> cast Type.bool
 
-let is_false value = eq fl value
+let is_false value = weak_eq fl value
 
 let tr = addi empty 1 |> cast Type.bool
 
-let is_true value = eq tr value
+let is_true value = weak_eq tr value
 
 let to_bool value = Bool.ite (eq value fl) Bool.fl Bool.tr
 
