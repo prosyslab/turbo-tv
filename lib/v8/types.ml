@@ -157,7 +157,9 @@ let rec of_string str =
   in
 
   let parse_other_number_constant c_ty_str =
-    let value_reg = Re.Pcre.regexp "OtherNumberConstant\\((-?[a-z\\.0-9]*).*" in
+    let value_reg =
+      Re.Pcre.regexp "OtherNumberConstant\\((-?[-a-z\\.0-9]*).*"
+    in
     let value_str =
       try Re.Group.get (Re.exec value_reg c_ty_str) 1
       with Not_found ->
