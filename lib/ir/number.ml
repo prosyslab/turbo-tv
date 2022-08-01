@@ -42,8 +42,20 @@ let to_float64 mem number =
              (number |> Value.TaggedSigned.to_float64)
              (heap_number |> HeapNumber.to_float64))))
 
+let to_boolean mem number =
+  let number_f64 = number |> to_float64 mem in
+  (* https://tc39.es/ecma262/#sec-toboolean *)
+  Bool.ite
+    (Bool.ors
+       [
+         number_f64 |> Float64.is_nan;
+         number_f64 |> Float64.is_zero;
+         number_f64 |> Float64.is_minus_zero;
+       ])
+    Bool.fl Bool.tr
+
 let to_uint32 mem number =
-  let number_f64 = HeapNumber.load number mem |> HeapNumber.to_float64 in
+  let number_f64 = number |> to_float64 mem in
   (* https://tc39.es/ecma262/#sec-touint32 *)
   Bool.ite
     (number |> Value.has_type Type.int32)
@@ -112,6 +124,22 @@ let less_than lnum rnum mem =
     (Bool.ite (Float64.lt lnum_f64 rnum_f64) Value.tr Value.fl)
 
 (* unary arith *)
+let abs mem number =
+  (* https://tc39.es/ecma262/#sec-math.abs *)
+  let num_f64 = number |> to_float64 mem in
+  (* nan -> nan *)
+  Bool.ite (Float64.is_nan num_f64) Float64.nan
+    (* -0 -> 0 *)
+    (Bool.ite
+       (Float64.is_minus_zero num_f64)
+       Float64.zero
+       (* ninf -> inf *)
+       (Bool.ite
+          (num_f64 |> Float64.is_ninf)
+          Float64.inf
+          (* n < 0 -> -n *)
+          (Bool.ite (Float64.is_negative num_f64) (Float64.neg num_f64) num_f64)))
+
 let unary_minus mem number =
   let num_f64 = number |> to_float64 mem in
   (* https://tc39.es/ecma262/#sec-numeric-types-number-unaryMinus *)
