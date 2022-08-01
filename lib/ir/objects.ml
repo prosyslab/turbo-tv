@@ -82,29 +82,30 @@ module HeapNumber = struct
 
   let to_string model obj =
     let f_str =
-      let fval = obj.value |> Float.from_ieee_bv |> Model.eval model in
-      let is_nan =
-        fval |> Float.is_nan |> Expr.to_simplified_string |> bool_of_string
-      in
-      let is_minus_zero =
-        fval |> Float.is_minus_zero |> Expr.to_simplified_string
-        |> bool_of_string
-      in
-      let is_inf =
-        fval |> Float.is_minus_zero |> Expr.to_simplified_string
-        |> bool_of_string
-      in
-      let is_ninf =
-        fval |> Float.is_minus_zero |> Expr.to_simplified_string
-        |> bool_of_string
-      in
-
-      if is_nan then "NaN"
-      else if is_minus_zero then "-0.0"
-      else if is_inf then "Infinity"
-      else if is_ninf then "-Infinity"
-      else fval |> Real.to_decimal_string
+      let evaluated = obj.value |> Float.from_ieee_bv |> Model.eval model in
+      if
+        String.contains
+          (evaluated |> Float.is_nan |> Expr.to_simplified_string)
+          't'
+      then "NaN"
+      else if
+        String.contains
+          (evaluated |> Float.is_inf |> Expr.to_simplified_string)
+          't'
+      then "+oo"
+      else if
+        String.contains
+          (evaluated |> Float.is_ninf |> Expr.to_simplified_string)
+          't'
+      then "-oo"
+      else if
+        String.contains
+          (evaluated |> Float.is_minus_zero |> Expr.to_simplified_string)
+          't'
+      then "-0.0"
+      else evaluated |> Real.to_decimal_string
     in
+
     Format.sprintf "HeapNumber(%s)" f_str
 end
 
