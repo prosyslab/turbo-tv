@@ -144,7 +144,7 @@ let word64_reverse_bytes v state =
 
 (* machine: logic *)
 let word32_and lval rval state =
-  let value = Value.and_ lval rval in
+  let value = Value.and_ Repr.Word32 lval rval in
   state |> State.update ~value
 
 let word32_or lval rval state =

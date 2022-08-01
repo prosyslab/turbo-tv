@@ -100,9 +100,14 @@ let sub lval rval =
   let lty = ty_of lval in
   BitVec.subb (data_of lval) (data_of rval) |> entype lty
 
-let and_ lval rval =
-  let lty = ty_of lval in
-  BitVec.andb (data_of lval) (data_of rval) |> entype lty
+let and_ repr lval rval =
+  let ty = Type.from_repr repr |> List.hd in
+  let width = Repr.width_of repr in
+  BitVec.andb
+    (BitVec.extract (width - 1) 0 lval)
+    (BitVec.extract (width - 1) 0 rval)
+  |> BitVec.zero_extend (len - width)
+  |> cast ty
 
 let andi value mask =
   let ty = ty_of value in
