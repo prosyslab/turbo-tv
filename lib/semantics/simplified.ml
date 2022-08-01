@@ -358,12 +358,12 @@ let number_less_than_or_equal lnum rnum mem state =
 
 let object_is_nan pval mem state =
   let value =
-    let is_smi = Value.has_type Type.tagged_signed pval in
+    let is_smi = pval |> Value.has_type Type.tagged_signed in
     Bool.ite is_smi Value.fl
-      (let is_heap_number = Objects.is_heap_number mem pval in
+      (let is_heap_number = pval |> Objects.is_heap_number mem in
        Bool.ite is_heap_number
          (let number = HeapNumber.load pval mem in
-          HeapNumber.is_nan number)
+          Bool.ite (HeapNumber.is_nan number) Value.tr Value.fl)
          Value.fl)
   in
   state |> State.update ~value
@@ -591,9 +591,7 @@ let checked_tagged_to_tagged_pointer pval _checkpoint control state =
   state |> Common.deoptimize_if deopt_cond () () control
 
 let checked_tagged_to_tagged_signed pval state =
-  let deopt =
-    Bool.ite (pval |> Value.has_type Type.tagged_signed) Value.fl Value.tr
-  in
+  let deopt = Bool.not (pval |> Value.has_type Type.tagged_signed) in
   state |> State.update ~value:pval ~deopt
 
 let checked_truncate_tagged_to_word32 hint pval mem state =
