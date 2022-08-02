@@ -460,6 +460,10 @@ let store_field ptr pos mt value mem state =
   state |> State.update ~mem
 
 (* simplified: type-check *)
+let number_is_minus_zero pval mem state =
+  let value = Bool.ite (pval |> Number.is_minus_zero mem) Value.tr Value.fl in
+  state |> State.update ~value
+
 let number_is_nan pval mem state =
   let value = Bool.ite (pval |> Number.is_nan mem) Value.tr Value.fl in
   state |> State.update ~value

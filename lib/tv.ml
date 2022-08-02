@@ -519,6 +519,10 @@ let encode program
       let value = RegisterFile.find value_id rf in
       store_field ptr pos machine_type value mem
   (* simplified: type-check *)
+  | NumberIsMinusZero ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      number_is_minus_zero pval mem
   | NumberIsNaN ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in

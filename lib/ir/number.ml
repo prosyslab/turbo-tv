@@ -84,6 +84,10 @@ let is_integer mem number =
        (number |> Float64.is_integer)
        (heap_number |> HeapNumber.is_integer))
 
+let is_minus_zero mem number =
+  let n_f64 = number |> to_float64 mem in
+  n_f64 |> Float64.is_minus_zero
+
 let is_nan mem number =
   let n_f64 = number |> to_float64 mem in
   n_f64 |> Float64.is_nan
