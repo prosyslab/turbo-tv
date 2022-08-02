@@ -205,18 +205,26 @@ module Make_Integer_Operator (I : IntValue) = struct
   (* conversion *)
   let to_int ty ty_width value =
     let data = value |> from_value in
-    (if width < ty_width then
-     if sign then BitVec.sign_extend (ty_width - width) data
-     else BitVec.zero_extend (ty_width - width) data
-    else BitVec.extract (ty_width - 1) 0 data)
-    |> BitVec.zero_extend (Value.data_len - width)
+    let converted =
+      if width < ty_width then
+        if sign then BitVec.sign_extend (ty_width - width) data
+        else BitVec.zero_extend (ty_width - width) data
+      else BitVec.extract (ty_width - 1) 0 data
+    in
+    converted
+    |> (fun converted ->
+         if Value.data_len > ty_width then
+           converted |> BitVec.zero_extend (Value.data_len - ty_width)
+         else converted)
     |> Value.entype ty
 
   let to_tagged_signed value =
     let data = value |> from_value in
     let extended =
-      if sign then BitVec.sign_extend (32 - width) data
-      else BitVec.zero_extend (32 - width) data
+      if width < 32 then
+        if sign then BitVec.sign_extend (32 - width) data
+        else BitVec.zero_extend (32 - width) data
+      else BitVec.extract (32 - 1) 0 data
     in
     BitVec.shli extended 1 |> BitVec.zero_extend 32
     |> Value.entype Type.tagged_signed
@@ -462,15 +470,15 @@ end)
 
 module Float64 = struct
   (* conversion *)
-  let from_float f = f |> Float.to_ieee_bv |> Value.entype Type.float64
+  let to_value f = f |> Float.to_ieee_bv |> Value.entype Type.float64
 
-  let from_numeral f = f |> Float.from_float |> from_float
+  let from_numeral f = f |> Float.from_float |> to_value
 
-  let to_float value = value |> Value.data_of |> Float.from_ieee_bv
+  let from_value value = value |> Value.data_of |> Float.from_ieee_bv
 
   let to_intx width value =
     let value_ix =
-      let f = value |> to_float in
+      let f = value |> from_value in
       let i_mod_2_x =
         Bool.ite (Float.is_negative f)
           (Integer.mod_
@@ -515,102 +523,102 @@ module Float64 = struct
   let to_uint32 value = value |> to_int32 |> Int32.to_int Type.uint32 32
 
   (* constants *)
-  let nan = Float.nan () |> from_float
+  let nan = Float.nan () |> to_value
 
-  let ninf = Float.ninf () |> from_float
+  let ninf = Float.ninf () |> to_value
 
-  let inf = Float.inf () |> from_float
+  let inf = Float.inf () |> to_value
 
-  let zero = Float.from_float 0.0 |> from_float
+  let zero = Float.from_float 0.0 |> to_value
 
-  let one = Float.from_float 1.0 |> from_float
+  let one = Float.from_float 1.0 |> to_value
 
-  let minus_zero = Float.minus_zero () |> from_float
+  let minus_zero = Float.minus_zero () |> to_value
 
-  let safe_integer_max = Float.safe_integer_max () |> from_float
+  let safe_integer_max = Float.safe_integer_max () |> to_value
 
-  let safe_integer_min = Float.safe_integer_min () |> from_float
+  let safe_integer_min = Float.safe_integer_min () |> to_value
 
   (* arithmetic *)
-  let abs value = Float.abs (value |> to_float) |> from_float
+  let abs value = Float.abs (value |> from_value) |> to_value
 
   let add lval rval =
-    let lf = lval |> to_float in
-    let rf = rval |> to_float in
-    Float.add lf rf |> from_float
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
+    Float.add lf rf |> to_value
 
-  let ceil value = Float.round Float.rtp_mode (value |> to_float) |> from_float
+  let ceil value = Float.round Float.rtp_mode (value |> from_value) |> to_value
 
   let div lval rval =
-    Float.div (lval |> to_float) (rval |> to_float) |> from_float
+    Float.div (lval |> from_value) (rval |> from_value) |> to_value
 
-  let floor value = Float.round Float.rtn_mode (value |> to_float) |> from_float
+  let floor value = Float.round Float.rtn_mode (value |> from_value) |> to_value
 
   let mul lval rval =
-    let lf = lval |> to_float in
-    let rf = rval |> to_float in
-    Float.mul lf rf |> from_float
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
+    Float.mul lf rf |> to_value
 
   let neg value =
-    let f = value |> to_float in
-    Float.neg f |> from_float
+    let f = value |> from_value in
+    Float.neg f |> to_value
 
   let rem lval rval =
-    Float.rem (lval |> to_float) (rval |> to_float) |> from_float
+    Float.rem (lval |> from_value) (rval |> from_value) |> to_value
 
-  let trunc value = Float.round Float.rtz_mode (value |> to_float) |> from_float
+  let trunc value = Float.round Float.rtz_mode (value |> from_value) |> to_value
 
   let round_down = floor
 
   let round_up = ceil
 
   let round_nearest_to_even value =
-    Float.round Float.rne_mode (value |> to_float) |> from_float
+    Float.round Float.rne_mode (value |> from_value) |> to_value
 
   let sub lval rval =
-    let lf = lval |> to_float in
-    let rf = rval |> to_float in
-    Float.sub lf rf |> from_float
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
+    Float.sub lf rf |> to_value
 
   (* comparison *)
   let eq lval rval =
-    let lf = lval |> to_float in
-    let rf = rval |> to_float in
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
     Float.eq lf rf
 
   let le lval rval =
-    let lf = lval |> to_float in
-    let rf = rval |> to_float in
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
     Float.le lf rf
 
   let lt lval rval =
-    let lf = lval |> to_float in
-    let rf = rval |> to_float in
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
     Float.lt lf rf
 
   let ge lval rval =
-    let lf = lval |> to_float in
-    let rf = rval |> to_float in
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
     Float.ge lf rf
 
   let gt lval rval =
-    let lf = lval |> to_float in
-    let rf = rval |> to_float in
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
     Float.gt lf rf
 
   (* methods *)
 
   let is_integer value = eq value (value |> floor)
 
-  let is_zero value = Float.is_zero (value |> to_float)
+  let is_zero value = Float.is_zero (value |> from_value)
 
-  let is_minus_zero value = Float.is_minus_zero (value |> to_float)
+  let is_minus_zero value = Float.is_minus_zero (value |> from_value)
 
-  let is_nan value = Float.is_nan (value |> to_float)
+  let is_nan value = Float.is_nan (value |> from_value)
 
-  let is_inf value = Float.is_inf (value |> to_float)
+  let is_inf value = Float.is_inf (value |> from_value)
 
-  let is_ninf value = Float.is_ninf (value |> to_float)
+  let is_ninf value = Float.is_ninf (value |> from_value)
 
   let is_negative value =
     BitVec.eqi (BitVec.extract 63 63 (value |> Value.data_of)) 0
@@ -631,14 +639,30 @@ module Float64 = struct
       ]
 
   let max lval rval =
-    Float.max (lval |> to_float) (rval |> to_float) |> from_float
+    Float.max (lval |> from_value) (rval |> from_value) |> to_value
 
   let min lval rval =
-    Float.min (lval |> to_float) (rval |> to_float) |> from_float
+    Float.min (lval |> from_value) (rval |> from_value) |> to_value
+
+  let expm1 value =
+    let float_sort = Z3utils.Float.double_sort in
+    let expm_decl =
+      Z3.FuncDecl.mk_func_decl_s ctx "float64_expm1" [ float_sort ] float_sort
+    in
+    (* if num is NaN or 0 or -0 or inf, return num*)
+    Bool.ite
+      (Bool.ors
+         [ is_nan value; is_zero value; is_minus_zero value; is_inf value ])
+      value
+      (* if num is -inf, return -1 *)
+      (Bool.ite (is_ninf value) (from_numeral (-1.0))
+         (Z3.FuncDecl.apply expm_decl [ value |> from_value ] |> to_value))
 
   let sin value =
-    let bv_sort = BV.mk_sort ctx 64 in
-    let uif = Z3.FuncDecl.mk_func_decl_s ctx "sin" [ bv_sort ] bv_sort in
+    let float_sort = Z3utils.Float.double_sort in
+    let uif =
+      Z3.FuncDecl.mk_func_decl_s ctx "float64_sin" [ float_sort ] float_sort
+    in
     (* https://tc39.es/ecma262/#sec-math.sin *)
     Bool.ite
       (Bool.ors [ value |> is_nan; value |> is_zero; value |> is_minus_zero ])
@@ -646,8 +670,7 @@ module Float64 = struct
       (Bool.ite
          (Bool.ors [ value |> is_inf; value |> is_ninf ])
          nan
-         (Z3.FuncDecl.apply uif [ value |> Value.data_of ]
-         |> Value.entype Type.float64))
+         (Z3.FuncDecl.apply uif [ value |> from_value ] |> to_value))
 
   (* pp *)
   let to_string model value =
@@ -667,5 +690,5 @@ module Float64 = struct
     then "Float64(-0.0)"
     else
       Format.sprintf "Float64(%s)"
-        (evaluated |> to_float |> Model.eval model |> Real.to_decimal_string)
+        (evaluated |> from_value |> Model.eval model |> Real.to_decimal_string)
 end

@@ -49,8 +49,8 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
       let num_f64 = value |> Number.to_float64 mem in
       Bool.ands
         [
-          Float64.ge num_f64 (lb |> Float.from_float |> Float64.from_float);
-          Float64.le num_f64 (ub |> Float.from_float |> Float64.from_float);
+          Float64.ge num_f64 (lb |> Float64.from_numeral);
+          Float64.le num_f64 (ub |> Float64.from_numeral);
         ]
   (* for now, handle only numeric types *)
   | _ -> Bool.tr

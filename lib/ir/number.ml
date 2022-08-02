@@ -186,6 +186,10 @@ let add lnum rnum mem =
                    (* else, n+n *)
                    (Float64.add lnum_f64 rnum_f64))))))
 
+let subtract lnum rnum mem =
+  (* https://tc39.es/ecma262/#sec-numeric-types-number-subtract *)
+  add lnum (rnum |> unary_minus mem) mem
+
 let divide lnum rnum mem =
   (* https://tc39.es/ecma262/#sec-numeric-types-number-divide *)
   let lnum_f64 = lnum |> to_float64 mem in
@@ -237,6 +241,47 @@ let divide lnum rnum mem =
                          Float64.ninf Float64.inf)
                       (Float64.div lnum_f64 rnum_f64)))))))
 
+let multiply lnum rnum mem =
+  (* https://tc39.es/ecma262/#sec-numeric-types-number-multiply *)
+  let lnum_f64 = lnum |> to_float64 mem in
+  let rnum_f64 = rnum |> to_float64 mem in
+
+  let if_l_is_inf_or_ninf l r =
+    Bool.ite
+      (Bool.ors [ Float64.is_zero r; Float64.is_minus_zero r ])
+      Float64.nan
+      (Bool.ite (Float64.is_positive r) l (l |> Float64.neg))
+  in
+
+  let if_minus_zero n =
+    Bool.ite
+      (Bool.ors [ Float64.is_minus_zero n; Float64.is_negative n ])
+      Float64.zero Float64.minus_zero
+  in
+
+  Bool.ite
+    (* if lnum or rnum is nan, return nan *)
+    (Bool.ors [ Float64.is_nan lnum_f64; Float64.is_nan rnum_f64 ])
+    Float64.nan
+    (* if lnum is inf or -inf *)
+    (Bool.ite
+       (Bool.ors [ Float64.is_inf lnum_f64; Float64.is_ninf lnum_f64 ])
+       (if_l_is_inf_or_ninf lnum_f64 rnum_f64)
+       (* if rnum is inf or -inf *)
+       (Bool.ite
+          (Bool.ors [ Float64.is_inf rnum_f64; Float64.is_ninf rnum_f64 ])
+          (if_l_is_inf_or_ninf rnum_f64 lnum_f64)
+          (* if lnum is -0 *)
+          (Bool.ite
+             (Float64.is_minus_zero lnum_f64)
+             (if_minus_zero rnum_f64)
+             (* if rnum is -0 *)
+             (Bool.ite
+                (Float64.is_minus_zero rnum_f64)
+                (if_minus_zero lnum_f64)
+                (* else, return lnum * rnum *)
+                (Float64.mul lnum_f64 rnum_f64)))))
+
 let imul lnum rnum mem =
   (* https://tc39.es/ecma262/#sec-math.imul *)
   Uint32.mul (lnum |> to_uint32 mem) (rnum |> to_uint32 mem)
@@ -284,79 +329,6 @@ let remainder n d mem =
                       ])
                    Float64.minus_zero r_f64)))))
 
-let multiply lnum rnum mem =
-  (* https://tc39.es/ecma262/#sec-numeric-types-number-multiply *)
-  let lnum_f64 = lnum |> to_float64 mem in
-  let rnum_f64 = rnum |> to_float64 mem in
-
-  let if_l_is_inf_or_ninf l r =
-    Bool.ite
-      (Bool.ors [ Float64.is_zero r; Float64.is_minus_zero r ])
-      Float64.nan
-      (Bool.ite (Float64.is_positive r) l (l |> Float64.neg))
-  in
-
-  let if_minus_zero n =
-    Bool.ite
-      (Bool.ors [ Float64.is_minus_zero n; Float64.is_negative n ])
-      Float64.zero Float64.minus_zero
-  in
-
-  Bool.ite
-    (* if lnum or rnum is nan, return nan *)
-    (Bool.ors [ Float64.is_nan lnum_f64; Float64.is_nan rnum_f64 ])
-    Float64.nan
-    (* if lnum is inf or -inf *)
-    (Bool.ite
-       (Bool.ors [ Float64.is_inf lnum_f64; Float64.is_ninf lnum_f64 ])
-       (if_l_is_inf_or_ninf lnum_f64 rnum_f64)
-       (* if rnum is inf or -inf *)
-       (Bool.ite
-          (Bool.ors [ Float64.is_inf rnum_f64; Float64.is_ninf rnum_f64 ])
-          (if_l_is_inf_or_ninf rnum_f64 lnum_f64)
-          (* if lnum is -0 *)
-          (Bool.ite
-             (Float64.is_minus_zero lnum_f64)
-             (if_minus_zero rnum_f64)
-             (* if rnum is -0 *)
-             (Bool.ite
-                (Float64.is_minus_zero rnum_f64)
-                (if_minus_zero lnum_f64)
-                (* else, return lnum * rnum *)
-                (Float64.mul lnum_f64 rnum_f64)))))
-
-let subtract lnum rnum mem =
-  (* https://tc39.es/ecma262/#sec-numeric-types-number-subtract *)
-  add lnum (rnum |> unary_minus mem) mem
-
-let trunc num mem =
-  (* https://tc39.es/ecma262/#sec-math.trunc *)
-  let num_f64 = num |> to_float64 mem in
-  Bool.ite
-    (Bool.ors
-       [
-         num_f64 |> Float64.is_nan;
-         num_f64 |> Float64.is_zero;
-         num_f64 |> Float64.is_minus_zero;
-         num_f64 |> Float64.is_inf;
-         num_f64 |> Float64.is_ninf;
-       ])
-    num_f64
-    (Bool.ite
-       (Bool.ands
-          [
-            Float64.lt num_f64 (1.0 |> Float64.from_numeral);
-            Float64.gt num_f64 Float64.zero;
-          ])
-       Float64.zero
-       (Bool.ite
-          (Bool.ands
-             [
-               Float64.gt num_f64 (-1.0 |> Float64.from_numeral);
-               Float64.lt num_f64 Float64.minus_zero;
-             ])
-          Float64.minus_zero (num_f64 |> Float64.trunc)))
-
 (* bitwise *)
 let unsigned_right_shift x y mem =
   (* https://tc39.es/ecma262/#sec-numeric-types-number-unsignedRightShift *)
@@ -368,6 +340,23 @@ let unsigned_right_shift x y mem =
   Uint32.lshr lnum shift_count
 
 (* methods *)
+let sign mem number =
+  let n_f64 = number |> to_float64 mem in
+  (* https://tc39.es/ecma262/#sec-math.sign *)
+  Bool.ite
+    (* [number] is nan, zero or minus_zero -> [number] *)
+    (Bool.ors
+       [
+         n_f64 |> Float64.is_nan;
+         n_f64 |> Float64.is_zero;
+         n_f64 |> Float64.is_minus_zero;
+       ])
+    n_f64
+    (Bool.ite
+       (* [number] < -0 -> -1 else 1 *)
+       (Float64.lt n_f64 Float64.minus_zero)
+       (Float64.neg Float64.one) Float64.one)
+
 let ceil mem number =
   let number_f64 = number |> to_float64 mem in
   (* https://tc39.es/ecma262/#sec-math.ceil *)
@@ -456,23 +445,38 @@ let round mem number =
              (* else round to nearest *)
              (n_f64 |> Float64.round_nearest_to_even))))
 
-let sign mem number =
-  let n_f64 = number |> to_float64 mem in
-  (* https://tc39.es/ecma262/#sec-math.sign *)
+let trunc num mem =
+  (* https://tc39.es/ecma262/#sec-math.trunc *)
+  let num_f64 = num |> to_float64 mem in
   Bool.ite
-    (* [number] is nan, zero or minus_zero -> [number] *)
     (Bool.ors
        [
-         n_f64 |> Float64.is_nan;
-         n_f64 |> Float64.is_zero;
-         n_f64 |> Float64.is_minus_zero;
+         num_f64 |> Float64.is_nan;
+         num_f64 |> Float64.is_zero;
+         num_f64 |> Float64.is_minus_zero;
+         num_f64 |> Float64.is_inf;
+         num_f64 |> Float64.is_ninf;
        ])
-    n_f64
+    num_f64
     (Bool.ite
-       (* [number] < -0 -> -1 else 1 *)
-       (Float64.lt n_f64 Float64.minus_zero)
-       (Float64.neg Float64.one) Float64.one)
+       (Bool.ands
+          [
+            Float64.lt num_f64 (1.0 |> Float64.from_numeral);
+            Float64.gt num_f64 Float64.zero;
+          ])
+       Float64.zero
+       (Bool.ite
+          (Bool.ands
+             [
+               Float64.gt num_f64 (-1.0 |> Float64.from_numeral);
+               Float64.lt num_f64 Float64.minus_zero;
+             ])
+          Float64.minus_zero (num_f64 |> Float64.trunc)))
 
 let sin mem number =
   let n_f64 = number |> to_float64 mem in
   n_f64 |> Float64.sin
+
+let expm1 mem number =
+  let n_f64 = number |> to_float64 mem in
+  n_f64 |> Float64.expm1

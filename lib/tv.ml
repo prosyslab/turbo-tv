@@ -272,11 +272,11 @@ let encode program
   | NumberExpm1 ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
-      number_expm1 pval next_bid mem
+      number_expm1 pval mem
   | NumberFloor ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
-      number_expm1 pval next_bid mem
+      number_floor pval mem
   | NumberMax ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in

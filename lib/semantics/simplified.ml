@@ -81,39 +81,10 @@ let number_divide lval rval mem state =
   let value = Number.divide lval rval mem in
   state |> State.update ~value
 
-let number_expm1 nptr next_bid mem state =
-  let deopt =
-    Bool.not
-      (Bool.ands
-         [
-           nptr |> Value.has_type Type.tagged_pointer;
-           nptr |> Objects.is_heap_number mem;
-         ])
-  in
+let number_expm1 pval mem state =
   (* https://tc39.es/ecma262/#sec-math.expm1 *)
-  let value, next_bid, mem =
-    let num = HeapNumber.load nptr mem in
-    let bv_sort = BV.mk_sort ctx 64 in
-    let expm_decl =
-      Z3.FuncDecl.mk_func_decl_s ctx "unknown_number_expm1" [ bv_sort ] bv_sort
-    in
-    (* if num is NaN or 0 or -0 or inf, return num*)
-    Bool.ite
-      (Bool.ors
-         [
-           HeapNumber.is_nan num;
-           HeapNumber.is_zero num;
-           HeapNumber.is_minus_zero num;
-           HeapNumber.is_inf num;
-         ])
-      (num |> HeapNumber.to_float64)
-      (* if num is -inf, return -1 *)
-      (Bool.ite (HeapNumber.is_ninf num)
-         (Float64.from_numeral (-1.0))
-         (Z3.FuncDecl.apply expm_decl [ num.value ] |> Value.entype Type.float64))
-    |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
-  in
-  state |> State.update ~value ~deopt ~next_bid ~mem
+  let value = pval |> Number.expm1 mem in
+  state |> State.update ~value
 
 let number_floor pval mem state =
   let value = pval |> Number.floor mem in
