@@ -1,4 +1,5 @@
 open Z3utils
+open ValueOperator
 module DeoptFile = ExprMap.Make (Deopt)
 module UBFile = ExprMap.Make (Ub)
 

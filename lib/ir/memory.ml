@@ -1,4 +1,5 @@
 open Z3utils
+open ValueOperator
 
 type t = Array.t
 

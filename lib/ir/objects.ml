@@ -1,4 +1,5 @@
 open Z3utils
+open ValueOperator
 
 module HeapNumber = struct
   type t = { map : BitVec.t; value : BitVec.t }

@@ -13,7 +13,6 @@
   objects
   number
   constants
-  taggedPointer
   control
   controlFile
   registerFile
@@ -24,7 +23,6 @@
   type
   value
   valueOperator
-  float64
   deopt
   exprMap
   ;tv
