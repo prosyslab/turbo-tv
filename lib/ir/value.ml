@@ -517,6 +517,9 @@ module Uint32 = struct
   (* comparison *)
   let eq lval rval = Z3utils.Bool.eq (lval |> from_value) (rval |> from_value)
 
+  let lt lval rval =
+    Z3utils.BitVec.ultb (lval |> from_value) (rval |> from_value)
+
   let is_zero value = BitVec.eqi (value |> from_value) 0
 
   (* arith *)

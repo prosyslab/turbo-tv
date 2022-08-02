@@ -200,6 +200,10 @@ module Float = struct
 
   let neg exp = Fl.mk_neg ctx exp
 
+  let max lexp rexp = Fl.mk_max ctx lexp rexp
+
+  let min lexp rexp = Fl.mk_min ctx lexp rexp
+
   let is_negative exp = Fl.mk_is_negative ctx exp
 
   let is_positive exp = Fl.mk_is_positive ctx exp

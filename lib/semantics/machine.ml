@@ -8,6 +8,14 @@ let float64_abs pval state =
   let value = Value.absf pval in
   state |> State.update ~value
 
+let float64_add lval rval state =
+  let value = Float64.add lval rval in
+  state |> State.update ~value
+
+let float64_div lval rval state =
+  let value = Float64.div lval rval in
+  state |> State.update ~value
+
 (* to be fixed *)
 let float64_extract_high_word32 pval state =
   let hword32 =
@@ -16,8 +24,24 @@ let float64_extract_high_word32 pval state =
   let value = Value.entype (Type.from_repr Repr.Word32 |> List.hd) hword32 in
   state |> State.update ~value
 
+let float64_max lval rval state =
+  let value = Float64.max lval rval in
+  state |> State.update ~value
+
+let float64_min lval rval state =
+  let value = Float64.min lval rval in
+  state |> State.update ~value
+
+let float64_mod lval rval state =
+  let value = Float64.rem lval rval in
+  state |> State.update ~value
+
+let float64_mul lval rval state =
+  let value = Float64.mul lval rval in
+  state |> State.update ~value
+
 let float64_sub lval rval state =
-  let value = Value.subf lval rval in
+  let value = Float64.sub lval rval in
   state |> State.update ~value
 
 let float64_round_down pval state =
@@ -26,6 +50,14 @@ let float64_round_down pval state =
 
 let float64_round_up pval state =
   let value = pval |> Float64.round_up in
+  state |> State.update ~value
+
+let float64_round_truncate pval state =
+  let value = pval |> Float64.trunc in
+  state |> State.update ~value
+
+let float64_sin pval state =
+  let value = pval |> Float64.sin in
   state |> State.update ~value
 
 let int32_add lval rval state =
@@ -211,27 +243,20 @@ let uint64_less_than_or_equal lval rval state =
  * assertion:
  *   mem = ite well-defined Store(ptr, pos, repr, mem) mem *)
 let store ptr pos repr value mem state =
-  (* ptr must be pointer type & well-defined *)
-  let wd_cond =
-    (* ptr must be a pointer or tagged pointer *)
-    let ptr_is_pointer = Value.has_type Type.pointer ptr in
+  let deopt = Bool.not (ptr |> Value.has_type Type.pointer) in
+  let ub =
     let ptr_is_tagged_pointer = Value.has_type Type.tagged_pointer ptr in
-
-    (* check index out-of-bounds *)
     let can_access = TaggedPointer.can_access_as pos repr ptr in
-
     (* only when value is tagged pointer, check boundary *)
-    Bool.ors [ ptr_is_pointer; Bool.ands [ ptr_is_tagged_pointer; can_access ] ]
+    Bool.ands [ ptr_is_tagged_pointer; Bool.not can_access ]
   in
-
-  let store_size = repr |> Repr.size_of in
   let mem =
     mem
-    |> Memory.store
-         (ptr |> TaggedPointer.to_raw_pointer)
-         store_size wd_cond value
+    |> Memory.store_as
+         (TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer)
+         repr (Bool.not ub) value
   in
-  state |> State.update ~mem
+  state |> State.update ~mem ~ub ~deopt
 
 (* well-defined condition:
  *   IsPointer(ptr) \/
@@ -239,18 +264,13 @@ let store ptr pos repr value mem state =
  * assertion:
  *   value = (Mem[pos+size]) *)
 let load ptr pos repr mem state =
-  let _wd_cond =
-    (* ptr must be a pointer or tagged pointer *)
-    let ptr_is_pointer = Value.has_type Type.pointer ptr in
+  let deopt = Bool.not (ptr |> Value.has_type Type.pointer) in
+  let ub =
     let ptr_is_tagged_pointer = Value.has_type Type.tagged_pointer ptr in
-
-    (* check index out-of-bounds *)
     let can_access = TaggedPointer.can_access_as pos repr ptr in
-
     (* only when value is tagged pointer, check boundary *)
-    Bool.ors [ ptr_is_pointer; Bool.ands [ ptr_is_tagged_pointer; can_access ] ]
+    Bool.ands [ ptr_is_tagged_pointer; Bool.not can_access ]
   in
-
   (* Some repr can be mapped to more than one type.
      e.g. Repr.Word8-> [Type.int8; Type.uint8]
      In this case, we pick the head of the type candidates.*)
@@ -261,7 +281,7 @@ let load ptr pos repr mem state =
       repr mem
     |> Value.zero_extend_data |> Value.entype ty
   in
-  state |> State.update ~value
+  state |> State.update ~value ~ub ~deopt
 
 (* machine: type-conversion *)
 let bitcast_float32_to_int32 v state =

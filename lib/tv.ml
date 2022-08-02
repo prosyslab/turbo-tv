@@ -613,12 +613,31 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       truncate_tagged_to_bit pval mem
+  (* simplified: bound-check *)
+  | CheckedUint32Bounds ->
+      let hint = Operands.const_of_nth operands 0 in
+      let lpid = Operands.id_of_nth operands 1 in
+      let rpid = Operands.id_of_nth operands 2 in
+      let _eid = Operands.id_of_nth operands 3 in
+      let cid = Operands.id_of_nth operands 4 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      let ctrl = ControlFile.find cid cf in
+      checked_uint32_bounds hint lval rval () ctrl
   (* machine: arithmetic *)
   | Float64Abs -> encode_machine_unary float64_abs
+  | Float64Add -> encode_machine_binary float64_add
+  | Float64Div -> encode_machine_binary float64_div
   | Float64ExtractHighWord32 -> encode_machine_unary float64_extract_high_word32
+  | Float64Max -> encode_machine_binary float64_max
+  | Float64Min -> encode_machine_binary float64_min
+  | Float64Mod -> encode_machine_binary float64_mod
+  | Float64Mul -> encode_machine_binary float64_mul
   | Float64Sub -> encode_machine_binary float64_sub
   | Float64RoundDown -> encode_machine_unary float64_round_down
   | Float64RoundUp -> encode_machine_unary float64_round_up
+  | Float64RoundTruncate -> encode_machine_unary float64_round_truncate
+  | Float64Sin -> encode_machine_unary float64_sin
   | Int32Add -> encode_machine_binary int32_add
   | Int32AddWithOverflow -> encode_machine_ovf int32_add_with_overflow
   | Int32Div ->

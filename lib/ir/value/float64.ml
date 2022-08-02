@@ -169,6 +169,25 @@ let can_be_smi value =
       value |> to_int32 |> Value.Int32.is_in_smi_range;
     ]
 
+let max lval rval =
+  Z3utils.Float.max (lval |> to_float) (rval |> to_float) |> from_float
+
+let min lval rval =
+  Z3utils.Float.min (lval |> to_float) (rval |> to_float) |> from_float
+
+let sin value =
+  let bv_sort = BV.mk_sort ctx 64 in
+  let uif = Z3.FuncDecl.mk_func_decl_s ctx "sin" [ bv_sort ] bv_sort in
+  (* https://tc39.es/ecma262/#sec-math.sin *)
+  Bool.ite
+    (Bool.ors [ value |> is_nan; value |> is_zero; value |> is_minus_zero ])
+    value
+    (Bool.ite
+       (Bool.ors [ value |> is_inf; value |> is_ninf ])
+       nan
+       (Z3.FuncDecl.apply uif [ value |> Value.data_of ]
+       |> Value.entype Type.float64))
+
 (* pp *)
 let to_string model value =
   let evaluated = value |> Model.eval model in

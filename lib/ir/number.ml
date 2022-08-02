@@ -470,19 +470,4 @@ let sign mem number =
 
 let sin mem number =
   let n_f64 = number |> to_float64 mem in
-  let bv_sort = BV.mk_sort ctx 64 in
-  let uif = Z3.FuncDecl.mk_func_decl_s ctx "sin" [ bv_sort ] bv_sort in
-  (* https://tc39.es/ecma262/#sec-math.sin *)
-  Bool.ite
-    (* [number] is nan, zero or minus_zero -> [number] *)
-    (Bool.ors
-       [
-         n_f64 |> Float64.is_nan;
-         n_f64 |> Float64.is_zero;
-         n_f64 |> Float64.is_minus_zero;
-       ])
-    n_f64
-    (Bool.ite
-       (Bool.ors [ n_f64 |> Float64.is_inf; n_f64 |> Float64.is_ninf ])
-       Float64.nan
-       (Z3.FuncDecl.apply uif [ number ] |> Value.entype Type.float64))
+  n_f64 |> Float64.sin

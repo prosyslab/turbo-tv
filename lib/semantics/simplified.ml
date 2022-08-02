@@ -775,3 +775,11 @@ let truncate_tagged_to_bit pval mem (state : State.t) =
                   (Bool.ite (Z3.FuncDecl.apply uif [ pval ]) Value.tr Value.fl)))))
   in
   state |> State.update ~value
+
+(* bound-check *)
+let checked_uint32_bounds flag lval rval _eff control state =
+  let check = Value.Uint32.lt lval rval in
+  (* AbortOnOutOfBounds *)
+  if flag = "2" then
+    state |> State.update ~value:lval ~ub:(Bool.not check) ~control
+  else state |> State.update ~value:lval ~deopt:(Bool.not check) ~control
