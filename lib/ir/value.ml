@@ -514,6 +514,11 @@ module Uint32 = struct
     BitVec.shli (value |> from_value) 1
     |> BitVec.zero_extend 32 |> entype Type.tagged_signed
 
+  (* comparison *)
+  let eq lval rval = Z3utils.Bool.eq (lval |> from_value) (rval |> from_value)
+
+  let is_zero value = BitVec.eqi (value |> from_value) 0
+
   (* arith *)
   let modulo lval rval =
     BitVec.modb (lval |> from_value) (rval |> from_value) |> to_value
@@ -527,6 +532,9 @@ module Uint32 = struct
   (* bitwise *)
   let lshr lval rval =
     BitVec.lshrb (lval |> from_value) (rval |> from_value) |> to_value
+
+  (* const *)
+  let zero = BitVecVal.from_int ~len:32 0 |> to_value
 
   (* method *)
   let is_in_smi_range value =

@@ -56,6 +56,21 @@ let checked_int32_mul mode lval rval _eff control state =
   in
   state |> Machine.int32_mul lval rval |> State.update ~deopt ~control
 
+let checked_int32_sub lval rval _eff control state =
+  let deopt = Value.Int32.sub_would_overflow lval rval in
+  state |> Machine.int32_sub lval rval |> State.update ~deopt ~control
+
+let checked_uint32_div lval rval _eff control state =
+  let deopt =
+    let division_by_zero = Value.Uint32.is_zero rval in
+    let lost_precision =
+      Bool.ands
+        [ Value.Uint32.eq (Value.Uint32.modulo lval rval) Value.Uint32.zero ]
+    in
+    Bool.ors [ division_by_zero; lost_precision ]
+  in
+  state |> Machine.uint32_div lval rval control |> State.update ~deopt ~control
+
 let number_abs nptr mem state =
   let value = nptr |> Number.abs mem in
   state |> State.update ~value
@@ -629,6 +644,11 @@ let checked_truncate_tagged_to_word32 hint pval mem state =
       (Value.TaggedSigned.to_int32 pval)
       (HeapNumber.load pval mem |> HeapNumber.to_float64 |> Float64.to_int32)
   in
+  state |> State.update ~value ~deopt
+
+let checked_uint32_to_int32 pval state =
+  let deopt = Value.Int32.is_negative pval in
+  let value = Value.Uint32.to_int32 pval in
   state |> State.update ~value ~deopt
 
 let number_to_boolean pval mem state =

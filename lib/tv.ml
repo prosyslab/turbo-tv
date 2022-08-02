@@ -240,6 +240,8 @@ let encode program
   | CheckedInt32Div -> encode_checked_simplified_binary checked_int32_div
   | CheckedInt32Mul ->
       encode_checked_simplified_binary_with_hint checked_int32_mul
+  | CheckedInt32Sub -> encode_checked_simplified_binary checked_int32_sub
+  | CheckedUint32Div -> encode_checked_simplified_binary checked_uint32_div
   | NumberAdd ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
@@ -583,6 +585,10 @@ let encode program
       let pid = Operands.id_of_nth operands 1 in
       let pval = RegisterFile.find pid rf in
       checked_truncate_tagged_to_word32 hint pval mem
+  | CheckedUint32ToInt32 ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      checked_uint32_to_int32 pval
   | NumberToBoolean ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
