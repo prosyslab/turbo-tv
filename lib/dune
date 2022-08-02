@@ -23,10 +23,10 @@
   memory
   type
   value
+  valueOperator
   float64
   deopt
   exprMap
-  output
   ;tv
   tv
   ;v8

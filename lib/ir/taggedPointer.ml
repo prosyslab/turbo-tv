@@ -23,7 +23,7 @@ let size_of t =
 
 let bid_of t = BitVec.extract (bid_len + off_len - 1) off_len t
 
-let to_raw_pointer t = Value.sub t (Value.from_int 1) |> Value.data_of
+let to_raw_pointer t = BitVec.subi t 1 |> Value.data_of
 
 let off_of t = t |> to_raw_pointer |> BitVec.extract (off_len - 1) 0
 
@@ -46,8 +46,12 @@ let movei t pos = BitVec.addi t pos
 let can_access pos sz t =
   (* no out-of-bounds *)
   let struct_size = Value.from_bv (size_of t) in
-  let out_of_lb = Value.slt pos (0 |> Value.from_int) in
-  let out_of_ub = Value.ugt (Value.addi pos sz) struct_size in
+  let out_of_lb = BitVec.slti (pos |> Value.data_of) 0 in
+  let out_of_ub =
+    BitVec.ugtb
+      (BitVec.addi pos sz |> Value.data_of)
+      (struct_size |> Value.data_of)
+  in
   Bool.not (Bool.ors [ out_of_lb; out_of_ub ])
 
 (* can read as [repr] *)

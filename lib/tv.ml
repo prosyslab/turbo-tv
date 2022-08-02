@@ -2,6 +2,7 @@ module Params = State.Params
 module DeoptFile = State.DeoptFile
 module UBFile = State.UBFile
 module HeapNumber = Objects.HeapNumber
+open ValueOperator
 open Common
 open Simplified
 open Machine
@@ -120,10 +121,10 @@ let encode program
       in
       external_constant c
   | Int32Constant ->
-      let c = Operands.const_of_nth operands 0 |> Value.Int32.str_to_value in
+      let c = Operands.const_of_nth operands 0 |> BitVecVal.from_istring in
       int32_constant c
   | Int64Constant ->
-      let c = Operands.const_of_nth operands 0 |> Value.Int64.str_to_value in
+      let c = Operands.const_of_nth operands 0 |> BitVecVal.from_istring in
       int64_constant c
   | NumberConstant ->
       let c_str = Operands.const_of_nth operands 0 in
@@ -728,7 +729,9 @@ let encode program
   | ChangeUint32ToUint64 -> encode_machine_unary change_uint32_to_uint64
   | RoundFloat64ToInt32 -> encode_machine_unary round_float64_to_int32
   | Empty -> nop
-  | _ -> nop
+  | _ ->
+      Format.printf "not implemented: %s\n" (opcode |> Opcode.to_str);
+      nop
 
 let propagate program state =
   let pc = State.pc state in
@@ -921,7 +924,7 @@ let run nparams src_program tgt_program =
       Bool.ite
         (value |> Value.has_type Type.tagged_pointer)
         (HeapNumber.load value mem |> HeapNumber.to_float64)
-        (value |> Value.TaggedSigned.to_float64)
+        (value |> TaggedSigned.to_float64)
     in
     Bool.eq (to_float64 src_retval src_mem) (to_float64 tgt_retval tgt_mem)
   in

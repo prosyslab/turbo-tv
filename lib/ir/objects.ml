@@ -111,7 +111,7 @@ end
 
 let map_of ptr mem = Memory.load (ptr |> TaggedPointer.to_raw_pointer) 4 mem
 
-let has_map_of map mem ptr = Value.eq (map_of ptr mem) map
+let has_map_of map mem ptr = Bool.eq (map_of ptr mem) map
 
 let is_big_int mem ptr = ptr |> has_map_of Objmap.big_int_map mem
 

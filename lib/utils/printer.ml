@@ -1,20 +1,20 @@
 open Z3utils
+open ValueOperator
 
 let value_to_string model mem value =
   let ty_str = value |> Value.ty_of |> Type.to_string model in
   match ty_str with
-  | "bool" -> value |> Value.Bool.to_string model
-  | "int8" -> value |> Value.Int8.to_string model
-  | "int32" -> value |> Value.Int32.to_string model
+  | "bool" -> value |> Boolean.to_string model
+  | "int8" -> value |> Int8.to_string model
+  | "int32" -> value |> Int32.to_string model
   (* | "uint32" -> value |> Uint32.to_string *)
-  | "int64" -> value |> Value.Int64.to_string model
-  | "uint32" -> value |> Value.Uint32.to_string model
-  | "uint64" -> value |> Value.Uint64.to_string model
+  | "int64" -> value |> Int64.to_string model
+  | "uint32" -> value |> Uint32.to_string model
+  | "uint64" -> value |> Uint64.to_string model
   (* | "uint64" -> value |> Uint64.to_string *)
   | "float64" -> value |> Float64.to_string model
-  | "pointer" ->
-      Format.sprintf "Pointer(%s)" (value |> Value.Int64.to_string model)
-  | "tagged_signed" -> value |> Value.TaggedSigned.to_string model
+  | "pointer" -> Format.sprintf "Pointer(%s)" (value |> Int64.to_string model)
+  | "tagged_signed" -> value |> TaggedSigned.to_string model
   | "tagged_pointer" ->
       Format.sprintf "%s => %s"
         (value |> TaggedPointer.to_string model)
@@ -25,13 +25,13 @@ let value_to_string model mem value =
           Bool.eq (BitVec.extract 0 0 value) (BitVecVal.from_int ~len:1 0)
           |> Model.eval model |> Expr.to_simplified_string |> bool_of_string
         in
-        if is_tagged_signed then value |> Value.TaggedSigned.to_string model
+        if is_tagged_signed then value |> TaggedSigned.to_string model
         else
           Format.sprintf "%s => %s"
             (value |> TaggedPointer.to_string model)
             (Objects.to_string model mem value)
       with _ -> value |> Model.eval model |> Expr.to_simplified_string)
-  | "map_in_header" -> value |> Value.MapInHeader.to_string model
+  | "map_in_header" -> value |> MapInHeader.to_string model
   | "empty" -> "empty"
   | _ -> ty_str ^ (value |> Model.eval model |> Expr.to_simplified_string)
 

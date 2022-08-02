@@ -1,11 +1,12 @@
 open Z3utils
+open ValueOperator
 
 (* conversion *)
-let from_float f = f |> Z3utils.Float.to_ieee_bv |> Value.entype Type.float64
+let from_float f = f |> Float.to_ieee_bv |> Value.entype Type.float64
 
 let from_numeral f = f |> Float.from_float |> from_float
 
-let to_float value = value |> Value.data_of |> Z3utils.Float.from_ieee_bv
+let to_float value = value |> Value.data_of |> Float.from_ieee_bv
 
 let to_intx width value =
   let value_ix =
@@ -49,9 +50,9 @@ let to_int32 value = value |> to_intx 32
 
 let to_int64 value = value |> to_intx 64
 
-let to_tagged_signed value = value |> to_int32 |> Value.Int32.to_tagged_signed
+let to_tagged_signed value = value |> to_int32 |> Int32.to_tagged_signed
 
-let to_uint32 value = value |> to_int32 |> Value.Int32.to_uint32
+let to_uint32 value = value |> to_int32 |> Int32.to_int Type.uint32 32
 
 (* constants *)
 let nan = Float.nan () |> from_float
@@ -76,26 +77,26 @@ let abs value = Float.abs (value |> to_float) |> from_float
 let add lval rval =
   let lf = lval |> to_float in
   let rf = rval |> to_float in
-  Z3utils.Float.add lf rf |> from_float
+  Float.add lf rf |> from_float
 
 let ceil value = Float.round Float.rtp_mode (value |> to_float) |> from_float
 
 let div lval rval =
-  Z3utils.Float.div (lval |> to_float) (rval |> to_float) |> from_float
+  Float.div (lval |> to_float) (rval |> to_float) |> from_float
 
 let floor value = Float.round Float.rtn_mode (value |> to_float) |> from_float
 
 let mul lval rval =
   let lf = lval |> to_float in
   let rf = rval |> to_float in
-  Z3utils.Float.mul lf rf |> from_float
+  Float.mul lf rf |> from_float
 
 let neg value =
   let f = value |> to_float in
-  Z3utils.Float.neg f |> from_float
+  Float.neg f |> from_float
 
 let rem lval rval =
-  Z3utils.Float.rem (lval |> to_float) (rval |> to_float) |> from_float
+  Float.rem (lval |> to_float) (rval |> to_float) |> from_float
 
 let trunc value = Float.round Float.rtz_mode (value |> to_float) |> from_float
 
@@ -109,33 +110,33 @@ let round_nearest_to_even value =
 let sub lval rval =
   let lf = lval |> to_float in
   let rf = rval |> to_float in
-  Z3utils.Float.sub lf rf |> from_float
+  Float.sub lf rf |> from_float
 
 (* comparison *)
 let eq lval rval =
   let lf = lval |> to_float in
   let rf = rval |> to_float in
-  Z3utils.Float.eq lf rf
+  Float.eq lf rf
 
 let le lval rval =
   let lf = lval |> to_float in
   let rf = rval |> to_float in
-  Z3utils.Float.le lf rf
+  Float.le lf rf
 
 let lt lval rval =
   let lf = lval |> to_float in
   let rf = rval |> to_float in
-  Z3utils.Float.lt lf rf
+  Float.lt lf rf
 
 let ge lval rval =
   let lf = lval |> to_float in
   let rf = rval |> to_float in
-  Z3utils.Float.ge lf rf
+  Float.ge lf rf
 
 let gt lval rval =
   let lf = lval |> to_float in
   let rf = rval |> to_float in
-  Z3utils.Float.gt lf rf
+  Float.gt lf rf
 
 (* methods *)
 
@@ -158,22 +159,22 @@ let is_positive value =
   BitVec.eqi (BitVec.extract 63 63 (value |> Value.data_of)) 0
 
 let is_safe_integer value =
-  Z3utils.Bool.ands
+  Bool.ands
     [ is_integer value; ge value safe_integer_min; le value safe_integer_max ]
 
 let can_be_smi value =
-  Z3utils.Bool.ands
+  Bool.ands
     [
       value |> is_integer;
-      Z3utils.Bool.not (value |> is_minus_zero);
-      value |> to_int32 |> Value.Int32.is_in_smi_range;
+      Bool.not (value |> is_minus_zero);
+      value |> to_int32 |> Int32.is_in_smi_range;
     ]
 
 let max lval rval =
-  Z3utils.Float.max (lval |> to_float) (rval |> to_float) |> from_float
+  Float.max (lval |> to_float) (rval |> to_float) |> from_float
 
 let min lval rval =
-  Z3utils.Float.min (lval |> to_float) (rval |> to_float) |> from_float
+  Float.min (lval |> to_float) (rval |> to_float) |> from_float
 
 let sin value =
   let bv_sort = BV.mk_sort ctx 64 in

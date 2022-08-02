@@ -1,4 +1,5 @@
 open Z3utils
+open ValueOperator
 module Boundary = Types.Boundary
 module HeapNumber = Objects.HeapNumber
 
@@ -19,8 +20,8 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                 Bool.ands
                   [
                     Value.is_integer value;
-                    Value.ugei ~width:32 value lb;
-                    Value.ulei ~width:32 value ub;
+                    Uint32.ge value (lb |> Value.from_int);
+                    Uint32.le value (ub |> Value.from_int);
                   ]
             | FloatBoundary (lb, ub) ->
                 let number = HeapNumber.load value mem in
@@ -38,8 +39,8 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
       Bool.ors (List.rev_map (fun field_ty -> verify value field_ty mem) fields)
   (* (T1, T2, ..., Tn) <= (T1', T2', ... Tn') if T1 <= T1' /\ T2 <= T2' /\ ... Tn <= Tn' *)
   | Tuple fields ->
-      let size_of_composed = value |> Value.Composed.size_of in
-      let decomposed = value |> Value.Composed.to_list in
+      let size_of_composed = value |> Composed.size_of in
+      let decomposed = value |> Composed.to_list in
       if size_of_composed = List.length fields then
         Bool.ands (List.rev_map2 (fun v f -> verify v f mem) decomposed fields)
       else failwith "is: wrong number of fields"

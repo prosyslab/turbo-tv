@@ -1,5 +1,5 @@
 open Z3utils
-module Composed = Value.Composed
+open ValueOperator
 module ControlTuple = Control.ControlTuple
 module HeapNumber = Objects.HeapNumber
 
@@ -13,12 +13,12 @@ let heap_constant c state = state |> State.update ~value:c
 
 (* assertion: value = c *)
 let int32_constant c state =
-  let value = c |> Value.cast Type.int32 in
+  let value = c |> Value.entype Type.int32 in
   state |> State.update ~value
 
 (* behavior: value=c *)
 let int64_constant c state =
-  let value = c |> Value.cast Type.int64 in
+  let value = c |> Value.entype Type.int64 in
   state |> State.update ~value
 
 (* behavior: value=c *)
@@ -106,7 +106,7 @@ let phi incomings repr ctrls state =
   (* settle [incoming_value] to the 'tagged signed' type or 'tagged pointer type' if [ty] is 'any tagged' *)
   let wd_value =
     let incoming_value = mk_value incomings ctrls in
-    if ty = Type.any_tagged then Value.AnyTagged.settle incoming_value
+    if ty = Type.any_tagged then AnyTagged.settle incoming_value
     else incoming_value |> Value.cast ty
   in
 

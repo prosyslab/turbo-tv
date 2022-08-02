@@ -1,4 +1,5 @@
 open Z3utils
+open ValueOperator
 module HeapNumber = Objects.HeapNumber
 
 (* Number ::= TaggedSigned | HeapNumber | Int32 | Uint32 | Float64 *)
@@ -30,16 +31,16 @@ let to_float64 mem number =
   let heap_number = HeapNumber.load number mem in
   Bool.ite
     (number |> Value.has_type Type.int32)
-    (number |> Value.Int32.to_float64)
+    (number |> Int32.to_float64)
     (Bool.ite
        (number |> Value.has_type Type.uint32)
-       (number |> Value.Uint32.to_float64)
+       (number |> Uint32.to_float64)
        (Bool.ite
           (number |> Value.has_type Type.float64)
           number
           (Bool.ite
              (number |> Value.has_type Type.tagged_signed)
-             (number |> Value.TaggedSigned.to_float64)
+             (number |> TaggedSigned.to_float64)
              (heap_number |> HeapNumber.to_float64))))
 
 let to_boolean mem number =
@@ -59,10 +60,10 @@ let to_uint32 mem number =
   (* https://tc39.es/ecma262/#sec-touint32 *)
   Bool.ite
     (number |> Value.has_type Type.int32)
-    (number |> Value.Int32.to_uint32)
+    (number |> Int32.to_int Type.uint32 32)
     (Bool.ite
        (number |> Value.has_type Type.tagged_signed)
-       (number |> Value.TaggedSigned.to_uint32)
+       (number |> TaggedSigned.to_uint32)
        (Bool.ite
           (number |> Value.has_type Type.uint32)
           number
@@ -238,8 +239,8 @@ let divide lnum rnum mem =
 
 let imul lnum rnum mem =
   (* https://tc39.es/ecma262/#sec-math.imul *)
-  Value.Uint32.mul (lnum |> to_uint32 mem) (rnum |> to_uint32 mem)
-  |> Value.Uint32.to_int32
+  Uint32.mul (lnum |> to_uint32 mem) (rnum |> to_uint32 mem)
+  |> Uint32.to_int Type.int32 32
 
 let remainder n d mem =
   (* https://tc39.es/ecma262/#sec-numeric-types-number-remainder *)
@@ -362,9 +363,9 @@ let unsigned_right_shift x y mem =
   let lnum = x |> to_uint32 mem in
   let rnum = y |> to_uint32 mem in
   let shift_count =
-    Value.Uint32.modulo rnum (32 |> Value.from_int |> Value.cast Type.uint32)
+    Uint32.modulo rnum (32 |> Value.from_int |> Value.cast Type.uint32)
   in
-  Value.Uint32.lshr lnum shift_count
+  Uint32.lshr lnum shift_count
 
 (* methods *)
 let ceil mem number =
