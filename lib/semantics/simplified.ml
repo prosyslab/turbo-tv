@@ -763,13 +763,21 @@ let truncate_tagged_to_bit pval mem (state : State.t) =
                   (* currently only handle the undefined, boolean and number *)
                   (Bool.ite (Z3.FuncDecl.apply uif [ pval ]) Value.tr Value.fl)))))
   in
-
   state |> State.update ~value
+
+(* check *)
+let check_if cond _eff control state =
+  let deopt = Bool.ite (Value.is_false cond) Bool.tr Bool.fl in
+  state |> State.update ~deopt ~control
 
 (* bound-check *)
 let checked_uint32_bounds flag lval rval _eff control state =
   let check = Uint32.lt lval rval in
-  (* AbortOnOutOfBounds *)
-  if flag = "2" then
+  if flag = "0" then
+    state |> State.update ~value:lval ~deopt:(Bool.not check) ~control
+  else if flag = "2" then
+    (* AbortOnOutOfBounds *)
     state |> State.update ~value:lval ~ub:(Bool.not check) ~control
-  else state |> State.update ~value:lval ~deopt:(Bool.not check) ~control
+  else failwith "not implemented"
+
+(* type-check *)

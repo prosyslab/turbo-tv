@@ -56,7 +56,7 @@ CheckEqualsInternalizedString,
 CheckEqualsSymbol,
 CheckFloat64Hole,
 CheckHeapObject,
-CheckIf,
+CheckIf,v1,e1,c1
 CheckInternalizedString,
 CheckMaps,
 CheckNotTaggedHole,

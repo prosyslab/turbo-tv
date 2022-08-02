@@ -639,6 +639,13 @@ let encode program
       let pval = RegisterFile.find pid rf in
       truncate_tagged_to_bit pval mem
   (* simplified: bound-check *)
+  | CheckIf ->
+      let pid = Operands.id_of_nth operands 0 in
+      let _eff = Operands.id_of_nth operands 1 in
+      let cid = Operands.id_of_nth operands 2 in
+      let pval = RegisterFile.find pid rf in
+      let ctrl = ControlFile.find cid cf in
+      check_if pval () ctrl
   | CheckedUint32Bounds ->
       let hint = Operands.const_of_nth operands 0 in
       let lpid = Operands.id_of_nth operands 1 in

@@ -73,7 +73,6 @@ type t =
   | CheckEqualsSymbol
   | CheckFloat64Hole
   | CheckHeapObject
-  | CheckIf
   | CheckInternalizedString
   | CheckMaps
   | CheckNotTaggedHole
@@ -745,6 +744,7 @@ type t =
   | Word64Xor
   (* v1e1c1 *)
   | Allocate
+  | CheckIf
   | CheckedInt64ToInt32
   | CheckedTaggedToTaggedPointer
   | CheckedTaggedToTaggedSigned
@@ -948,7 +948,7 @@ let get_kind opcode =
   | ChangeTaggedToFloat64 | ChangeTaggedToInt32 | ChangeTaggedToInt64
   | ChangeTaggedToTaggedSigned | ChangeTaggedToUint32 | ChangeUint64ToBigInt
   | CheckBigInt | CheckBounds | CheckClosure | CheckEqualsInternalizedString
-  | CheckEqualsSymbol | CheckFloat64Hole | CheckHeapObject | CheckIf
+  | CheckEqualsSymbol | CheckFloat64Hole | CheckHeapObject
   | CheckInternalizedString | CheckMaps | CheckNotTaggedHole | CheckNumber
   | CheckReceiver | CheckReceiverOrNullOrUndefined | CheckSmi | CheckString
   | CheckSymbol | CheckedFloat64ToInt64 | CheckedInt32Mod
@@ -1119,7 +1119,7 @@ let get_kind opcode =
   | Word64Rol | Word64RolLowerable | Word64Ror | Word64RorLowerable
   | Word64Select | Word64Shr | Word64Xor ->
       UNIMPL
-  | Allocate | CheckedInt64ToInt32 | CheckedTaggedToTaggedPointer
+  | Allocate | CheckIf | CheckedInt64ToInt32 | CheckedTaggedToTaggedPointer
   | CheckedTaggedToTaggedSigned | CheckedUint32ToInt32 | Deoptimize ->
       V1E1C1
   | BitcastFloat32ToInt32 | BitcastFloat64ToInt64 | BitcastTaggedToWord
@@ -1262,7 +1262,6 @@ let of_str str =
   | "CheckEqualsSymbol" -> CheckEqualsSymbol
   | "CheckFloat64Hole" -> CheckFloat64Hole
   | "CheckHeapObject" -> CheckHeapObject
-  | "CheckIf" -> CheckIf
   | "CheckInternalizedString" -> CheckInternalizedString
   | "CheckMaps" -> CheckMaps
   | "CheckNotTaggedHole" -> CheckNotTaggedHole
@@ -1933,6 +1932,7 @@ let of_str str =
   | "Word64Shr" -> Word64Shr
   | "Word64Xor" -> Word64Xor
   | "Allocate" -> Allocate
+  | "CheckIf" -> CheckIf
   | "CheckedInt64ToInt32" -> CheckedInt64ToInt32
   | "CheckedTaggedToTaggedPointer" -> CheckedTaggedToTaggedPointer
   | "CheckedTaggedToTaggedSigned" -> CheckedTaggedToTaggedSigned
@@ -2132,7 +2132,6 @@ let to_str opcode =
   | CheckEqualsSymbol -> "CheckEqualsSymbol"
   | CheckFloat64Hole -> "CheckFloat64Hole"
   | CheckHeapObject -> "CheckHeapObject"
-  | CheckIf -> "CheckIf"
   | CheckInternalizedString -> "CheckInternalizedString"
   | CheckMaps -> "CheckMaps"
   | CheckNotTaggedHole -> "CheckNotTaggedHole"
@@ -2803,6 +2802,7 @@ let to_str opcode =
   | Word64Shr -> "Word64Shr"
   | Word64Xor -> "Word64Xor"
   | Allocate -> "Allocate"
+  | CheckIf -> "CheckIf"
   | CheckedInt64ToInt32 -> "CheckedInt64ToInt32"
   | CheckedTaggedToTaggedPointer -> "CheckedTaggedToTaggedPointer"
   | CheckedTaggedToTaggedSigned -> "CheckedTaggedToTaggedSigned"
