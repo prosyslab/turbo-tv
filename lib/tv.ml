@@ -121,7 +121,11 @@ let encode program
       in
       external_constant c
   | Int32Constant ->
-      let c = Operands.const_of_nth operands 0 |> BitVecVal.from_istring in
+      let c =
+        Operands.const_of_nth operands 0
+        |> BitVecVal.from_istring ~len:32
+        |> BitVec.zero_extend 32
+      in
       int32_constant c
   | Int64Constant ->
       let c = Operands.const_of_nth operands 0 |> BitVecVal.from_istring in
@@ -421,6 +425,18 @@ let encode program
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
       number_less_than_or_equal lval rval mem
+  | NumberSameValue ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      number_same_value lval rval mem
+  | SameValue ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      same_value lval rval mem
   | ReferenceEqual ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
@@ -528,6 +544,10 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       number_is_nan pval mem
+  | ObjectIsMinusZero ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      object_is_minus_zero pval mem
   | ObjectIsNaN ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in

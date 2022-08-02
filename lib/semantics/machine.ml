@@ -109,7 +109,7 @@ let round_float64_to_int32 pval state =
   state |> State.update ~value
 
 let uint32_div lval rval control state =
-  let value = Int32.div lval rval in
+  let value = Uint32.div lval rval in
   state |> State.update ~value ~control
 
 (* well-defined conditions:

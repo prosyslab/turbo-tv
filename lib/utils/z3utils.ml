@@ -249,7 +249,6 @@ module BitVecVal = struct
         in
         err (InvalidFormat (c, r))
     in
-
     BV.mk_numeral ctx dec_str len
 
   let from_f64string str =

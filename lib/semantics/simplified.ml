@@ -353,6 +353,15 @@ let number_less_than_or_equal lnum rnum mem state =
   in
   state |> State.update ~value
 
+let number_same_value lnum rnum mem state =
+  let value = Number.same_value lnum rnum mem in
+  state |> State.update ~value
+
+let same_value lval rval mem state =
+  (* when non-number type values are given, set deopt flag to avoid mis-verification *)
+  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+  state |> number_same_value lval rval mem |> State.update ~deopt
+
 let speculative_number_equal lval rval mem state =
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
   state |> number_equal lval rval mem |> State.update ~deopt
@@ -433,13 +442,24 @@ let number_is_nan pval mem state =
   let value = Bool.ite (pval |> Number.is_nan mem) Value.tr Value.fl in
   state |> State.update ~value
 
-(* requires audit *)
+let object_is_minus_zero pval mem state =
+  let value =
+    let is_smi = pval |> Value.has_type Type.tagged_signed in
+    Bool.ite is_smi Value.fl
+      (Bool.ite
+         (pval |> Objects.is_heap_number mem)
+         (let number = HeapNumber.load pval mem in
+          Bool.ite (HeapNumber.is_minus_zero number) Value.tr Value.fl)
+         Value.fl)
+  in
+  state |> State.update ~value
+
 let object_is_nan pval mem state =
   let value =
     let is_smi = pval |> Value.has_type Type.tagged_signed in
     Bool.ite is_smi Value.fl
-      (let is_heap_number = pval |> Objects.is_heap_number mem in
-       Bool.ite is_heap_number
+      (Bool.ite
+         (pval |> Objects.is_heap_number mem)
          (let number = HeapNumber.load pval mem in
           Bool.ite (HeapNumber.is_nan number) Value.tr Value.fl)
          Value.fl)

@@ -333,7 +333,7 @@ module MapInHeader = struct
 end
 
 module Int8 = Make_Integer_Operator (struct
-  let sign = false
+  let sign = true
 
   let width = 8
 
@@ -351,9 +351,9 @@ end)
 module Int64 = Make_Integer_Operator (struct
   let sign = true
 
-  let width = 32
+  let width = 64
 
-  let ty = Type.int32
+  let ty = Type.int64
 end)
 
 module Uint32 = Make_Integer_Operator (struct
@@ -367,7 +367,7 @@ end)
 module Uint64 = Make_Integer_Operator (struct
   let sign = false
 
-  let width = 32
+  let width = 64
 
   let ty = Type.uint64
 end)

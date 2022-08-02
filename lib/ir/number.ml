@@ -128,6 +128,27 @@ let less_than lnum rnum mem =
     Value.undefined
     (Bool.ite (Float64.lt lnum_f64 rnum_f64) Value.tr Value.fl)
 
+let same_value lnum rnum mem =
+  (* https://tc39.es/ecma262/#sec-numeric-types-number-sameValue *)
+  let lnum_f64 = lnum |> to_float64 mem in
+  let rnum_f64 = rnum |> to_float64 mem in
+  Bool.ite
+    (Bool.ite
+       (Bool.ors [ lnum_f64 |> Float64.is_nan; rnum_f64 |> Float64.is_nan ])
+       Bool.tr
+       (Bool.ite
+          (Bool.ands
+             [ lnum_f64 |> Float64.is_zero; rnum_f64 |> Float64.is_minus_zero ])
+          Bool.fl
+          (Bool.ite
+             (Bool.ands
+                [
+                  rnum_f64 |> Float64.is_zero; lnum_f64 |> Float64.is_minus_zero;
+                ])
+             Bool.fl
+             (Float64.eq lnum_f64 rnum_f64))))
+    Value.tr Value.fl
+
 (* unary arith *)
 let abs mem number =
   (* https://tc39.es/ecma262/#sec-math.abs *)

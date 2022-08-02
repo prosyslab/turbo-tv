@@ -622,7 +622,7 @@ NumberModulus,v1,v2
 NumberMultiply,v1,v2
 NumberPow,
 NumberRound,v1
-NumberSameValue,
+NumberSameValue,v1,v2
 NumberShiftLeft,
 NumberShiftRight,
 NumberShiftRightLogical,v1,v2
@@ -648,7 +648,7 @@ ObjectIsConstructor,
 ObjectIsDetectableCallable,
 ObjectIsFiniteNumber,
 ObjectIsInteger,
-ObjectIsMinusZero,
+ObjectIsMinusZero,v1
 ObjectIsNaN,v1
 ObjectIsNonCallable,
 ObjectIsNumber,
@@ -693,7 +693,7 @@ S128Select,
 S128Xor,
 S128Zero,
 SLVerifierHint,
-SameValue,
+SameValue,v1,v2
 SameValueNumbersOnly,
 Select,v1,v2,v3
 SignExtendWord16ToInt32,
