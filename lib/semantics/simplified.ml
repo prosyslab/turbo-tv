@@ -656,7 +656,7 @@ let checked_uint32_to_int32 pval state =
   state |> State.update ~value ~deopt
 
 let number_to_boolean pval mem state =
-  let value = pval |> Number.to_boolean mem in
+  let value = Bool.ite (pval |> Number.to_boolean mem) Value.tr Value.fl in
   state |> State.update ~value
 
 let number_to_int32 pval next_bid mem state =
