@@ -1,7 +1,7 @@
 open Z3utils
 open ValueOperator
 
-let value_to_string model mem value =
+let value_to_string model rf mem value =
   let ty_str = value |> Value.ty_of |> Type.to_string model in
   match ty_str with
   | "bool" -> value |> Boolean.to_string model
@@ -18,7 +18,9 @@ let value_to_string model mem value =
   | "tagged_pointer" ->
       Format.sprintf "%s => %s"
         (value |> TaggedPointer.to_string model)
-        (Objects.to_string model mem value)
+        (if value |> Constant.is_constant_ptr model rf then
+         value |> Constant.to_string model rf
+        else Objects.to_string model mem value)
   | "any_tagged" -> (
       try
         let is_tagged_signed =
@@ -32,15 +34,16 @@ let value_to_string model mem value =
             (Objects.to_string model mem value)
       with _ -> value |> Model.eval model |> Expr.to_simplified_string)
   | "map_in_header" -> value |> MapInHeader.to_string model
+  | "undefined" -> "undefined"
   | "empty" -> "empty"
   | _ -> ty_str ^ (value |> Model.eval model |> Expr.to_simplified_string)
 
-let print_params model mem params =
+let print_params model rf mem params =
   Format.printf "Parameters: \n";
   List.iteri
     (fun idx param ->
       let param_str =
-        try param |> value_to_string model mem
+        try param |> value_to_string model rf mem
         with _ -> param |> Model.eval model |> Expr.to_string
       in
       Format.printf "Parameter[%d]: %s\n" idx param_str)
@@ -68,7 +71,7 @@ let print_counter_example program state model =
     in
 
     let value =
-      RegisterFile.find (string_of_int pc) rf |> value_to_string model mem
+      RegisterFile.find (string_of_int pc) rf |> value_to_string model rf mem
     in
     let control =
       ControlFile.find (string_of_int pc) cf |> Control.to_string model

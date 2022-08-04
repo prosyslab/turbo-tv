@@ -88,6 +88,7 @@ let to_string model t =
     | 20 -> "none"
     | 21 -> "empty"
     | 22 -> "const"
+    | 23 -> "undefined"
     | _ -> failwith "unreachable"
   with _ -> ty_str
 

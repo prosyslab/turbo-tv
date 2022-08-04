@@ -39,44 +39,50 @@ type t = {
   deopt : Bool.t;
 }
 
-let default_constants =
-  [ "undefined"; "the_hole"; "null"; "String[0]: #"; "false"; "true" ]
-
-let init nparams stage : t =
-  let embed_default_constants mem rf =
+let install_constants state =
+  let mem, rf, next_bid =
     List.fold_left
       (fun (mem, rf, next_bid) name ->
         let next_bid, ptr =
-          Memory.allocate next_bid (BitVecVal.from_int ~len:Value.len 1)
+          Memory.allocate next_bid (BitVecVal.from_int ~len:Value.len 5)
         in
         let updated_mem =
+          let map =
+            match name with
+            | "undefined" -> Objmap.undefined_map
+            | "null" -> Objmap.null_map
+            | "String[0]: #" -> Objmap.string_map
+            | "false" | "true" -> Objmap.boolean_map
+            | _ -> failwith "unreachable"
+          in
           Memory.store
             (ptr |> TaggedPointer.to_raw_pointer)
-            next_bid Bool.tr (BitVecVal.from_int 0) mem
+            Objmap.size Bool.tr map mem
         in
         (updated_mem, RegisterFile.add name (Some ptr) rf, next_bid))
-      (mem, rf, nparams) default_constants
+      (state.memory, state.register_file, List.length state.params)
+      Constant.names
   in
-  let memory, register_file, next_bid =
-    embed_default_constants (Memory.init "mem")
-      (RegisterFile.init stage RegisterFile.symbol)
-  in
+  { state with memory = mem; register_file = rf; next_bid }
+
+let init nparams stage : t =
   {
     stage;
     pc = 0;
     final = false;
-    next_bid;
-    register_file;
+    next_bid = nparams;
+    register_file = RegisterFile.init stage RegisterFile.symbol;
     control_file = ControlFile.init stage ControlFile.symbol;
     ub_file = UBFile.init stage Ub.symbol;
     deopt_file = DeoptFile.init stage Deopt.symbol;
-    memory;
+    memory = Memory.init "mem";
     params = Params.init nparams;
     retval = Value.empty;
     ub = Bool.fl;
     assertion = Bool.tr;
     deopt = Bool.fl;
   }
+  |> install_constants
 
 (* getter *)
 let stage t = t.stage

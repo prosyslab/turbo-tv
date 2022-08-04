@@ -12,7 +12,7 @@
   IR
   objects
   number
-  constants
+  constant
   control
   controlFile
   registerFile
