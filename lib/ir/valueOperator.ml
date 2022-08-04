@@ -625,7 +625,7 @@ module Float64 = struct
   let is_ninf value = Float.is_ninf (value |> from_value)
 
   let is_negative value =
-    BitVec.eqi (BitVec.extract 63 63 (value |> Value.data_of)) 0
+    BitVec.eqi (BitVec.extract 63 63 (value |> Value.data_of)) 1
 
   let is_positive value =
     BitVec.eqi (BitVec.extract 63 63 (value |> Value.data_of)) 0
