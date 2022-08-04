@@ -52,15 +52,15 @@ module HeapNumber = struct
 
   let number_of obj = obj.value
 
-  let is_zero obj = BitVec.eqb obj.value (BitVecVal.zero ())
+  let is_zero obj = Float.is_zero (obj.value |> Float.from_ieee_bv)
 
-  let is_minus_zero obj = BitVec.eqb obj.value (BitVecVal.minus_zero ())
+  let is_minus_zero obj = Float.is_minus_zero (obj.value |> Float.from_ieee_bv)
 
-  let is_nan obj = BitVec.eqb obj.value (BitVecVal.nan ())
+  let is_nan obj = Float.is_nan (obj.value |> Float.from_ieee_bv)
 
-  let is_ninf obj = BitVec.eqb obj.value (BitVecVal.ninf ())
+  let is_ninf obj = Float.is_ninf (obj.value |> Float.from_ieee_bv)
 
-  let is_inf obj = BitVec.eqb obj.value (BitVecVal.inf ())
+  let is_inf obj = Float.is_inf (obj.value |> Float.from_ieee_bv)
 
   let is_integer obj =
     obj.value |> Value.entype Type.float64 |> Float64.is_integer
