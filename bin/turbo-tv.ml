@@ -44,13 +44,16 @@ let parse_command_line () =
   | Ok `Version | Ok `Help -> exit 0
   | Ok (`Ok conf) -> conf
 
-let unknown_nodes = [ Opcode.JSCall ]
+let unknown_ops = [ Opcode.JSCall; Opcode.JSCallRuntime ]
 
-let unknown_node_exists graph =
-  try
-    List.iter (fun node -> IR.find_by_opcode node graph |> ignore) unknown_nodes;
-    true
-  with Err.NodeNotFound _ -> false
+let unknown_op_exists graph =
+  List.exists
+    (fun op ->
+      try
+        IR.find_by_opcode op graph |> ignore;
+        true
+      with Err.NodeNotFound _ -> false)
+    unknown_ops
 
 let main () =
   Printexc.record_backtrace true;
@@ -67,13 +70,13 @@ let main () =
       IR.generate_graph_output "source.dot" src_grp;
       IR.generate_graph_output "target.dot" tgt_grp);
 
-    if unknown_node_exists src_grp || unknown_node_exists tgt_grp then
-      Printf.printf "Result: Unknown\n"
+    if unknown_op_exists src_grp || unknown_op_exists tgt_grp then
+      Printf.printf "Result: Not target\n"
     else Tv.run nparams src_grp tgt_grp)
   else
     let test_ir_p = source |> Option.get in
     let test_grp = IR.create_from_ir_file test_ir_p in
-    if unknown_node_exists test_grp then Printf.printf "Result: Unknown\n"
+    if unknown_op_exists test_grp then Printf.printf "Result: Not target\n"
     else Tv.check_ub_semantic 2 test_grp
 
 let () = main ()
