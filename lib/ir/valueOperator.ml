@@ -32,6 +32,10 @@ module TaggedSigned = struct
     Format.sprintf "TaggedSigned(%d)"
       ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
       |> Int32.of_string |> Int32.to_int)
+
+  let min_limit = -1073741824
+
+  let max_limit = 1073741823
 end
 
 module TaggedPointer = struct
@@ -39,8 +43,8 @@ module TaggedPointer = struct
 
   (* const *)
   (* 0-16: offset
-     16-48: bid
-     48-64: size of struct
+     16-32: bid
+     32-64: size of struct
      64-69: ty
   *)
   (* High |-ty-|-size-|--bid--|-offset-(1)-| Low *)
@@ -64,7 +68,7 @@ module TaggedPointer = struct
 
   (* constructor *)
   let init bid sz =
-    let bid = BitVecVal.from_int ~len:64 bid in
+    let bid = BitVecVal.from_int ~len:Value.data_len bid in
     let sz = Value.data_of sz in
     BitVec.ori
       (BitVec.orb
@@ -202,6 +206,49 @@ module Make_Integer_Operator (I : IntValue) = struct
     if sign then BitVec.sgeb (lval |> from_value) (rval |> from_value)
     else BitVec.ugeb (lval |> from_value) (rval |> from_value)
 
+  (* constants *)
+  let zero = BitVecVal.from_int ~len:width 0 |> to_value
+
+  let min_limit =
+    if sign then
+      (* (1 << (width - 1)) *)
+      BitVec.shli (BitVecVal.from_int ~len:width 1) (width - 1)
+    else zero
+
+  let max_limit =
+    if sign then
+      (* (1 << (width - 1)) - 1 *)
+      BitVec.subi (BitVec.shli (BitVecVal.from_int ~len:width 1) (width - 1)) 1
+    else
+      (* (1 << width) - 1 *)
+      BitVec.extract (width - 1) 0
+        (BitVec.subi
+           (BitVec.shli (BitVecVal.from_int ~len:(width + 1) 1) width)
+           1)
+
+  (* methods *)
+  let is_negative value =
+    if sign then BitVec.slti (value |> from_value) 0 else Bool.fl
+
+  let is_positive value =
+    if sign then BitVec.sgti (value |> from_value) 0 else Bool.tr
+
+  let is_zero value = BitVec.eqi (value |> from_value) 0
+
+  let is_in_smi_range value =
+    if sign then
+      Z3utils.Bool.ands
+        [
+          BitVec.sgei (value |> from_value) TaggedSigned.min_limit;
+          BitVec.slei (value |> from_value) TaggedSigned.max_limit;
+        ]
+    else
+      Z3utils.Bool.ands
+        [
+          BitVec.ugei (value |> from_value) 0;
+          BitVec.ulei (value |> from_value) TaggedSigned.max_limit;
+        ]
+
   (* conversion *)
   let to_int ty ty_width value =
     let data = value |> from_value in
@@ -237,49 +284,6 @@ module Make_Integer_Operator (I : IntValue) = struct
     else
       data |> Float.from_unsigned_bv |> Float.to_ieee_bv
       |> Value.entype Type.float64
-
-  (* constants *)
-  let zero = BitVecVal.from_int ~len:width 0 |> to_value
-
-  let min_limit =
-    if sign then
-      (* (1 << (width - 1)) *)
-      BitVec.shli (BitVecVal.from_int ~len:width 1) (width - 1)
-    else zero
-
-  let max_limit =
-    if sign then
-      (* (1 << (width - 1)) - 1 *)
-      BitVec.subi (BitVec.shli (BitVecVal.from_int ~len:width 1) (width - 1)) 1
-    else
-      (* (1 << width) - 1 *)
-      BitVec.extract (width - 1) 0
-        (BitVec.subi
-           (BitVec.shli (BitVecVal.from_int ~len:(width + 1) 1) width)
-           1)
-
-  (* methods *)
-  let is_negative value =
-    if sign then BitVec.slti (value |> from_value) 0 else Bool.fl
-
-  let is_positive value =
-    if sign then BitVec.sgti (value |> from_value) 0 else Bool.tr
-
-  let is_zero value = BitVec.eqi (value |> from_value) 0
-
-  let is_in_smi_range value =
-    if sign then
-      Z3utils.Bool.ands
-        [
-          BitVec.sgei (value |> from_value) Constants.smi_min;
-          BitVec.slei (value |> from_value) Constants.smi_max;
-        ]
-    else
-      Z3utils.Bool.ands
-        [
-          BitVec.ugei (value |> from_value) 0;
-          BitVec.ulei (value |> from_value) Constants.smi_max;
-        ]
 
   (* pp *)
   let to_string model value =
@@ -457,15 +461,15 @@ module Word8 = Make_Word_Operator (struct
 end)
 
 module Word16 = Make_Word_Operator (struct
-  let repr = MachineType.Repr.Word8
+  let repr = MachineType.Repr.Word16
 end)
 
 module Word32 = Make_Word_Operator (struct
-  let repr = MachineType.Repr.Word8
+  let repr = MachineType.Repr.Word32
 end)
 
 module Word64 = Make_Word_Operator (struct
-  let repr = MachineType.Repr.Word8
+  let repr = MachineType.Repr.Word64
 end)
 
 module Float64 = struct
