@@ -94,77 +94,13 @@ let number_imul lval rval mem state =
   let value = Number.imul lval rval mem in
   state |> State.update ~value
 
-let number_max lval rval next_bid mem state =
-  let deopt =
-    Bool.not
-      (Bool.ands
-         [
-           lval |> Value.has_type Type.tagged_pointer;
-           rval |> Value.has_type Type.tagged_pointer;
-           lval |> Objects.is_heap_number mem;
-           rval |> Objects.is_heap_number mem;
-         ])
-  in
-  (* https://tc39.es/ecma262/#sec-math.max *)
-  let value, next_bid, mem =
-    let lnum = HeapNumber.load lval mem in
-    let rnum = HeapNumber.load rval mem in
-    Bool.ite
-      (* if lnum or rnum is nan, return nan *)
-      (Bool.ors [ HeapNumber.is_nan lnum; HeapNumber.is_nan rnum ])
-      Float64.nan
-      (* if lnum is -0 and rnum is 0, return 0 *)
-      (Bool.ite
-         (Bool.ands [ HeapNumber.is_minus_zero lnum; HeapNumber.is_zero rnum ])
-         Float64.zero
-         (* if lnum is 0 and rnum is -0, return 0 *)
-         (Bool.ite
-            (Bool.ands
-               [ HeapNumber.is_zero lnum; HeapNumber.is_minus_zero rnum ])
-            Float64.zero
-            (* if lnum < rnum, return rnum else return lnum *)
-            (Bool.ite (HeapNumber.lt lnum rnum)
-               (rnum |> HeapNumber.to_float64)
-               (lnum |> HeapNumber.to_float64))))
-    |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
-  in
-  state |> State.update ~value ~deopt ~next_bid ~mem
+let number_max lval rval mem state =
+  let value = Number.max lval rval mem in
+  state |> State.update ~value ~mem
 
-let number_min lval rval next_bid mem state =
-  let deopt =
-    Bool.not
-      (Bool.ands
-         [
-           lval |> Value.has_type Type.tagged_pointer;
-           rval |> Value.has_type Type.tagged_pointer;
-           lval |> Objects.is_heap_number mem;
-           rval |> Objects.is_heap_number mem;
-         ])
-  in
-  (* https://tc39.es/ecma262/#sec-math.min *)
-  let value, next_bid, mem =
-    let lnum = HeapNumber.load lval mem in
-    let rnum = HeapNumber.load rval mem in
-    Bool.ite
-      (* if lnum or rnum is nan, return nan *)
-      (Bool.ors [ HeapNumber.is_nan lnum; HeapNumber.is_nan rnum ])
-      Float64.nan
-      (* if lnum is -0 and rnum is 0, return -0 *)
-      (Bool.ite
-         (Bool.ands [ HeapNumber.is_minus_zero lnum; HeapNumber.is_zero rnum ])
-         Float64.minus_zero
-         (* if lnum is 0 and rnum is -0, return -0 *)
-         (Bool.ite
-            (Bool.ands
-               [ HeapNumber.is_zero lnum; HeapNumber.is_minus_zero rnum ])
-            Float64.minus_zero
-            (* if lnum < rnum, return lnum else return rnum *)
-            (Bool.ite (HeapNumber.lt lnum rnum)
-               (lnum |> HeapNumber.to_float64)
-               (rnum |> HeapNumber.to_float64))))
-    |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
-  in
-  state |> State.update ~value ~deopt ~next_bid ~mem
+let number_min lval rval mem state =
+  let value = Number.min lval rval mem in
+  state |> State.update ~value ~mem
 
 let number_modulus lval rval mem state =
   let value = Number.remainder lval rval mem in

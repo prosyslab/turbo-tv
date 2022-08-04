@@ -286,13 +286,13 @@ let encode program
       let rpid = Operands.id_of_nth operands 1 in
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
-      number_max lval rval next_bid mem
+      number_max lval rval mem
   | NumberMin ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
-      number_min lval rval next_bid mem
+      number_min lval rval mem
   | NumberMultiply ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
