@@ -53,7 +53,7 @@ let to_boolean mem number =
          number_f64 |> Float64.is_zero;
          number_f64 |> Float64.is_minus_zero;
        ])
-    Bool.fl Bool.tr
+    Value.fl Value.tr
 
 let to_uint32 mem number =
   let number_f64 = number |> to_float64 mem in
@@ -351,6 +351,16 @@ let remainder n d mem =
                    Float64.minus_zero r_f64)))))
 
 (* bitwise *)
+let bitwise op x y mem =
+  (* https://tc39.es/ecma262/#sec-numberbitwiseop *)
+  let lnum = x |> to_float64 mem |> Float64.to_int32 in
+  let rnum = y |> to_float64 mem |> Float64.to_int32 in
+  match op with
+  | "&" -> Word32.and_ lnum rnum
+  | "|" -> Word32.or_ lnum rnum
+  | "^" -> Word32.xor lnum rnum
+  | _ -> failwith "unreachable"
+
 let unsigned_right_shift x y mem =
   (* https://tc39.es/ecma262/#sec-numeric-types-number-unsignedRightShift *)
   let lnum = x |> to_uint32 mem in

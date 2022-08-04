@@ -302,30 +302,14 @@ let number_shift_right_logical lval rval mem state =
   let value = Number.unsigned_right_shift lval rval mem in
   state |> State.update ~value
 
-let speculative_number_bitwise_or lval rval next_bid mem state =
+let number_bitwise op lval rval mem state =
+  let value = Number.bitwise op lval rval mem in
+  state |> State.update ~value
+
+let speculative_number_bitwise op lval rval mem state =
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
-  let value, next_bid, mem =
-    let lnum = HeapNumber.load lval mem in
-    let rnum = HeapNumber.load rval mem in
-    Int32.or_
-      (lnum |> HeapNumber.to_float64 |> Float64.to_int32)
-      (rnum |> HeapNumber.to_float64 |> Float64.to_int32)
-    |> Int32.to_float64
-    |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
-  in
-  state |> State.update ~value ~deopt ~next_bid ~mem
+  state |> number_bitwise op lval rval mem |> State.update ~deopt
 
-let speculative_number_bitwise_xor lval rval state =
-  let deopt =
-    Bool.not
-      (Bool.ands
-         [ Value.has_repr Repr.Word32 lval; Value.has_repr Repr.Word32 rval ])
-  in
-  let value = Word64.xor lval rval in
-
-  state |> State.update ~value ~deopt
-
-(* 2V1E1C -> 1V *)
 let speculative_number_shift_right_logical lval rval _eff control mem state =
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
   state
@@ -392,8 +376,8 @@ let load_element tag_value header_size repr bid ind mem state =
   in
   state |> Machine.load bid off repr mem
 
-let load_field tag_value offset repr bid mem state =
-  let off = offset - tag_value |> BitVecVal.from_int ~len:Value.len in
+let load_field _tag_value offset repr bid mem state =
+  let off = offset |> BitVecVal.from_int ~len:Value.len in
   state |> Machine.load bid off repr mem
 
 let load_typed_element array_type base extern ind mem state =
@@ -405,8 +389,8 @@ let load_typed_element array_type base extern ind mem state =
   state |> load_element taggedness header_size repr bid ind mem
 
 (* V2E1C1 -> E1 *)
-let store_element tag_value header_size repr bid ind value mem control state =
-  let fixed_off = header_size - tag_value in
+let store_element _tag_value header_size repr bid ind value mem control state =
+  let fixed_off = header_size in
   let off =
     BitVec.addi
       (BitVec.shli ind (MachineType.Repr.element_size_log2_of repr))
@@ -504,7 +488,8 @@ let change_int32_to_tagged pval next_bid mem state =
 
   let number_value = data |> Float.from_signed_bv |> Float.to_ieee_bv in
   let obj, next_bid, mem =
-    number_value |> HeapNumber.from_float64 next_bid Bool.tr mem
+    number_value
+    |> HeapNumber.from_float64 next_bid (Bool.not is_in_smi_range) mem
   in
 
   let value = Bool.ite is_in_smi_range smi obj in
@@ -517,14 +502,11 @@ let change_int64_to_tagged pval next_bid mem state =
   (* if pval is in smi range, value = TaggedSigned(pval+pval) *)
   let is_in_smi_range = Int64.is_in_smi_range pval in
   let smi = Int64.to_tagged_signed pval in
-
   let number, next_bid, mem =
     pval |> Int64.to_float64
-    |> HeapNumber.from_float64 next_bid is_in_smi_range mem
+    |> HeapNumber.from_float64 next_bid (Bool.not is_in_smi_range) mem
   in
-
   let value = Bool.ite is_in_smi_range smi number in
-
   state |> State.update ~value ~next_bid ~mem
 
 let change_tagged_signed_to_int64 pval state =
@@ -641,7 +623,7 @@ let checked_uint32_to_int32 pval state =
   state |> State.update ~value ~deopt
 
 let number_to_boolean pval mem state =
-  let value = Bool.ite (pval |> Number.to_boolean mem) Value.tr Value.fl in
+  let value = pval |> Number.to_boolean mem in
   state |> State.update ~value
 
 let number_to_int32 pval next_bid mem state =
@@ -690,6 +672,7 @@ let speculative_to_number pval next_bid mem state =
   state |> State.update ~value ~deopt ~next_bid ~mem
 
 let to_boolean pval mem (state : State.t) =
+  let rf = state.register_file in
   let uif =
     let value_sort = BV.mk_sort ctx Value.len in
     Z3.FuncDecl.mk_func_decl_s ctx "to_boolean" [ value_sort ] Bool.mk_sort
@@ -699,29 +682,35 @@ let to_boolean pval mem (state : State.t) =
     Bool.ite
       (Number.is_number pval mem)
       (* number *)
-      (Bool.ite (pval |> Number.to_boolean mem) Value.tr Value.fl)
+      (pval |> Number.to_boolean mem)
       (Bool.ite
          (* undefined *)
-         (Value.eq pval (RegisterFile.find "undefined" state.register_file))
+         (pval |> Constant.is_undefined rf)
          Value.fl
          (Bool.ite
             (* boolean *)
             (pval |> Value.has_type Type.bool)
             pval
             (Bool.ite
-               (Value.eq pval (RegisterFile.find "true" state.register_file))
+               (pval |> Constant.is_true_cst rf)
                Value.tr
                (Bool.ite
-                  (Value.eq pval
-                     (RegisterFile.find "false" state.register_file))
+                  (pval |> Constant.is_false_cst rf)
                   Value.fl
-                  (* currently only handle the undefined, boolean and number *)
-                  (Bool.ite (Z3.FuncDecl.apply uif [ pval ]) Value.tr Value.fl)))))
+                  (Bool.ite
+                     (pval |> Constant.is_empty_string rf)
+                     Value.fl
+                     (Bool.ite
+                        (pval |> Constant.is_null rf)
+                        Value.fl
+                        (Bool.ite
+                           (Z3.FuncDecl.apply uif [ pval ])
+                           Value.tr Value.fl)))))))
   in
-
   state |> State.update ~value
 
 let truncate_tagged_to_bit pval mem (state : State.t) =
+  let rf = state.register_file in
   let uif =
     let value_sort = BV.mk_sort ctx Value.len in
     Z3.FuncDecl.mk_func_decl_s ctx "to_boolean" [ value_sort ] Bool.mk_sort
@@ -749,19 +738,26 @@ let truncate_tagged_to_bit pval mem (state : State.t) =
             Value.fl Value.tr)
          (Bool.ite
             (* if [pval] is undefined, return false *)
-            (Value.eq pval (RegisterFile.find "undefined" state.register_file))
+            (pval |> Constant.is_undefined rf)
             Value.fl
             (Bool.ite
                (* if [pval] is true, return true *)
-               (Value.eq pval (RegisterFile.find "true" state.register_file))
+               (pval |> Constant.is_true_cst rf)
                Value.tr
                (Bool.ite
                   (* if [pval] is false, return false *)
-                  (Value.eq pval
-                     (RegisterFile.find "false" state.register_file))
+                  (pval |> Constant.is_false_cst rf)
                   Value.fl
                   (* currently only handle the undefined, boolean and number *)
-                  (Bool.ite (Z3.FuncDecl.apply uif [ pval ]) Value.tr Value.fl)))))
+                  (Bool.ite
+                     (pval |> Constant.is_empty_string rf)
+                     Value.fl
+                     (Bool.ite
+                        (pval |> Constant.is_null rf)
+                        Value.fl
+                        (Bool.ite
+                           (Z3.FuncDecl.apply uif [ pval ])
+                           Value.tr Value.fl)))))))
   in
   state |> State.update ~value
 
@@ -779,5 +775,3 @@ let checked_uint32_bounds flag lval rval _eff control state =
     (* AbortOnOutOfBounds *)
     state |> State.update ~value:lval ~ub:(Bool.not check) ~control
   else failwith "not implemented"
-
-(* type-check *)

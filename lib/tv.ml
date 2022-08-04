@@ -109,7 +109,7 @@ let encode program
       in
       let name = Re.Group.get addr_name 2 in
       (* if constant is default constant, use pre-defined value in register file *)
-      if List.mem name State.default_constants then
+      if Constant.is_constant name then
         heap_constant (RegisterFile.find name rf)
       else heap_constant ptr
   | ExternalConstant ->
@@ -380,24 +380,48 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       boolean_not pval
+  | NumberBitwiseAnd ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      number_bitwise "&" lval rval mem
+  | NumberBitwiseOr ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      number_bitwise "|" lval rval mem
+  | NumberBitwiseXor ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      number_bitwise "&" lval rval mem
   | NumberShiftRightLogical ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
       number_shift_right_logical lval rval mem
+  | SpeculativeNumberBitwiseAnd ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      speculative_number_bitwise "&" lval rval mem
   | SpeculativeNumberBitwiseOr ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
-      speculative_number_bitwise_or lval rval next_bid mem
+      speculative_number_bitwise "|" lval rval mem
   | SpeculativeNumberBitwiseXor ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
-      speculative_number_bitwise_xor lval rval
+      speculative_number_bitwise "^" lval rval mem
   | SpeculativeNumberShiftRightLogical ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
@@ -882,8 +906,7 @@ let check_ub_semantic nparams program =
                 ];
               Bool.ors
                 (List.map (Value.eq param)
-                   (RegisterFile.find_all State.default_constants
-                      state.register_file));
+                   (RegisterFile.find_all Constant.names state.register_file));
             ])
         params
       |> Bool.ands
@@ -898,7 +921,9 @@ let check_ub_semantic nparams program =
       let model = Option.get (Solver.get_model validator) in
       Printf.printf "Result: Possible\n";
       Printf.printf "Example: \n";
-      Printer.print_params model (State.memory state) (State.params state);
+      Printer.print_params model
+        (State.register_file state)
+        (State.memory state) (State.params state);
       Printer.print_counter_example program state model
   | UNSATISFIABLE -> Printf.printf "Result: Not Possible\n"
   | UNKNOWN ->
@@ -927,8 +952,7 @@ let run nparams src_program tgt_program =
                 ];
               Bool.ors
                 (List.map (Value.eq param)
-                   (RegisterFile.find_all State.default_constants
-                      src_state.register_file));
+                   (RegisterFile.find_all Constant.names src_state.register_file));
             ])
         params
       |> Bool.ands
@@ -972,8 +996,9 @@ let run nparams src_program tgt_program =
       let model = Option.get (Solver.get_model validator) in
       Printf.printf "Result: Not Verified \n";
       Printf.printf "CounterExample: \n";
-      Printer.print_params model (State.memory src_state)
-        (State.params src_state);
+      Printer.print_params model
+        (State.register_file src_state)
+        (State.memory src_state) (State.params src_state);
       Printer.print_counter_example src_program src_state model;
       Printer.print_counter_example tgt_program tgt_state model
   | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
