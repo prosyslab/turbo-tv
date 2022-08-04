@@ -117,7 +117,7 @@ let uint32_div lval rval control state =
  * assertion:
  * value = ite well-defined (lval >> (rval mod 32)) UB *)
 let word32_sar hint lval rval state =
-  let cnt = Word32.ashr rval (32 |> Value.from_int) in
+  let cnt = Uint32.modulo rval (32 |> Value.from_int) in
   let shift_out = Word32.mask lval cnt in
   let hint_is_shift_out_zero = String.equal hint "ShiftOutZeros" in
   let wd_cond =
@@ -231,7 +231,6 @@ let uint64_less_than_or_equal lval rval state =
  * assertion:
  *   mem = ite well-defined Store(ptr, pos, repr, mem) mem *)
 let store ptr pos repr value mem state =
-  let deopt = Bool.not (ptr |> Value.has_type Type.pointer) in
   let ub =
     let ptr_is_tagged_pointer = Value.has_type Type.tagged_pointer ptr in
     let can_access = TaggedPointer.can_access_as pos repr ptr in
@@ -244,7 +243,7 @@ let store ptr pos repr value mem state =
          (TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer)
          repr (Bool.not ub) value
   in
-  state |> State.update ~mem ~ub ~deopt
+  state |> State.update ~mem ~ub
 
 (* well-defined condition:
  *   IsPointer(ptr) \/
@@ -252,7 +251,6 @@ let store ptr pos repr value mem state =
  * assertion:
  *   value = (Mem[pos+size]) *)
 let load ptr pos repr mem state =
-  let deopt = Bool.not (ptr |> Value.has_type Type.pointer) in
   let ub =
     let ptr_is_tagged_pointer = Value.has_type Type.tagged_pointer ptr in
     let can_access = TaggedPointer.can_access_as pos repr ptr in
@@ -270,7 +268,7 @@ let load ptr pos repr mem state =
     |> BitVec.zero_extend (64 - Repr.width_of repr)
     |> Value.entype ty
   in
-  state |> State.update ~value ~ub ~deopt
+  state |> State.update ~value ~ub
 
 (* machine: type-conversion *)
 let bitcast_float32_to_int32 v state =

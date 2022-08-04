@@ -176,7 +176,7 @@ let finish_region pval state = state |> State.update ~value:pval
 (* temporary *)
 let js_stack_check = start
 
-let call state = state |> State.update ~value:Value.tr
+let call state = state |> State.update ~value:Value.tr ~control:Bool.tr
 
 let stack_pointer_greater_than = call
 (* temporary-over *)
