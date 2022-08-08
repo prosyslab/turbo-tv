@@ -581,6 +581,11 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       change_bit_to_tagged pval next_bid mem
+  | ChangeFloat64ToTagged ->
+      let mode = Operands.const_of_nth operands 0 in
+      let pid = Operands.id_of_nth operands 1 in
+      let pval = RegisterFile.find pid rf in
+      change_float64_to_tagged mode pval next_bid mem
   | ChangeInt31ToTaggedSigned ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in

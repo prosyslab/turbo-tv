@@ -406,6 +406,21 @@ let change_bit_to_tagged pval next_bid mem state =
 
   state |> State.update ~value ~deopt ~next_bid ~mem
 
+let change_float64_to_tagged mode pval next_bid mem state =
+  let smi_cond =
+    if mode = "check-for-minus-zero" then
+      Bool.ands
+        [ pval |> Float64.can_be_smi; Bool.not (pval |> Float64.is_minus_zero) ]
+    else pval |> Float64.can_be_smi
+  in
+  let heap_number, next_bid, mem =
+    pval |> HeapNumber.from_float64 next_bid (Bool.not smi_cond) mem
+  in
+  let value =
+    Bool.ite smi_cond (pval |> Float64.to_tagged_signed) heap_number
+  in
+  state |> State.update ~value ~next_bid ~mem
+
 (* assertion:
  * value = ite well-defined TaggedSigned(pval) UV *)
 let change_int31_to_tagged_signed pval state =
