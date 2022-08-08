@@ -134,7 +134,7 @@ let same_value lnum rnum mem =
   let rnum_f64 = rnum |> to_float64 mem in
   Bool.ite
     (Bool.ite
-       (Bool.ors [ lnum_f64 |> Float64.is_nan; rnum_f64 |> Float64.is_nan ])
+       (Bool.ands [ lnum_f64 |> Float64.is_nan; rnum_f64 |> Float64.is_nan ])
        Bool.tr
        (Bool.ite
           (Bool.ands
@@ -375,43 +375,13 @@ let max lnum rnum mem =
   (* https://tc39.es/ecma262/#sec-math.max *)
   let lnum_f64 = lnum |> to_float64 mem in
   let rnum_f64 = rnum |> to_float64 mem in
-  Bool.ite
-    (* nan, nan -> nan *)
-    (Bool.ors [ lnum_f64 |> Float64.is_nan; rnum_f64 |> Float64.is_nan ])
-    Float64.nan
-    (Bool.ite
-       (* -0, 0 -> 0 *)
-       (Bool.ands
-          [ lnum_f64 |> Float64.is_minus_zero; rnum_f64 |> Float64.is_zero ])
-       Float64.zero
-       (Bool.ite
-          (* 0, -0 -> 0 *)
-          (Bool.ands
-             [ lnum_f64 |> Float64.is_zero; rnum_f64 |> Float64.is_minus_zero ])
-          Float64.zero
-          (* n1, n2 -> n1 > n2 ? n1 : n2 *)
-          (Bool.ite (Float64.gt lnum_f64 rnum_f64) lnum_f64 rnum_f64)))
+  Float64.max lnum_f64 rnum_f64
 
 let min lnum rnum mem =
   (* https://tc39.es/ecma262/#sec-math.min *)
   let lnum_f64 = lnum |> to_float64 mem in
   let rnum_f64 = rnum |> to_float64 mem in
-  Bool.ite
-    (* nan, nan -> nan *)
-    (Bool.ors [ lnum_f64 |> Float64.is_nan; rnum_f64 |> Float64.is_nan ])
-    Float64.nan
-    (Bool.ite
-       (* -0, 0 -> -0 *)
-       (Bool.ands
-          [ lnum_f64 |> Float64.is_minus_zero; rnum_f64 |> Float64.is_zero ])
-       Float64.minus_zero
-       (Bool.ite
-          (* 0, -0 -> -0 *)
-          (Bool.ands
-             [ lnum_f64 |> Float64.is_zero; rnum_f64 |> Float64.is_minus_zero ])
-          Float64.minus_zero
-          (* n1, n2 -> n1 < n2 ? n1 : n2 *)
-          (Bool.ite (Float64.lt lnum_f64 rnum_f64) lnum_f64 rnum_f64)))
+  Float64.min lnum_f64 rnum_f64
 
 let sign mem number =
   let n_f64 = number |> to_float64 mem in

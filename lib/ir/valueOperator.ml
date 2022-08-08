@@ -154,6 +154,12 @@ module Make_Integer_Operator (I : IntValue) = struct
   let modulo lval rval =
     BitVec.modb (lval |> from_value) (rval |> from_value) |> to_value
 
+  let srem lval rval =
+    BitVec.sremb (lval |> from_value) (rval |> from_value) |> to_value
+
+  let urem lval rval =
+    BitVec.uremb (lval |> from_value) (rval |> from_value) |> to_value
+
   (* assume turbofan consider 'overflow' as overflow \/ underflow *)
   let add_would_overflow lval rval =
     Z3utils.Bool.not
@@ -612,8 +618,6 @@ module Float64 = struct
 
   (* methods *)
 
-  let is_integer value = eq value (value |> floor)
-
   let is_zero value = Float.is_zero (value |> from_value)
 
   let is_minus_zero value = Float.is_minus_zero (value |> from_value)
@@ -630,23 +634,53 @@ module Float64 = struct
   let is_positive value =
     BitVec.eqi (BitVec.extract 63 63 (value |> Value.data_of)) 0
 
+  let is_integer value =
+    Bool.ite
+      (Bool.ors [ value |> is_inf; value |> is_ninf; value |> is_nan ])
+      Bool.fl
+      (eq value (value |> floor))
+
   let is_safe_integer value =
     Bool.ands
       [ is_integer value; ge value safe_integer_min; le value safe_integer_max ]
 
   let can_be_smi value =
     Bool.ands
-      [
-        value |> is_integer;
-        Bool.not (value |> is_minus_zero);
-        value |> to_int32 |> Int32.is_in_smi_range;
-      ]
+      [ value |> is_integer; value |> to_int32 |> Int32.is_in_smi_range ]
 
   let max lval rval =
-    Float.max (lval |> from_value) (rval |> from_value) |> to_value
+    (* UCOMISD: https://www.felixcloutier.com/x86/ucomisd *)
+    Bool.ite
+      (* nan, nan -> nan *)
+      (Bool.ors [ lval |> is_nan; rval |> is_nan ])
+      nan
+      (Bool.ite
+         (* -0, 0 -> 0 *)
+         (Bool.ands [ lval |> is_minus_zero; rval |> is_zero ])
+         zero
+         (Bool.ite
+            (* 0, -0 -> 0 *)
+            (Bool.ands [ lval |> is_zero; rval |> is_minus_zero ])
+            zero
+            (* n1, n2 -> n1 > n2 ? n1 : n2 *)
+            (Bool.ite (gt lval rval) lval rval)))
 
   let min lval rval =
-    Float.min (lval |> from_value) (rval |> from_value) |> to_value
+    (* UCOMISD: https://www.felixcloutier.com/x86/ucomisd *)
+    Bool.ite
+      (* nan, nan -> nan *)
+      (Bool.ors [ lval |> is_nan; rval |> is_nan ])
+      nan
+      (Bool.ite
+         (* -0, 0 -> -0 *)
+         (Bool.ands [ lval |> is_minus_zero; rval |> is_zero ])
+         minus_zero
+         (Bool.ite
+            (* 0, -0 -> -0 *)
+            (Bool.ands [ lval |> is_zero; rval |> is_minus_zero ])
+            minus_zero
+            (* n1, n2 -> n1 < n2 ? n1 : n2 *)
+            (Bool.ite (lt lval rval) lval rval)))
 
   let expm1 value =
     let float_sort = Z3utils.Float.double_sort in

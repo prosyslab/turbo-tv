@@ -390,6 +390,10 @@ module BitVec = struct
 
   let abs bv = Bool.ite (slti bv 0) (BV.mk_neg ctx bv) bv
 
+  let sremb lbv rbv = BV.mk_srem ctx lbv rbv
+
+  let uremb lbv rbv = BV.mk_urem ctx lbv rbv
+
   (* rbv != 0 && lbv % rbv *)
   let modb lbv rbv = BV.mk_smod ctx lbv rbv
 

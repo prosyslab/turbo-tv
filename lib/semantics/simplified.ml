@@ -29,7 +29,7 @@ let checked_int32_div lval rval _eff control state =
         [ Int32.eq Int32.min_limit lval; Int32.eq rval (Value.from_int (-1)) ]
     in
     let lost_precision =
-      Bool.ands [ Int32.eq (Int32.modulo lval rval) Int32.zero ]
+      Bool.not (Int32.eq (Int32.srem lval rval) Int32.zero)
     in
     Bool.ors [ division_by_zero; minus_zero; overflow; lost_precision ]
   in
@@ -59,7 +59,7 @@ let checked_uint32_div lval rval _eff control state =
   let deopt =
     let division_by_zero = Uint32.is_zero rval in
     let lost_precision =
-      Bool.ands [ Uint32.eq (Uint32.modulo lval rval) Uint32.zero ]
+      Bool.not (Uint32.eq (Uint32.urem lval rval) Uint32.zero)
     in
     Bool.ors [ division_by_zero; lost_precision ]
   in
@@ -425,26 +425,21 @@ let change_float64_to_tagged mode pval next_bid mem state =
  * value = ite well-defined TaggedSigned(pval) UV *)
 let change_int31_to_tagged_signed pval state =
   let value = Int32.to_tagged_signed pval in
-
   state |> State.update ~value
 
 (* Assertion =
  *  value = ite well-defined (tagged(pval)) UB *)
 let change_int32_to_tagged pval next_bid mem state =
   let data = Value.data_of pval in
-
   (* if pval is in smi range, value = TaggedSigned(pval+pval) *)
   let is_in_smi_range = Int32.is_in_smi_range pval in
   let smi = Int32.to_tagged_signed pval in
-
   let number_value = data |> Float.from_signed_bv |> Float.to_ieee_bv in
   let obj, next_bid, mem =
     number_value
     |> HeapNumber.from_float64 next_bid (Bool.not is_in_smi_range) mem
   in
-
   let value = Bool.ite is_in_smi_range smi obj in
-
   state |> State.update ~value ~next_bid ~mem
 
 (* assertion:
@@ -471,9 +466,7 @@ let change_uint32_to_tagged pval next_bid mem state =
     pval |> Uint32.to_float64
     |> HeapNumber.from_float64 next_bid (Bool.not is_in_smi_range) mem
   in
-
   let value = Bool.ite is_in_smi_range smi number in
-
   state |> State.update ~value ~next_bid ~mem
 
 let change_uint64_to_tagged pval next_bid mem state =

@@ -588,9 +588,9 @@ NumberAsinh,
 NumberAtan,
 NumberAtan2,
 NumberAtanh,
-NumberBitwiseAnd,
-NumberBitwiseOr,
-NumberBitwiseXor,
+NumberBitwiseAnd,v1,v2
+NumberBitwiseOr,v1,v2
+NumberBitwiseXor,v1,v2
 NumberCbrt,
 NumberCeil,v1
 NumberClz32,
@@ -708,7 +708,7 @@ SpeculativeBigIntAsUintN,
 SpeculativeBigIntNegate,
 SpeculativeBigIntSubtract,
 SpeculativeNumberAdd,v1,v2
-SpeculativeNumberBitwiseAnd,
+SpeculativeNumberBitwiseAnd,v1,v2
 SpeculativeNumberBitwiseOr,v1,v2
 SpeculativeNumberBitwiseXor,v1,v2
 SpeculativeNumberDivide,v1,v2,e1,c1
