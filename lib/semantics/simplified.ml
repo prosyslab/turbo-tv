@@ -430,16 +430,14 @@ let change_int31_to_tagged_signed pval state =
 (* Assertion =
  *  value = ite well-defined (tagged(pval)) UB *)
 let change_int32_to_tagged pval next_bid mem state =
-  let data = Value.data_of pval in
   (* if pval is in smi range, value = TaggedSigned(pval+pval) *)
-  let is_in_smi_range = Int32.is_in_smi_range pval in
-  let smi = Int32.to_tagged_signed pval in
-  let number_value = data |> Float.from_signed_bv |> Float.to_ieee_bv in
-  let obj, next_bid, mem =
-    number_value
+  let is_in_smi_range = pval |> Int32.is_in_smi_range in
+  let smi = pval |> Int32.to_tagged_signed in
+  let heap_number, next_bid, mem =
+    pval |> Int32.to_float64
     |> HeapNumber.from_float64 next_bid (Bool.not is_in_smi_range) mem
   in
-  let value = Bool.ite is_in_smi_range smi obj in
+  let value = Bool.ite is_in_smi_range smi heap_number in
   state |> State.update ~value ~next_bid ~mem
 
 (* assertion:
@@ -447,12 +445,12 @@ let change_int32_to_tagged pval next_bid mem state =
 let change_int64_to_tagged pval next_bid mem state =
   (* if pval is in smi range, value = TaggedSigned(pval+pval) *)
   let is_in_smi_range = Int64.is_in_smi_range pval in
-  let smi = Int64.to_tagged_signed pval in
-  let number, next_bid, mem =
+  let smi = pval |> Int64.to_tagged_signed in
+  let heap_number, next_bid, mem =
     pval |> Int64.to_float64
     |> HeapNumber.from_float64 next_bid (Bool.not is_in_smi_range) mem
   in
-  let value = Bool.ite is_in_smi_range smi number in
+  let value = Bool.ite is_in_smi_range smi heap_number in
   state |> State.update ~value ~next_bid ~mem
 
 let change_tagged_signed_to_int64 pval state =
