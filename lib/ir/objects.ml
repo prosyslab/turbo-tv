@@ -114,19 +114,33 @@ let map_of ptr mem = Memory.load (ptr |> TaggedPointer.to_raw_pointer) 4 mem
 
 let has_map_of map mem ptr = Bool.eq (map_of ptr mem) map
 
-let is_big_int mem ptr = ptr |> has_map_of Objmap.big_int_map mem
+let is_big_int mem ptr =
+  Bool.ands
+    [
+      ptr |> Value.has_type Type.tagged_pointer;
+      ptr |> has_map_of Objmap.big_int_map mem;
+    ]
 
-let is_boolean mem ptr = ptr |> has_map_of Objmap.boolean_map mem
+let is_boolean mem ptr =
+  Bool.ands
+    [
+      ptr |> Value.has_type Type.tagged_pointer;
+      ptr |> has_map_of Objmap.boolean_map mem;
+    ]
 
-let is_fixed_array mem ptr = ptr |> has_map_of Objmap.fixed_array_map mem
+let is_heap_number mem ptr =
+  Bool.ands
+    [
+      ptr |> Value.has_type Type.tagged_pointer;
+      ptr |> has_map_of Objmap.heap_number_map mem;
+    ]
 
-let is_fixed_double_array mem ptr =
-  ptr |> has_map_of Objmap.fixed_double_array_map mem
-
-let is_weak_fixed_array mem ptr =
-  ptr |> has_map_of Objmap.weak_fixed_array_map mem
-
-let is_heap_number mem ptr = ptr |> has_map_of Objmap.heap_number_map mem
+let is_undefined mem ptr =
+  Bool.ands
+    [
+      ptr |> Value.has_type Type.tagged_pointer;
+      ptr |> has_map_of Objmap.undefined_map mem;
+    ]
 
 let are_heap_nubmer mem ptrs =
   Bool.ands (List.map (has_map_of Objmap.heap_number_map mem) ptrs)

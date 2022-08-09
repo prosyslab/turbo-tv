@@ -156,7 +156,7 @@ let return return_value return_control next_bid mem state =
   let heap_number, next_bid, mem =
     return_value |> HeapNumber.from_float64 next_bid Bool.tr mem
   in
-  (* return heap number or smi *)
+  (* return heap number or smi or bool *)
   let value =
     Bool.ite
       (return_value |> Value.has_type Type.float64)

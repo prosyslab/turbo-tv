@@ -91,7 +91,13 @@ let number_floor pval mem state =
   state |> State.update ~value
 
 let number_imul lval rval mem state =
-  let value = Number.imul lval rval mem in
+  let value =
+    let res = Number.imul lval rval mem in
+    Bool.ite
+      (res |> Int32.is_in_smi_range)
+      (res |> Int32.to_tagged_signed)
+      (res |> Int32.to_float64)
+  in
   state |> State.update ~value
 
 let number_max lval rval mem state =
@@ -175,7 +181,6 @@ let speculative_safe_integer_add lval rval next_bid mem state =
           value |> Value.has_type Type.tagged_signed;
           Bool.ands
             [
-              value |> Value.has_type Type.tagged_pointer;
               value |> Objects.is_heap_number mem;
               HeapNumber.is_safe_integer (HeapNumber.load value mem);
             ];
@@ -209,8 +214,6 @@ let speculative_safe_integer_subtract lval rval next_bid mem state =
     Bool.not
       (Bool.ands
          [
-           lval |> Value.has_type Type.tagged_pointer;
-           rval |> Value.has_type Type.tagged_pointer;
            lval |> Objects.is_heap_number mem;
            rval |> Objects.is_heap_number mem;
            HeapNumber.is_safe_integer lnum;
@@ -274,7 +277,10 @@ let number_less_than_or_equal lnum rnum mem state =
   state |> State.update ~value
 
 let number_same_value lnum rnum mem state =
-  let value = Number.same_value lnum rnum mem in
+  let rf = State.register_file state in
+  let true_cst = RegisterFile.find "true" rf in
+  let false_cst = RegisterFile.find "false" rf in
+  let value = Bool.ite (Number.same_value lnum rnum mem) true_cst false_cst in
   state |> State.update ~value
 
 let same_value lval rval mem state =
@@ -363,48 +369,38 @@ let number_is_nan pval mem state =
   state |> State.update ~value
 
 let object_is_minus_zero pval mem state =
+  (* when non-number type values are given, set deopt flag to avoid mis-verification *)
+  let deopt = Bool.not (Number.is_number pval mem) in
+  let rf = State.register_file state in
+  let true_constant = RegisterFile.find "true" rf in
+  let false_constant = RegisterFile.find "false" rf in
   let value =
-    let is_smi = pval |> Value.has_type Type.tagged_signed in
-    Bool.ite is_smi Value.fl
-      (Bool.ite
-         (pval |> Objects.is_heap_number mem)
-         (let number = HeapNumber.load pval mem in
-          Bool.ite (HeapNumber.is_minus_zero number) Value.tr Value.fl)
-         Value.fl)
+    Bool.ite (pval |> Number.is_minus_zero mem) true_constant false_constant
   in
-  state |> State.update ~value
+  state |> State.update ~value ~deopt
 
 let object_is_nan pval mem state =
+  (* when non-number type values are given, set deopt flag to avoid mis-verification *)
+  let deopt = Bool.not (Number.is_number pval mem) in
+  let rf = State.register_file state in
+  let true_constant = RegisterFile.find "true" rf in
+  let false_constant = RegisterFile.find "false" rf in
   let value =
-    let is_smi = pval |> Value.has_type Type.tagged_signed in
-    Bool.ite is_smi Value.fl
-      (Bool.ite
-         (pval |> Objects.is_heap_number mem)
-         (let number = HeapNumber.load pval mem in
-          Bool.ite (HeapNumber.is_nan number) Value.tr Value.fl)
-         Value.fl)
+    Bool.ite (pval |> Number.is_nan mem) true_constant false_constant
   in
-  state |> State.update ~value
+  state |> State.update ~value ~deopt
 
 (* simplified: type-conversion *)
 (* well-defined condition
    - IsBool(pval)
    assertion:
     value = ite well-defined (ite pval true false) UB *)
-(* [TODO] fix this *)
-let change_bit_to_tagged pval next_bid mem state =
-  let deopt = Bool.not (Value.has_type Type.bool pval) in
-  let true_, next_bid, mem =
-    Value.from_f64string "1.0" |> Value.cast Type.float64
-    |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
-  in
-  let false_, next_bid, mem =
-    Value.from_f64string "0.0" |> Value.cast Type.float64
-    |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
-  in
-  let value = Bool.ite (Value.eq Value.tr pval) true_ false_ in
-
-  state |> State.update ~value ~deopt ~next_bid ~mem
+let change_bit_to_tagged pval state =
+  let rf = State.register_file state in
+  let true_constant = RegisterFile.find "true" rf in
+  let false_constant = RegisterFile.find "false" rf in
+  let value = Bool.ite (Value.eq Value.tr pval) true_constant false_constant in
+  state |> State.update ~value
 
 let change_float64_to_tagged mode pval next_bid mem state =
   let smi_cond =
@@ -569,13 +565,7 @@ let number_to_boolean pval mem state =
   state |> State.update ~value
 
 let number_to_int32 pval next_bid mem state =
-  let deopt =
-    Bool.ands
-      [
-        pval |> Value.has_type Type.tagged_pointer;
-        pval |> Objects.is_heap_number mem;
-      ]
-  in
+  let deopt = Bool.not (pval |> Objects.is_heap_number mem) in
   (* https://tc39.es/ecma262/#sec-toint32 *)
   let value, next_bid, mem =
     let num = HeapNumber.load pval mem in
@@ -591,27 +581,34 @@ let number_to_uint32 pval mem state =
   state |> State.update ~value
 
 let speculative_to_number pval next_bid mem state =
-  (* assumption: [pval] is heap number or smi *)
+  (* assumption: [pval] is heap number or smi or undefined or boolean *)
   let deopt =
     Bool.not
       (Bool.ors
          [
            pval |> Value.has_type Type.tagged_signed;
-           Bool.ands
-             [
-               pval |> Value.has_type Type.tagged_pointer;
-               pval |> Objects.is_heap_number mem;
-             ];
+           pval |> Objects.is_heap_number mem;
+           pval |> Objects.is_undefined mem;
+           pval |> Objects.is_boolean mem;
          ])
   in
+  let rf = state.State.register_file in
+  let true_constant = RegisterFile.find "true" rf in
   let value, next_bid, mem =
     Bool.ite
       (pval |> Value.has_type Type.tagged_signed)
       (TaggedSigned.to_float64 pval)
-      (HeapNumber.load pval mem |> HeapNumber.to_float64)
+      (Bool.ite
+         (pval |> Objects.is_heap_number mem)
+         (HeapNumber.load pval mem |> HeapNumber.to_float64)
+         (Bool.ite
+            (pval |> Objects.is_undefined mem)
+            Float64.nan
+            (Bool.ite (Bool.eq pval true_constant) Float64.one Float64.zero)))
     |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
-  state |> State.update ~value ~deopt ~next_bid ~mem
+
+  state |> State.update ~value ~next_bid ~mem ~deopt
 
 let to_boolean pval mem (state : State.t) =
   let rf = state.register_file in
@@ -665,11 +662,7 @@ let truncate_tagged_to_bit pval mem (state : State.t) =
       (Bool.ite (TaggedSigned.is_zero pval) Value.fl Value.tr)
       (Bool.ite
          (* if [pval] is heap number, return [pval] != 0.0, -0.0 or NaN *)
-         (Bool.ands
-            [
-              pval |> Value.has_type Type.tagged_pointer;
-              pval |> Objects.is_heap_number mem;
-            ])
+         (pval |> Objects.is_heap_number mem)
          (Bool.ite
             (Bool.ors
                [

@@ -580,7 +580,7 @@ let encode program
   | ChangeBitToTagged ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
-      change_bit_to_tagged pval next_bid mem
+      change_bit_to_tagged pval
   | ChangeFloat64ToTagged ->
       let mode = Operands.const_of_nth operands 0 in
       let pid = Operands.id_of_nth operands 1 in
@@ -975,14 +975,22 @@ let run nparams src_program tgt_program =
     let tgt_retval = State.retval tgt_state in
     let src_mem = State.memory src_state in
     let tgt_mem = State.memory tgt_state in
-    (* assume it only returns smi or heap number pointer *)
+    (* assume if return value is number, it is smi or heap number. *)
     let to_float64 value mem =
       Bool.ite
-        (value |> Value.has_type Type.tagged_pointer)
+        (value |> Objects.is_heap_number mem)
         (HeapNumber.load value mem |> HeapNumber.to_float64)
         (value |> TaggedSigned.to_float64)
     in
-    Bool.eq (to_float64 src_retval src_mem) (to_float64 tgt_retval tgt_mem)
+
+    Bool.ite
+      (Bool.ands
+         [
+           Number.is_number src_retval src_mem;
+           Number.is_number tgt_retval tgt_mem;
+         ])
+      (Bool.eq (to_float64 src_retval src_mem) (to_float64 tgt_retval tgt_mem))
+      (Bool.eq src_retval tgt_retval)
   in
 
   let assertion =
