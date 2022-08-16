@@ -11,7 +11,7 @@ let check_map_for_heap_number_or_oddball_to_float64 hint pval mem =
   | "Number" -> is_heap_number
   | "NumberOrBoolean" -> Bool.ors [ is_heap_number; is_boolean ]
   (* TODO: Implement MapInstanceType for NumberOrOddball *)
-  | "NumberOrOddball" -> Bool.tr
+  | "NumberOrOddball" -> Bool.fl
   | _ ->
       failwith (Printf.sprintf "CheckedTaggedToFloat64: Undefined hint %s" hint)
 
@@ -112,9 +112,9 @@ let number_modulus lval rval mem state =
   let value = Number.remainder lval rval mem in
   state |> State.update ~value
 
-let number_multiply lval rval next_bid mem state =
+let number_multiply lval rval mem state =
   let value = Number.multiply lval rval mem in
-  state |> State.update ~value ~next_bid ~mem
+  state |> State.update ~value ~mem
 
 let number_round pval mem state =
   let value = pval |> Number.round mem in
@@ -156,9 +156,9 @@ let speculative_number_modulus lval rval _eff control mem state =
 
 (* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
  * value: Float64(lval x rval) *)
-let speculative_number_multiply lval rval next_bid mem state =
+let speculative_number_multiply lval rval _eff control mem state =
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
-  state |> number_multiply lval rval next_bid mem |> State.update ~deopt
+  state |> number_multiply lval rval mem |> State.update ~deopt ~control
 
 (* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
  * value: Float64(lval - rval) *)
@@ -173,58 +173,31 @@ let speculative_number_subtract lval rval _effect control mem state =
  *    /\ IsAdditiveSafeInteger(lval) /\ IsAdditiveSafeInteger(rval))
  * assertion:
  *  value = ite well-defined (lval+rval) UB *)
-let speculative_safe_integer_add lval rval next_bid mem state =
-  let deopt =
-    let is_safe_integer value =
-      Bool.ors
-        [
-          value |> Value.has_type Type.tagged_signed;
-          Bool.ands
-            [
-              value |> Objects.is_heap_number mem;
-              HeapNumber.is_safe_integer (HeapNumber.load value mem);
-            ];
-        ]
-    in
-    Bool.not (Bool.ands [ is_safe_integer lval; is_safe_integer rval ])
-  in
-  let added_f64 =
-    let value_to_float64 value =
-      let number = HeapNumber.load value mem in
-      Bool.ite
-        (value |> Value.has_type Type.tagged_signed)
-        (TaggedSigned.to_float64 value)
-        (number.value |> Value.entype Type.float64)
-    in
-    let lf = lval |> value_to_float64 in
-    let rf = rval |> value_to_float64 in
-    Float64.add lf rf
-  in
-  let value, next_bid, mem =
-    added_f64 |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
-  in
-  state |> State.update ~value ~deopt ~next_bid ~mem
-
-(* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
- * value: Float64(lval - rval) *)
-let speculative_safe_integer_subtract lval rval next_bid mem state =
-  let lnum = HeapNumber.load lval mem in
-  let rnum = HeapNumber.load rval mem in
+let speculative_safe_integer_add lval rval control mem state =
   let deopt =
     Bool.not
       (Bool.ands
          [
-           lval |> Objects.is_heap_number mem;
-           rval |> Objects.is_heap_number mem;
-           HeapNumber.is_safe_integer lnum;
-           HeapNumber.is_safe_integer rnum;
+           Number.are_numbers [ lval; rval ] mem;
+           Number.are_safe_integer [ lval; rval ] mem;
          ])
   in
-  let value, next_bid, mem =
-    Float64.sub lnum.value rnum.value
-    |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
+  let value = Number.add lval rval mem in
+  state |> State.update ~value ~deopt ~control
+
+(* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
+ * value: Float64(lval - rval) *)
+let speculative_safe_integer_subtract lval rval control mem state =
+  let deopt =
+    Bool.not
+      (Bool.ands
+         [
+           Number.are_numbers [ lval; rval ] mem;
+           Number.are_safe_integer [ lval; rval ] mem;
+         ])
   in
-  state |> State.update ~value ~deopt ~next_bid ~mem
+  let value = Number.subtract lval rval mem in
+  state |> State.update ~value ~deopt ~control
 
 (* simplified: bitwise *)
 (* well-defined condition:
@@ -232,9 +205,8 @@ let speculative_safe_integer_subtract lval rval next_bid mem state =
  * assertion:
  *  value = ite well-defined (not pval) UB *)
 let boolean_not pval state =
-  let deopt = Bool.not (Bool.ands [ Value.has_type Type.bool pval ]) in
   let value = Bool.ite (Value.eq Value.fl pval) Value.tr Value.fl in
-  state |> State.update ~value ~deopt
+  state |> State.update ~value
 
 (* 2V -> 1V *)
 let number_shift_right_logical lval rval mem state =
@@ -402,20 +374,17 @@ let change_bit_to_tagged pval state =
   let value = Bool.ite (Value.eq Value.tr pval) true_constant false_constant in
   state |> State.update ~value
 
-let change_float64_to_tagged mode pval next_bid mem state =
+let change_float64_to_tagged mode pval mem state =
   let smi_cond =
     if mode = "check-for-minus-zero" then
       Bool.ands
         [ pval |> Float64.can_be_smi; Bool.not (pval |> Float64.is_minus_zero) ]
     else pval |> Float64.can_be_smi
   in
-  let heap_number, next_bid, mem =
-    pval |> HeapNumber.from_float64 next_bid (Bool.not smi_cond) mem
-  in
-  let value =
-    Bool.ite smi_cond (pval |> Float64.to_tagged_signed) heap_number
-  in
-  state |> State.update ~value ~next_bid ~mem
+  let smi = pval |> Float64.to_tagged_signed in
+  let heap_number = pval in
+  let value = Bool.ite smi_cond smi heap_number in
+  state |> State.update ~value ~mem
 
 (* assertion:
  * value = ite well-defined TaggedSigned(pval) UV *)
@@ -425,53 +394,40 @@ let change_int31_to_tagged_signed pval state =
 
 (* Assertion =
  *  value = ite well-defined (tagged(pval)) UB *)
-let change_int32_to_tagged pval next_bid mem state =
-  (* if pval is in smi range, value = TaggedSigned(pval+pval) *)
+let change_int32_to_tagged pval state =
   let is_in_smi_range = pval |> Int32.is_in_smi_range in
   let smi = pval |> Int32.to_tagged_signed in
-  let heap_number, next_bid, mem =
-    pval |> Int32.to_float64
-    |> HeapNumber.from_float64 next_bid (Bool.not is_in_smi_range) mem
-  in
+  let heap_number = pval |> Int32.to_float64 in
   let value = Bool.ite is_in_smi_range smi heap_number in
-  state |> State.update ~value ~next_bid ~mem
+  state |> State.update ~value
 
 (* assertion:
  *  value = ite well-defined (tagged(pval)) UB *)
-let change_int64_to_tagged pval next_bid mem state =
+let change_int64_to_tagged pval state =
   (* if pval is in smi range, value = TaggedSigned(pval+pval) *)
   let is_in_smi_range = Int64.is_in_smi_range pval in
   let smi = pval |> Int64.to_tagged_signed in
-  let heap_number, next_bid, mem =
-    pval |> Int64.to_float64
-    |> HeapNumber.from_float64 next_bid (Bool.not is_in_smi_range) mem
-  in
+  let heap_number = pval |> Int64.to_float64 in
   let value = Bool.ite is_in_smi_range smi heap_number in
-  state |> State.update ~value ~next_bid ~mem
+  state |> State.update ~value
 
 let change_tagged_signed_to_int64 pval state =
   let value = TaggedSigned.to_int64 pval in
   state |> State.update ~value
 
-let change_uint32_to_tagged pval next_bid mem state =
+let change_uint32_to_tagged pval state =
   let is_in_smi_range = Uint32.is_in_smi_range pval in
   let smi = Uint32.to_tagged_signed pval in
-  let number, next_bid, mem =
-    pval |> Uint32.to_float64
-    |> HeapNumber.from_float64 next_bid (Bool.not is_in_smi_range) mem
-  in
-  let value = Bool.ite is_in_smi_range smi number in
-  state |> State.update ~value ~next_bid ~mem
+  let heap_number = Uint32.to_float64 pval in
+  let value = Bool.ite is_in_smi_range smi heap_number in
+  state |> State.update ~value
 
-let change_uint64_to_tagged pval next_bid mem state =
+let change_uint64_to_tagged pval state =
   let is_in_smi_range = Uint64.is_in_smi_range pval in
   let smi = Uint64.to_tagged_signed pval in
-  let number, next_bid, mem =
-    pval |> Uint64.to_float64
-    |> HeapNumber.from_float64 next_bid (Bool.not is_in_smi_range) mem
-  in
-  let value = Bool.ite is_in_smi_range smi number in
-  state |> State.update ~value ~next_bid ~mem
+  let heap_number = pval |> Uint64.to_float64 in
+  let value = Bool.ite is_in_smi_range smi heap_number in
+  state |> State.update ~value
 
 (* Deoptimization condition =
  *  LostPrecision(pval)
@@ -479,7 +435,6 @@ let change_uint64_to_tagged pval next_bid mem state =
  *)
 let checked_float64_to_int32 hint pval state =
   let value32 = pval |> Float64.to_int32 in
-
   let deopt =
     let lost_precision =
       Bool.not (Float64.eq pval (value32 |> Int32.to_float64))
@@ -523,7 +478,13 @@ let checked_tagged_to_float64 hint pval mem state =
   let map_check =
     check_map_for_heap_number_or_oddball_to_float64 hint pval mem
   in
-  let deopt = Bool.ands [ is_tagged_pointer; Bool.not map_check ] in
+  let deopt =
+    Bool.ors
+      [
+        Bool.not (pval |> Value.has_type Type.any_tagged);
+        Bool.ands [ is_tagged_pointer; Bool.not map_check ];
+      ]
+  in
   let value =
     Bool.ite is_tagged_signed
       (TaggedSigned.to_float64 pval)
@@ -532,24 +493,28 @@ let checked_tagged_to_float64 hint pval mem state =
   state |> State.update ~value ~deopt
 
 let checked_tagged_to_tagged_pointer pval _checkpoint control state =
-  let deopt_cond =
-    Bool.ite (pval |> Value.has_type Type.tagged_signed) Value.tr Value.fl
-  in
-  state |> Common.deoptimize_if deopt_cond () () control
+  let deopt = pval |> Value.has_type Type.tagged_signed in
+  state |> State.update ~value:pval ~control ~deopt
 
-let checked_tagged_to_tagged_signed pval state =
+let checked_tagged_to_tagged_signed pval _checkpoint control state =
   let deopt = Bool.not (pval |> Value.has_type Type.tagged_signed) in
-  state |> State.update ~value:pval ~deopt
+  state |> State.update ~value:pval ~control ~deopt
 
 let checked_truncate_tagged_to_word32 hint pval mem state =
-  let is_tagged_signed = pval |> Value.has_type Type.tagged_signed in
-  let is_tagged_pointer = pval |> Value.has_type Type.tagged_pointer in
-  let map_check =
-    check_map_for_heap_number_or_oddball_to_float64 hint pval mem
+  let deopt =
+    let map_check =
+      check_map_for_heap_number_or_oddball_to_float64 hint pval mem
+    in
+    Bool.ors
+      [
+        Bool.not (pval |> Value.has_type Type.any_tagged);
+        Bool.ands
+          [ pval |> Value.has_type Type.tagged_pointer; Bool.not map_check ];
+      ]
   in
-  let deopt = Bool.ands [ is_tagged_pointer; Bool.not map_check ] in
   let value =
-    Bool.ite is_tagged_signed
+    Bool.ite
+      (pval |> Value.has_type Type.tagged_signed)
       (TaggedSigned.to_int32 pval)
       (HeapNumber.load pval mem |> HeapNumber.to_float64 |> Float64.to_int32)
   in
@@ -564,23 +529,16 @@ let number_to_boolean pval mem state =
   let value = pval |> Number.to_boolean mem in
   state |> State.update ~value
 
-let number_to_int32 pval next_bid mem state =
-  let deopt = Bool.not (pval |> Objects.is_heap_number mem) in
-  (* https://tc39.es/ecma262/#sec-toint32 *)
-  let value, next_bid, mem =
-    let num = HeapNumber.load pval mem in
-    let i = num |> HeapNumber.to_float64 |> Float64.to_int32 in
-    i |> Int32.to_float64
-    |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
-  in
-  state |> State.update ~value ~deopt ~next_bid ~mem
+let number_to_int32 pval mem state =
+  let value = pval |> Number.to_int32 mem in
+  state |> State.update ~value
 
 (* pure: 1V -> 1V *)
 let number_to_uint32 pval mem state =
   let value = pval |> Number.to_uint32 mem in
   state |> State.update ~value
 
-let speculative_to_number pval next_bid mem state =
+let speculative_to_number pval () control mem state =
   (* assumption: [pval] is heap number or smi or undefined or boolean *)
   let deopt =
     Bool.not
@@ -594,7 +552,7 @@ let speculative_to_number pval next_bid mem state =
   in
   let rf = state.State.register_file in
   let true_constant = RegisterFile.find "true" rf in
-  let value, next_bid, mem =
+  let value =
     Bool.ite
       (pval |> Value.has_type Type.tagged_signed)
       (TaggedSigned.to_float64 pval)
@@ -605,14 +563,12 @@ let speculative_to_number pval next_bid mem state =
             (pval |> Objects.is_undefined mem)
             Float64.nan
             (Bool.ite (Bool.eq pval true_constant) Float64.one Float64.zero)))
-    |> HeapNumber.from_float64 next_bid (Bool.not deopt) mem
   in
-
-  state |> State.update ~value ~next_bid ~mem ~deopt
+  state |> State.update ~value ~deopt ~control
 
 let to_boolean pval mem (state : State.t) =
   let rf = state.register_file in
-  let uif =
+  let _uif =
     let value_sort = BV.mk_sort ctx Value.len in
     Z3.FuncDecl.mk_func_decl_s ctx "to_boolean" [ value_sort ] Bool.mk_sort
   in
@@ -637,20 +593,21 @@ let to_boolean pval mem (state : State.t) =
                   (pval |> Constant.is_false_cst rf)
                   Value.fl
                   (Bool.ite
+                     (* empty string *)
                      (pval |> Constant.is_empty_string rf)
                      Value.fl
+                     (* null *)
                      (Bool.ite
                         (pval |> Constant.is_null rf)
                         Value.fl
-                        (Bool.ite
-                           (Z3.FuncDecl.apply uif [ pval ])
-                           Value.tr Value.fl)))))))
+                        (* otherwise, return true: can be improved *)
+                        Value.tr))))))
   in
   state |> State.update ~value
 
 let truncate_tagged_to_bit pval mem (state : State.t) =
   let rf = state.register_file in
-  let uif =
+  let _uif =
     let value_sort = BV.mk_sort ctx Value.len in
     Z3.FuncDecl.mk_func_decl_s ctx "to_boolean" [ value_sort ] Bool.mk_sort
   in
@@ -683,16 +640,15 @@ let truncate_tagged_to_bit pval mem (state : State.t) =
                   (* if [pval] is false, return false *)
                   (pval |> Constant.is_false_cst rf)
                   Value.fl
-                  (* currently only handle the undefined, boolean and number *)
+                  (* if [pval] is empty string, return false *)
                   (Bool.ite
                      (pval |> Constant.is_empty_string rf)
                      Value.fl
+                     (* if [pval] is null, return false *)
                      (Bool.ite
                         (pval |> Constant.is_null rf)
-                        Value.fl
-                        (Bool.ite
-                           (Z3.FuncDecl.apply uif [ pval ])
-                           Value.tr Value.fl)))))))
+                        Value.fl (* otherwise return true: can be improved *)
+                        Value.tr))))))
   in
   state |> State.update ~value
 

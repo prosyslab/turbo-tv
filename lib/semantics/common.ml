@@ -28,15 +28,8 @@ let external_constant c state =
 
 (* behavior: value=c *)
 let number_constant c state =
-  let bid = State.next_bid state in
-  let next_bid, ptr = HeapNumber.allocate bid in
-  let mem =
-    State.memory state
-    |> HeapNumber.store ptr (HeapNumber.from_number_string c) Bool.tr
-  in
-
-  let value = ptr in
-  state |> State.update ~value ~next_bid ~mem
+  let value = c |> BitVecVal.from_f64string |> Value.entype Type.float64 in
+  state |> State.update ~value
 
 (* common: control *)
 (* retrieve the value at [idx] from [incoming]
@@ -90,9 +83,7 @@ let merge conds state =
   let control = Bool.ors conds in
   state |> State.update ~control
 
-let phi incomings repr ctrls state =
-  (* select one of types candidated by repr *)
-  let ty = Type.from_repr repr |> List.hd in
+let phi incomings ctrls state =
   let rec mk_value values conds =
     match values with
     | [ h ] -> Bool.ite (List.hd conds) h Value.empty
@@ -102,15 +93,7 @@ let phi incomings repr ctrls state =
     (* length of incoming is larger than 1 *)
     | _ -> failwith "unreachable"
   in
-
-  (* settle [incoming_value] to the 'tagged signed' type or 'tagged pointer type' if [ty] is 'any tagged' *)
-  let wd_value =
-    let incoming_value = mk_value incomings ctrls in
-    if ty = Type.any_tagged then AnyTagged.settle incoming_value
-    else incoming_value |> Value.cast ty
-  in
-
-  let value = wd_value in
+  let value = mk_value incomings ctrls in
   state |> State.update ~value
 
 let select cond tr fl state =
@@ -152,21 +135,18 @@ let parameter param state =
   let value = param in
   state |> State.update ~value
 
-let return return_value return_control next_bid mem state =
-  let heap_number, next_bid, mem =
-    return_value |> HeapNumber.from_float64 next_bid Bool.tr mem
-  in
+let return return_value return_control state =
   (* return heap number or smi or bool *)
   let value =
     Bool.ite
       (return_value |> Value.has_type Type.float64)
-      heap_number
+      return_value
       (Bool.ite
          (return_value |> Value.has_type Type.tagged_pointer)
          return_value
          (return_value |> Value.cast Type.tagged_signed))
   in
-  state |> State.update ~value ~next_bid ~mem ~control:return_control
+  state |> State.update ~value ~control:return_control
 
 let start state = state |> State.update ~control:Bool.tr
 
@@ -174,7 +154,7 @@ let start state = state |> State.update ~control:Bool.tr
 let finish_region pval state = state |> State.update ~value:pval
 
 (* temporary *)
-let js_stack_check = start
+let js_stack_check _eff control state = state |> State.update ~control
 
 let call state = state |> State.update ~value:Value.tr ~control:Bool.tr
 

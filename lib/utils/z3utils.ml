@@ -208,9 +208,9 @@ module Float = struct
 
   let is_positive exp = Fl.mk_is_positive ctx exp
 
-  let is_zero exp = Fl.mk_is_zero ctx exp
+  let is_zero exp = Bool.ands [ is_positive exp; Fl.mk_is_zero ctx exp ]
 
-  let is_minus_zero exp = Bool.ands [ is_negative exp; is_zero exp ]
+  let is_minus_zero exp = Bool.ands [ is_negative exp; Fl.mk_is_zero ctx exp ]
 
   let is_nan exp = Fl.mk_is_nan ctx exp
 

@@ -27,7 +27,6 @@ let encode program
        register_file = rf;
        memory = mem;
        params;
-       next_bid;
        _;
      } as state) =
   let nop state = state in
@@ -164,15 +163,12 @@ let encode program
           let incoming_ctrl_tokens =
             ControlFile.find_all (incomings_id |> Operands.id_of_all) cf
           in
-          let repr =
-            Operands.const_of_nth rev 1 |> MachineType.Repr.of_string
-          in
           let incoming_values =
             RegisterFile.find_all
-              (rev |> List.tl |> List.tl |> List.rev |> Operands.id_of_all)
+              (rev |> List.tl |> List.rev |> Operands.id_of_all)
               rf
           in
-          phi incoming_values repr incoming_ctrl_tokens
+          phi incoming_values incoming_ctrl_tokens
       | Dead -> nop
       | _ ->
           failwith
@@ -228,7 +224,7 @@ let encode program
       let cid = Operands.id_of_nth operands 1 in
       let retval = RegisterFile.find pid rf in
       let retctrl = ControlFile.find cid cf in
-      return retval retctrl next_bid mem
+      return retval retctrl
   | End ->
       let retvals = RegisterFile.find_all (operands |> Operands.id_of_all) rf in
       let retctrls = ControlFile.find_all (operands |> Operands.id_of_all) cf in
@@ -239,7 +235,11 @@ let encode program
       let pval = RegisterFile.find pid rf in
       finish_region pval
   (* JS: comparision *)
-  | JSStackCheck -> js_stack_check
+  | JSStackCheck ->
+      let _eid = Operands.id_of_nth operands 0 in
+      let cid = Operands.id_of_nth operands 1 in
+      let ctrl = ControlFile.find cid cf in
+      js_stack_check () ctrl
   (* simplified: numeric *)
   | CheckedInt32Add -> encode_checked_simplified_binary checked_int32_add
   | CheckedInt32Div -> encode_checked_simplified_binary checked_int32_div
@@ -298,7 +298,7 @@ let encode program
       let rpid = Operands.id_of_nth operands 1 in
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
-      number_multiply lval rval next_bid mem
+      number_multiply lval rval mem
   | NumberModulus ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
@@ -352,9 +352,11 @@ let encode program
   | SpeculativeNumberMultiply ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
+      let ctrl_id = Operands.id_of_nth operands 3 in
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
-      speculative_number_multiply lval rval next_bid mem
+      let ctrl = ControlFile.find ctrl_id cf in
+      speculative_number_multiply lval rval () ctrl mem
   | SpeculativeNumberSubtract ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
@@ -366,15 +368,19 @@ let encode program
   | SpeculativeSafeIntegerAdd ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
+      let cid = Operands.id_of_nth operands 3 in
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
-      speculative_safe_integer_add lval rval next_bid mem
+      let ctrl = ControlFile.find cid cf in
+      speculative_safe_integer_add lval rval ctrl mem
   | SpeculativeSafeIntegerSubtract ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
+      let cid = Operands.id_of_nth operands 3 in
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
-      speculative_safe_integer_subtract lval rval next_bid mem
+      let ctrl = ControlFile.find cid cf in
+      speculative_safe_integer_subtract lval rval ctrl mem
   (* simplified: bitwise *)
   | BooleanNot ->
       let pid = Operands.id_of_nth operands 0 in
@@ -585,7 +591,7 @@ let encode program
       let mode = Operands.const_of_nth operands 0 in
       let pid = Operands.id_of_nth operands 1 in
       let pval = RegisterFile.find pid rf in
-      change_float64_to_tagged mode pval next_bid mem
+      change_float64_to_tagged mode pval mem
   | ChangeInt31ToTaggedSigned ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -593,11 +599,11 @@ let encode program
   | ChangeInt32ToTagged ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
-      change_int32_to_tagged pval next_bid mem
+      change_int32_to_tagged pval
   | ChangeInt64ToTagged ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
-      change_int64_to_tagged pval next_bid mem
+      change_int64_to_tagged pval
   | ChangeTaggedSignedToInt64 ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -605,11 +611,11 @@ let encode program
   | ChangeUint32ToTagged ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
-      change_uint32_to_tagged pval next_bid mem
+      change_uint32_to_tagged pval
   | ChangeUint64ToTagged ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
-      change_uint64_to_tagged pval next_bid mem
+      change_uint64_to_tagged pval
   | CheckedFloat64ToInt32 ->
       let hint = Operands.const_of_nth operands 0 in
       let pid = Operands.id_of_nth operands 1 in
@@ -626,14 +632,18 @@ let encode program
       checked_tagged_to_float64 hint pval mem
   | CheckedTaggedToTaggedPointer ->
       let pid = Operands.id_of_nth operands 0 in
+      let _eid = Operands.id_of_nth operands 1 in
       let cid = Operands.id_of_nth operands 2 in
       let pval = RegisterFile.find pid rf in
       let ctrl = ControlFile.find cid cf in
       checked_tagged_to_tagged_pointer pval () ctrl
   | CheckedTaggedToTaggedSigned ->
       let pid = Operands.id_of_nth operands 0 in
+      let _eid = Operands.id_of_nth operands 1 in
+      let cid = Operands.id_of_nth operands 2 in
       let pval = RegisterFile.find pid rf in
-      checked_tagged_to_tagged_signed pval
+      let ctrl = ControlFile.find cid cf in
+      checked_tagged_to_tagged_signed pval () ctrl
   | CheckedTruncateTaggedToWord32 ->
       let hint = Operands.const_of_nth operands 0 in
       let pid = Operands.id_of_nth operands 1 in
@@ -650,15 +660,18 @@ let encode program
   | NumberToInt32 ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
-      number_to_int32 pval next_bid mem
+      number_to_int32 pval mem
   | NumberToUint32 ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       number_to_uint32 pval mem
   | SpeculativeToNumber ->
       let pid = Operands.id_of_nth operands 0 in
+      let _eid = Operands.id_of_nth operands 1 in
+      let cid = Operands.id_of_nth operands 2 in
       let pval = RegisterFile.find pid rf in
-      speculative_to_number pval next_bid mem
+      let ctrl = ControlFile.find cid cf in
+      speculative_to_number pval () ctrl mem
   | ToBoolean ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -845,12 +858,12 @@ let propagate program state =
             in
             let incoming_ubs =
               UBFile.find_all
-                (rev |> List.tl |> List.tl |> List.rev |> Operands.id_of_all)
+                (rev |> List.tl |> List.rev |> Operands.id_of_all)
                 uf
             in
             let incoming_deopts =
               DeoptFile.find_all
-                (rev |> List.tl |> List.tl |> List.rev |> Operands.id_of_all)
+                (rev |> List.tl |> List.rev |> Operands.id_of_all)
                 df
             in
             ( Bool.ors
@@ -973,23 +986,29 @@ let run nparams src_program tgt_program =
   let retval_is_same =
     let src_retval = State.retval src_state in
     let tgt_retval = State.retval tgt_state in
-    let src_mem = State.memory src_state in
-    let tgt_mem = State.memory tgt_state in
-    (* assume if return value is number, it is smi or heap number. *)
-    let to_float64 value mem =
-      Bool.ite
-        (value |> Objects.is_heap_number mem)
-        (HeapNumber.load value mem |> HeapNumber.to_float64)
-        (value |> TaggedSigned.to_float64)
-    in
 
+    (* assume if return value is number, it is smi or heap number(float64). *)
+    let to_float64 value =
+      Bool.ite
+        (value |> Value.has_type Type.tagged_signed)
+        (value |> TaggedSigned.to_float64)
+        value
+    in
     Bool.ite
       (Bool.ands
          [
-           Number.is_number src_retval src_mem;
-           Number.is_number tgt_retval tgt_mem;
+           Bool.ors
+             [
+               src_retval |> Value.has_type Type.tagged_signed;
+               src_retval |> Value.has_type Type.float64;
+             ];
+           Bool.ors
+             [
+               tgt_retval |> Value.has_type Type.tagged_signed;
+               tgt_retval |> Value.has_type Type.float64;
+             ];
          ])
-      (Bool.eq (to_float64 src_retval src_mem) (to_float64 tgt_retval tgt_mem))
+      (Bool.eq (to_float64 src_retval) (to_float64 tgt_retval))
       (Bool.eq src_retval tgt_retval)
   in
 

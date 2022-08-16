@@ -55,6 +55,20 @@ let to_boolean mem number =
        ])
     Value.fl Value.tr
 
+let to_int32 mem number =
+  let number_f64 = number |> to_float64 mem in
+  (* https://tc39.es/ecma262/#sec-toint32 *)
+  Bool.ite
+    (number |> Value.has_type Type.int32)
+    number
+    (Bool.ite
+       (number |> Value.has_type Type.tagged_signed)
+       (number |> TaggedSigned.to_int32)
+       (Bool.ite
+          (number |> Value.has_type Type.uint32)
+          (number |> Uint32.to_int Type.int32 32)
+          (number_f64 |> Float64.to_int32)))
+
 let to_uint32 mem number =
   let number_f64 = number |> to_float64 mem in
   (* https://tc39.es/ecma262/#sec-touint32 *)
@@ -84,6 +98,12 @@ let is_integer mem number =
        (number |> Value.has_type Type.float64)
        (number |> Float64.is_integer)
        (heap_number |> HeapNumber.is_integer))
+
+let is_safe_integer mem number =
+  number |> to_float64 mem |> Float64.is_safe_integer
+
+let are_safe_integer numbers mem =
+  Bool.ands (numbers |> List.rev_map (fun value -> value |> is_safe_integer mem))
 
 let is_minus_zero mem number =
   let n_f64 = number |> to_float64 mem in
@@ -351,11 +371,17 @@ let bitwise op x y mem =
   (* https://tc39.es/ecma262/#sec-numberbitwiseop *)
   let lnum = x |> to_float64 mem |> Float64.to_int32 in
   let rnum = y |> to_float64 mem |> Float64.to_int32 in
-  match op with
-  | "&" -> Word32.and_ lnum rnum
-  | "|" -> Word32.or_ lnum rnum
-  | "^" -> Word32.xor lnum rnum
-  | _ -> failwith "unreachable"
+  let res =
+    match op with
+    | "&" -> Word32.and_ lnum rnum
+    | "|" -> Word32.or_ lnum rnum
+    | "^" -> Word32.xor lnum rnum
+    | _ -> failwith "unreachable"
+  in
+  Bool.ite
+    (res |> Int32.is_in_smi_range)
+    (res |> Int32.to_tagged_signed)
+    (res |> Int32.to_float64)
 
 let unsigned_right_shift x y mem =
   (* https://tc39.es/ecma262/#sec-numeric-types-number-unsignedRightShift *)
@@ -364,7 +390,11 @@ let unsigned_right_shift x y mem =
   let shift_count =
     Uint32.modulo rnum (32 |> Value.from_int |> Value.cast Type.uint32)
   in
-  Uint32.lshr lnum shift_count
+  let res = Uint32.lshr lnum shift_count in
+  Bool.ite
+    (res |> Uint32.is_in_smi_range)
+    (res |> Uint32.to_tagged_signed)
+    (res |> Uint32.to_float64)
 
 (* methods *)
 let max lnum rnum mem =
