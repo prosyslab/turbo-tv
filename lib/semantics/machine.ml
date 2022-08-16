@@ -231,19 +231,18 @@ let uint64_less_than_or_equal lval rval state =
  * assertion:
  *   mem = ite well-defined Store(ptr, pos, repr, mem) mem *)
 let store ptr pos repr value mem state =
+  let deopt = Bool.not (Value.has_type Type.tagged_pointer ptr) in
   let ub =
-    let ptr_is_tagged_pointer = Value.has_type Type.tagged_pointer ptr in
     let can_access = TaggedPointer.can_access_as pos repr ptr in
-    (* only when value is tagged pointer, check boundary *)
-    Bool.ands [ ptr_is_tagged_pointer; Bool.not can_access ]
+    Bool.not can_access
   in
   let mem =
     mem
     |> Memory.store_as
          (TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer)
-         repr (Bool.not ub) value
+         repr (Bool.not deopt) value
   in
-  state |> State.update ~mem ~ub
+  state |> State.update ~mem ~ub ~deopt
 
 (* well-defined condition:
  *   IsPointer(ptr) \/
@@ -251,11 +250,10 @@ let store ptr pos repr value mem state =
  * assertion:
  *   value = (Mem[pos+size]) *)
 let load ptr pos repr mem state =
+  let deopt = Bool.not (Value.has_type Type.tagged_pointer ptr) in
   let ub =
-    let ptr_is_tagged_pointer = Value.has_type Type.tagged_pointer ptr in
     let can_access = TaggedPointer.can_access_as pos repr ptr in
-    (* only when value is tagged pointer, check boundary *)
-    Bool.ands [ ptr_is_tagged_pointer; Bool.not can_access ]
+    Bool.not can_access
   in
   (* Some repr can be mapped to more than one type.
      e.g. Repr.Word8-> [Type.int8; Type.uint8]
@@ -268,7 +266,7 @@ let load ptr pos repr mem state =
     |> BitVec.zero_extend (64 - Repr.width_of repr)
     |> Value.entype ty
   in
-  state |> State.update ~value ~ub
+  state |> State.update ~value ~ub ~deopt
 
 (* machine: type-conversion *)
 let bitcast_float32_to_int32 v state =
@@ -311,11 +309,11 @@ let change_int64_to_float64 pval state =
   state |> State.update ~value
 
 let change_uint32_to_float64 pval state =
-  let value = pval |> Value.cast Type.float64 in
+  let value = pval |> Uint32.to_float64 in
   state |> State.update ~value
 
 let change_uint32_to_uint64 pval state =
-  let value = pval |> Value.cast Type.uint64 in
+  let value = pval |> Uint32.to_int Type.uint64 64 in
   state |> State.update ~value
 
 let truncate_float64_to_word32 pval state =
