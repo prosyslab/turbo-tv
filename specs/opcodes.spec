@@ -535,7 +535,7 @@ JSSetNamedProperty,
 JSShiftLeft,
 JSShiftRight,
 JSShiftRightLogical,
-JSStackCheck,b1
+JSStackCheck,e1,c1
 JSStoreContext,
 JSStoreGlobal,
 JSStoreInArrayLiteral,
@@ -661,7 +661,7 @@ ObjectIsUndetectable,
 ObjectState,
 OsrValue,
 Parameter,b1
-Phi,vv,b1,c1
+Phi,vv,c1
 PlainPrimitiveToFloat64,
 PlainPrimitiveToNumber,
 PlainPrimitiveToWord32,
@@ -716,14 +716,14 @@ SpeculativeNumberEqual,v1,v2
 SpeculativeNumberLessThan,v1,v2,e1,c1
 SpeculativeNumberLessThanOrEqual,v1,v2,e1,c1
 SpeculativeNumberModulus,v1,v2,e1,c1
-SpeculativeNumberMultiply,v1,v2
+SpeculativeNumberMultiply,v1,v2,e1,c1
 SpeculativeNumberShiftLeft,
 SpeculativeNumberShiftRight,
 SpeculativeNumberShiftRightLogical,v1,v2,e1,c1
 SpeculativeNumberSubtract,v1,v2,e1,c1
-SpeculativeSafeIntegerAdd,v1,v2
-SpeculativeSafeIntegerSubtract,v1,v2
-SpeculativeToNumber,v1
+SpeculativeSafeIntegerAdd,v1,v2,e1,c1
+SpeculativeSafeIntegerSubtract,v1,v2,e1,c1
+SpeculativeToNumber,v1,e1,c1
 StackPointerGreaterThan,v1
 StackSlot,
 Start,

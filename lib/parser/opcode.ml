@@ -20,6 +20,7 @@ type kind =
   | CV
   | V1V2
   | V1V2C1
+  | E1C1
   | V1V2B1
   | B1B2B4V1V2
   | B4
@@ -27,7 +28,7 @@ type kind =
   | B1V2V3V4
   | V3
   | V4
-  | VVB1C1
+  | VVC1
   | VV
   | V2C1
   | V1V2V3
@@ -35,7 +36,6 @@ type kind =
   | B1B2B4V1V2V3E1C1
   | V1B2B4V2
   | C1E1
-  | E1C1
   | B1V1V2
   | Empty
 
@@ -746,6 +746,7 @@ type t =
   | CheckedTaggedToTaggedSigned
   | CheckedUint32ToInt32
   | Deoptimize
+  | SpeculativeToNumber
   (* v1 *)
   | BitcastFloat32ToInt32
   | BitcastFloat64ToInt64
@@ -791,7 +792,6 @@ type t =
   | ObjectIsMinusZero
   | ObjectIsNaN
   | RoundFloat64ToInt32
-  | SpeculativeToNumber
   | StackPointerGreaterThan
   | ToBoolean
   | TruncateFloat64ToWord32
@@ -814,7 +814,6 @@ type t =
   | HeapConstant
   | Int32Constant
   | Int64Constant
-  | JSStackCheck
   | NumberConstant
   | Parameter
   (* b1v1 *)
@@ -832,8 +831,11 @@ type t =
   | SpeculativeNumberLessThan
   | SpeculativeNumberLessThanOrEqual
   | SpeculativeNumberModulus
+  | SpeculativeNumberMultiply
   | SpeculativeNumberShiftRightLogical
   | SpeculativeNumberSubtract
+  | SpeculativeSafeIntegerAdd
+  | SpeculativeSafeIntegerSubtract
   (* b1v1v2e1c1 *)
   | CheckedInt32Mul
   (* b1v1e1c1 *)
@@ -886,9 +888,6 @@ type t =
   | SpeculativeNumberBitwiseOr
   | SpeculativeNumberBitwiseXor
   | SpeculativeNumberEqual
-  | SpeculativeNumberMultiply
-  | SpeculativeSafeIntegerAdd
-  | SpeculativeSafeIntegerSubtract
   | Uint32LessThan
   | Uint32LessThanOrEqual
   | Uint64LessThan
@@ -907,6 +906,9 @@ type t =
   | Int32MulWithOverflow
   | Int32SubWithOverflow
   | Uint32Div
+  (* e1c1 *)
+  | JSStackCheck
+  | Unreachable
   (* v1v2b1 *)
   | Load
   (* b1b2b4v1v2 *)
@@ -915,7 +917,7 @@ type t =
   | LoadField
   (* b1v2v3v4 *)
   | LoadTypedElement
-  (* vvb1c1 *)
+  (* vvc1 *)
   | Phi
   (* v2c1 *)
   | Return
@@ -929,8 +931,6 @@ type t =
   | StoreField
   (* c1e1 *)
   | Throw
-  (* e1c1 *)
-  | Unreachable
   (* b1v1v2 *)
   | Word32Sar
   | Word64Sar
@@ -1119,7 +1119,8 @@ let get_kind opcode =
   | Word64Select | Word64Shr | Word64Xor ->
       UNIMPL
   | Allocate | CheckIf | CheckedInt64ToInt32 | CheckedTaggedToTaggedPointer
-  | CheckedTaggedToTaggedSigned | CheckedUint32ToInt32 | Deoptimize ->
+  | CheckedTaggedToTaggedSigned | CheckedUint32ToInt32 | Deoptimize
+  | SpeculativeToNumber ->
       V1E1C1
   | BitcastFloat32ToInt32 | BitcastFloat64ToInt64 | BitcastTaggedToWord
   | BitcastWord32ToWord64 | BitcastWordToTagged | BooleanNot | ChangeBitToTagged
@@ -1133,22 +1134,23 @@ let get_kind opcode =
   | NumberExpm1 | NumberFloor | NumberIsMinusZero | NumberIsNaN | NumberRound
   | NumberSign | NumberSin | NumberToBoolean | NumberToInt32 | NumberToUint32
   | NumberTrunc | ObjectIsMinusZero | ObjectIsNaN | RoundFloat64ToInt32
-  | SpeculativeToNumber | StackPointerGreaterThan | ToBoolean
-  | TruncateFloat64ToWord32 | TruncateInt64ToInt32 | TruncateTaggedToBit
-  | Word32ReverseBytes | Word64ReverseBytes ->
+  | StackPointerGreaterThan | ToBoolean | TruncateFloat64ToWord32
+  | TruncateInt64ToInt32 | TruncateTaggedToBit | Word32ReverseBytes
+  | Word64ReverseBytes ->
       V1
   | IfFalse | IfTrue -> C1
   | AllocateRaw -> V1C1
   | Branch | FinishRegion -> V1E1
   | Call | ExternalConstant | Float64Constant | HeapConstant | Int32Constant
-  | Int64Constant | JSStackCheck | NumberConstant | Parameter ->
+  | Int64Constant | NumberConstant | Parameter ->
       B1
   | ChangeFloat64ToTagged | CheckedFloat64ToInt32 | Projection -> B1V1
   | CheckedInt32Add | CheckedInt32Div | CheckedInt32Sub | CheckedUint32Div
   | DeoptimizeIf | DeoptimizeUnless | SpeculativeNumberDivide
   | SpeculativeNumberLessThan | SpeculativeNumberLessThanOrEqual
-  | SpeculativeNumberModulus | SpeculativeNumberShiftRightLogical
-  | SpeculativeNumberSubtract ->
+  | SpeculativeNumberModulus | SpeculativeNumberMultiply
+  | SpeculativeNumberShiftRightLogical | SpeculativeNumberSubtract
+  | SpeculativeSafeIntegerAdd | SpeculativeSafeIntegerSubtract ->
       V1V2E1C1
   | CheckedInt32Mul -> B1V1V2E1C1
   | CheckedTaggedToFloat64 | CheckedTruncateTaggedToWord32 -> B1V1E1C1
@@ -1164,27 +1166,25 @@ let get_kind opcode =
   | NumberShiftRightLogical | NumberSubtract | ReferenceEqual | SameValue
   | SpeculativeNumberAdd | SpeculativeNumberBitwiseAnd
   | SpeculativeNumberBitwiseOr | SpeculativeNumberBitwiseXor
-  | SpeculativeNumberEqual | SpeculativeNumberMultiply
-  | SpeculativeSafeIntegerAdd | SpeculativeSafeIntegerSubtract | Uint32LessThan
-  | Uint32LessThanOrEqual | Uint64LessThan | Uint64LessThanOrEqual | Word32And
-  | Word32Equal | Word32Or | Word32Shl | Word32Shr | Word32Xor | Word64Equal
-  | Word64Shl ->
+  | SpeculativeNumberEqual | Uint32LessThan | Uint32LessThanOrEqual
+  | Uint64LessThan | Uint64LessThanOrEqual | Word32And | Word32Equal | Word32Or
+  | Word32Shl | Word32Shr | Word32Xor | Word64Equal | Word64Shl ->
       V1V2
   | Int32AddWithOverflow | Int32Div | Int32MulWithOverflow
   | Int32SubWithOverflow | Uint32Div ->
       V1V2C1
+  | JSStackCheck | Unreachable -> E1C1
   | Load -> V1V2B1
   | LoadElement -> B1B2B4V1V2
   | LoadField -> B1B2B4V1
   | LoadTypedElement -> B1V2V3V4
-  | Phi -> VVB1C1
+  | Phi -> VVC1
   | Return -> V2C1
   | Select -> V1V2V3
   | Store -> V1V2B1V3
   | StoreElement -> B1B2B4V1V2V3E1C1
   | StoreField -> V1B2B4V2
   | Throw -> C1E1
-  | Unreachable -> E1C1
   | Word32Sar | Word64Sar -> B1V1V2
   | Empty -> Empty
 
@@ -1208,6 +1208,7 @@ let split_kind kind =
   | CV -> [ CV ]
   | V1V2 -> [ V1; V2 ]
   | V1V2C1 -> [ V1; V2; C1 ]
+  | E1C1 -> [ E1; C1 ]
   | V1V2B1 -> [ V1; V2; B1 ]
   | B1B2B4V1V2 -> [ B1; B2; B4; V1; V2 ]
   | B4 -> [ B4 ]
@@ -1215,7 +1216,7 @@ let split_kind kind =
   | B1V2V3V4 -> [ B1; V2; V3; V4 ]
   | V3 -> [ V3 ]
   | V4 -> [ V4 ]
-  | VVB1C1 -> [ VV; B1; C1 ]
+  | VVC1 -> [ VV; C1 ]
   | VV -> [ VV ]
   | V2C1 -> [ V2; C1 ]
   | V1V2V3 -> [ V1; V2; V3 ]
@@ -1223,7 +1224,6 @@ let split_kind kind =
   | B1B2B4V1V2V3E1C1 -> [ B1; B2; B4; V1; V2; V3; E1; C1 ]
   | V1B2B4V2 -> [ V1; B2; B4; V2 ]
   | C1E1 -> [ C1; E1 ]
-  | E1C1 -> [ E1; C1 ]
   | B1V1V2 -> [ B1; V1; V2 ]
   | Empty -> [ Empty ]
 
@@ -1935,6 +1935,7 @@ let of_str str =
   | "CheckedTaggedToTaggedSigned" -> CheckedTaggedToTaggedSigned
   | "CheckedUint32ToInt32" -> CheckedUint32ToInt32
   | "Deoptimize" -> Deoptimize
+  | "SpeculativeToNumber" -> SpeculativeToNumber
   | "BitcastFloat32ToInt32" -> BitcastFloat32ToInt32
   | "BitcastFloat64ToInt64" -> BitcastFloat64ToInt64
   | "BitcastTaggedToWord" -> BitcastTaggedToWord
@@ -1979,7 +1980,6 @@ let of_str str =
   | "ObjectIsMinusZero" -> ObjectIsMinusZero
   | "ObjectIsNaN" -> ObjectIsNaN
   | "RoundFloat64ToInt32" -> RoundFloat64ToInt32
-  | "SpeculativeToNumber" -> SpeculativeToNumber
   | "StackPointerGreaterThan" -> StackPointerGreaterThan
   | "ToBoolean" -> ToBoolean
   | "TruncateFloat64ToWord32" -> TruncateFloat64ToWord32
@@ -1998,7 +1998,6 @@ let of_str str =
   | "HeapConstant" -> HeapConstant
   | "Int32Constant" -> Int32Constant
   | "Int64Constant" -> Int64Constant
-  | "JSStackCheck" -> JSStackCheck
   | "NumberConstant" -> NumberConstant
   | "Parameter" -> Parameter
   | "ChangeFloat64ToTagged" -> ChangeFloat64ToTagged
@@ -2014,8 +2013,11 @@ let of_str str =
   | "SpeculativeNumberLessThan" -> SpeculativeNumberLessThan
   | "SpeculativeNumberLessThanOrEqual" -> SpeculativeNumberLessThanOrEqual
   | "SpeculativeNumberModulus" -> SpeculativeNumberModulus
+  | "SpeculativeNumberMultiply" -> SpeculativeNumberMultiply
   | "SpeculativeNumberShiftRightLogical" -> SpeculativeNumberShiftRightLogical
   | "SpeculativeNumberSubtract" -> SpeculativeNumberSubtract
+  | "SpeculativeSafeIntegerAdd" -> SpeculativeSafeIntegerAdd
+  | "SpeculativeSafeIntegerSubtract" -> SpeculativeSafeIntegerSubtract
   | "CheckedInt32Mul" -> CheckedInt32Mul
   | "CheckedTaggedToFloat64" -> CheckedTaggedToFloat64
   | "CheckedTruncateTaggedToWord32" -> CheckedTruncateTaggedToWord32
@@ -2063,9 +2065,6 @@ let of_str str =
   | "SpeculativeNumberBitwiseOr" -> SpeculativeNumberBitwiseOr
   | "SpeculativeNumberBitwiseXor" -> SpeculativeNumberBitwiseXor
   | "SpeculativeNumberEqual" -> SpeculativeNumberEqual
-  | "SpeculativeNumberMultiply" -> SpeculativeNumberMultiply
-  | "SpeculativeSafeIntegerAdd" -> SpeculativeSafeIntegerAdd
-  | "SpeculativeSafeIntegerSubtract" -> SpeculativeSafeIntegerSubtract
   | "Uint32LessThan" -> Uint32LessThan
   | "Uint32LessThanOrEqual" -> Uint32LessThanOrEqual
   | "Uint64LessThan" -> Uint64LessThan
@@ -2083,6 +2082,8 @@ let of_str str =
   | "Int32MulWithOverflow" -> Int32MulWithOverflow
   | "Int32SubWithOverflow" -> Int32SubWithOverflow
   | "Uint32Div" -> Uint32Div
+  | "JSStackCheck" -> JSStackCheck
+  | "Unreachable" -> Unreachable
   | "Load" -> Load
   | "LoadElement" -> LoadElement
   | "LoadField" -> LoadField
@@ -2094,7 +2095,6 @@ let of_str str =
   | "StoreElement" -> StoreElement
   | "StoreField" -> StoreField
   | "Throw" -> Throw
-  | "Unreachable" -> Unreachable
   | "Word32Sar" -> Word32Sar
   | "Word64Sar" -> Word64Sar
   | _ -> raise Invalid_opcode
@@ -2805,6 +2805,7 @@ let to_str opcode =
   | CheckedTaggedToTaggedSigned -> "CheckedTaggedToTaggedSigned"
   | CheckedUint32ToInt32 -> "CheckedUint32ToInt32"
   | Deoptimize -> "Deoptimize"
+  | SpeculativeToNumber -> "SpeculativeToNumber"
   | BitcastFloat32ToInt32 -> "BitcastFloat32ToInt32"
   | BitcastFloat64ToInt64 -> "BitcastFloat64ToInt64"
   | BitcastTaggedToWord -> "BitcastTaggedToWord"
@@ -2849,7 +2850,6 @@ let to_str opcode =
   | ObjectIsMinusZero -> "ObjectIsMinusZero"
   | ObjectIsNaN -> "ObjectIsNaN"
   | RoundFloat64ToInt32 -> "RoundFloat64ToInt32"
-  | SpeculativeToNumber -> "SpeculativeToNumber"
   | StackPointerGreaterThan -> "StackPointerGreaterThan"
   | ToBoolean -> "ToBoolean"
   | TruncateFloat64ToWord32 -> "TruncateFloat64ToWord32"
@@ -2868,7 +2868,6 @@ let to_str opcode =
   | HeapConstant -> "HeapConstant"
   | Int32Constant -> "Int32Constant"
   | Int64Constant -> "Int64Constant"
-  | JSStackCheck -> "JSStackCheck"
   | NumberConstant -> "NumberConstant"
   | Parameter -> "Parameter"
   | ChangeFloat64ToTagged -> "ChangeFloat64ToTagged"
@@ -2884,8 +2883,11 @@ let to_str opcode =
   | SpeculativeNumberLessThan -> "SpeculativeNumberLessThan"
   | SpeculativeNumberLessThanOrEqual -> "SpeculativeNumberLessThanOrEqual"
   | SpeculativeNumberModulus -> "SpeculativeNumberModulus"
+  | SpeculativeNumberMultiply -> "SpeculativeNumberMultiply"
   | SpeculativeNumberShiftRightLogical -> "SpeculativeNumberShiftRightLogical"
   | SpeculativeNumberSubtract -> "SpeculativeNumberSubtract"
+  | SpeculativeSafeIntegerAdd -> "SpeculativeSafeIntegerAdd"
+  | SpeculativeSafeIntegerSubtract -> "SpeculativeSafeIntegerSubtract"
   | CheckedInt32Mul -> "CheckedInt32Mul"
   | CheckedTaggedToFloat64 -> "CheckedTaggedToFloat64"
   | CheckedTruncateTaggedToWord32 -> "CheckedTruncateTaggedToWord32"
@@ -2933,9 +2935,6 @@ let to_str opcode =
   | SpeculativeNumberBitwiseOr -> "SpeculativeNumberBitwiseOr"
   | SpeculativeNumberBitwiseXor -> "SpeculativeNumberBitwiseXor"
   | SpeculativeNumberEqual -> "SpeculativeNumberEqual"
-  | SpeculativeNumberMultiply -> "SpeculativeNumberMultiply"
-  | SpeculativeSafeIntegerAdd -> "SpeculativeSafeIntegerAdd"
-  | SpeculativeSafeIntegerSubtract -> "SpeculativeSafeIntegerSubtract"
   | Uint32LessThan -> "Uint32LessThan"
   | Uint32LessThanOrEqual -> "Uint32LessThanOrEqual"
   | Uint64LessThan -> "Uint64LessThan"
@@ -2953,6 +2952,8 @@ let to_str opcode =
   | Int32MulWithOverflow -> "Int32MulWithOverflow"
   | Int32SubWithOverflow -> "Int32SubWithOverflow"
   | Uint32Div -> "Uint32Div"
+  | JSStackCheck -> "JSStackCheck"
+  | Unreachable -> "Unreachable"
   | Load -> "Load"
   | LoadElement -> "LoadElement"
   | LoadField -> "LoadField"
@@ -2964,7 +2965,6 @@ let to_str opcode =
   | StoreElement -> "StoreElement"
   | StoreField -> "StoreField"
   | Throw -> "Throw"
-  | Unreachable -> "Unreachable"
   | Word32Sar -> "Word32Sar"
   | Word64Sar -> "Word64Sar"
   | Empty -> failwith "Unreachable"
