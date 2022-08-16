@@ -489,17 +489,6 @@ module Float64 = struct
   let to_intx width value =
     let value_ix =
       let f = value |> from_value in
-      let i_mod_2_x =
-        Bool.ite (Float.is_negative f)
-          (Integer.mod_
-             (f |> Float.abs
-             |> Float.to_sbv Float.rtn_mode
-             |> BitVec.neg |> BitVec.to_sint)
-             (Integer.from_int (Utils.pow 2 width)))
-          (Integer.mod_
-             (f |> Float.abs |> Float.to_sbv Float.rtn_mode |> BitVec.to_sint)
-             (Integer.from_int (Utils.pow 2 width)))
-      in
       Bool.ite
         (* if num is nan or 0 or -0 or inf or -inf, return 0 *)
         (Bool.ors
@@ -510,18 +499,13 @@ module Float64 = struct
              Float.is_inf f;
              Float.is_ninf f;
            ])
-        (Integer.from_int 0)
+        (BitVecVal.from_int ~len:width 0)
         (* else *)
-        (Bool.ite
-           (Integer.ge i_mod_2_x (Integer.from_int (Utils.pow 2 (width - 1))))
-           (Integer.sub i_mod_2_x (Integer.from_int (Utils.pow 2 width)))
-           i_mod_2_x)
+        (value |> from_value |> Float.to_sbv ~len:width Float.rtn_mode)
     in
     match width with
-    | 32 ->
-        value_ix |> Integer.to_bv ~len:32 |> BitVec.zero_extend 32
-        |> Value.entype Type.int32
-    | 64 -> value_ix |> Integer.to_bv ~len:64 |> Value.entype Type.int64
+    | 32 -> value_ix |> BitVec.zero_extend 32 |> Value.entype Type.int32
+    | 64 -> value_ix |> Value.entype Type.int64
     | _ -> failwith "not implemented"
 
   let to_int32 value = value |> to_intx 32
@@ -644,9 +628,15 @@ module Float64 = struct
     Bool.ands
       [ is_integer value; ge value safe_integer_min; le value safe_integer_max ]
 
-  let can_be_smi value =
+  let is_in_smi_range value =
     Bool.ands
-      [ value |> is_integer; value |> to_int32 |> Int32.is_in_smi_range ]
+      [
+        ge value (from_numeral (TaggedSigned.min_limit |> float_of_int));
+        le value (from_numeral (TaggedSigned.max_limit |> float_of_int));
+      ]
+
+  let can_be_smi value =
+    Bool.ands [ value |> is_integer; value |> is_in_smi_range ]
 
   let max lval rval =
     (* UCOMISD: https://www.felixcloutier.com/x86/ucomisd *)
