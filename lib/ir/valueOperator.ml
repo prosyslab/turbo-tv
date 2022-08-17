@@ -204,6 +204,10 @@ module Make_Integer_Operator (I : IntValue) = struct
     if sign then BitVec.sleb (lval |> from_value) (rval |> from_value)
     else BitVec.uleb (lval |> from_value) (rval |> from_value)
 
+  let lei lval n =
+    if sign then BitVec.slei (lval |> from_value) n
+    else BitVec.ulei (lval |> from_value) n
+
   let gt lval rval =
     if sign then BitVec.sgtb (lval |> from_value) (rval |> from_value)
     else BitVec.ugtb (lval |> from_value) (rval |> from_value)
@@ -211,6 +215,10 @@ module Make_Integer_Operator (I : IntValue) = struct
   let ge lval rval =
     if sign then BitVec.sgeb (lval |> from_value) (rval |> from_value)
     else BitVec.ugeb (lval |> from_value) (rval |> from_value)
+
+  let gei lval n =
+    if sign then BitVec.sgei (lval |> from_value) n
+    else BitVec.ugei (lval |> from_value) n
 
   (* constants *)
   let zero = BitVecVal.from_int ~len:width 0 |> to_value

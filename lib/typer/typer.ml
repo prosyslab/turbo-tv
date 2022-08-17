@@ -45,12 +45,47 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
         Bool.ands (List.rev_map2 (fun v f -> verify v f mem) decomposed fields)
       else failwith "is: wrong number of fields"
   | Range (lb, ub) ->
-      (* assume value is a number *)
+      (* if value is int32 *)
+      let is_int32 = Value.has_type Type.int32 value in
+      let int32_lb = Stdlib.Float.to_int lb in
+      let int32_ub = Stdlib.Float.to_int ub in
+      let int32_expr =
+        Bool.ands
+          [
+            Int32.gei value (min int32_lb int32_ub);
+            Int32.lei value (max int32_lb int32_ub);
+          ]
+      in
+
+      (* if value is uint32 *)
+      let is_uint32 = Value.has_type Type.uint32 value in
+      let uint32_lb =
+        match Stdlib.Int32.of_float lb |> Stdlib.Int32.unsigned_to_int with
+        | Some n -> n
+        | None -> Stdlib.Float.to_int lb
+      in
+      let uint32_ub =
+        match Stdlib.Int32.of_float ub |> Stdlib.Int32.unsigned_to_int with
+        | Some n -> n
+        | None -> Stdlib.Float.to_int ub
+      in
+      let uint32_expr =
+        Bool.ands
+          [
+            Uint32.gei value (min uint32_lb uint32_ub);
+            Uint32.lei value (max uint32_lb uint32_ub);
+          ]
+      in
+
+      (* otherwise, assume value is a number *)
       let num_f64 = value |> Number.to_float64 mem in
-      Bool.ands
-        [
-          Float64.ge num_f64 (lb |> Float64.from_numeral);
-          Float64.le num_f64 (ub |> Float64.from_numeral);
-        ]
+      let number_expr =
+        Bool.ands
+          [
+            Float64.ge num_f64 (lb |> Float64.from_numeral);
+            Float64.le num_f64 (ub |> Float64.from_numeral);
+          ]
+      in
+      Bool.ite is_int32 int32_expr (Bool.ite is_uint32 uint32_expr number_expr)
   (* for now, handle only numeric types *)
   | _ -> Bool.tr
