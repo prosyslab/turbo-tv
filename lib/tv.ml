@@ -11,7 +11,17 @@ open Z3utils
 let ctx = Z3utils.ctx
 
 let validator =
-  let tactic = Tactic.and_then [ "simplify"; "eq2bv"; "fpa2bv"; "qfaufbv" ] in
+  let init = Tactic.concat [ "simplify"; "eq2bv"; "fpa2bv" ] in
+  let qffpbv = Tactic.init "qffpbv" in
+  let qfaufbv = Tactic.init "qfaufbv" in
+  let smt = Tactic.init "smt" in
+  let is_qffpbv = Probe.mk_probe "is-qffpbv" in
+  let is_qfaufbv = Probe.mk_probe "is-qfaufbv" in
+  let tactic =
+    Tactic.and_then init
+      (Tactic.cond is_qffpbv qffpbv (Tactic.cond is_qfaufbv qfaufbv smt))
+      []
+  in
   Solver.init_with_tactic tactic
 
 let tag base_is_tagged =

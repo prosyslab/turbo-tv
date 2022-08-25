@@ -10,6 +10,7 @@ module S = Z3.Solver
 module BV = Z3.BitVector
 module Fl = Z3.FloatingPoint
 module T = Z3.Tactic
+module P = Z3.Probe
 
 (* global context *)
 let ctx = Z3.mk_context [ ("model", "true") ]
@@ -41,11 +42,21 @@ module Tactic = struct
 
   let init name = T.mk_tactic ctx name
 
-  let and_then tactic_names =
+  let concat tactic_names =
     let tactics = List.map init tactic_names in
     match tactics with
     | h :: s :: t -> T.and_then ctx h s t
     | _ -> failwith "require more than two tactics"
+
+  let and_then t1 t2 ts = T.and_then ctx t1 t2 ts
+
+  let cond probe tr fl = T.cond ctx probe tr fl
+end
+
+module Probe = struct
+  type t = P.probe
+
+  let mk_probe s = P.mk_probe ctx s
 end
 
 module Model = struct
