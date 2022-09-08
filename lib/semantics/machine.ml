@@ -238,7 +238,7 @@ let store ptr pos repr value mem state =
     mem
     |> Memory.store_as
          (TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer)
-         repr Bool.tr value
+         repr (Bool.not deopt) value
   in
   state |> State.update ~mem ~deopt
 
