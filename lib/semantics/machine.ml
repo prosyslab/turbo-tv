@@ -231,18 +231,16 @@ let uint64_less_than_or_equal lval rval state =
  * assertion:
  *   mem = ite well-defined Store(ptr, pos, repr, mem) mem *)
 let store ptr pos repr value mem state =
-  let deopt = Bool.not (Value.has_type Type.tagged_pointer ptr) in
-  let ub =
-    let can_access = TaggedPointer.can_access_as pos repr ptr in
-    Bool.not can_access
-  in
+  let is_pointer = Value.has_type Type.pointer ptr in
+  let is_tagged_pointer = Value.has_type Type.tagged_pointer ptr in
+  let deopt = Bool.ands [ Bool.not is_pointer; Bool.not is_tagged_pointer ] in
   let mem =
     mem
     |> Memory.store_as
          (TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer)
-         repr (Bool.not deopt) value
+         repr Bool.tr value
   in
-  state |> State.update ~mem ~ub ~deopt
+  state |> State.update ~mem ~deopt
 
 (* well-defined condition:
  *   IsPointer(ptr) \/
@@ -250,11 +248,9 @@ let store ptr pos repr value mem state =
  * assertion:
  *   value = (Mem[pos+size]) *)
 let load ptr pos repr mem state =
-  let deopt = Bool.not (Value.has_type Type.tagged_pointer ptr) in
-  let ub =
-    let can_access = TaggedPointer.can_access_as pos repr ptr in
-    Bool.not can_access
-  in
+  let is_pointer = Value.has_type Type.pointer ptr in
+  let is_tagged_pointer = Value.has_type Type.tagged_pointer ptr in
+  let deopt = Bool.ands [ Bool.not is_pointer; Bool.not is_tagged_pointer ] in
   (* Some repr can be mapped to more than one type.
      e.g. Repr.Word8-> [Type.int8; Type.uint8]
      In this case, we pick the head of the type candidates.*)
@@ -266,7 +262,7 @@ let load ptr pos repr mem state =
     |> BitVec.zero_extend (64 - Repr.width_of repr)
     |> Value.entype ty
   in
-  state |> State.update ~value ~ub ~deopt
+  state |> State.update ~value ~deopt
 
 (* machine: type-conversion *)
 let bitcast_float32_to_int32 v state =
@@ -289,7 +285,7 @@ let bitcast_word32_to_word64 v state =
 
 let bitcast_word_to_tagged v state =
   let ty = Type.from_repr Repr.Tagged |> List.hd in
-  let value = v |> Value.cast ty in
+  let value = v |> Value.cast ty |> AnyTagged.settle in
   state |> State.update ~value
 
 let change_float64_to_int64 pval state =
