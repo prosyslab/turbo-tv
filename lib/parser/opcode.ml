@@ -24,9 +24,7 @@ type kind =
   | V1V2B1
   | B1B2B4V1V2
   | B4
-  | B2B3B5V1
-  | B3
-  | B5
+  | B1B2B4V1
   | B1V2V3V4
   | V3
   | V4
@@ -36,7 +34,7 @@ type kind =
   | V1V2V3
   | V1V2B1V3
   | B1B2B4V1V2V3E1C1
-  | V1B3B5V2
+  | V1B2B4V2
   | C1E1
   | B1V1V2
   | Empty
@@ -915,7 +913,7 @@ type t =
   | Load
   (* b1b2b4v1v2 *)
   | LoadElement
-  (* b2b3b5v1 *)
+  (* b1b2b4v1 *)
   | LoadField
   (* b1v2v3v4 *)
   | LoadTypedElement
@@ -929,7 +927,7 @@ type t =
   | Store
   (* b1b2b4v1v2v3e1c1 *)
   | StoreElement
-  (* v1b3b5v2 *)
+  (* v1b2b4v2 *)
   | StoreField
   (* c1e1 *)
   | Throw
@@ -1178,14 +1176,14 @@ let get_kind opcode =
   | JSStackCheck | Unreachable -> E1C1
   | Load -> V1V2B1
   | LoadElement -> B1B2B4V1V2
-  | LoadField -> B2B3B5V1
+  | LoadField -> B1B2B4V1
   | LoadTypedElement -> B1V2V3V4
   | Phi -> VVC1
   | Return -> V2C1
   | Select -> V1V2V3
   | Store -> V1V2B1V3
   | StoreElement -> B1B2B4V1V2V3E1C1
-  | StoreField -> V1B3B5V2
+  | StoreField -> V1B2B4V2
   | Throw -> C1E1
   | Word32Sar | Word64Sar -> B1V1V2
   | Empty -> Empty
@@ -1214,9 +1212,7 @@ let split_kind kind =
   | V1V2B1 -> [ V1; V2; B1 ]
   | B1B2B4V1V2 -> [ B1; B2; B4; V1; V2 ]
   | B4 -> [ B4 ]
-  | B2B3B5V1 -> [ B2; B3; B5; V1 ]
-  | B3 -> [ B3 ]
-  | B5 -> [ B5 ]
+  | B1B2B4V1 -> [ B1; B2; B4; V1 ]
   | B1V2V3V4 -> [ B1; V2; V3; V4 ]
   | V3 -> [ V3 ]
   | V4 -> [ V4 ]
@@ -1226,7 +1222,7 @@ let split_kind kind =
   | V1V2V3 -> [ V1; V2; V3 ]
   | V1V2B1V3 -> [ V1; V2; B1; V3 ]
   | B1B2B4V1V2V3E1C1 -> [ B1; B2; B4; V1; V2; V3; E1; C1 ]
-  | V1B3B5V2 -> [ V1; B3; B5; V2 ]
+  | V1B2B4V2 -> [ V1; B2; B4; V2 ]
   | C1E1 -> [ C1; E1 ]
   | B1V1V2 -> [ B1; V1; V2 ]
   | Empty -> [ Empty ]
