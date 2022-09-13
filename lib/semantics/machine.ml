@@ -112,6 +112,10 @@ let uint32_div lval rval control state =
   let value = Uint32.div lval rval in
   state |> State.update ~value ~control
 
+let uint32_mod lval rval control state =
+  let value = Uint32.modulo lval rval in
+  state |> State.update ~value ~control
+
 (* well-defined conditions:
  * (hint = "ShiftOutZero") ^ (cnt = (rval mod 32)) -> lval[-cnt:] = 0
  * assertion:

@@ -205,6 +205,12 @@ let encode program
       let control = ControlFile.find cid cf in
       unreachable control
   (* common: deoptimization *)
+  | Deoptimize ->
+      let _frame_id = Operands.id_of_nth operands 0 in
+      let _eff_id = Operands.id_of_nth operands 1 in
+      let ctrl_id = Operands.id_of_nth operands 2 in
+      let ctrl = ControlFile.find ctrl_id cf in
+      deoptimize () () ctrl
   | DeoptimizeIf ->
       let cond_id = Operands.id_of_nth operands 0 in
       (* let frame_id = Operands.id_of_nth operands 1 in
@@ -746,6 +752,14 @@ let encode program
       let rval = RegisterFile.find rpid rf in
       let ctrl = ControlFile.find ctrl_id cf in
       uint32_div lval rval ctrl
+  | Uint32Mod ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let ctrl_id = Operands.id_of_nth operands 2 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      let ctrl = ControlFile.find ctrl_id cf in
+      uint32_mod lval rval ctrl
   | Word32Sar -> encode_machine_binary_with_hint word32_sar
   | Word32Shl -> encode_machine_binary word32_shl
   | Word32Shr -> encode_machine_binary word32_shr
