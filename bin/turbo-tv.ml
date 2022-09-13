@@ -44,7 +44,31 @@ let parse_command_line () =
   | Ok `Version | Ok `Help -> exit 0
   | Ok (`Ok conf) -> conf
 
-let unknown_ops = [ Opcode.JSCall; Opcode.JSCallRuntime; Opcode.JSStrictEqual ]
+let unknown_ops =
+  [
+    Opcode.JSCall;
+    Opcode.JSAdd;
+    Opcode.JSModulus;
+    Opcode.JSEqual;
+    Opcode.JSDecrement;
+    Opcode.JSLoadContext;
+    Opcode.JSCallRuntime;
+    Opcode.JSStrictEqual;
+    Opcode.JSLessThan;
+    Opcode.JSLessThanOrEqual;
+    Opcode.JSGreaterThanOrEqual;
+    Opcode.JSLoadGlobal;
+    Opcode.JSBitwiseOr;
+    Opcode.JSBitwiseAnd;
+    Opcode.JSBitwiseNot;
+    Opcode.JSBitwiseXor;
+    Opcode.JSExponentiate;
+    Opcode.JSMultiply;
+    Opcode.JSGreaterThan;
+    Opcode.JSToNumeric;
+    Opcode.JSShiftRightLogical;
+    Opcode.JSStoreContext;
+  ]
 
 let unknown_op_exists graph =
   List.exists
