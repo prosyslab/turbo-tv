@@ -292,6 +292,10 @@ let bitcast_word_to_tagged v state =
   let value = v |> Value.cast ty |> AnyTagged.settle in
   state |> State.update ~value
 
+let change_float64_to_int32 pval state =
+  let value = pval |> Float64.to_int32 in
+  state |> State.update ~value
+
 let change_float64_to_int64 pval state =
   let value = pval |> Float64.to_int64 in
   state |> State.update ~value

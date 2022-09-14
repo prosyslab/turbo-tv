@@ -814,6 +814,7 @@ let encode program
   | TruncateFloat64ToWord32 -> encode_machine_unary truncate_float64_to_word32
   | TruncateInt64ToInt32 -> encode_machine_unary truncate_int64_to_int32
   (* machine: type-conversion *)
+  | ChangeFloat64ToInt32 -> encode_machine_unary change_float64_to_int32
   | ChangeFloat64ToInt64 -> encode_machine_unary change_float64_to_int64
   | ChangeInt32ToFloat64 -> encode_machine_unary change_int32_to_float64
   | ChangeInt32ToInt64 -> encode_machine_unary change_int32_to_int64
