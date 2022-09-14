@@ -235,16 +235,16 @@ let uint64_less_than_or_equal lval rval state =
  * assertion:
  *   mem = ite well-defined Store(ptr, pos, repr, mem) mem *)
 let store ptr pos repr value mem state =
-  let is_pointer = Value.has_type Type.pointer ptr in
-  let is_tagged_pointer = Value.has_type Type.tagged_pointer ptr in
-  let deopt = Bool.ands [ Bool.not is_pointer; Bool.not is_tagged_pointer ] in
-  let mem =
-    mem
-    |> Memory.store_as
-         (TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer)
-         repr (Bool.not deopt) value
+  let base_ptr = TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer in
+  let ub =
+    Bool.ands
+      [
+        ptr |> Value.has_type Type.tagged_pointer;
+        Bool.not (Memory.can_access_as base_ptr repr mem);
+      ]
   in
-  state |> State.update ~mem ~deopt
+  let mem = mem |> Memory.store_as (Bool.not ub) base_ptr repr value in
+  state |> State.update ~mem ~ub
 
 (* well-defined condition:
  *   IsPointer(ptr) \/
@@ -252,21 +252,21 @@ let store ptr pos repr value mem state =
  * assertion:
  *   value = (Mem[pos+size]) *)
 let load ptr pos repr mem state =
-  let is_pointer = Value.has_type Type.pointer ptr in
-  let is_tagged_pointer = Value.has_type Type.tagged_pointer ptr in
-  let deopt = Bool.ands [ Bool.not is_pointer; Bool.not is_tagged_pointer ] in
-  (* Some repr can be mapped to more than one type.
-     e.g. Repr.Word8-> [Type.int8; Type.uint8]
-     In this case, we pick the head of the type candidates.*)
+  let base_ptr = TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer in
+  let ub =
+    Bool.ands
+      [
+        ptr |> Value.has_type Type.tagged_pointer;
+        Bool.not (Memory.can_access_as base_ptr repr mem);
+      ]
+  in
   let ty = Type.from_repr repr |> List.hd in
   let value =
-    Memory.load_as
-      (TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer)
-      repr mem
+    Memory.load_as base_ptr repr mem
     |> BitVec.zero_extend (64 - Repr.width_of repr)
     |> Value.entype ty
   in
-  state |> State.update ~value ~deopt
+  state |> State.update ~value ~ub
 
 (* machine: type-conversion *)
 let bitcast_float32_to_int32 v state =

@@ -40,11 +40,11 @@ type t = {
 }
 
 let install_constants state =
-  let mem, rf, next_bid =
+  let mem, rf =
     List.fold_left
-      (fun (mem, rf, next_bid) name ->
-        let next_bid, ptr =
-          Memory.allocate next_bid (BitVecVal.from_int ~len:Value.len 5)
+      (fun (mem, rf) name ->
+        let ptr, mem =
+          Memory.allocate (BitVecVal.from_int ~len:Value.len 5) mem
         in
         let updated_mem =
           let map =
@@ -55,15 +55,15 @@ let install_constants state =
             | "false" | "true" -> Objmap.boolean_map
             | _ -> failwith "unreachable"
           in
-          Memory.store
+          Memory.store Bool.tr
             (ptr |> TaggedPointer.to_raw_pointer)
-            Objmap.size Bool.tr map mem
+            Objmap.size map mem
         in
-        (updated_mem, RegisterFile.add name (Some ptr) rf, next_bid))
-      (state.memory, state.register_file, List.length state.params)
+        (updated_mem, RegisterFile.add name (Some ptr) rf))
+      (state.memory, state.register_file)
       Constant.names
   in
-  { state with memory = mem; register_file = rf; next_bid }
+  { state with memory = mem; register_file = rf }
 
 let init nparams stage : t =
   {

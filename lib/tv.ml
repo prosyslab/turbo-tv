@@ -517,13 +517,13 @@ let encode program
       let size_value = RegisterFile.find size_id rf in
       let ct_id = Operands.id_of_nth operands 2 in
       let ct = ControlFile.find ct_id cf in
-      allocate_raw size_value ct
+      allocate_raw size_value ct mem
   | AllocateRaw ->
       let size_id = Operands.id_of_nth operands 0 in
       let size_value = RegisterFile.find size_id rf in
       let ct_id = Operands.id_of_nth operands 1 in
       let ct = ControlFile.find ct_id cf in
-      allocate_raw size_value ct
+      allocate_raw size_value ct mem
   | LoadElement ->
       let base_is_tagged = Operands.const_of_nth operands 0 in
       let tag_value = tag base_is_tagged in
@@ -945,6 +945,7 @@ let check_ub_semantic nparams program =
                 [
                   param |> Value.has_type Type.tagged_pointer;
                   param |> Objects.is_heap_number mem;
+                  BitVec.eqi (param |> TaggedPointer.off_of) 0;
                   BitVec.eqi (param |> TaggedPointer.bid_of) bid;
                 ];
               Bool.ors
@@ -956,7 +957,7 @@ let check_ub_semantic nparams program =
     in
     Bool.ands [ params_are_smi_or_heapnumber; Bool.not (State.deopt state) ]
   in
-  let assertion = Bool.ands [ State.assertion state; precond; ub ] in
+  let assertion = Bool.ands [ precond; ub ] in
   let status = Solver.check validator assertion in
 
   match status with
@@ -991,6 +992,7 @@ let run nparams src_program tgt_program =
                 [
                   param |> Value.has_type Type.tagged_pointer;
                   param |> Objects.is_heap_number mem;
+                  BitVec.eqi (param |> TaggedPointer.off_of) 0;
                   BitVec.eqi (param |> TaggedPointer.bid_of) bid;
                 ];
               Bool.ors

@@ -12,21 +12,21 @@ module HeapNumber = struct
 
   let number_offset = Objmap.len / 8
 
-  let allocate bid =
-    Memory.allocate bid (size |> BitVecVal.from_int ~len:Value.len)
+  let allocate mem =
+    Memory.allocate (size |> BitVecVal.from_int ~len:Value.len) mem
 
   let from_number_string s =
     { map = Objmap.heap_number_map; value = s |> BitVecVal.from_f64string }
 
-  let store ptr obj cond mem =
+  let store ptr cond obj mem =
     (* ptr is tagged *)
     mem
-    |> Memory.store
+    |> Memory.store cond
          (ptr |> TaggedPointer.to_raw_pointer)
-         (Objmap.len / 8) cond obj.map
-    |> Memory.store
+         (Objmap.len / 8) obj.map
+    |> Memory.store cond
          (TaggedPointer.movei ptr number_offset |> TaggedPointer.to_raw_pointer)
-         (number_len / 8) cond obj.value
+         (number_len / 8) obj.value
 
   let load ptr mem =
     {
@@ -38,13 +38,13 @@ module HeapNumber = struct
           (number_len / 8) mem;
     }
 
-  let from_float64 bid cond mem value_f64 =
-    let next_bid, ptr = allocate bid in
+  let from_float64 cond mem value_f64 =
+    let ptr, mem = allocate mem in
     let obj =
       { map = Objmap.heap_number_map; value = value_f64 |> Value.data_of }
     in
-    let mem = store ptr obj cond mem in
-    (ptr, next_bid, mem)
+    let mem = store cond ptr obj mem in
+    (ptr, mem)
 
   let to_float64 obj = obj.value |> Value.entype Type.float64
 

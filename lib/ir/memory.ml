@@ -1,18 +1,33 @@
 open Z3utils
 open ValueOperator
 
-type t = Array.t
+type t = { bytes : Array.t; bsizes : Array.t; next_bid : int }
 
-let init name = Array.init name (BitVec.mk_sort 64) (BitVec.mk_sort 8)
+let init name =
+  let bytes = Array.init name (BitVec.mk_sort 64) (BitVec.mk_sort 8) in
+  let bsizes =
+    Array.init "size_map"
+      (BitVec.mk_sort TaggedPointer.bid_len)
+      (BitVec.mk_sort TaggedPointer.off_len)
+  in
+  { bytes; bsizes; next_bid = 0 }
 
-let allocate bid size = (bid + 1, TaggedPointer.init bid size)
+let allocate size t =
+  let bid = t.next_bid |> BitVecVal.from_int ~len:TaggedPointer.bid_len in
+  let size = BitVec.extract 31 0 size in
+  let memory =
+    { t with bsizes = Array.store size bid t.bsizes; next_bid = t.next_bid + 1 }
+  in
+  (TaggedPointer.init bid, memory)
+
+let size_of bid t = Array.select bid t.bsizes
 
 (* Load [value] at block of [ptr] with the size [sz]*)
-let load ptr sz mem =
+let load ptr sz t =
   let rec aux res loaded_sz ptr =
     if loaded_sz = sz then res
     else
-      let byte = Array.select ptr mem in
+      let byte = Array.select ptr t.bytes in
       let res = if loaded_sz = 0 then byte else BitVec.concat byte res in
       aux res (loaded_sz + 1) (TaggedPointer.next ptr)
   in
@@ -23,16 +38,31 @@ let load_as ptr repr mem =
   load ptr load_size mem
 
 (* Store [value] at block of [ptr] with the size [sz] *)
-let store ptr sz cond value mem =
-  let rec aux stored_sz value ptr mem =
-    if stored_sz = sz then mem
+let store cond ptr sz value t =
+  let rec aux stored_sz value ptr bytes =
+    if stored_sz = sz then bytes
     else
       let byte = BitVec.extract ((stored_sz * 8) + 7) (stored_sz * 8) value in
-      let updated_mem = Array.store byte ptr mem in
-      aux (stored_sz + 1) value (TaggedPointer.next ptr) updated_mem
+      aux (stored_sz + 1) value (TaggedPointer.next ptr)
+        (Array.store byte ptr bytes)
   in
-  Bool.ite cond (aux 0 value ptr mem) mem
+  let updated_mem = Bool.ite cond (aux 0 value ptr t.bytes) t.bytes in
+  { t with bytes = updated_mem }
 
-let store_as ptr repr cond value mem =
+let store_as cond ptr repr value mem =
   let store_size = MachineType.Repr.size_of repr in
-  store ptr store_size cond value mem
+  store cond ptr store_size value mem
+
+let can_access ptr sz t =
+  (* no out-of-bounds *)
+  let bid = TaggedPointer.bid_of ptr in
+  let off = TaggedPointer.off_of ptr in
+  let bsize = size_of bid t in
+  let out_of_lb = BitVec.slti off 0 in
+  let out_of_ub = BitVec.ugtb (BitVec.addi off sz) bsize in
+  Bool.not (Bool.ors [ out_of_lb; out_of_ub ])
+
+(* can read as [repr] *)
+let can_access_as pos repr t =
+  let repr_sz = MachineType.Repr.size_of repr in
+  can_access pos repr_sz t

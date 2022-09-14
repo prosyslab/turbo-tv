@@ -275,11 +275,9 @@ let speculative_number_less_than_or_equal lval rval _eff control mem state =
   |> State.update ~deopt ~control
 
 (* simplified: memory *)
-let allocate_raw size control state =
-  let bid = State.next_bid state in
-  let next_bid, value = Memory.allocate bid size in
-  (* assume AllocateRaw doesn't change the control *)
-  state |> State.update ~value ~control ~next_bid
+let allocate_raw size control mem state =
+  let value, mem = Memory.allocate size mem in
+  state |> State.update ~value ~control ~mem
 
 let load_element tag_value header_size repr bid ind mem state =
   let fixed_off = header_size - tag_value in
@@ -319,17 +317,16 @@ let store_field ptr pos mt value mem state =
   let ty_check = Value.has_type Type.tagged_pointer ptr in
 
   (* check index out-of-bounds *)
-  let can_access = TaggedPointer.can_access_as pos repr ptr in
-  let _ub = Bool.not (Bool.ands [ ty_check; can_access ]) in
-  let store_cond = Bool.not _ub in
+  let can_access = Memory.can_access_as (TaggedPointer.move ptr pos) repr mem in
+  let ub = Bool.not (Bool.ands [ ty_check; can_access ]) in
 
   let mem =
     mem
-    |> Memory.store_as
+    |> Memory.store_as (Bool.not ub)
          (TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer)
-         repr store_cond value
+         repr value
   in
-  state |> State.update ~mem
+  state |> State.update ~mem ~ub
 
 (* simplified: type-check *)
 let number_is_minus_zero pval mem state =

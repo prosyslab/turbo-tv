@@ -42,23 +42,22 @@ module TaggedPointer = struct
   type t = Value.t
 
   (* const *)
-  (* 0-16: offset
-     16-32: bid
-     32-64: size of struct
+  (* 0-32: offset
+     32-40: bid
+     40-64: reserved
      64-69: ty
   *)
   (* High |-ty-|-size-|--bid--|-offset-(1)-| Low *)
-  let size_len = 32
 
-  let bid_len = 16
+  let bid_len = 8
 
-  let off_len = 16
+  let off_len = 32
 
-  let len = Value.ty_len + size_len + bid_len + off_len
+  let reserved_len = 24
+
+  let len = Value.ty_len + reserved_len + bid_len + off_len
 
   (* getter *)
-  let size_of t =
-    BitVec.extract (size_len + bid_len + off_len - 1) (bid_len + off_len) t
 
   let bid_of t = BitVec.extract (bid_len + off_len - 1) off_len t
 
@@ -67,14 +66,9 @@ module TaggedPointer = struct
   let off_of t = t |> to_raw_pointer |> BitVec.extract (off_len - 1) 0
 
   (* constructor *)
-  let init bid sz =
-    let bid = BitVecVal.from_int ~len:Value.data_len bid in
-    let sz = Value.data_of sz in
-    BitVec.ori
-      (BitVec.orb
-         (BitVec.shli sz (bid_len + off_len))
-         (BitVec.shli bid off_len))
-      1
+  let init bid =
+    BitVec.ori (BitVec.shli bid off_len) 1
+    |> BitVec.zero_extend (Value.data_len - bid_len)
     |> Value.entype Type.tagged_pointer
 
   (* method *)
@@ -83,22 +77,6 @@ module TaggedPointer = struct
   let move t pos = BitVec.addb t pos
 
   let movei t pos = BitVec.addi t pos
-
-  let can_access pos sz t =
-    (* no out-of-bounds *)
-    let struct_size = Value.from_bv (size_of t) in
-    let out_of_lb = BitVec.slti (pos |> Value.data_of) 0 in
-    let out_of_ub =
-      BitVec.ugtb
-        (BitVec.addi pos sz |> Value.data_of)
-        (struct_size |> Value.data_of)
-    in
-    Bool.not (Bool.ors [ out_of_lb; out_of_ub ])
-
-  (* can read as [repr] *)
-  let can_access_as pos repr t =
-    let repr_sz = MachineType.Repr.size_of repr in
-    can_access pos repr_sz t
 
   let to_string model t =
     let bid =
