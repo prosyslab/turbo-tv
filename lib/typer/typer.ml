@@ -45,35 +45,27 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
         Bool.ands (List.rev_map2 (fun v f -> verify v f mem) decomposed fields)
       else failwith "is: wrong number of fields"
   | Range (lb, ub) ->
-      (* if value is int32 *)
-      let is_int32 = Value.has_type Type.int32 value in
-      let int32_lb = Stdlib.Float.to_int lb in
-      let int32_ub = Stdlib.Float.to_int ub in
-      let int32_expr =
-        Bool.ands
-          [
-            Int32.gei value (min int32_lb int32_ub);
-            Int32.lei value (max int32_lb int32_ub);
-          ]
-      in
+      let lb_f = lb |> Float64.from_numeral in
+      let ub_f = ub |> Float64.from_numeral in
 
-      (* if value is uint32 *)
-      let is_uint32 = Value.has_type Type.uint32 value in
-      let uint32_lb =
-        match Stdlib.Int32.of_float lb |> Stdlib.Int32.unsigned_to_int with
-        | Some n -> n
-        | None -> Stdlib.Float.to_int lb
+      (* if value is a integer; (assume there are only 32bit integer and 64bit integer) *)
+      let value_s =
+        Bool.ite
+          (value |> Value.is_32bit_integer)
+          (value |> Int32.to_float64)
+          (value |> Int64.to_float64)
       in
-      let uint32_ub =
-        match Stdlib.Int32.of_float ub |> Stdlib.Int32.unsigned_to_int with
-        | Some n -> n
-        | None -> Stdlib.Float.to_int ub
+      let value_u =
+        Bool.ite
+          (value |> Value.is_32bit_integer)
+          (value |> Uint32.to_float64)
+          (value |> Uint64.to_float64)
       in
-      let uint32_expr =
-        Bool.ands
+      let int_expr =
+        Bool.ors
           [
-            Uint32.gei value (min uint32_lb uint32_ub);
-            Uint32.lei value (max uint32_lb uint32_ub);
+            Bool.ands [ Float64.ge value_s lb_f; Float64.le value_s ub_f ];
+            Bool.ands [ Float64.ge value_u lb_f; Float64.le value_u ub_f ];
           ]
       in
 
@@ -86,6 +78,6 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
             Float64.le num_f64 (ub |> Float64.from_numeral);
           ]
       in
-      Bool.ite is_int32 int32_expr (Bool.ite is_uint32 uint32_expr number_expr)
+      Bool.ite (value |> Value.is_integer) int_expr number_expr
   (* for now, handle only numeric types *)
   | _ -> Bool.tr

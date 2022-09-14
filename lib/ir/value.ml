@@ -28,7 +28,6 @@ let entype ty data =
   let input_data_len = BitVec.length_of data in
   if input_data_len <> data_len then
     failwith (Printf.sprintf "invalid data length: %d" input_data_len)
-    (* TODO handling undef of data *)
   else BitVec.concat ty data
 
 (* type checks *)

@@ -789,12 +789,9 @@ let encode program
   | Store ->
       let ptr_id = Operands.id_of_nth operands 0 in
       let ptr = RegisterFile.find ptr_id rf in
-
       let pos_id = Operands.id_of_nth operands 1 in
       let pos = RegisterFile.find pos_id rf in
-
       let repr = Operands.const_of_nth operands 2 |> Repr.of_string in
-
       let value_id = Operands.id_of_nth operands 3 in
       let value = RegisterFile.find value_id rf in
       store ptr pos repr value mem
@@ -832,13 +829,15 @@ let propagate program state =
   let cf = State.control_file state in
   let uf = State.ub_file state in
   let df = State.deopt_file state in
-  let _, opcode, operands = IR.instr_of pc program in
+  let mem = State.memory state in
+  let ty, opcode, operands = IR.instr_of pc program in
   let ub = UBFile.find (pc |> string_of_int) uf in
   let deopt = DeoptFile.find (pc |> string_of_int) df in
 
-  (* let type_is_verified =
-       match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
-     in *)
+  let type_is_verified =
+    let value = RegisterFile.find (pc |> string_of_int) state.register_file in
+    match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
+  in
   let ub_from_input, deopt_from_input =
     match opcode with
     | End ->
@@ -912,7 +911,7 @@ let propagate program state =
         let deopts = DeoptFile.find_all pids df in
         (Bool.ors ubs, Bool.ors deopts)
   in
-  let ub = Bool.ors [ ub; ub_from_input ] in
+  let ub = Bool.ors [ ub; Bool.not type_is_verified; ub_from_input ] in
   let deopt = Bool.ors [ deopt; deopt_from_input ] in
   state |> State.update ~ub ~deopt
 
