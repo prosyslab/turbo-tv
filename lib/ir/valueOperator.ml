@@ -47,7 +47,7 @@ module TaggedPointer = struct
      40-64: reserved
      64-69: ty
   *)
-  (* High |-ty-|-size-|--bid--|-offset-(1)-| Low *)
+  (* High |-ty-|-reserved-|--bid--|-offset-(1)-| Low *)
 
   let bid_len = 8
 
@@ -67,16 +67,19 @@ module TaggedPointer = struct
 
   (* constructor *)
   let init bid =
-    BitVec.ori (BitVec.shli bid off_len) 1
-    |> BitVec.zero_extend (Value.data_len - bid_len)
+    BitVec.ori
+      (BitVec.shli
+         (bid |> BitVec.zero_extend (Value.data_len - bid_len))
+         off_len)
+      1
     |> Value.entype Type.tagged_pointer
 
   (* method *)
   let next t = BitVec.addi t 1
 
-  let move t pos = BitVec.addb t pos
+  let move t pos = BitVec.addb t pos |> next
 
-  let movei t pos = BitVec.addi t pos
+  let movei t pos = BitVec.addi t pos |> next
 
   let to_string model t =
     let bid =

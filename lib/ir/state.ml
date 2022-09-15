@@ -26,7 +26,6 @@ type t = {
   stage : string;
   pc : IR.Node.id;
   final : bool;
-  next_bid : int;
   register_file : RegisterFile.t;
   control_file : ControlFile.t;
   ub_file : UBFile.t;
@@ -70,12 +69,11 @@ let init nparams stage : t =
     stage;
     pc = 0;
     final = false;
-    next_bid = nparams;
     register_file = RegisterFile.init stage RegisterFile.symbol;
     control_file = ControlFile.init stage ControlFile.symbol;
     ub_file = UBFile.init stage Ub.symbol;
     deopt_file = DeoptFile.init stage Deopt.symbol;
-    memory = Memory.init "mem";
+    memory = Memory.init nparams;
     params = Params.init nparams;
     retval = Value.empty;
     ub = Bool.fl;
@@ -88,8 +86,6 @@ let init nparams stage : t =
 let stage t = t.stage
 
 let pc t = t.pc
-
-let next_bid t = t.next_bid
 
 let register_file t = t.register_file
 
@@ -121,7 +117,7 @@ let deopt_of id t = DeoptFile.find id (deopt_file t)
 
 let output_of id t = (value_of id t, control_of id t, ub_of id t, deopt_of id t)
 
-let update ?value ?mem ?control ?ub ?deopt ?next_bid ?(final = false) t =
+let update ?value ?mem ?control ?ub ?deopt ?(final = false) t =
   let pc = t.pc |> string_of_int in
   let register_file = RegisterFile.add pc value (register_file t) in
   let control_file = ControlFile.add pc control (control_file t) in
@@ -131,8 +127,6 @@ let update ?value ?mem ?control ?ub ?deopt ?next_bid ?(final = false) t =
     t with
     register_file;
     memory = (match mem with Some mem -> mem | None -> t.memory);
-    next_bid =
-      (match next_bid with Some next_bid -> next_bid | None -> t.next_bid);
     control_file;
     ub_file;
     deopt_file;

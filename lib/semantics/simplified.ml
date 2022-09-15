@@ -276,8 +276,8 @@ let speculative_number_less_than_or_equal lval rval _eff control mem state =
 
 (* simplified: memory *)
 let allocate_raw size control mem state =
-  let value, mem = Memory.allocate size mem in
-  state |> State.update ~value ~control ~mem
+  let ptr, mem = Memory.allocate size mem in
+  state |> State.update ~value:ptr ~control ~mem
 
 let load_element tag_value header_size repr bid ind mem state =
   let fixed_off = header_size - tag_value in
@@ -288,9 +288,9 @@ let load_element tag_value header_size repr bid ind mem state =
   in
   state |> Machine.load bid off repr mem
 
-let load_field _tag_value offset repr bid mem state =
+let load_field _tag_value offset repr ptr _eff control mem state =
   let off = offset |> BitVecVal.from_int ~len:Value.len in
-  state |> Machine.load bid off repr mem
+  state |> Machine.load ptr off repr mem |> State.update ~control
 
 let load_typed_element array_type base extern ind mem state =
   let bid = BitVec.addb base extern in
@@ -310,23 +310,9 @@ let store_element _tag_value header_size repr bid ind value mem control state =
   in
   state |> Machine.store bid off repr value mem |> State.update ~control
 
-let store_field ptr pos mt value mem state =
-  let repr = MachineType.repr mt in
-
-  (* ptr must be pointer type *)
-  let ty_check = Value.has_type Type.tagged_pointer ptr in
-
-  (* check index out-of-bounds *)
-  let can_access = Memory.can_access_as (TaggedPointer.move ptr pos) repr mem in
-  let ub = Bool.not (Bool.ands [ ty_check; can_access ]) in
-
-  let mem =
-    mem
-    |> Memory.store_as (Bool.not ub)
-         (TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer)
-         repr value
-  in
-  state |> State.update ~mem ~ub
+let store_field ptr off repr value _eff control mem state =
+  let off = off |> BitVecVal.from_int ~len:Value.len in
+  state |> Machine.store ptr off repr value mem |> State.update ~control
 
 (* simplified: type-check *)
 let number_is_minus_zero pval mem state =

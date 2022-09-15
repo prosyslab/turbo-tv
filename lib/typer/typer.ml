@@ -48,7 +48,7 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
       let lb_f = lb |> Float64.from_numeral in
       let ub_f = ub |> Float64.from_numeral in
 
-      (* if value is a integer; (assume there are only 32bit integer and 64bit integer) *)
+      (* if value is a integer *)
       let value_s =
         Bool.ite
           (value |> Value.is_32bit_integer)

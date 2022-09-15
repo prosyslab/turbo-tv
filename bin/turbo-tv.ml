@@ -68,6 +68,7 @@ let unknown_ops =
     Opcode.JSToNumeric;
     Opcode.JSShiftRightLogical;
     Opcode.JSStoreContext;
+    Opcode.JSCreateEmptyLiteralArray;
   ]
 
 let unknown_op_exists graph =

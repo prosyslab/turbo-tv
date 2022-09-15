@@ -543,7 +543,11 @@ let encode program
       let repr = MachineType.Repr.of_rs_string machine_type in
       let bid_id = Operands.id_of_nth operands 3 in
       let bid = RegisterFile.find bid_id rf in
-      load_field tag_value offset repr bid mem
+      (* let _eff_id = Operands.id_of_nth operands 4 in
+         let _eff = () in *)
+      let ctrl_id = Operands.id_of_nth operands 5 in
+      let ctrl = ControlFile.find ctrl_id cf in
+      load_field tag_value offset repr bid () ctrl mem
   | LoadTypedElement ->
       let array_type = Operands.const_of_nth operands 0 |> int_of_string in
       let base_id = Operands.id_of_nth operands 1 in
@@ -565,22 +569,25 @@ let encode program
       let ind = RegisterFile.find ind_id rf in
       let value_id = Operands.id_of_nth operands 5 in
       let value = RegisterFile.find value_id rf in
+      (* let _eff_id = Operands.id_of_nth operands 6 in
+         let _eff = () in *)
       let ctrl_id = Operands.id_of_nth operands 7 in
       let ctrl = ControlFile.find ctrl_id cf in
       store_element tag_value header_size repr bid ind value mem ctrl
   | StoreField ->
       let ptr_id = Operands.id_of_nth operands 0 in
       let ptr = RegisterFile.find ptr_id rf in
-      let pos =
-        Operands.const_of_nth operands 1
-        |> BitVecVal.from_istring ~len:Value.len
-      in
-      let machine_type =
-        Operands.const_of_nth operands 2 |> MachineType.of_rs_string
+      let off = Operands.const_of_nth operands 1 |> int_of_string in
+      let repr =
+        Operands.const_of_nth operands 2 |> MachineType.Repr.of_rs_string
       in
       let value_id = Operands.id_of_nth operands 3 in
       let value = RegisterFile.find value_id rf in
-      store_field ptr pos machine_type value mem
+      (* let _eff_id = Operands.id_of_nth operands 4 in
+         let _eff = () in *)
+      let ctrl_id = Operands.id_of_nth operands 5 in
+      let ctrl = ControlFile.find ctrl_id cf in
+      store_field ptr off repr value () ctrl mem
   (* simplified: type-check *)
   | NumberIsMinusZero ->
       let pid = Operands.id_of_nth operands 0 in
@@ -980,7 +987,7 @@ let run nparams src_program tgt_program =
   (* params are tagged /\ not deopt *)
   let precond =
     let params = State.params src_state in
-    let mem = Memory.init "mem" in
+    let mem = Memory.init nparams in
     let params_are_smi_or_heapnumber =
       List.mapi
         (fun bid param ->

@@ -3,20 +3,31 @@ open ValueOperator
 
 type t = { bytes : Array.t; bsizes : Array.t; next_bid : int }
 
-let init name =
-  let bytes = Array.init name (BitVec.mk_sort 64) (BitVec.mk_sort 8) in
+let init nparams =
+  let bytes = Array.init "mem" (BitVec.mk_sort 64) (BitVec.mk_sort 8) in
   let bsizes =
     Array.init "size_map"
       (BitVec.mk_sort TaggedPointer.bid_len)
       (BitVec.mk_sort TaggedPointer.off_len)
   in
-  { bytes; bsizes; next_bid = 0 }
+  { bytes; bsizes; next_bid = nparams }
 
 let allocate size t =
+  let size_u32 =
+    Bool.ite
+      (size |> Value.has_type Type.float64)
+      (size |> Float64.to_uint32)
+      size
+    |> BitVec.extract 31 0
+  in
+
   let bid = t.next_bid |> BitVecVal.from_int ~len:TaggedPointer.bid_len in
-  let size = BitVec.extract 31 0 size in
   let memory =
-    { t with bsizes = Array.store size bid t.bsizes; next_bid = t.next_bid + 1 }
+    {
+      t with
+      bsizes = Array.store size_u32 bid t.bsizes;
+      next_bid = t.next_bid + 1;
+    }
   in
   (TaggedPointer.init bid, memory)
 

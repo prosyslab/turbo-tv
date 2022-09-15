@@ -41,6 +41,9 @@ let rec has_type (ty : Type.t) t =
     Bool.ands [ BitVec.eqb (ty_of t) ty; BitVec.eqi (BitVec.andi t 1) 1 ]
   else BitVec.eqb (ty_of t) ty
 
+let is_32bit_integer t =
+  Bool.ors [ t |> has_type Type.int32; t |> has_type Type.uint32 ]
+
 let is_signed_integer t =
   Bool.ors (List.map (fun ty -> has_type ty t) Type.int_types)
 
