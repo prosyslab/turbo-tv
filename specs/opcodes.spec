@@ -23,7 +23,7 @@ Branch,v1,e1
 Call,b1
 ChangeBitToTagged,v1
 ChangeFloat32ToFloat64,v1
-ChangeFloat64ToInt32,
+ChangeFloat64ToInt32,v1
 ChangeFloat64ToInt64,v1
 ChangeFloat64ToTagged,b1,v1
 ChangeFloat64ToTaggedPointer,
@@ -554,7 +554,7 @@ JSWasmCall,
 Load,v1,v2,b1
 LoadDataViewElement,
 LoadElement,b1,b2,b4,v1,v2
-LoadField,b1,b2,b4,v1
+LoadField,b1,b2,b4,v1,e1,c1
 LoadFieldByIndex,
 LoadFramePointer,
 LoadFromObject,
@@ -732,7 +732,7 @@ StaticAssert,
 Store,v1,v2,b1,v3
 StoreDataViewElement,
 StoreElement,b1,b2,b4,v1,v2,v3,e1,c1
-StoreField,v1,b2,b4,v2
+StoreField,v1,b2,b4,v2,e1,c1
 StoreLane,
 StoreMessage,
 StoreSignedSmallElement,
