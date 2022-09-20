@@ -24,12 +24,11 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                     Uint32.le value (ub |> Value.from_int);
                   ]
             | FloatBoundary (lb, ub) ->
-                let number = HeapNumber.load value mem in
                 Bool.ands
                   [
-                    value |> Objects.is_heap_number mem;
-                    Float.gef (Float.from_ieee_bv number.value) lb;
-                    Float.lef (Float.from_ieee_bv number.value) ub;
+                    value |> Value.is_float;
+                    Float.gef (value |> Value.data_of |> Float.from_ieee_bv) lb;
+                    Float.lef (value |> Value.data_of |> Float.from_ieee_bv) ub;
                   ]
           in
           Bool.ors [ verified; in_bound ])
