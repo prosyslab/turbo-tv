@@ -176,7 +176,7 @@ module Float = struct
 
   let to_sbv ?(len = !bvlen) rm t = Fl.mk_to_sbv ctx rm t len
 
-  let to_ubv t = Fl.mk_to_ubv ctx t
+  let to_ubv ?(len = !bvlen) rm t = Fl.mk_to_ubv ctx rm t len
 
   let to_ieee_bv t = Fl.mk_to_ieee_bv ctx t
 

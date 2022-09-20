@@ -472,7 +472,7 @@ module Float64 = struct
 
   let from_value value = value |> Value.data_of |> Float.from_ieee_bv
 
-  let to_intx width value =
+  let to_intx ?(to_bv = Float.to_sbv) width value =
     let value_ix =
       let f = value |> from_value in
       Bool.ite
@@ -487,7 +487,7 @@ module Float64 = struct
            ])
         (BitVecVal.from_int ~len:width 0)
         (* else *)
-        (value |> from_value |> Float.to_sbv ~len:width Float.rtn_mode)
+        (value |> from_value |> to_bv ~len:width Float.rtn_mode)
     in
     match width with
     | 32 -> value_ix |> BitVec.zero_extend 32 |> Value.entype Type.int32
@@ -498,9 +498,9 @@ module Float64 = struct
 
   let to_int64 value = value |> to_intx 64
 
-  let to_tagged_signed value = value |> to_int32 |> Int32.to_tagged_signed
+  let to_uint32 value = value |> to_intx ~to_bv:Float.to_ubv 32
 
-  let to_uint32 value = value |> to_int32 |> Int32.to_int Type.uint32 32
+  let to_tagged_signed value = value |> to_int32 |> Int32.to_tagged_signed
 
   (* constants *)
   let nan = Float.nan () |> to_value
