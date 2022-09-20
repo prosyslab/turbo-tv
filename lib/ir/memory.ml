@@ -1,7 +1,12 @@
 open Z3utils
 open ValueOperator
 
-type t = { bytes : Array.t; bsizes : Array.t; next_bid : int }
+type t = {
+  bytes : Array.t;
+  bsizes : Array.t;
+  is_angelic : Array.t;
+  next_bid : int;
+}
 
 let init nparams =
   let bytes = Array.init "mem" (BitVec.mk_sort 64) (BitVec.mk_sort 8) in
@@ -10,9 +15,12 @@ let init nparams =
       (BitVec.mk_sort TaggedPointer.bid_len)
       (BitVec.mk_sort TaggedPointer.off_len)
   in
-  { bytes; bsizes; next_bid = nparams }
+  let is_angelic =
+    Z3.Z3Array.mk_const_array ctx (BitVec.mk_sort TaggedPointer.bid_len) Bool.tr
+  in
+  { bytes; bsizes; is_angelic; next_bid = nparams + 1 }
 
-let allocate size t =
+let allocate ?(angelic = Bool.fl) size t =
   let size_u32 =
     Bool.ite
       (size |> Value.has_type Type.float64)
@@ -20,12 +28,12 @@ let allocate size t =
       size
     |> BitVec.extract 31 0
   in
-
   let bid = t.next_bid |> BitVecVal.from_int ~len:TaggedPointer.bid_len in
   let memory =
     {
       t with
       bsizes = Array.store size_u32 bid t.bsizes;
+      is_angelic = Array.store angelic bid t.is_angelic;
       next_bid = t.next_bid + 1;
     }
   in
@@ -71,7 +79,10 @@ let can_access ptr sz t =
   let bsize = size_of bid t in
   let out_of_lb = BitVec.slti off 0 in
   let out_of_ub = BitVec.ugtb (BitVec.addi off sz) bsize in
-  Bool.not (Bool.ors [ out_of_lb; out_of_ub ])
+  Bool.ite
+    (Array.select bid t.is_angelic)
+    Bool.tr
+    (Bool.not (Bool.ors [ out_of_lb; out_of_ub ]))
 
 (* can read as [repr] *)
 let can_access_as pos repr t =

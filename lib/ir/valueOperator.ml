@@ -43,19 +43,16 @@ module TaggedPointer = struct
 
   (* const *)
   (* 0-32: offset
-     32-40: bid
-     40-64: reserved
+     32-64: bid
      64-69: ty
   *)
   (* High |-ty-|-reserved-|--bid--|-offset-(1)-| Low *)
 
-  let bid_len = 8
+  let bid_len = 32
 
   let off_len = 32
 
-  let reserved_len = 24
-
-  let len = Value.ty_len + reserved_len + bid_len + off_len
+  let len = Value.ty_len + bid_len + off_len
 
   (* getter *)
 

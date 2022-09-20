@@ -236,13 +236,7 @@ let uint64_less_than_or_equal lval rval state =
  *   mem = ite well-defined Store(ptr, pos, repr, mem) mem *)
 let store ptr pos repr value mem state =
   let base_ptr = TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer in
-  let ub =
-    Bool.ands
-      [
-        ptr |> Value.has_type Type.tagged_pointer;
-        Bool.not (Memory.can_access_as base_ptr repr mem);
-      ]
-  in
+  let ub = Bool.not (Memory.can_access_as base_ptr repr mem) in
   let mem = mem |> Memory.store_as (Bool.not ub) base_ptr repr value in
   state |> State.update ~mem ~ub
 
@@ -253,13 +247,7 @@ let store ptr pos repr value mem state =
  *   value = (Mem[pos+size]) *)
 let load ptr pos repr mem state =
   let base_ptr = TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer in
-  let ub =
-    Bool.ands
-      [
-        ptr |> Value.has_type Type.tagged_pointer;
-        Bool.not (Memory.can_access_as base_ptr repr mem);
-      ]
-  in
+  let ub = Bool.not (Memory.can_access_as base_ptr repr mem) in
   let ty = Type.from_repr repr |> List.hd in
   let value =
     Memory.load_as base_ptr repr mem

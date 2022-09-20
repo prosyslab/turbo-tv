@@ -43,7 +43,9 @@ let install_constants state =
     List.fold_left
       (fun (mem, rf) name ->
         let ptr, mem =
-          Memory.allocate (BitVecVal.from_int ~len:Value.len 5) mem
+          Memory.allocate ~angelic:Bool.tr
+            (BitVecVal.from_int ~len:Value.len 5)
+            mem
         in
         let updated_mem =
           let map =

@@ -952,7 +952,8 @@ let check_ub_semantic nparams program =
                   param |> Value.has_type Type.tagged_pointer;
                   param |> Objects.is_heap_number mem;
                   BitVec.eqi (param |> TaggedPointer.off_of) 0;
-                  BitVec.eqi (param |> TaggedPointer.bid_of) bid;
+                  (* bid 0 is reserved for referenced angelic ptr *)
+                  BitVec.eqi (param |> TaggedPointer.bid_of) (bid + 1);
                 ];
               Bool.ors
                 (List.map (Value.eq param)
@@ -999,7 +1000,8 @@ let run nparams src_program tgt_program =
                   param |> Value.has_type Type.tagged_pointer;
                   param |> Objects.is_heap_number mem;
                   BitVec.eqi (param |> TaggedPointer.off_of) 0;
-                  BitVec.eqi (param |> TaggedPointer.bid_of) bid;
+                  (* bid 0 is reserved for referenced angelic ptr *)
+                  BitVec.eqi (param |> TaggedPointer.bid_of) (bid + 1);
                 ];
               Bool.ors
                 (List.map (Value.eq param)
