@@ -383,6 +383,19 @@ let bitwise op x y mem =
     (res |> Int32.to_tagged_signed)
     (res |> Int32.to_float64)
 
+let left_shift x y mem =
+  (* https://tc39.es/ecma262/#sec-numeric-types-number-leftShift *)
+  let lnum = x |> to_int32 mem in
+  let rnum = y |> to_uint32 mem in
+  let shift_count =
+    Uint32.modulo rnum (32 |> Value.from_int |> Value.cast Type.uint32)
+  in
+  let res = Uint32.shl lnum shift_count in
+  Bool.ite
+    (res |> Uint32.is_in_smi_range)
+    (res |> Uint32.to_tagged_signed)
+    (res |> Uint32.to_float64)
+
 let unsigned_right_shift x y mem =
   (* https://tc39.es/ecma262/#sec-numeric-types-number-unsignedRightShift *)
   let lnum = x |> to_uint32 mem in

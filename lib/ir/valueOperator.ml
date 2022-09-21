@@ -168,6 +168,9 @@ module Make_Integer_Operator (I : IntValue) = struct
   let or_ lval rval =
     BitVec.orb (lval |> from_value) (rval |> from_value) |> to_value
 
+  let shl lval rval =
+    BitVec.shlb (lval |> from_value) (rval |> from_value) |> to_value
+
   let lshr lval rval =
     BitVec.lshrb (lval |> from_value) (rval |> from_value) |> to_value
 
