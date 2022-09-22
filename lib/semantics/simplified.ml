@@ -174,29 +174,31 @@ let speculative_number_subtract lval rval _effect control mem state =
  * assertion:
  *  value = ite well-defined (lval+rval) UB *)
 let speculative_safe_integer_add lval rval control mem state =
+  let res = Number.add lval rval mem in
   let deopt =
     Bool.not
       (Bool.ands
          [
            Number.are_numbers [ lval; rval ] mem;
-           Number.are_safe_integer [ lval; rval ] mem;
+           Number.are_safe_integer [ lval; rval; res ] mem;
          ])
   in
-  let value = Number.add lval rval mem in
+  let value = res in
   state |> State.update ~value ~deopt ~control
 
 (* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
  * value: Float64(lval - rval) *)
 let speculative_safe_integer_subtract lval rval control mem state =
+  let res = Number.subtract lval rval mem in
   let deopt =
     Bool.not
       (Bool.ands
          [
            Number.are_numbers [ lval; rval ] mem;
-           Number.are_safe_integer [ lval; rval ] mem;
+           Number.are_safe_integer [ lval; rval; res ] mem;
          ])
   in
-  let value = Number.subtract lval rval mem in
+  let value = res in
   state |> State.update ~value ~deopt ~control
 
 (* simplified: bitwise *)
