@@ -33,12 +33,20 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                               (value |> Value.has_type Type.uint64)
                               (Uint64.is_in_range value lb ub)
                               (Bool.ite
-                                 (value |> Value.has_type Type.int8)
-                                 (Int8.is_in_range value lb ub)
+                                 (Bool.ands
+                                    [
+                                      value |> Value.has_type Type.float64;
+                                      value |> Float64.is_integer;
+                                    ])
+                                 (Float64.is_in_range value (lb |> float_of_int)
+                                    (ub |> float_of_int))
                                  (Bool.ite
-                                    (value |> Value.has_type Type.uint8)
-                                    (Uint8.is_in_range value lb ub)
-                                    Bool.fl))))))
+                                    (value |> Value.has_type Type.int8)
+                                    (Int8.is_in_range value lb ub)
+                                    (Bool.ite
+                                       (value |> Value.has_type Type.uint8)
+                                       (Uint8.is_in_range value lb ub)
+                                       Bool.fl)))))))
             | FloatBoundary (lb, ub) ->
                 let value_f = value |> Value.data_of |> Float.from_ieee_bv in
                 let lb_v = lb |> Float64.from_numeral in

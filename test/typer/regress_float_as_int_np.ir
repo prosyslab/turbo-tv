@@ -1,0 +1,28 @@
+#29:NumberConstant[0]()()()  [Type: Range(0, 0)]
+#0:Start()()()  [Type: Internal]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#35:HeapConstant[0x0e5908206055 <Object map = 0xe5908242a01>]()()()  [Type: HeapConstant(0x558d922c7030)]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#10:StateValues[dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#11:StateValues[sparse:..]()()()  [Type: Internal]
+#12:HeapConstant[0x0e5908042895 <Odd Oddball: optimized_out>]()()()  [Type: HeapConstant(0x558d922c74c8 {0x0e5908042895 <Odd Oddball: optimized_out>})]
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#34:HeapConstant[0x0e5908088c55 <JSFunction foo (sfi = 0xe59082127d1)>]()()()  [Type: HeapConstant(0x558d922c74d8)]
+#16:FrameState[UNOPTIMIZED_FRAME, 0, Ignore, 0x0e59082127d1 <SharedFunctionInfo foo>](#10:StateValues, #11:StateValues, #12:HeapConstant, #5:Parameter, #34:HeapConstant)()()  [Type: Internal]
+#7:HeapConstant[0x0e5908203171 <NativeContext[237]>]()()()  [Type: HeapConstant(0x558d92254958)]
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x0e59082127d1 <SharedFunctionInfo foo>](#10:StateValues, #11:StateValues, #12:HeapConstant, #5:Parameter, #34:HeapConstant)()()  [Type: Internal]
+#9:JSStackCheck[JSFunctionEntry]()(#0:Start)(#0:Start)
+#15:Checkpoint()(#9:JSStackCheck)(#9:JSStackCheck)
+#36:LoadField[tagged base, 4, Any, kRepTaggedPointer|kTypeAny, PointerWriteBarrier, mutable](#35:HeapConstant)(#15:Checkpoint)(#9:JSStackCheck)  [Type: Any]
+#37:LoadField[tagged base, 64, NonInternal, kRepTagged|kTypeAny, FullWriteBarrier, mutable](#36:LoadField)(#36:LoadField)(#9:JSStackCheck)  [Type: NonInternal]
+#38:HeapConstant[0x0e59082062a9 <JSFunction imul (sfi = 0xe59081863c1)>]()()()  [Type: HeapConstant(0x558d922c7b30)]
+#39:ReferenceEqual(#37:LoadField, #38:HeapConstant)()()  [Type: Boolean]
+#40:CheckIf[WrongCallTarget, FeedbackSource(INVALID)](#39:ReferenceEqual)(#37:LoadField)(#9:JSStackCheck)
+#41:SpeculativeToNumber[NumberOrOddball, FeedbackSource(#4)](#2:Parameter)(#40:CheckIf)(#9:JSStackCheck)  [Type: Number]
+#43:NumberToUint32(#41:SpeculativeToNumber)()()  [Type: Unsigned32]
+#42:SpeculativeToNumber[NumberOrOddball, FeedbackSource(#4)](#3:Parameter)(#41:SpeculativeToNumber)(#9:JSStackCheck)  [Type: Number]
+#44:NumberToUint32(#42:SpeculativeToNumber)()()  [Type: Unsigned32]
+#45:NumberImul(#43:NumberToUint32, #44:NumberToUint32)()()  [Type: Signed32]
+#30:Return(#29:NumberConstant, #45:NumberImul)(#42:SpeculativeToNumber)(#9:JSStackCheck)
+#31:End()()(#30:Return)

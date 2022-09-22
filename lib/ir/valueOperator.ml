@@ -654,6 +654,9 @@ module Float64 = struct
         le value (from_numeral (TaggedSigned.max_limit |> float_of_int));
       ]
 
+  let is_in_range value lb ub =
+    Bool.ands [ ge value (from_numeral lb); le value (from_numeral ub) ]
+
   let can_be_smi value =
     Bool.ands [ value |> is_integer; value |> is_in_smi_range ]
 
