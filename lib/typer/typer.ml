@@ -16,13 +16,29 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
         (fun verified boundary ->
           let in_bound =
             match boundary with
-            | Boundary.Int32Boundary (lb, ub) ->
-                Bool.ands
-                  [
-                    Value.is_integer value;
-                    Uint32.ge value (lb |> Value.from_int);
-                    Uint32.le value (ub |> Value.from_int);
-                  ]
+            | Boundary.IntBoundary (lb, ub) ->
+                Bool.ite
+                  (value |> Value.has_type Type.tagged_signed)
+                  (TaggedSigned.is_in_range value lb ub)
+                  (Bool.ite
+                     (value |> Value.has_type Type.int32)
+                     (Int32.is_in_range value lb ub)
+                     (Bool.ite
+                        (value |> Value.has_type Type.uint32)
+                        (Uint32.is_in_range value lb ub)
+                        (Bool.ite
+                           (value |> Value.has_type Type.int64)
+                           (Int64.is_in_range value lb ub)
+                           (Bool.ite
+                              (value |> Value.has_type Type.uint64)
+                              (Uint64.is_in_range value lb ub)
+                              (Bool.ite
+                                 (value |> Value.has_type Type.int8)
+                                 (Int8.is_in_range value lb ub)
+                                 (Bool.ite
+                                    (value |> Value.has_type Type.uint8)
+                                    (Uint8.is_in_range value lb ub)
+                                    Bool.fl))))))
             | FloatBoundary (lb, ub) ->
                 let value_f = value |> Value.data_of |> Float.from_ieee_bv in
                 let lb_v = lb |> Float64.from_numeral in
@@ -65,6 +81,7 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
           (value |> Uint32.to_float64)
           (value |> Uint64.to_float64)
       in
+
       let int_expr =
         Bool.ors
           [

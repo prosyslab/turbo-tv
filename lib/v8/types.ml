@@ -983,17 +983,16 @@ let decompose t =
   | _ -> [ t ]
 
 module Boundary = struct
-  type t = Int32Boundary of int * int | FloatBoundary of float * float
+  type t = IntBoundary of int * int | FloatBoundary of float * float
 
   let contains b1 b2 =
     (* lb1 --- lb2 --- ub2 --- ub1 ||
        lb2 --- lb1 --- ub1 --- ub2 *)
     match (b1, b2) with
-    | Int32Boundary (lb1, ub1), Int32Boundary (lb2, ub2) ->
-        lb1 <= lb2 && ub1 >= ub2
-    | Int32Boundary (lb1, ub1), FloatBoundary (lb2, ub2) ->
+    | IntBoundary (lb1, ub1), IntBoundary (lb2, ub2) -> lb1 <= lb2 && ub1 >= ub2
+    | IntBoundary (lb1, ub1), FloatBoundary (lb2, ub2) ->
         float_of_int lb1 <= lb2 && float_of_int ub1 >= ub2
-    | FloatBoundary (lb1, ub1), Int32Boundary (lb2, ub2) ->
+    | FloatBoundary (lb1, ub1), IntBoundary (lb2, ub2) ->
         lb1 <= float_of_int lb2 && ub1 >= float_of_int ub2
     | FloatBoundary (lb1, ub1), FloatBoundary (lb2, ub2) ->
         lb1 <= lb2 && ub1 >= ub2
@@ -1002,15 +1001,15 @@ module Boundary = struct
     (* lb1 --- lb2 --- ub1 --- ub2 ||
        lb2 --- lb1 --- ub2 --- ub1 *)
     match (b1, b2) with
-    | Int32Boundary (lb1, ub1), Int32Boundary (lb2, ub2) ->
+    | IntBoundary (lb1, ub1), IntBoundary (lb2, ub2) ->
         (lb1 <= lb2 && ub1 <= ub2 && lb2 <= ub1)
         || (lb2 <= lb1 && ub2 <= ub1 && lb1 <= ub2)
-    | Int32Boundary (lb1, ub1), FloatBoundary (lb2, ub2) ->
+    | IntBoundary (lb1, ub1), FloatBoundary (lb2, ub2) ->
         let lb1_f = lb1 |> float_of_int in
         let ub1_f = ub1 |> float_of_int in
         (lb1_f <= lb2 && ub1_f <= ub2 && lb2 <= ub1_f)
         || (lb2 <= lb1_f && ub2 <= ub1_f && lb1_f <= ub2)
-    | FloatBoundary (lb1, ub1), Int32Boundary (lb2, ub2) ->
+    | FloatBoundary (lb1, ub1), IntBoundary (lb2, ub2) ->
         let lb2_f = lb2 |> float_of_int in
         let ub2_f = ub2 |> float_of_int in
         (lb1 <= lb2_f && ub1 <= ub2_f && lb2_f <= ub1)
@@ -1021,13 +1020,12 @@ module Boundary = struct
 
   let union b1 b2 =
     match (b1, b2) with
-    | Int32Boundary (lb1, ub1), Int32Boundary (lb2, ub2) ->
-        if ub1 = lb2 - 1 then [ Int32Boundary (lb1, ub2) ]
-        else if ub2 = lb1 - 1 then [ Int32Boundary (lb2, ub1) ]
+    | IntBoundary (lb1, ub1), IntBoundary (lb2, ub2) ->
+        if ub1 = lb2 - 1 then [ IntBoundary (lb1, ub2) ]
+        else if ub2 = lb1 - 1 then [ IntBoundary (lb2, ub1) ]
         else if contains b1 b2 then [ b1 ]
         else if contains b2 b1 then [ b2 ]
-        else if overlapped b1 b2 then
-          [ Int32Boundary (min lb1 lb2, max ub1 ub2) ]
+        else if overlapped b1 b2 then [ IntBoundary (min lb1 lb2, max ub1 ub2) ]
         else [ b1; b2 ]
     | FloatBoundary (lb1, lb2), FloatBoundary (ub1, ub2) ->
         if contains b1 b2 then [ b1 ]
@@ -1040,27 +1038,27 @@ module Boundary = struct
 
   let from_type ty =
     match ty with
-    | OtherSigned32 -> Int32Boundary (-Utils.pow 2 31, -Utils.pow 2 30 - 1)
-    | Negative31 -> Int32Boundary (-Utils.pow 2 30, 0 - 1)
-    | Unsigned30 -> Int32Boundary (0, Utils.pow 2 30 - 1)
-    | OtherUnsigned31 -> Int32Boundary (Utils.pow 2 30, Utils.pow 2 31 - 1)
-    | OtherUnsigned32 -> Int32Boundary (Utils.pow 2 31, Utils.pow 2 32 - 1)
+    | OtherSigned32 -> IntBoundary (-Utils.pow 2 31, -Utils.pow 2 30 - 1)
+    | Negative31 -> IntBoundary (-Utils.pow 2 30, 0 - 1)
+    | Unsigned30 -> IntBoundary (0, Utils.pow 2 30 - 1)
+    | OtherUnsigned31 -> IntBoundary (Utils.pow 2 30, Utils.pow 2 31 - 1)
+    | OtherUnsigned32 -> IntBoundary (Utils.pow 2 31, Utils.pow 2 32 - 1)
     | MinusZero -> FloatBoundary (-0.0, -0.0)
     | NaN -> FloatBoundary (nan, nan)
     | _ -> failwith "unimplemented"
 
   let int_range_of t =
     match t with
-    | Int32Boundary (lb, ub) -> (lb, ub)
+    | IntBoundary (lb, ub) -> (lb, ub)
     | FloatBoundary _ -> failwith "not an integer boundary"
 
   let float_range_of t =
     match t with
     | FloatBoundary (lb, ub) -> (lb, ub)
-    | Int32Boundary _ -> failwith "not a float boundary"
+    | IntBoundary _ -> failwith "not a float boundary"
 
   let print t =
     match t with
     | FloatBoundary (lb, ub) -> Format.printf "(%f, %f)" lb ub
-    | Int32Boundary (lb, ub) -> Format.printf "(%d, %d)" lb ub
+    | IntBoundary (lb, ub) -> Format.printf "(%d, %d)" lb ub
 end

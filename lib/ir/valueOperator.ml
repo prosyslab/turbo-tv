@@ -24,6 +24,13 @@ module TaggedSigned = struct
   let is_zero value =
     BitVec.eqb (value |> from_value) (BitVecVal.zero ~len:31 ())
 
+  let is_in_range value lb ub =
+    Bool.ands
+      [
+        BitVec.sgei (value |> from_value) lb;
+        BitVec.slei (value |> from_value) ub;
+      ]
+
   let to_string model value =
     let v_str =
       value |> from_value |> BitVec.sign_extend 1 |> Model.eval model
@@ -244,6 +251,19 @@ module Make_Integer_Operator (I : IntValue) = struct
           BitVec.ulei (value |> from_value) TaggedSigned.max_limit;
         ]
 
+  let is_in_range value lb ub =
+    let sext =
+      (if width = 64 then value else BitVec.sign_extend (64 - width) value)
+      |> from_value
+    in
+    let zext =
+      (if width = 64 then value else BitVec.zero_extend (64 - width) value)
+      |> from_value
+    in
+
+    if sign then Z3utils.Bool.ands [ BitVec.sgei sext lb; BitVec.slei sext ub ]
+    else Z3utils.Bool.ands [ BitVec.ugei zext lb; BitVec.ulei zext ub ]
+
   (* conversion *)
   let to_int ty ty_width value =
     let data = value |> from_value in
@@ -337,6 +357,14 @@ module Int8 = Make_Integer_Operator (struct
   let width = 8
 
   let ty = Type.int8
+end)
+
+module Uint8 = Make_Integer_Operator (struct
+  let sign = false
+
+  let width = 8
+
+  let ty = Type.uint8
 end)
 
 module Int32 = Make_Integer_Operator (struct
@@ -503,7 +531,7 @@ module Float64 = struct
 
   let to_int64 value = value |> to_intx 64
 
-  let to_uint32 value = value |> to_intx ~to_bv:Float.to_ubv 32
+  let to_uint32 value = value |> to_intx ~sign:false 32
 
   let to_tagged_signed value = value |> to_int32 |> Int32.to_tagged_signed
 

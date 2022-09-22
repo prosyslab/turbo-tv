@@ -50,7 +50,13 @@ let is_signed_integer t =
 let is_unsigned_integer t =
   Bool.ors (List.map (fun ty -> has_type ty t) Type.uint_types)
 
-let is_integer t = Bool.ors [ is_signed_integer t; is_unsigned_integer t ]
+let is_integer t =
+  Bool.ors
+    [
+      t |> has_type Type.tagged_signed;
+      is_signed_integer t;
+      is_unsigned_integer t;
+    ]
 
 let is_float t = Bool.ors (List.map (fun ty -> has_type ty t) Type.float_types)
 
