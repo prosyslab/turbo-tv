@@ -1,0 +1,20 @@
+#20:NumberConstant[0]()()()  [Type: Range(0, 0)]
+#0:Start()()()  [Type: Internal]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#16:NumberConstant[2]()()()  [Type: Range(2, 2)]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#9:StateValues[dense](#1:Parameter, #2:Parameter)()()  [Type: Internal]
+#10:StateValues[sparse:.]()()()  [Type: Internal]
+#4:Parameter[4, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#25:HeapConstant[0x0e6e08088b9d <JSFunction f1 (sfi = 0xe6e082127c1)>]()()()  [Type: HeapConstant(0x55c2f54c4a70)]
+#15:FrameState[UNOPTIMIZED_FRAME, 2, Ignore, 0x0e6e082127c1 <SharedFunctionInfo f1>](#9:StateValues, #10:StateValues, #2:Parameter, #4:Parameter, #25:HeapConstant)()()  [Type: Internal]
+#6:HeapConstant[0x0e6e08203171 <NativeContext[237]>]()()()  [Type: HeapConstant(0x55c2f544f938)]
+#11:HeapConstant[0x0e6e08042895 <Odd Oddball: optimized_out>]()()()  [Type: HeapConstant(0x55c2f54c5060 {0x0e6e08042895 <Odd Oddball: optimized_out>})]
+#13:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x0e6e082127c1 <SharedFunctionInfo f1>](#9:StateValues, #10:StateValues, #11:HeapConstant, #4:Parameter, #25:HeapConstant)()()  [Type: Internal]
+#8:JSStackCheck[JSFunctionEntry]()(#0:Start)(#0:Start)
+#14:Checkpoint()(#8:JSStackCheck)(#8:JSStackCheck)
+#17:SpeculativeSafeIntegerAdd[SignedSmall](#2:Parameter, #16:NumberConstant)(#14:Checkpoint)(#8:JSStackCheck)  [Type: Range(-9007199254740991, 9007199254740991)]
+#18:NumberConstant[3]()()()  [Type: Range(3, 3)]
+#19:SpeculativeSafeIntegerAdd[SignedSmall](#17:SpeculativeSafeIntegerAdd, #18:NumberConstant)(#17:SpeculativeSafeIntegerAdd)(#8:JSStackCheck)  [Type: Range(-9007199254740988, 9007199254740991)]
+#21:Return(#20:NumberConstant, #19:SpeculativeSafeIntegerAdd)(#19:SpeculativeSafeIntegerAdd)(#8:JSStackCheck)
+#22:End()()(#21:Return)
