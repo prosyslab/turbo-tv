@@ -475,9 +475,10 @@ module Float64 = struct
 
   let from_value value = value |> Value.data_of |> Float.from_ieee_bv
 
-  let to_intx ?(to_bv = Float.to_sbv) width value =
+  let to_intx ?(sign = true) width value =
     let value_ix =
       let f = value |> from_value in
+      let to_bv = if sign then Float.to_sbv else Float.to_ubv in
       Bool.ite
         (* if num is nan or 0 or -0 or inf or -inf, return 0 *)
         (Bool.ors
@@ -489,12 +490,13 @@ module Float64 = struct
              Float.is_ninf f;
            ])
         (BitVecVal.from_int ~len:width 0)
-        (* else *)
-        (value |> from_value |> to_bv ~len:width Float.rtn_mode)
+        (f |> to_bv ~len:width Float.rtn_mode)
     in
     match width with
-    | 32 -> value_ix |> BitVec.zero_extend 32 |> Value.entype Type.int32
-    | 64 -> value_ix |> Value.entype Type.int64
+    | 32 ->
+        value_ix |> BitVec.zero_extend 32
+        |> Value.entype (if sign then Type.int32 else Type.uint32)
+    | 64 -> value_ix |> Value.entype (if sign then Type.int64 else Type.uint64)
     | _ -> failwith "not implemented"
 
   let to_int32 value = value |> to_intx 32
