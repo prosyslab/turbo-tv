@@ -228,6 +228,8 @@ module Float = struct
 
   let is_inf exp = Fl.mk_is_infinite ctx exp
 
+  let is_pinf exp = Bool.ands [ is_positive exp; is_inf exp ]
+
   let is_ninf exp = Bool.ands [ is_negative exp; is_inf exp ]
 end
 

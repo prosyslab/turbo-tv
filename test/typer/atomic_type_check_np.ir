@@ -1,0 +1,25 @@
+#26:NumberConstant[0]()()()  [Type: Range(0, 0)]
+#0:Start()()()  [Type: Internal]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#10:StateValues[dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#11:StateValues[sparse:.]()()()  [Type: Internal]
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#33:HeapConstant[0x068808088ced <JSFunction foo (sfi = 0x688082127d1)>]()()()  [Type: HeapConstant(0x55f21a652a70)]
+#16:FrameState[UNOPTIMIZED_FRAME, 2, Ignore, 0x0688082127d1 <SharedFunctionInfo foo>](#10:StateValues, #11:StateValues, #3:Parameter, #5:Parameter, #33:HeapConstant)()()  [Type: Internal]
+#7:HeapConstant[0x068808203171 <NativeContext[237]>]()()()  [Type: HeapConstant(0x55f21a5dd938)]
+#12:HeapConstant[0x068808042895 <Odd Oddball: optimized_out>]()()()  [Type: HeapConstant(0x55f21a653060 {0x068808042895 <Odd Oddball: optimized_out>})]
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x0688082127d1 <SharedFunctionInfo foo>](#10:StateValues, #11:StateValues, #12:HeapConstant, #5:Parameter, #33:HeapConstant)()()  [Type: Internal]
+#9:JSStackCheck[JSFunctionEntry]()(#0:Start)(#0:Start)
+#15:Checkpoint()(#9:JSStackCheck)(#9:JSStackCheck)
+#17:SpeculativeNumberMultiply[SignedSmall](#2:Parameter, #3:Parameter)(#15:Checkpoint)(#9:JSStackCheck)  [Type: Number]
+#18:NumberConstant[-0]()()()  [Type: MinusZero]
+#19:SpeculativeNumberLessThanOrEqual[Number](#17:SpeculativeNumberMultiply, #18:NumberConstant)(#17:SpeculativeNumberMultiply)(#9:JSStackCheck)  [Type: Boolean]
+#20:Branch[None, NoSafetyCheck](#19:SpeculativeNumberLessThanOrEqual)()(#9:JSStackCheck)
+#24:IfTrue()()(#20:Branch)
+#27:Return(#26:NumberConstant, #26:NumberConstant)(#19:SpeculativeNumberLessThanOrEqual)(#24:IfTrue)
+#28:NumberConstant[1]()()()  [Type: Range(1, 1)]
+#21:IfFalse()()(#20:Branch)
+#29:Return(#26:NumberConstant, #28:NumberConstant)(#19:SpeculativeNumberLessThanOrEqual)(#21:IfFalse)
+#30:End()()(#27:Return, #29:Return)

@@ -597,7 +597,7 @@ module Float64 = struct
 
   let is_nan value = Float.is_nan (value |> from_value)
 
-  let is_inf value = Float.is_inf (value |> from_value)
+  let is_inf value = Float.is_pinf (value |> from_value)
 
   let is_ninf value = Float.is_ninf (value |> from_value)
 

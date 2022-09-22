@@ -24,12 +24,17 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                     Uint32.le value (ub |> Value.from_int);
                   ]
             | FloatBoundary (lb, ub) ->
-                Bool.ands
-                  [
-                    value |> Value.is_float;
-                    Float.gef (value |> Value.data_of |> Float.from_ieee_bv) lb;
-                    Float.lef (value |> Value.data_of |> Float.from_ieee_bv) ub;
-                  ]
+                let value_f = value |> Value.data_of |> Float.from_ieee_bv in
+                let lb_v = lb |> Float64.from_numeral in
+                Bool.ite (value |> Float64.is_nan) (lb_v |> Float64.is_nan)
+                  ((Bool.ite (value |> Float64.is_minus_zero))
+                     (lb_v |> Float64.is_minus_zero)
+                     (Bool.ands
+                        [
+                          value |> Value.is_float;
+                          Float.gef value_f lb;
+                          Float.lef value_f ub;
+                        ]))
           in
           Bool.ors [ verified; in_bound ])
         Bool.fl region
