@@ -1,6 +1,0 @@
-#1:Start()()()
-#2:NumberConstant[4294967295]()()()
-#3:NumberToInt32(#2:NumberConstant)()()
-#4:ChangeInt32ToTagged(#3:NumberConstant)()()
-#5:Return(#2:NumberConstant, #4:ChangeInt32ToTagged)()(#1:Start)
-#6:End()()(#5:Return)

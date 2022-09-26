@@ -1,0 +1,9 @@
+(test
+ (name typerTest)
+ (modules typerTest)
+ (libraries lib oUnit))
+
+(test
+ (name simplifiedTest)
+ (modules simplifiedTest)
+ (libraries lib oUnit))
