@@ -31,6 +31,8 @@ module TaggedSigned = struct
         BitVec.slei (value |> from_value) ub;
       ]
 
+  let eq lval rval = BitVec.eqb (lval |> from_value) (rval |> from_value)
+
   let to_string model value =
     let v_str =
       value |> from_value |> BitVec.sign_extend 1 |> Model.eval model

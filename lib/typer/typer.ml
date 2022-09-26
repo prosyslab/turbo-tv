@@ -37,6 +37,7 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                                     [
                                       value |> Value.has_type Type.float64;
                                       value |> Float64.is_integer;
+                                      Bool.not (value |> Float64.is_minus_zero);
                                     ])
                                  (Float64.is_in_range value (lb |> float_of_int)
                                     (ub |> float_of_int))

@@ -1,5 +1,0 @@
-#1:Start()()()
-#3:NumberConstant[-0.0]()()()
-#4:NumberExpm1(#3:NumberConstant)()() [Type: Number]
-#5:Return(#3:NumberConstant, #3:NumberConstant)()()
-#6:End()()(#5:Return)

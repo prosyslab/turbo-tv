@@ -21,6 +21,28 @@ let value_printer e =
     (e |> Printer.value_to_string model state.register_file state.memory)
     (e |> Expr.to_simplified_string)
 
+let change_int31_to_tagged_signed desc input expected =
+  let name = String.concat "_" [ "change_int31_to_tagged_signed"; desc ] in
+  let result =
+    state
+    |> change_int31_to_tagged_signed
+         (Value.from_int input |> Value.cast Type.int32)
+    |> State.register_file |> RegisterFile.find "0"
+  in
+  let expected =
+    Value.from_int expected |> Value.cast Type.int32 |> Int32.to_tagged_signed
+  in
+  let eq = TaggedSigned.eq in
+  name >:: fun _ ->
+  assert_equal ~msg:name ~cmp:(value_eq eq) ~printer:value_printer result
+    expected
+
+let change_int31_to_tagged_signed_pos_val =
+  change_int31_to_tagged_signed "pos_val" 0 0
+
+let change_int31_to_tagged_signed_neg_val =
+  change_int31_to_tagged_signed "neg_val" (-1) (-1)
+
 let number_to ty_s desc input expected =
   let name = String.concat "_" [ "number_to"; ty_s; desc ] in
   let ty, eq, convert =
@@ -60,6 +82,8 @@ let number_to_int32_pos_ovf = number_to "int32" "pos_ovf" 4294967297.0 1
 let suite =
   "suite"
   >::: [
+         change_int31_to_tagged_signed_pos_val;
+         change_int31_to_tagged_signed_neg_val;
          number_to_uint32_neg_val;
          number_to_uint32_pos_val;
          number_to_uint32_neg_ovf;

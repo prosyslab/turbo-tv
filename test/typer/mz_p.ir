@@ -1,4 +1,0 @@
-#1:Start()()()
-#3:NumberConstant[-0.0]()()() [Type: Signed31]
-#5:Return(#3:NumberConstant, #3:NumberConstant)()(#1:Start)
-#6:End()()(#5:Return)
