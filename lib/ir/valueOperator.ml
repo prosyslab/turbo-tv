@@ -503,38 +503,6 @@ module Float64 = struct
 
   let from_value value = value |> Value.data_of |> Float.from_ieee_bv
 
-  let to_intx ?(sign = true) width value =
-    let value_ix =
-      let f = value |> from_value in
-      let to_bv = if sign then Float.to_sbv else Float.to_ubv in
-      Bool.ite
-        (* if num is nan or 0 or -0 or inf or -inf, return 0 *)
-        (Bool.ors
-           [
-             Float.is_nan f;
-             Float.is_zero f;
-             Float.is_minus_zero f;
-             Float.is_inf f;
-             Float.is_ninf f;
-           ])
-        (BitVecVal.from_int ~len:width 0)
-        (f |> to_bv ~len:width Float.rtn_mode)
-    in
-    match width with
-    | 32 ->
-        value_ix |> BitVec.zero_extend 32
-        |> Value.entype (if sign then Type.int32 else Type.uint32)
-    | 64 -> value_ix |> Value.entype (if sign then Type.int64 else Type.uint64)
-    | _ -> failwith "not implemented"
-
-  let to_int32 value = value |> to_intx 32
-
-  let to_int64 value = value |> to_intx 64
-
-  let to_uint32 value = value |> to_intx ~sign:false 32
-
-  let to_tagged_signed value = value |> to_int32 |> Int32.to_tagged_signed
-
   (* constants *)
   let nan = Float.nan () |> to_value
 
@@ -721,6 +689,66 @@ module Float64 = struct
          (Bool.ors [ value |> is_inf; value |> is_ninf ])
          nan
          (Z3.FuncDecl.apply uif [ value |> from_value ] |> to_value))
+
+  let to_intx ?(sign = true) width value =
+    (* https://tc39.es/ecma262/#sec-toint32 *)
+    let value_w_bit =
+      let modulo =
+        Stdlib.Float.pow 2.0 (width |> float_of_int) |> Float.from_float
+      in
+      let f = value |> from_value in
+      let number =
+        Bool.ite
+          (* Note: http://smtlib.cs.uiowa.edu/theories-FloatingPoint.shtml
+              fp.to_* functions are unspecified for NaN and infinity input values.
+              In addition, fp.to_ubv and fp.to_sbv are unspecified for finite number inputs
+              that are out of range (which includes all negative numbers for fp.to_ubv). *)
+          (* if num is nan or 0 or -0 or inf or -inf, return 0 *)
+          (Bool.ors
+             [
+               Float.is_nan f;
+               Float.is_zero f;
+               Float.is_minus_zero f;
+               Float.is_inf f;
+               Float.is_ninf f;
+             ])
+          (Float.from_float 0.0) f
+      in
+      let i =
+        let fan = number |> Float.abs |> Float.round Float.rtn_mode in
+        Bool.ite (Float.is_positive f) fan (Float.neg fan)
+      in
+      let remainder = Float.rem i modulo in
+      let int_w_bit =
+        Bool.ite
+          (Float.is_positive remainder)
+          remainder
+          (Float.add modulo remainder)
+      in
+      if sign then
+        Bool.ite
+          (Float.gef int_w_bit
+             (Stdlib.Float.pow 2.0 ((width |> float_of_int) -. 1.0)))
+          (Float.sub int_w_bit modulo)
+          int_w_bit
+        |> Float.to_sbv ~len:width Float.rne_mode
+      else int_w_bit |> Float.to_ubv ~len:width Float.rne_mode
+    in
+    match width with
+    | 32 ->
+        value_w_bit |> BitVec.zero_extend 32
+        |> Value.entype (if sign then Type.int32 else Type.uint32)
+    | 64 ->
+        value_w_bit |> Value.entype (if sign then Type.int64 else Type.uint64)
+    | _ -> failwith "not implemented"
+
+  let to_int32 value = value |> to_intx 32
+
+  let to_int64 value = value |> to_intx 64
+
+  let to_uint32 value = value |> to_intx ~sign:false 32
+
+  let to_tagged_signed value = value |> to_int32 |> Int32.to_tagged_signed
 
   (* pp *)
   let to_string model value =
