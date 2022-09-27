@@ -1,0 +1,24 @@
+#27:NumberConstant[0]()()()  [Type: Range(0, 0)]
+#19:NumberConstant[4294967295]()()()  [Type: Range(4294967295, 4294967295)]
+#21:NumberConstant[-1]()()()  [Type: Range(-1, -1)]
+#0:Start()()()  [Type: Internal]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#14:ToBoolean(#2:Parameter)()()  [Type: Boolean]
+#6:HeapConstant[0x39a308203171 <NativeContext[237]>]()()()  [Type: HeapConstant(0x557ba7685938)]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#9:StateValues[dense](#1:Parameter, #2:Parameter)()()  [Type: Internal]
+#10:StateValues[sparse:.]()()()  [Type: Internal]
+#11:HeapConstant[0x39a308042895 <Odd Oddball: optimized_out>]()()()  [Type: HeapConstant(0x557ba76faa70 {0x39a308042895 <Odd Oddball: optimized_out>})]
+#4:Parameter[4, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#32:HeapConstant[0x39a308088c29 <JSFunction foo (sfi = 0x39a3082127c1)>]()()()  [Type: HeapConstant(0x557ba76faa80)]
+#13:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x39a3082127c1 <SharedFunctionInfo foo>](#9:StateValues, #10:StateValues, #11:HeapConstant, #4:Parameter, #32:HeapConstant)()()  [Type: Internal]
+#8:JSStackCheck[JSFunctionEntry]()(#0:Start)(#0:Start)
+#15:Branch[None, NoSafetyCheck](#14:ToBoolean)()(#8:JSStackCheck)
+#18:IfTrue()()(#15:Branch)
+#16:IfFalse()()(#15:Branch)
+#20:Merge()()(#18:IfTrue, #16:IfFalse)
+#22:Phi[kRepTagged](#19:NumberConstant, #21:NumberConstant)()(#20:Merge)  [Type: Range(-1, 4294967295)]
+#25:NumberConstant[1]()()()  [Type: Range(1, 1)]
+#37:NumberAdd(#22:Phi, #25:NumberConstant)()()  [Type: Range(0, 4294967296)]
+#28:Return(#27:NumberConstant, #37:NumberAdd)(#8:JSStackCheck)(#20:Merge)
+#29:End()()(#28:Return)
