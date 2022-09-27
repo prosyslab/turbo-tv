@@ -720,8 +720,13 @@ module Float64 = struct
         let fan = number |> Float.abs |> Float.round Float.rtn_mode in
         Bool.ite (Float.is_positive f) fan (Float.neg fan)
       in
-      Float.rem i modulo |> Float.to_sbv ~len:width Float.rne_mode
+      let remainder = Float.rem i modulo in
+      Bool.ite
+        (Float.is_positive remainder)
+        (remainder |> Float.to_ubv ~len:width Float.rne_mode)
+        (remainder |> Float.to_sbv ~len:width Float.rne_mode)
     in
+
     match width with
     | 32 ->
         value_w_bit |> BitVec.zero_extend 32
