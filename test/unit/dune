@@ -1,9 +1,19 @@
+(library
+ (name helper)
+ (modules helper)
+ (libraries lib oUnit))
+
 (test
  (name typerTest)
  (modules typerTest)
- (libraries lib oUnit))
+ (libraries helper))
 
 (test
  (name simplifiedTest)
  (modules simplifiedTest)
- (libraries lib oUnit))
+ (libraries helper))
+
+(test
+ (name machineTest)
+ (modules machineTest)
+ (libraries helper))

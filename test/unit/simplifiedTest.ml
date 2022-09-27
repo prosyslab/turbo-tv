@@ -1,25 +1,4 @@
-open Lib
-open Lib.Z3utils
-open Lib.Simplified
-open Lib.ValueOperator
-open OUnit2
-
-let state = State.init 0 "test"
-
-let solver = Solver.init None
-
-let is_satisfiable expr =
-  match Solver.check solver expr with
-  | Z3.Solver.SATISFIABLE -> true
-  | _ -> false
-
-let value_eq eq e1 e2 = eq e1 e2 |> is_satisfiable
-
-let value_printer e =
-  let model = Solver.get_model solver |> Option.get in
-  Format.sprintf "Formated: %s\nRaw: %s"
-    (e |> Printer.value_to_string model state.register_file state.memory)
-    (e |> Expr.to_simplified_string)
+open Helper
 
 let change_int31_to_tagged_signed desc input expected =
   let name = String.concat "_" [ "change_int31_to_tagged_signed"; desc ] in
@@ -49,18 +28,18 @@ let number_to ty_s desc input expected =
     match ty_s with
     | "int32" -> (Type.int32, Int32.eq, number_to_int32)
     | "uint32" -> (Type.uint32, Uint32.eq, number_to_uint32)
-    | _ -> failwith "unreachable"
+    | _ -> failwith "not implemented"
   in
+  let msg = "\027[91m" ^ name ^ "\027[0m" in
+  let expected = Value.from_int expected |> Value.cast ty in
   let result =
     state
     |> convert (Float64.from_numeral input) state.memory
     |> State.register_file |> RegisterFile.find "0"
   in
-  let expected = Value.from_int expected |> Value.cast ty in
   let _ = value_eq eq result expected in
   name >:: fun _ ->
-  assert_equal ~msg:name ~cmp:(value_eq eq) ~printer:value_printer result
-    expected
+  assert_equal ~msg ~cmp:(value_eq eq) ~printer:value_printer expected result
 
 let number_to_uint32_neg_val = number_to "uint32" "neg_val" (-1.0) 4294967295
 
