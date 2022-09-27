@@ -720,21 +720,7 @@ module Float64 = struct
         let fan = number |> Float.abs |> Float.round Float.rtn_mode in
         Bool.ite (Float.is_positive f) fan (Float.neg fan)
       in
-      let remainder = Float.rem i modulo in
-      let int_w_bit =
-        Bool.ite
-          (Float.is_positive remainder)
-          remainder
-          (Float.add modulo remainder)
-      in
-      if sign then
-        Bool.ite
-          (Float.gef int_w_bit
-             (Stdlib.Float.pow 2.0 ((width |> float_of_int) -. 1.0)))
-          (Float.sub int_w_bit modulo)
-          int_w_bit
-        |> Float.to_sbv ~len:width Float.rne_mode
-      else int_w_bit |> Float.to_ubv ~len:width Float.rne_mode
+      Float.rem i modulo |> Float.to_sbv ~len:width Float.rne_mode
     in
     match width with
     | 32 ->
