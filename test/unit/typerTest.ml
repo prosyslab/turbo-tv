@@ -29,10 +29,23 @@ let mz_is_not_signed31 =
     (is_unsatisfiable
        (Typer.verify Float64.minus_zero Types.Signed31 (Memory.init 0)))
 
+let mz_is_not_in_plain_number_or_nan =
+  "mz_is_not_in_plain_number_or_nan" >:: fun _ ->
+  assert_bool "mz_is_not_in_plain_number_or_nan"
+    (is_unsatisfiable
+       (Typer.verify Float64.minus_zero
+          (Types.Union [ PlainNumber; NaN ])
+          (Memory.init 0)))
+
 let nan_is_nan =
   "nan_is_nan" >:: fun _ ->
   assert_bool "nan_is_nan"
     (is_satisfiable (Typer.verify Float64.nan Types.NaN (Memory.init 0)))
+
+let nan_is_number =
+  "nan_is_number" >:: fun _ ->
+  assert_bool "nan_is_number"
+    (is_satisfiable (Typer.verify Float64.nan Types.Number (Memory.init 0)))
 
 let nan_is_not_unsigned32 =
   "nan_is_not_unsigned32" >:: fun _ ->
@@ -78,6 +91,7 @@ let suite =
          mz_is_mz;
          mz_is_not_signed31;
          nan_is_nan;
+         nan_is_number;
          nan_is_not_unsigned32;
          mz_is_u32_or_mz;
          mz_is_not_u32_or_nan;

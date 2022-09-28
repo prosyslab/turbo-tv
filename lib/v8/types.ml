@@ -983,7 +983,10 @@ let decompose t =
   | _ -> [ t ]
 
 module Boundary = struct
-  type t = IntBoundary of int * int | FloatBoundary of float * float
+  type t =
+    | IntBoundary of int * int
+    | FloatBoundary of float * float
+    | OtherBoundary
 
   let contains b1 b2 =
     (* lb1 --- lb2 --- ub2 --- ub1 ||
@@ -996,6 +999,9 @@ module Boundary = struct
         lb1 <= float_of_int lb2 && ub1 >= float_of_int ub2
     | FloatBoundary (lb1, ub1), FloatBoundary (lb2, ub2) ->
         lb1 <= lb2 && ub1 >= ub2
+    | OtherBoundary, OtherBoundary -> true
+    | OtherBoundary, _ -> false
+    | _, OtherBoundary -> false
 
   let overlapped b1 b2 =
     (* lb1 --- lb2 --- ub1 --- ub2 ||
@@ -1017,6 +1023,9 @@ module Boundary = struct
     | FloatBoundary (lb1, ub1), FloatBoundary (lb2, ub2) ->
         (lb1 <= lb2 && ub1 <= ub2 && lb2 <= ub1)
         || (lb2 <= lb1 && ub2 <= ub1 && lb1 <= ub2)
+    | OtherBoundary, OtherBoundary -> true
+    | OtherBoundary, _ -> false
+    | _, OtherBoundary -> false
 
   let union b1 b2 =
     match (b1, b2) with
@@ -1045,20 +1054,24 @@ module Boundary = struct
     | OtherUnsigned32 -> IntBoundary (Utils.pow 2 31, Utils.pow 2 32 - 1)
     | MinusZero -> FloatBoundary (-0.0, -0.0)
     | NaN -> FloatBoundary (nan, nan)
+    | OtherNumber -> OtherBoundary
     | _ -> failwith "unimplemented"
 
   let int_range_of t =
     match t with
     | IntBoundary (lb, ub) -> (lb, ub)
     | FloatBoundary _ -> failwith "not an integer boundary"
+    | OtherBoundary -> failwith "not an integer boundary"
 
   let float_range_of t =
     match t with
     | FloatBoundary (lb, ub) -> (lb, ub)
     | IntBoundary _ -> failwith "not a float boundary"
+    | OtherBoundary -> failwith "not a float boundary"
 
   let print t =
     match t with
     | FloatBoundary (lb, ub) -> Format.printf "(%f, %f)" lb ub
     | IntBoundary (lb, ub) -> Format.printf "(%d, %d)" lb ub
+    | OtherBoundary -> failwith "not an integer boundary"
 end

@@ -9,7 +9,8 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
   | Negative31 | Unsigned30 | Signed31 | Signed32 | Signed32OrMinusZero
   | Signed32OrMinusZeroOrNaN | Negative32 | Unsigned31 | Unsigned32
   | Unsigned32OrMinusZero | Unsigned32OrMinusZeroOrNaN | Integral32
-  | Integral32OrMinusZero | Integral32OrMinusZeroOrNaN | MinusZeroOrNaN ->
+  | Integral32OrMinusZero | Integral32OrMinusZeroOrNaN | MinusZeroOrNaN
+  | PlainNumber | OrderedNumber | Number ->
       (* if there exists a boundary B of the region R that satisfy T <= B, then T <= R *)
       let region = Types.decompose ty |> List.map Boundary.from_type in
       List.fold_left
@@ -36,8 +37,14 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                                  (Bool.ands
                                     [
                                       value |> Value.has_type Type.float64;
-                                      value |> Float64.is_integer;
-                                      Bool.not (value |> Float64.is_minus_zero);
+                                      Bool.not
+                                        (Bool.ors
+                                           [
+                                             value |> Float64.is_ninf;
+                                             value |> Float64.is_inf;
+                                             value |> Float64.is_nan;
+                                             value |> Float64.is_minus_zero;
+                                           ]);
                                     ])
                                  (Float64.is_in_range value (lb |> float_of_int)
                                     (ub |> float_of_int))
@@ -49,16 +56,30 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                                        (Uint8.is_in_range value lb ub)
                                        Bool.fl)))))))
             | FloatBoundary (lb, ub) ->
-                if ty = NaN then value |> Float64.is_nan
-                else if ty = Types.MinusZero then value |> Float64.is_minus_zero
-                else
-                  let value_f = value |> Value.data_of |> Float.from_ieee_bv in
-                  Bool.ands
-                    [
-                      value |> Value.is_float;
-                      Float.gef value_f lb;
-                      Float.lef value_f ub;
-                    ]
+                if lb == nan && ub == nan then value |> Float64.is_nan
+                else if lb == -0.0 && ub == -0.0 then
+                  value |> Float64.is_minus_zero
+                else Float64.is_in_range value lb ub
+            | OtherBoundary ->
+                Bool.ite
+                  (value |> Value.has_type Type.int64)
+                  (Bool.not
+                     (Int64.is_in_range value
+                        (-Utils.pow 2 31)
+                        (Utils.pow 2 32 - 1)))
+                  (Bool.ite
+                     (value |> Value.has_type Type.uint64)
+                     (Bool.not
+                        (Uint64.is_in_range value
+                           (-Utils.pow 2 31)
+                           (Utils.pow 2 32 - 1)))
+                     (Bool.ite
+                        (value |> Value.has_type Type.float64)
+                        (Bool.not
+                           (Float64.is_in_range value
+                              (-.Stdlib.Float.pow 2.0 31.0)
+                              (Stdlib.Float.pow 2.0 32.0 -. 1.)))
+                        Bool.fl))
           in
           Bool.ors [ verified; in_bound ])
         Bool.fl region
