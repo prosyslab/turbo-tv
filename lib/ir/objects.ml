@@ -135,6 +135,13 @@ let is_heap_number mem ptr =
       ptr |> has_map_of Objmap.heap_number_map mem;
     ]
 
+let is_null mem ptr =
+  Bool.ands
+    [
+      ptr |> Value.has_type Type.tagged_pointer;
+      ptr |> has_map_of Objmap.null_map mem;
+    ]
+
 let is_undefined mem ptr =
   Bool.ands
     [

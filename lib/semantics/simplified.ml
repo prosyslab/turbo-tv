@@ -531,31 +531,33 @@ let number_to_uint32 pval mem state =
   let value = pval |> Number.to_uint32 mem in
   state |> State.update ~value
 
-let speculative_to_number pval () control mem state =
-  (* assumption: [pval] is heap number or smi or undefined or boolean *)
+let speculative_to_number pval () control mem (state : State.t) =
   let deopt =
     Bool.not
       (Bool.ors
          [
-           pval |> Value.has_type Type.tagged_signed;
-           pval |> Objects.is_heap_number mem;
+           Number.is_number pval mem;
+           pval |> Value.has_type Type.bool;
+           pval |> Objects.is_null mem;
            pval |> Objects.is_undefined mem;
            pval |> Objects.is_boolean mem;
          ])
   in
-  let rf = state.State.register_file in
-  let true_constant = RegisterFile.find "true" rf in
+  let rf = state.register_file in
   let value =
     Bool.ite
-      (pval |> Value.has_type Type.tagged_signed)
-      (TaggedSigned.to_float64 pval)
+      (Number.is_number pval mem)
+      (pval |> Number.to_float64 mem)
       (Bool.ite
-         (pval |> Objects.is_heap_number mem)
-         (HeapNumber.load pval mem |> HeapNumber.to_float64)
+         (pval |> Objects.is_undefined mem)
+         Float64.nan
          (Bool.ite
-            (pval |> Objects.is_undefined mem)
-            Float64.nan
-            (Bool.ite (Bool.eq pval true_constant) Float64.one Float64.zero)))
+            (pval |> Objects.is_null mem)
+            Float64.zero
+            (Bool.ite
+               (Bool.ors
+                  [ pval |> Value.is_true; pval |> Constant.is_true_cst rf ])
+               (Float64.from_numeral 1.0) (Float64.from_numeral 0.0))))
   in
   state |> State.update ~value ~deopt ~control
 
