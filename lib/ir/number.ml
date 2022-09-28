@@ -5,24 +5,19 @@ module HeapNumber = Objects.HeapNumber
 (* Number ::= TaggedSigned | HeapNumber | Int32 | Uint32 | Float64 *)
 let is_number value mem =
   Bool.ite
-    (value |> Value.has_type Type.int32)
-    Bool.tr
-    (Bool.ite
-       (value |> Value.has_type Type.uint32)
-       Bool.tr
-       (Bool.ite
-          (value |> Value.has_type Type.float64)
-          Bool.tr
-          (Bool.ite
-             (value |> Value.has_type Type.tagged_signed)
-             Bool.tr
-             (Bool.ite
-                (Bool.ands
-                   [
-                     value |> Value.has_type Type.tagged_pointer;
-                     value |> Objects.is_heap_number mem;
-                   ])
-                Bool.tr Bool.fl))))
+    (Bool.ors
+       [
+         value |> Value.has_type Type.int32;
+         value |> Value.has_type Type.uint32;
+         value |> Value.has_type Type.float64;
+         value |> Value.has_type Type.tagged_signed;
+         Bool.ands
+           [
+             value |> Value.has_type Type.tagged_pointer;
+             value |> Objects.is_heap_number mem;
+           ];
+       ])
+    Bool.tr Bool.fl
 
 let are_numbers values mem =
   Bool.ands (values |> List.rev_map (fun value -> is_number value mem))
