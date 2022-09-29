@@ -112,12 +112,33 @@ let can_be_float64 s =
   || String.equal s "-inf"
 
 let rec of_string str =
+  let paren_check s =
+    let rec paren_check_acc s n =
+      let len = String.length s in
+      if len = 0 then n = 0
+      else
+        let hd = String.sub s 0 1 in
+        let tl = String.sub s 1 (len - 1) in
+        if hd = "(" then paren_check_acc tl (n + 1)
+        else if hd = ")" then paren_check_acc tl (n - 1)
+        else paren_check_acc tl n
+    in
+    paren_check_acc s 0
+  in
+  let rec split_check str_list =
+    match str_list with
+    | [] -> []
+    | [ s ] -> [ s ]
+    | f :: s :: tl ->
+        if paren_check f then f :: split_check (s :: tl)
+        else split_check ((f ^ "|" ^ s) :: tl)
+  in
   let parse_union union_ty_str =
     let elems_reg = Re.Pcre.regexp "\\((.*)\\)" in
     let elems_ty_str =
       try
         Re.Group.get (Re.exec elems_reg union_ty_str) 1
-        |> String.split_on_char '|' |> List.map String.trim
+        |> String.split_on_char '|' |> split_check |> List.map String.trim
       with Not_found ->
         let cause = union_ty_str in
         let reason = "Cannot parse 'Union' from the " ^ union_ty_str in
