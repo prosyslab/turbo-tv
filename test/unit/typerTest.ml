@@ -1,89 +1,55 @@
-open Lib
-open Lib.Z3utils
-open Lib.ValueOperator
-open OUnit2
+open Helper
 
-let expr_printer b = b |> Expr.to_simplified_string
+let printer = Expr.to_simplified_string
 
-let solver = Solver.init None
+let check desc value ty expected =
+  let type_is_verified = Typer.verify value ty state.memory in
+  let eq = Bool.eq in
+  let _ = value_eq eq type_is_verified expected in
+  let msg =
+    Format.sprintf "Value:\n%s\nType: %s\n"
+      (value |> value_printer ~indent:1)
+      (ty |> Types.to_string)
+  in
+  desc >:: fun _ ->
+  assert_equal ~msg ~cmp:(value_eq eq) ~printer type_is_verified expected
 
-let is_satisfiable expr =
-  match Solver.check solver expr with
-  | Z3.Solver.SATISFIABLE -> true
-  | _ -> false
-
-let is_unsatisfiable expr =
-  match Solver.check solver expr with
-  | Z3.Solver.UNSATISFIABLE -> true
-  | _ -> false
-
-let mz_is_mz =
-  "mz_is_mz" >:: fun _ ->
-  assert_bool "mz_is_mz"
-    (is_satisfiable
-       (Typer.verify Float64.minus_zero Types.MinusZero (Memory.init 0)))
+let mz_is_mz = check "mz_is_mz" Float64.minus_zero Types.MinusZero Bool.tr
 
 let mz_is_not_signed31 =
-  "mz_is_not_signed31" >:: fun _ ->
-  assert_bool "mz_is_not_signed31"
-    (is_unsatisfiable
-       (Typer.verify Float64.minus_zero Types.Signed31 (Memory.init 0)))
+  check "mz_is_not_signed31" Float64.minus_zero Types.Signed31 Bool.fl
 
 let mz_is_not_in_plain_number_or_nan =
-  "mz_is_not_in_plain_number_or_nan" >:: fun _ ->
-  assert_bool "mz_is_not_in_plain_number_or_nan"
-    (is_unsatisfiable
-       (Typer.verify Float64.minus_zero
-          (Types.Union [ PlainNumber; NaN ])
-          (Memory.init 0)))
+  check "mz_is_not_in_plain_number_or_nan" Float64.minus_zero
+    (Types.Union [ Types.PlainNumber; Types.NaN ])
+    Bool.fl
 
-let nan_is_nan =
-  "nan_is_nan" >:: fun _ ->
-  assert_bool "nan_is_nan"
-    (is_satisfiable (Typer.verify Float64.nan Types.NaN (Memory.init 0)))
+let nan_is_nan = check "nan_is_nan" Float64.nan Types.NaN Bool.tr
 
-let nan_is_number =
-  "nan_is_number" >:: fun _ ->
-  assert_bool "nan_is_number"
-    (is_satisfiable (Typer.verify Float64.nan Types.Number (Memory.init 0)))
+let nan_is_number = check "nan_is_number" Float64.nan Types.Number Bool.tr
 
 let nan_is_not_unsigned32 =
-  "nan_is_not_unsigned32" >:: fun _ ->
-  assert_bool "nan_is_not_unsigned32"
-    (is_unsatisfiable
-       (Typer.verify Float64.nan Types.Unsigned32 (Memory.init 0)))
+  check "nan_is_not_unsigned32" Float64.nan Types.Unsigned32 Bool.fl
 
 let mz_is_u32_or_mz =
-  "mz_is_u32_or_mz" >:: fun _ ->
-  assert_bool "mz_is_u32_or_mz"
-    (is_satisfiable
-       (Typer.verify Float64.minus_zero
-          (Types.Union [ Types.MinusZero; Types.Unsigned32 ])
-          (Memory.init 0)))
+  check "mz_is_u32_or_mz" Float64.minus_zero
+    (Types.Union [ Types.Unsigned32; Types.MinusZero ])
+    Bool.tr
 
 let mz_is_not_u32_or_nan =
-  "mz_is_not_u32_or_nan" >:: fun _ ->
-  assert_bool "mz_is_not_u32_or_nan"
-    (is_unsatisfiable
-       (Typer.verify Float64.minus_zero
-          (Types.Union [ Types.NaN; Types.Unsigned32 ])
-          (Memory.init 0)))
+  check "mz_is_not_u32_or_nan" Float64.minus_zero
+    (Types.Union [ Types.Unsigned32; Types.NaN ])
+    Bool.fl
 
 let simple_in_range =
-  "3.5_in_(-100,100)" >:: fun _ ->
-  assert_bool "3.5_in_(-100,100)"
-    (is_satisfiable
-       (Typer.verify (Float64.from_numeral 3.5)
-          (Types.Range (-100., 100.))
-          (Memory.init 0)))
+  check "3.5_in_-100_to_100" (Float64.from_numeral 3.5)
+    (Types.Range (-100., 100.))
+    Bool.tr
 
 let simple_not_in_range =
-  "3.5_not_in_(1.5,2.5)" >:: fun _ ->
-  assert_bool "3.5_not_in_(1.5,2.5)"
-    (is_unsatisfiable
-       (Typer.verify (Float64.from_numeral 3.5)
-          (Types.Range (1.5, 2.5))
-          (Memory.init 0)))
+  check "3.5_not_in_-1_to_1" (Float64.from_numeral 3.5)
+    (Types.Range (-1., 1.))
+    Bool.fl
 
 let suite =
   "suite"
