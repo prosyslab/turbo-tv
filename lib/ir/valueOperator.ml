@@ -256,18 +256,24 @@ module Make_Integer_Operator (I : IntValue) = struct
           BitVec.ulei (value |> from_value) TaggedSigned.max_limit;
         ]
 
-  let is_in_range value lb ub =
-    let sext =
-      (if width = 64 then value else BitVec.sign_extend (64 - width) value)
-      |> from_value
-    in
-    let zext =
-      (if width = 64 then value else BitVec.zero_extend (64 - width) value)
-      |> from_value
-    in
+  let min lval rval =
+    if sign then
+      Bool.ite (BitVec.sltb (lval |> from_value) (rval |> from_value)) lval rval
+    else
+      Bool.ite (BitVec.ultb (lval |> from_value) (rval |> from_value)) lval rval
 
-    if sign then Z3utils.Bool.ands [ BitVec.sgei sext lb; BitVec.slei sext ub ]
-    else Z3utils.Bool.ands [ BitVec.ugei zext lb; BitVec.ulei zext ub ]
+  let max lval rval =
+    if sign then
+      Bool.ite (BitVec.sgtb (lval |> from_value) (rval |> from_value)) lval rval
+    else
+      Bool.ite (BitVec.ugtb (lval |> from_value) (rval |> from_value)) lval rval
+
+  let is_in_range value lb ub =
+    let lb_v = lb |> Value.from_int |> Value.cast ty in
+    let ub_v = ub |> Value.from_int |> Value.cast ty in
+    let lb = min lb_v ub_v in
+    let ub = max lb_v ub_v in
+    Z3utils.Bool.ands [ ge value lb; le value ub ]
 
   (* conversion *)
   let to_int ty ty_width value =
@@ -743,6 +749,8 @@ module Float64 = struct
   let to_int64 value = value |> to_intx 64
 
   let to_uint32 value = value |> to_intx ~sign:false 32
+
+  let to_uint64 value = value |> to_intx ~sign:false 64
 
   let to_tagged_signed value = value |> to_int32 |> Int32.to_tagged_signed
 

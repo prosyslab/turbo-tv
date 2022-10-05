@@ -37,14 +37,8 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                                  (Bool.ands
                                     [
                                       value |> Value.has_type Type.float64;
-                                      Bool.not
-                                        (Bool.ors
-                                           [
-                                             value |> Float64.is_ninf;
-                                             value |> Float64.is_inf;
-                                             value |> Float64.is_nan;
-                                             value |> Float64.is_minus_zero;
-                                           ]);
+                                      value |> Float64.is_integer;
+                                      Bool.not (value |> Float64.is_minus_zero);
                                     ])
                                  (Float64.is_in_range value (lb |> float_of_int)
                                     (ub |> float_of_int))
@@ -94,29 +88,19 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
         Bool.ands (List.rev_map2 (fun v f -> verify v f mem) decomposed fields)
       else failwith "is: wrong number of fields"
   | Range (lb, ub) ->
-      let lb_f = lb |> Float64.from_numeral in
-      let ub_f = ub |> Float64.from_numeral in
-
-      (* if value is a integer *)
-      let value_s =
-        Bool.ite
-          (value |> Value.is_32bit_integer)
-          (value |> Int32.to_float64)
-          (value |> Int64.to_float64)
-      in
-      let value_u =
-        Bool.ite
-          (value |> Value.is_32bit_integer)
-          (value |> Uint32.to_float64)
-          (value |> Uint64.to_float64)
-      in
-
+      let lb_i = lb |> int_of_float in
+      let ub_i = ub |> int_of_float in
       let int_expr =
-        Bool.ors
-          [
-            Bool.ands [ Float64.ge value_s lb_f; Float64.le value_s ub_f ];
-            Bool.ands [ Float64.ge value_u lb_f; Float64.le value_u ub_f ];
-          ]
+        Bool.ite
+          (value |> Value.has_type Type.int32)
+          (Int32.is_in_range value lb_i ub_i)
+          (Bool.ite
+             (value |> Value.has_type Type.int64)
+             (Int64.is_in_range value lb_i ub_i)
+             (Bool.ite
+                (value |> Value.has_type Type.uint32)
+                (Uint32.is_in_range value lb_i ub_i)
+                (Uint64.is_in_range value lb_i ub_i)))
       in
 
       (* otherwise, assume value is a number *)
