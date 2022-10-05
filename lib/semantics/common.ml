@@ -137,6 +137,9 @@ let parameter param state =
 
 let return return_value return_control state =
   (* return heap number or smi or bool *)
+  let rf = State.register_file state in
+  let true_constant = RegisterFile.find "true" rf in
+  let false_constant = RegisterFile.find "false" rf in
   let value =
     Bool.ite
       (return_value |> Value.has_type Type.float64)
@@ -144,7 +147,12 @@ let return return_value return_control state =
       (Bool.ite
          (return_value |> Value.has_type Type.tagged_pointer)
          return_value
-         (return_value |> Value.cast Type.tagged_signed))
+         (Bool.ite
+            (return_value |> Value.has_type Type.bool)
+            (Bool.ite
+               (Value.eq Value.tr return_value)
+               true_constant false_constant)
+            (return_value |> Value.cast Type.tagged_signed)))
   in
   state |> State.update ~value ~control:return_control
 

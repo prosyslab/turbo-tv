@@ -675,7 +675,7 @@ RelocatableInt32Constant,
 RelocatableInt64Constant,
 RestLength,
 Retain,
-Return,v2,c1
+Return,v2,c1,e1
 RoundFloat64ToInt32,v1
 RoundInt32ToFloat32,
 RoundInt64ToFloat32,
@@ -719,7 +719,7 @@ SpeculativeNumberModulus,v1,v2,e1,c1
 SpeculativeNumberMultiply,v1,v2,e1,c1
 SpeculativeNumberPow,
 SpeculativeNumberShiftLeft,v1,v2,e1,c1
-SpeculativeNumberShiftRight,
+SpeculativeNumberShiftRight,v1,v2,e1,c1
 SpeculativeNumberShiftRightLogical,v1,v2,e1,c1
 SpeculativeNumberSubtract,v1,v2,e1,c1
 SpeculativeSafeIntegerAdd,v1,v2,e1,c1

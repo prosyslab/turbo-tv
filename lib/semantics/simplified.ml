@@ -215,6 +215,10 @@ let number_shift_left lval rval mem state =
   let value = Number.left_shift lval rval mem in
   state |> State.update ~value
 
+let number_shift_right lval rval mem state =
+  let value = Number.signed_right_shfit lval rval mem in
+  state |> State.update ~value
+
 let number_shift_right_logical lval rval mem state =
   let value = Number.unsigned_right_shift lval rval mem in
   state |> State.update ~value
@@ -230,6 +234,10 @@ let speculative_number_bitwise op lval rval mem state =
 let speculative_number_shift_left lval rval _eff control mem state =
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
   state |> number_shift_left lval rval mem |> State.update ~control ~deopt
+
+let speculative_number_shift_right lval rval _eff control mem state =
+  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+  state |> number_shift_right lval rval mem |> State.update ~control ~deopt
 
 let speculative_number_shift_right_logical lval rval _eff control mem state =
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in

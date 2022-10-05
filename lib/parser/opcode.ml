@@ -32,7 +32,7 @@ type kind =
   | V4
   | VVC1
   | VV
-  | V2C1
+  | V2C1E1
   | V1V2V3
   | V1V2B1V3
   | B1B2B4V1V2V3E1C1
@@ -625,7 +625,6 @@ type t =
   | SpeculativeBigIntNegate
   | SpeculativeBigIntSubtract
   | SpeculativeNumberPow
-  | SpeculativeNumberShiftRight
   | StackSlot
   | Start
   | StateValues
@@ -834,6 +833,7 @@ type t =
   | SpeculativeNumberModulus
   | SpeculativeNumberMultiply
   | SpeculativeNumberShiftLeft
+  | SpeculativeNumberShiftRight
   | SpeculativeNumberShiftRightLogical
   | SpeculativeNumberSubtract
   | SpeculativeSafeIntegerAdd
@@ -922,7 +922,7 @@ type t =
   | LoadTypedElement
   (* vvc1 *)
   | Phi
-  (* v2c1 *)
+  (* v2c1e1 *)
   | Return
   (* v1v2v3 *)
   | Select
@@ -1087,21 +1087,20 @@ let get_kind opcode =
   | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
   | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
   | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
-  | SpeculativeBigIntSubtract | SpeculativeNumberPow
-  | SpeculativeNumberShiftRight | StackSlot | Start | StateValues | StaticAssert
-  | StoreDataViewElement | StoreLane | StoreMessage | StoreSignedSmallElement
-  | StoreToObject | StoreTypedElement | StringCharCodeAt | StringCodePointAt
-  | StringConcat | StringEqual | StringFromCodePointAt
-  | StringFromSingleCharCode | StringFromSingleCodePoint | StringIndexOf
-  | StringLength | StringLessThan | StringLessThanOrEqual | StringSubstring
-  | StringToLowerCaseIntl | StringToNumber | StringToUpperCaseIntl | Switch
-  | TaggedIndexConstant | TailCall | Terminate | TransitionAndStoreElement
-  | TransitionAndStoreNonNumberElement | TransitionAndStoreNumberElement
-  | TransitionElementsKind | TrapIf | TrapUnless | TruncateBigIntToWord64
-  | TruncateFloat32ToInt32 | TruncateFloat32ToUint32 | TruncateFloat64ToFloat32
-  | TruncateFloat64ToInt64 | TruncateFloat64ToUint32
-  | TruncateTaggedPointerToBit | TruncateTaggedToFloat64
-  | TruncateTaggedToWord32 | TryTruncateFloat32ToInt64
+  | SpeculativeBigIntSubtract | SpeculativeNumberPow | StackSlot | Start
+  | StateValues | StaticAssert | StoreDataViewElement | StoreLane | StoreMessage
+  | StoreSignedSmallElement | StoreToObject | StoreTypedElement
+  | StringCharCodeAt | StringCodePointAt | StringConcat | StringEqual
+  | StringFromCodePointAt | StringFromSingleCharCode | StringFromSingleCodePoint
+  | StringIndexOf | StringLength | StringLessThan | StringLessThanOrEqual
+  | StringSubstring | StringToLowerCaseIntl | StringToNumber
+  | StringToUpperCaseIntl | Switch | TaggedIndexConstant | TailCall | Terminate
+  | TransitionAndStoreElement | TransitionAndStoreNonNumberElement
+  | TransitionAndStoreNumberElement | TransitionElementsKind | TrapIf
+  | TrapUnless | TruncateBigIntToWord64 | TruncateFloat32ToInt32
+  | TruncateFloat32ToUint32 | TruncateFloat64ToFloat32 | TruncateFloat64ToInt64
+  | TruncateFloat64ToUint32 | TruncateTaggedPointerToBit
+  | TruncateTaggedToFloat64 | TruncateTaggedToWord32 | TryTruncateFloat32ToInt64
   | TryTruncateFloat32ToUint64 | TryTruncateFloat64ToInt64
   | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf | TypedObjectState
   | TypedStateValues | Uint32MulHigh | Uint64Div | Uint64Mod | UnalignedLoad
@@ -1153,9 +1152,9 @@ let get_kind opcode =
   | DeoptimizeIf | DeoptimizeUnless | SpeculativeNumberDivide
   | SpeculativeNumberLessThan | SpeculativeNumberLessThanOrEqual
   | SpeculativeNumberModulus | SpeculativeNumberMultiply
-  | SpeculativeNumberShiftLeft | SpeculativeNumberShiftRightLogical
-  | SpeculativeNumberSubtract | SpeculativeSafeIntegerAdd
-  | SpeculativeSafeIntegerSubtract ->
+  | SpeculativeNumberShiftLeft | SpeculativeNumberShiftRight
+  | SpeculativeNumberShiftRightLogical | SpeculativeNumberSubtract
+  | SpeculativeSafeIntegerAdd | SpeculativeSafeIntegerSubtract ->
       V1V2E1C1
   | CheckedInt32Mul -> B1V1V2E1C1
   | CheckedTaggedToFloat64 | CheckedTruncateTaggedToWord32 -> B1V1E1C1
@@ -1184,7 +1183,7 @@ let get_kind opcode =
   | LoadField -> B2B3B5V1E1C1
   | LoadTypedElement -> B1V2V3V4
   | Phi -> VVC1
-  | Return -> V2C1
+  | Return -> V2C1E1
   | Select -> V1V2V3
   | Store -> V1V2B1V3
   | StoreElement -> B1B2B4V1V2V3E1C1
@@ -1225,7 +1224,7 @@ let split_kind kind =
   | V4 -> [ V4 ]
   | VVC1 -> [ VV; C1 ]
   | VV -> [ VV ]
-  | V2C1 -> [ V2; C1 ]
+  | V2C1E1 -> [ V2; C1; E1 ]
   | V1V2V3 -> [ V1; V2; V3 ]
   | V1V2B1V3 -> [ V1; V2; B1; V3 ]
   | B1B2B4V1V2V3E1C1 -> [ B1; B2; B4; V1; V2; V3; E1; C1 ]
@@ -1820,7 +1819,6 @@ let of_str str =
   | "SpeculativeBigIntNegate" -> SpeculativeBigIntNegate
   | "SpeculativeBigIntSubtract" -> SpeculativeBigIntSubtract
   | "SpeculativeNumberPow" -> SpeculativeNumberPow
-  | "SpeculativeNumberShiftRight" -> SpeculativeNumberShiftRight
   | "StackSlot" -> StackSlot
   | "Start" -> Start
   | "StateValues" -> StateValues
@@ -2021,6 +2019,7 @@ let of_str str =
   | "SpeculativeNumberModulus" -> SpeculativeNumberModulus
   | "SpeculativeNumberMultiply" -> SpeculativeNumberMultiply
   | "SpeculativeNumberShiftLeft" -> SpeculativeNumberShiftLeft
+  | "SpeculativeNumberShiftRight" -> SpeculativeNumberShiftRight
   | "SpeculativeNumberShiftRightLogical" -> SpeculativeNumberShiftRightLogical
   | "SpeculativeNumberSubtract" -> SpeculativeNumberSubtract
   | "SpeculativeSafeIntegerAdd" -> SpeculativeSafeIntegerAdd
@@ -2691,7 +2690,6 @@ let to_str opcode =
   | SpeculativeBigIntNegate -> "SpeculativeBigIntNegate"
   | SpeculativeBigIntSubtract -> "SpeculativeBigIntSubtract"
   | SpeculativeNumberPow -> "SpeculativeNumberPow"
-  | SpeculativeNumberShiftRight -> "SpeculativeNumberShiftRight"
   | StackSlot -> "StackSlot"
   | Start -> "Start"
   | StateValues -> "StateValues"
@@ -2892,6 +2890,7 @@ let to_str opcode =
   | SpeculativeNumberModulus -> "SpeculativeNumberModulus"
   | SpeculativeNumberMultiply -> "SpeculativeNumberMultiply"
   | SpeculativeNumberShiftLeft -> "SpeculativeNumberShiftLeft"
+  | SpeculativeNumberShiftRight -> "SpeculativeNumberShiftRight"
   | SpeculativeNumberShiftRightLogical -> "SpeculativeNumberShiftRightLogical"
   | SpeculativeNumberSubtract -> "SpeculativeNumberSubtract"
   | SpeculativeSafeIntegerAdd -> "SpeculativeSafeIntegerAdd"

@@ -404,6 +404,19 @@ let unsigned_right_shift x y mem =
     (res |> Uint32.to_tagged_signed)
     (res |> Uint32.to_float64)
 
+let signed_right_shfit x y mem =
+  (* https://tc39.es/ecma262/#sec-numeric-types-number-signedRightShift *)
+  let lnum = x |> to_int32 mem in
+  let rnum = y |> to_uint32 mem in
+  let shift_count =
+    Uint32.modulo rnum (32 |> Value.from_int |> Value.cast Type.uint32)
+  in
+  let res = Int32.ashr lnum shift_count in
+  Bool.ite
+    (res |> Int32.is_in_smi_range)
+    (res |> Int32.to_tagged_signed)
+    (res |> Int32.to_float64)
+
 (* methods *)
 let max lnum rnum mem =
   (* https://tc39.es/ecma262/#sec-math.max *)

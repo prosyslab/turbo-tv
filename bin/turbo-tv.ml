@@ -69,6 +69,7 @@ let unknown_ops =
     Opcode.JSShiftRightLogical;
     Opcode.JSStoreContext;
     Opcode.JSCreateEmptyLiteralArray;
+    Opcode.JSToNumber;
     Opcode.Loop;
   ]
 

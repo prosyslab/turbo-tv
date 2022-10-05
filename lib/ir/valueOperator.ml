@@ -183,6 +183,9 @@ module Make_Integer_Operator (I : IntValue) = struct
   let lshr lval rval =
     BitVec.lshrb (lval |> from_value) (rval |> from_value) |> to_value
 
+  let ashr lval rval =
+    BitVec.ashrb (lval |> from_value) (rval |> from_value) |> to_value
+
   (* comparison *)
   let eq lval rval = Z3utils.Bool.eq (lval |> from_value) (rval |> from_value)
 
