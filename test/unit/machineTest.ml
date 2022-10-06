@@ -75,6 +75,14 @@ let word_logical_shift_test desc width kind li ri expected =
   assert_equal ~msg ~cmp:(value_eq Int64.eq) ~printer:value_printer expected
     result
 
+let word32_shl_simple = word_logical_shift_test "simple" 32 "shl" 1 1 2
+
+let word32_shl_mod32_off = word_logical_shift_test "simple" 32 "shl" 1 100 16
+
+let word32_shr_simple = word_logical_shift_test "simple" 32 "shr" 2 1 1
+
+let word32_shr_to_zero = word_logical_shift_test "simple" 32 "shr" 2 2 0
+
 let word32_shr_mod32_off =
   word_logical_shift_test "mod32_off" 32 "shr" (-2147483648) (-1073741808) 32768
 
@@ -91,6 +99,10 @@ let suite =
          change_float64_to_int32_neg_udf3;
          change_float64_to_int64_pos_val;
          change_float64_to_int64_neg_val;
+         word32_shl_simple;
+         word32_shl_mod32_off;
+         word32_shr_simple;
+         word32_shr_to_zero;
          word32_shr_mod32_off;
        ]
 
