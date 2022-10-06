@@ -100,28 +100,76 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
   | Range (lb, ub) ->
       let lb_i = lb |> int_of_float in
       let ub_i = ub |> int_of_float in
-      let int_expr =
-        Bool.ite
-          (value |> Value.has_type Type.int32)
-          (Int32.is_in_range value lb_i ub_i)
-          (Bool.ite
-             (value |> Value.has_type Type.int64)
-             (Int64.is_in_range value lb_i ub_i)
-             (Bool.ite
-                (value |> Value.has_type Type.uint32)
-                (Uint32.is_in_range value lb_i ub_i)
-                (Uint64.is_in_range value lb_i ub_i)))
-      in
-
-      (* otherwise, assume value is a number *)
-      let num_f64 = value |> Number.to_float64 mem in
-      let number_expr =
-        Bool.ands
-          [
-            Float64.ge num_f64 (lb |> Float64.from_numeral);
-            Float64.le num_f64 (ub |> Float64.from_numeral);
-          ]
-      in
-      Bool.ite (value |> Value.is_integer) int_expr number_expr
+      Bool.ite
+        (value |> Value.has_type Type.int32)
+        (Bool.ors
+           [
+             Int32.is_in_range value lb_i ub_i;
+             Uint32.is_in_range value lb_i ub_i;
+             Float64.is_in_range (Int32.to_float64 value) lb ub;
+           ])
+        (Bool.ite
+           (value |> Value.has_type Type.int64)
+           (Bool.ors
+              [
+                Int64.is_in_range value lb_i ub_i;
+                Uint64.is_in_range value lb_i ub_i;
+                Float64.is_in_range (Int64.to_float64 value) lb ub;
+              ])
+           (Bool.ite
+              (value |> Value.has_type Type.uint32)
+              (Bool.ors
+                 [
+                   Uint32.is_in_range value lb_i ub_i;
+                   Int32.is_in_range value lb_i ub_i;
+                   Float64.is_in_range (Uint32.to_float64 value) lb ub;
+                 ])
+              (Bool.ite
+                 (value |> Value.has_type Type.uint64)
+                 (Bool.ors
+                    [
+                      Uint64.is_in_range value lb_i ub_i;
+                      Int64.is_in_range value lb_i ub_i;
+                      Float64.is_in_range (Uint64.to_float64 value) lb ub;
+                    ])
+                 (Bool.ite
+                    (value |> Value.has_type Type.tagged_signed)
+                    (Bool.ors
+                       [
+                         TaggedSigned.is_in_range value lb_i ub_i;
+                         Float64.is_in_range
+                           (TaggedSigned.to_float64 value)
+                           lb ub;
+                       ])
+                    (Bool.ite
+                       (value |> Value.has_type Type.int8)
+                       (Bool.ors
+                          [
+                            Int8.is_in_range value lb_i ub_i;
+                            Uint8.is_in_range value lb_i ub_i;
+                            Float64.is_in_range (Int8.to_float64 value) lb ub;
+                          ])
+                       (Bool.ite
+                          (value |> Value.has_type Type.uint8)
+                          (Bool.ors
+                             [
+                               Int8.is_in_range value lb_i ub_i;
+                               Uint8.is_in_range value lb_i ub_i;
+                               Float64.is_in_range (Uint8.to_float64 value) lb
+                                 ub;
+                             ])
+                          (Bool.ite
+                             (value |> Value.has_type Type.float64)
+                             (Float64.is_in_range value lb ub)
+                             (Bool.ite
+                                (Bool.ands
+                                   [
+                                     value |> Value.has_type Type.tagged_pointer;
+                                     value |> Objects.is_heap_number mem;
+                                   ])
+                                (Float64.is_in_range
+                                   (value |> Number.to_float64 mem)
+                                   lb ub)
+                                Bool.tr))))))))
   (* for now, handle only numeric types *)
   | _ -> Bool.tr
