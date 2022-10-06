@@ -1,9 +1,0 @@
-#1:Start()()()
-#2:Parameter[1]()()(#1:Start)
-#3:CheckedTaggedSignedToInt32(#2:Parameter)()(#1:Start)
-#4:Int32Constant[0]()()()
-#5:Int32Constant[-1]()()() 
-#6:Int32LessThan(#3:CheckedTaggedSignedToInt32, #4:Int32Constant)()()
-#7:Select(#6:Int32LessThan, #4:Int32Constant, #5:Int32Constant)()() [Type: Range(0,4294967295)]
-#8:Return(#4:NumberConstant, #7:NumberConstant)()(#1:Start)
-#0:End()()(#8:Return)
