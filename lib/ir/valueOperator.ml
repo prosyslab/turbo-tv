@@ -464,6 +464,8 @@ module Make_Word_Operator (W : WordValue) = struct
   let and_ lval rval =
     BitVec.andb (lval |> from_value) (rval |> from_value) |> to_value
 
+  let andi lval rval = BitVec.andi (lval |> from_value) rval |> to_value
+
   let or_ lval rval =
     BitVec.orb (lval |> from_value) (rval |> from_value) |> to_value
 
@@ -474,10 +476,12 @@ module Make_Word_Operator (W : WordValue) = struct
     BitVec.shlb (lval |> from_value) (rval |> from_value) |> to_value
 
   let ashr lval rval =
-    BitVec.ashrb (lval |> from_value) (rval |> from_value) |> to_value
+    BitVec.ashrb (lval |> from_value) (andi rval (width - 1) |> from_value)
+    |> to_value
 
   let lshr lval rval =
-    BitVec.lshrb (lval |> from_value) (rval |> from_value) |> to_value
+    BitVec.lshrb (lval |> from_value) (andi rval (width - 1) |> from_value)
+    |> to_value
 
   let swap value =
     if width = 32 then BitVec.swap32 (value |> from_value) |> to_value
