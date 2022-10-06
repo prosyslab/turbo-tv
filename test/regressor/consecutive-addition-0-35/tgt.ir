@@ -1,0 +1,36 @@
+#40:Int32Constant[0]()()()
+#0:Start()()()  [Type: Internal]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#9:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter)()()  [Type: Internal]
+#10:TypedStateValues[, sparse:.]()()()  [Type: Internal]
+#34:TypedStateValues[kRepTagged|kTypeAny, dense](#2:Parameter)()()
+#4:Parameter[4, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#25:HeapConstant[0x0e6e08088b9d <JSFunction f1 (sfi = 0xe6e082127c1)>]()()()  [Type: HeapConstant(0x55c2f54c4a70)]
+#15:FrameState[UNOPTIMIZED_FRAME, 2, Ignore, 0x0e6e082127c1 <SharedFunctionInfo f1>](#9:TypedStateValues, #10:TypedStateValues, #34:TypedStateValues, #4:Parameter, #25:HeapConstant)()()  [Type: Internal]
+#42:ExternalConstant[0xe6e00000060]()()()
+#32:Int64Constant[0]()()()
+#43:Load[kRepWord64](#42:ExternalConstant, #32:Int64Constant)(#0:Start)(#0:Start)
+#44:StackPointerGreaterThan[JSFunctionEntry](#43:Load)(#43:Load)()
+#53:HeapConstant[0x0e6e0018c0e1 <Code BUILTIN CEntry_Return1_DontSaveFPRegs_ArgvOnStack_NoBuiltinExit>]()()()
+#50:LoadStackCheckOffset()()()
+#51:ExternalConstant[0x55c2f42b8430<StackGuardWithGap.entry>]()()()
+#52:Int32Constant[1]()()()
+#6:HeapConstant[0x0e6e08203171 <NativeContext[237]>]()()()  [Type: HeapConstant(0x55c2f544f938)]
+#35:TypedStateValues[, sparse:.]()()()
+#13:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x0e6e082127c1 <SharedFunctionInfo f1>](#9:TypedStateValues, #10:TypedStateValues, #35:TypedStateValues, #4:Parameter, #25:HeapConstant)()()  [Type: Internal]
+#45:Branch[True, SafetyCheck](#44:StackPointerGreaterThan)()(#0:Start)
+#47:IfFalse()()(#45:Branch)
+#8:Call[Code:StackGuardWithGap:r1s1i5f1](#53:HeapConstant, #50:LoadStackCheckOffset, #51:ExternalConstant, #52:Int32Constant, #6:HeapConstant, #13:FrameState)(#44:StackPointerGreaterThan)(#47:IfFalse)
+#46:IfTrue()()(#45:Branch)
+#48:Merge()()(#46:IfTrue, #8:Call)
+#49:EffectPhi()(#44:StackPointerGreaterThan, #8:Call)(#48:Merge)
+#14:Checkpoint()(#49:EffectPhi)(#48:Merge)
+#36:CheckedTaggedSignedToInt32[FeedbackSource(INVALID)](#2:Parameter)(#14:Checkpoint)(#48:Merge)
+#37:Int32Constant[2]()()()
+#17:CheckedInt32Add(#36:CheckedTaggedSignedToInt32, #37:Int32Constant)(#36:CheckedTaggedSignedToInt32)(#48:Merge)  [Type: Range(-9007199254740991, 9007199254740991)]
+#39:Int32Constant[3]()()()
+#19:CheckedInt32Add(#17:CheckedInt32Add, #39:Int32Constant)(#17:CheckedInt32Add)(#48:Merge)  [Type: Range(-9007199254740988, 9007199254740991)]
+#41:ChangeInt32ToTagged(#19:CheckedInt32Add)()()
+#21:Return(#40:Int32Constant, #41:ChangeInt32ToTagged)(#19:CheckedInt32Add)(#48:Merge)
+#22:End()()(#21:Return)

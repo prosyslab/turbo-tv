@@ -1,0 +1,29 @@
+#58:Int32Constant[0]()()()
+#0:Start()()()  [Type: Internal]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#35:HeapConstant[0x0c3708206055 <Object map = 0xc3708242a01>]()()()  [Type: HeapConstant(0x5599b4f40030)]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#10:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#11:TypedStateValues[, sparse:..]()()()  [Type: Internal]
+#53:TypedStateValues[, sparse:.]()()()
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#34:HeapConstant[0x0c3708088bbd <JSFunction foo (sfi = 0xc37082127d1)>]()()()  [Type: HeapConstant(0x5599b4f404d8)]
+#16:FrameState[UNOPTIMIZED_FRAME, 0, Ignore, 0x0c37082127d1 <SharedFunctionInfo foo>](#10:TypedStateValues, #11:TypedStateValues, #53:TypedStateValues, #5:Parameter, #34:HeapConstant)()()  [Type: Internal]
+#7:HeapConstant[0x0c3708203171 <NativeContext[237]>]()()()  [Type: HeapConstant(0x5599b4ecd958)]
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x0c37082127d1 <SharedFunctionInfo foo>](#10:TypedStateValues, #11:TypedStateValues, #53:TypedStateValues, #5:Parameter, #34:HeapConstant)()()  [Type: Internal]
+#9:JSStackCheck[JSFunctionEntry]()(#0:Start)(#0:Start)
+#15:Checkpoint()(#9:JSStackCheck)(#9:JSStackCheck)
+#36:LoadField[tagged base, 4, Any, kRepTaggedPointer|kTypeAny, PointerWriteBarrier, mutable](#35:HeapConstant)(#15:Checkpoint)(#9:JSStackCheck)  [Type: Any]
+#37:LoadField[tagged base, 64, NonInternal, kRepTagged|kTypeAny, FullWriteBarrier, mutable](#36:LoadField)(#36:LoadField)(#9:JSStackCheck)  [Type: NonInternal]
+#38:HeapConstant[0x0c37082062a9 <JSFunction imul (sfi = 0xc37081863c1)>]()()()  [Type: HeapConstant(0x5599b4f40b30)]
+#39:Word32Equal(#37:LoadField, #38:HeapConstant)()()  [Type: Boolean]
+#40:CheckIf[WrongCallTarget, FeedbackSource(INVALID)](#39:Word32Equal)(#37:LoadField)(#9:JSStackCheck)
+#54:CheckedTaggedToFloat64[NumberOrOddball, FeedbackSource(#4)](#2:Parameter)(#40:CheckIf)(#9:JSStackCheck)
+#55:TruncateFloat64ToWord32(#54:CheckedTaggedToFloat64)()()
+#56:CheckedTaggedToFloat64[NumberOrOddball, FeedbackSource(#4)](#3:Parameter)(#54:CheckedTaggedToFloat64)(#9:JSStackCheck)
+#57:TruncateFloat64ToWord32(#56:CheckedTaggedToFloat64)()()
+#45:Int32Mul(#55:TruncateFloat64ToWord32, #57:TruncateFloat64ToWord32)()()  [Type: Signed32]
+#59:ChangeInt32ToTagged(#45:Int32Mul)()()
+#30:Return(#58:Int32Constant, #59:ChangeInt32ToTagged)(#56:CheckedTaggedToFloat64)(#9:JSStackCheck)
+#31:End()()(#30:Return)
