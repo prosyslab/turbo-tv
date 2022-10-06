@@ -101,62 +101,25 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
       let ub_i = ub |> int_of_float in
       Bool.ite
         (value |> Value.has_type Type.int32)
-        (Bool.ors
-           [
-             Int32.is_in_range value lb_i ub_i;
-             Uint32.is_in_range value lb_i ub_i;
-             Float64.is_in_range (Int32.to_float64 value) lb ub;
-           ])
+        (Int32.is_in_range value lb_i ub_i)
         (Bool.ite
            (value |> Value.has_type Type.int64)
-           (Bool.ors
-              [
-                Int64.is_in_range value lb_i ub_i;
-                Uint64.is_in_range value lb_i ub_i;
-                Float64.is_in_range (Int64.to_float64 value) lb ub;
-              ])
+           (Int64.is_in_range value lb_i ub_i)
            (Bool.ite
               (value |> Value.has_type Type.uint32)
-              (Bool.ors
-                 [
-                   Uint32.is_in_range value lb_i ub_i;
-                   Int32.is_in_range value lb_i ub_i;
-                   Float64.is_in_range (Uint32.to_float64 value) lb ub;
-                 ])
+              (Uint32.is_in_range value lb_i ub_i)
               (Bool.ite
                  (value |> Value.has_type Type.uint64)
-                 (Bool.ors
-                    [
-                      Uint64.is_in_range value lb_i ub_i;
-                      Int64.is_in_range value lb_i ub_i;
-                      Float64.is_in_range (Uint64.to_float64 value) lb ub;
-                    ])
+                 (Uint64.is_in_range value lb_i ub_i)
                  (Bool.ite
                     (value |> Value.has_type Type.tagged_signed)
-                    (Bool.ors
-                       [
-                         TaggedSigned.is_in_range value lb_i ub_i;
-                         Float64.is_in_range
-                           (TaggedSigned.to_float64 value)
-                           lb ub;
-                       ])
+                    (TaggedSigned.is_in_range value lb_i ub_i)
                     (Bool.ite
                        (value |> Value.has_type Type.int8)
-                       (Bool.ors
-                          [
-                            Int8.is_in_range value lb_i ub_i;
-                            Uint8.is_in_range value lb_i ub_i;
-                            Float64.is_in_range (Int8.to_float64 value) lb ub;
-                          ])
+                       (Int8.is_in_range value lb_i ub_i)
                        (Bool.ite
                           (value |> Value.has_type Type.uint8)
-                          (Bool.ors
-                             [
-                               Int8.is_in_range value lb_i ub_i;
-                               Uint8.is_in_range value lb_i ub_i;
-                               Float64.is_in_range (Uint8.to_float64 value) lb
-                                 ub;
-                             ])
+                          (Int8.is_in_range value lb_i ub_i)
                           (Bool.ite
                              (value |> Value.has_type Type.float64)
                              (Float64.is_in_range value lb ub)

@@ -34,6 +34,7 @@ type t = {
   params : BitVec.t list;
   retval : BitVec.t;
   ub : Bool.t;
+  check_type : bool;
   assertion : BitVec.t;
   deopt : Bool.t;
 }
@@ -66,7 +67,7 @@ let install_constants state =
   in
   { state with memory = mem; register_file = rf }
 
-let init nparams stage : t =
+let init nparams ?check_type stage : t =
   {
     stage;
     pc = 0;
@@ -79,6 +80,7 @@ let init nparams stage : t =
     params = Params.init nparams;
     retval = Value.empty;
     ub = Bool.fl;
+    check_type = Option.value check_type ~default:false;
     assertion = Bool.tr;
     deopt = Bool.fl;
   }

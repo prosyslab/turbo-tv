@@ -946,7 +946,11 @@ let propagate program state =
         let deopts = DeoptFile.find_all pids df in
         (Bool.ors ubs, Bool.ors deopts)
   in
-  let ub = Bool.ors [ ub; Bool.not type_is_verified; ub_from_input ] in
+  let ub =
+    if state.check_type then
+      Bool.ors [ ub; Bool.not type_is_verified; ub_from_input ]
+    else Bool.ors [ ub; ub_from_input ]
+  in
   let deopt = Bool.ors [ deopt; deopt_from_input ] in
   state |> State.update ~ub ~deopt
 
@@ -957,13 +961,13 @@ let rec next program state =
   else next program { next_state with pc = pc + 1 }
 
 (* execute the program and retrieve a final state *)
-let execute stage program nparams =
+let execute stage program ?(check_type = false) nparams =
   (* symbols for parameters *)
-  let init_state = State.init nparams stage in
+  let init_state = State.init nparams ~check_type stage in
   next program init_state
 
-let check_ub_semantic nparams program =
-  let state = execute "test" program nparams in
+let check_ub_semantic nparams check_type program =
+  let state = execute "test" program ~check_type nparams in
   let ub = State.ub state in
   let mem = State.memory state in
   (* params are tagged /\ not deopt *)
@@ -990,7 +994,7 @@ let check_ub_semantic nparams program =
         params
       |> Bool.ands
     in
-    Bool.ands [ params_are_smi_or_heapnumber; Bool.not (State.deopt state) ]
+    Bool.ands [ params_are_smi_or_heapnumber; Bool.not state.deopt ]
   in
   let assertion = Bool.ands [ precond; ub ] in
   let status = Solver.check validator assertion in
