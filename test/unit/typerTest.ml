@@ -31,6 +31,11 @@ let nan_is_number = check "nan_is_number" Float64.nan Types.Number Bool.tr
 let nan_is_not_unsigned32 =
   check "nan_is_not_unsigned32" Float64.nan Types.Unsigned32 Bool.fl
 
+let f64_minus_1073741824_is_number =
+  check "f64_minus_1073741824_is_number"
+    (Float64.from_numeral (-1073741824.000002861022))
+    Types.Number Bool.tr
+
 let mz_is_u32_or_mz =
   check "mz_is_u32_or_mz" Float64.minus_zero
     (Types.Union [ Types.Unsigned32; Types.MinusZero ])
@@ -63,6 +68,12 @@ let i32_zero_in_4294967295_and_4294967296 =
     (Types.Range (4294967295., 4294967296.))
     Bool.tr
 
+let i32_in_u32_range =
+  check "i32_in_unsigned_range"
+    (Value.from_int (-1199570816) |> Value.cast Type.int32)
+    (Types.Range (0., 4294967295.))
+    Bool.tr
+
 let i64_minus_one_not_in_0_and_4294967295 =
   check "i64:-1_not_in_0_and_4294967295"
     (Value.from_int (-1) |> Value.cast Type.int64)
@@ -80,13 +91,16 @@ let suite =
   >::: [
          mz_is_mz;
          mz_is_not_signed31;
+         mz_is_not_in_plain_number_or_nan;
          nan_is_nan;
          nan_is_number;
          nan_is_not_unsigned32;
+         f64_minus_1073741824_is_number;
          mz_is_u32_or_mz;
          mz_is_not_u32_or_nan;
          simple_in_range;
          simple_not_in_range;
+         i32_in_u32_range;
          i32_minus_one_in_0_and_4294967295;
          i32_zero_in_4294967295_and_4294967296;
          i64_minus_one_not_in_0_and_4294967295;
