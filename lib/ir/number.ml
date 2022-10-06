@@ -467,7 +467,7 @@ let ceil mem number =
        (Bool.ands
           [
             Float64.lt number_f64 Float64.minus_zero;
-            Float64.gt number_f64 (Float64.from_numeral (-1.0));
+            Float64.gt number_f64 (Float64.of_float (-1.0));
           ])
        Float64.minus_zero
        (* else round to positive inf *)
@@ -493,7 +493,7 @@ let floor mem number =
        (Bool.ands
           [
             Float64.gt number_f64 Float64.zero;
-            Float64.lt number_f64 (Float64.from_numeral 1.0);
+            Float64.lt number_f64 (Float64.of_float 1.0);
           ])
        Float64.zero
        (* else round to negative inf *)
@@ -516,7 +516,7 @@ let round mem number =
        (* 0 < [number] < 0.5 -> 0 *)
        (Bool.ands
           [
-            Float64.lt n_f64 (0.5 |> Float64.from_numeral);
+            Float64.lt n_f64 (0.5 |> Float64.of_float);
             Float64.gt n_f64 Float64.zero;
           ])
        Float64.zero
@@ -525,13 +525,13 @@ let round mem number =
           (Bool.ands
              [
                Float64.lt n_f64 Float64.minus_zero;
-               Float64.ge n_f64 (Float64.from_numeral (-0.5));
+               Float64.ge n_f64 (Float64.of_float (-0.5));
              ])
           Float64.minus_zero
           (Bool.ite
              (* tie -> [number] + 0.5 ; half up *)
-             (Float64.mul n_f64 (Float64.from_numeral 2.0) |> Float64.is_integer)
-             (Float64.add n_f64 (Float64.from_numeral 0.5))
+             (Float64.mul n_f64 (Float64.of_float 2.0) |> Float64.is_integer)
+             (Float64.add n_f64 (Float64.of_float 0.5))
              (* else round to nearest *)
              (n_f64 |> Float64.round_nearest_to_even))))
 
@@ -551,14 +551,14 @@ let trunc num mem =
     (Bool.ite
        (Bool.ands
           [
-            Float64.lt num_f64 (1.0 |> Float64.from_numeral);
+            Float64.lt num_f64 (1.0 |> Float64.of_float);
             Float64.gt num_f64 Float64.zero;
           ])
        Float64.zero
        (Bool.ite
           (Bool.ands
              [
-               Float64.gt num_f64 (-1.0 |> Float64.from_numeral);
+               Float64.gt num_f64 (-1.0 |> Float64.of_float);
                Float64.lt num_f64 Float64.minus_zero;
              ])
           Float64.minus_zero (num_f64 |> Float64.trunc)))

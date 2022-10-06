@@ -46,10 +46,9 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                                  (Bool.ands
                                     [
                                       Float64.ge value
-                                        (Float64.from_numeral
-                                           (lb |> float_of_int));
+                                        (Float64.of_float (lb |> float_of_int));
                                       Float64.le value
-                                        (Float64.from_numeral
+                                        (Float64.of_float
                                            (ub + 1 |> float_of_int));
                                     ])
                                  (Bool.ite

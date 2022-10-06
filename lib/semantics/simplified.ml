@@ -566,7 +566,7 @@ let speculative_to_number pval () control mem (state : State.t) =
             (Bool.ite
                (Bool.ors
                   [ pval |> Value.is_true; pval |> Constant.is_true_cst rf ])
-               (Float64.from_numeral 1.0) (Float64.from_numeral 0.0))))
+               (Float64.of_float 1.0) (Float64.of_float 0.0))))
   in
   state |> State.update ~value ~deopt ~control
 

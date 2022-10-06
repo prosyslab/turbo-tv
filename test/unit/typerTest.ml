@@ -33,7 +33,7 @@ let nan_is_not_unsigned32 =
 
 let f64_minus_1073741824_is_number =
   check "f64_minus_1073741824_is_number"
-    (Float64.from_numeral (-1073741824.000002861022))
+    (Float64.of_float (-1073741824.000002861022))
     Types.Number Bool.tr
 
 let mz_is_u32_or_mz =
@@ -47,12 +47,12 @@ let mz_is_not_u32_or_nan =
     Bool.fl
 
 let simple_in_range =
-  check "3.5_in_-100_to_100" (Float64.from_numeral 3.5)
+  check "3.5_in_-100_to_100" (Float64.of_float 3.5)
     (Types.Range (-100., 100.))
     Bool.tr
 
 let simple_not_in_range =
-  check "3.5_not_in_-1_to_1" (Float64.from_numeral 3.5)
+  check "3.5_not_in_-1_to_1" (Float64.of_float 3.5)
     (Types.Range (-1., 1.))
     Bool.fl
 

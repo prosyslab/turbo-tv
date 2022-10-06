@@ -123,6 +123,8 @@ module Make_Integer_Operator (I : IntValue) = struct
   let to_value t =
     t |> BitVec.zero_extend (Value.data_len - width) |> Value.entype ty
 
+  let of_int i = BitVecVal.from_int ~len:width i |> to_value
+
   (* arith *)
   let add lval rval =
     BitVec.addb (lval |> from_value) (rval |> from_value) |> to_value
@@ -514,7 +516,7 @@ module Float64 = struct
   (* conversion *)
   let to_value f = f |> Float.to_ieee_bv |> Value.entype Type.float64
 
-  let from_numeral f = f |> Float.from_float |> to_value
+  let of_float f = f |> Float.from_float |> to_value
 
   let from_value value = value |> Value.data_of |> Float.from_ieee_bv
 
@@ -633,12 +635,12 @@ module Float64 = struct
   let is_in_smi_range value =
     Bool.ands
       [
-        ge value (from_numeral (TaggedSigned.min_limit |> float_of_int));
-        le value (from_numeral (TaggedSigned.max_limit |> float_of_int));
+        ge value (of_float (TaggedSigned.min_limit |> float_of_int));
+        le value (of_float (TaggedSigned.max_limit |> float_of_int));
       ]
 
   let is_in_range value lb ub =
-    Bool.ands [ ge value (from_numeral lb); le value (from_numeral ub) ]
+    Bool.ands [ ge value (of_float lb); le value (of_float ub) ]
 
   let can_be_smi value =
     Bool.ands [ value |> is_integer; value |> is_in_smi_range ]
@@ -688,7 +690,7 @@ module Float64 = struct
          [ is_nan value; is_zero value; is_minus_zero value; is_inf value ])
       value
       (* if num is -inf, return -1 *)
-      (Bool.ite (is_ninf value) (from_numeral (-1.0))
+      (Bool.ite (is_ninf value) (of_float (-1.0))
          (Z3.FuncDecl.apply expm_decl [ value |> from_value ] |> to_value))
 
   let sin value =

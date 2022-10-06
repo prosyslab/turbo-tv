@@ -34,7 +34,7 @@ let number_to ty_s desc input expected =
   let expected = Value.from_int expected |> Value.cast ty in
   let result =
     state
-    |> convert (Float64.from_numeral input) state.memory
+    |> convert (Float64.of_float input) state.memory
     |> State.register_file |> RegisterFile.find "0"
   in
   let _ = value_eq eq result expected in

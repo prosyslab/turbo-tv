@@ -11,7 +11,7 @@ let conversion_test i_ty o_ty desc input expected =
   let msg = "\027[91m" ^ name ^ "\027[0m" in
   let result =
     state
-    |> convert (Float64.from_numeral input)
+    |> convert (Float64.of_float input)
     |> State.register_file |> RegisterFile.find "0"
   in
   let expected = Value.from_int expected |> Value.cast ty in
@@ -49,6 +49,35 @@ let change_float64_to_int32_neg_udf2 =
 let change_float64_to_int32_neg_udf3 =
   conversion_test "float64" "int32" "neg_udf2" (-4294967297.0) (-1)
 
+let word_logical_shift_test desc width kind li ri expected =
+  let name = Printf.sprintf "word%d%s_%s" width kind desc in
+  let msg = "\027[91m" ^ name ^ "\027[0m" in
+  let op =
+    match (width, kind) with
+    | 32, "shl" -> word32_shl
+    | 32, "shr" -> word32_shr
+    | 8, _ | 16, _ | 64, _ -> failwith "not implemented"
+    | _ -> failwith "unreachable"
+  in
+  let eq, lval, rval =
+    match width with
+    | 32 -> (Word32.eq, Int32.of_int li, Int32.of_int ri)
+    | 8 | 16 | 64 -> failwith "not implemented"
+    | _ -> failwith "unreachable"
+  in
+
+  let result =
+    state |> op lval rval |> State.register_file |> RegisterFile.find "0"
+  in
+  let expected = Value.from_int expected |> Value.cast Type.int64 in
+  let _ = value_eq eq result expected in
+  name >:: fun _ ->
+  assert_equal ~msg ~cmp:(value_eq Int64.eq) ~printer:value_printer expected
+    result
+
+let word32_shr_mod32_off =
+  word_logical_shift_test "mod32_off" 32 "shr" (-2147483648) (-1073741808) 32768
+
 let suite =
   "Test suite for machine-level operator semantics"
   >::: [
@@ -62,6 +91,7 @@ let suite =
          change_float64_to_int32_neg_udf3;
          change_float64_to_int64_pos_val;
          change_float64_to_int64_neg_val;
+         word32_shr_mod32_off;
        ]
 
 let _ = OUnit2.run_test_tt_main suite
