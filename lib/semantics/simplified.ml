@@ -540,6 +540,7 @@ let number_to_uint32 pval mem state =
   state |> State.update ~value
 
 let speculative_to_number pval () control mem (state : State.t) =
+  let rf = state.register_file in
   let deopt =
     Bool.not
       (Bool.ors
@@ -549,9 +550,9 @@ let speculative_to_number pval () control mem (state : State.t) =
            pval |> Objects.is_null mem;
            pval |> Objects.is_undefined mem;
            pval |> Objects.is_boolean mem;
+           pval |> Constant.is_empty_string rf;
          ])
   in
-  let rf = state.register_file in
   let value =
     Bool.ite
       (Number.is_number pval mem)
