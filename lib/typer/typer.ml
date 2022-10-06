@@ -37,11 +37,21 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                                  (Bool.ands
                                     [
                                       value |> Value.has_type Type.float64;
-                                      value |> Float64.is_integer;
+                                      Bool.not (value |> Float64.is_nan);
                                       Bool.not (value |> Float64.is_minus_zero);
+                                      Bool.not (value |> Float64.is_inf);
+                                      Bool.not (value |> Float64.is_ninf);
                                     ])
-                                 (Float64.is_in_range value (lb |> float_of_int)
-                                    (ub |> float_of_int))
+                                 (* don't use is_in_range. it'll make off-by-one error  *)
+                                 (Bool.ands
+                                    [
+                                      Float64.ge value
+                                        (Float64.from_numeral
+                                           (lb |> float_of_int));
+                                      Float64.le value
+                                        (Float64.from_numeral
+                                           (ub + 1 |> float_of_int));
+                                    ])
                                  (Bool.ite
                                     (value |> Value.has_type Type.int8)
                                     (Int8.is_in_range value lb ub)
