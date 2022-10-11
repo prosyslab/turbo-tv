@@ -84,12 +84,16 @@ let print_counter_example program state model =
     match opcode with
     | End ->
         Format.printf
-          "#%d:%s => \n  Value: %s\n  Control: %s\n  UB: %s\n  Deopt: %s\n\n" pc
-          instr_s value control ub deopt
+          "#%d:%s => \n\
+          \  Value: %s\n\
+          \  ControlToken: %s\n\
+          \  UB: %s\n\
+          \  Deopt: %s\n\n"
+          pc instr_s value control ub deopt
     | _ ->
         Format.printf
-          "#%d:%s => \n  Value: %s\n  Control: %s\n  UB: %s\n  Deopt: %s\n" pc
-          instr_s value control ub deopt;
+          "#%d:%s => \n  Value: %s\n  ControlToken: %s\n  UB: %s\n  Deopt: %s\n"
+          pc instr_s value control ub deopt;
         aux (pc + 1)
   in
 

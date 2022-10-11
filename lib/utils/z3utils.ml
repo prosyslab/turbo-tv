@@ -158,6 +158,7 @@ module Float = struct
 
   let from_string ?(sort = !float_sort) s =
     if String.equal s "nan" then nan ()
+    else if String.equal s "-nan" then nan ()
     else if String.equal s "inf" then inf ()
     else if String.equal s "-inf" then ninf ()
     else
