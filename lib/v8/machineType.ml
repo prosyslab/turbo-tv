@@ -142,6 +142,7 @@ type t =
   | CompressedPointer
   | AnyCompressed
   | SandboxedPointer
+  | TaggedBool
   | Bool
   | None
 
@@ -168,6 +169,7 @@ let of_rs_string rs =
   | "kRepCompressed|kTypeAny" -> AnyCompressed
   | "kRepSandboxedPointer|kMachNone" -> SandboxedPointer
   | "kRepBit|kTypeBool" -> Bool
+  | "kRepTagged|kTypeBool" -> TaggedBool
   | "kRepNone|kMachNone" -> None
   | _ -> failwith "Invalid repr|semantic string"
 
@@ -213,6 +215,7 @@ let repr t : Repr.t =
   | AnyCompressed -> Compressed
   | SandboxedPointer -> SandboxedPointer
   | Bool -> Bit
+  | TaggedBool -> Tagged
   | None -> None
 
 let sem t : Sem.t =
@@ -236,6 +239,7 @@ let sem t : Sem.t =
   | CompressedPointer -> Any
   | AnyCompressed -> Any
   | SandboxedPointer -> None
+  | TaggedBool -> Bool
   | Bool -> Bool
   | None -> None
 
