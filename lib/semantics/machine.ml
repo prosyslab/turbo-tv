@@ -16,6 +16,10 @@ let float64_div lval rval state =
   let value = Float64.div lval rval in
   state |> State.update ~value
 
+let float64_neg pval state =
+  let value = Float64.neg pval in
+  state |> State.update ~value
+
 (* to be fixed *)
 let float64_extract_high_word32 pval state =
   let hword32 =
@@ -74,6 +78,10 @@ let int32_add_with_overflow lval rval control state =
 
 let int32_div lval rval control state =
   let value = Int32.div lval rval in
+  state |> State.update ~value ~control
+
+let int32_mod lval rval control state =
+  let value = Int32.modulo lval rval in
   state |> State.update ~value ~control
 
 let int32_mul lval rval state =

@@ -746,6 +746,7 @@ let encode program
   | Float64Min -> encode_machine_binary float64_min
   | Float64Mod -> encode_machine_binary float64_mod
   | Float64Mul -> encode_machine_binary float64_mul
+  | Float64Neg -> encode_machine_unary float64_neg
   | Float64Sub -> encode_machine_binary float64_sub
   | Float64RoundDown -> encode_machine_unary float64_round_down
   | Float64RoundUp -> encode_machine_unary float64_round_up
@@ -761,6 +762,14 @@ let encode program
       let rval = RegisterFile.find rpid rf in
       let ctrl = ControlFile.find ctrl_id cf in
       int32_div lval rval ctrl
+  | Int32Mod ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let ctrl_id = Operands.id_of_nth operands 2 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      let ctrl = ControlFile.find ctrl_id cf in
+      int32_mod lval rval ctrl
   | Int32Mul -> encode_machine_binary int32_mul
   | Int32MulWithOverflow -> encode_machine_ovf int32_mul_with_overflow
   | Int32Sub -> encode_machine_binary int32_sub

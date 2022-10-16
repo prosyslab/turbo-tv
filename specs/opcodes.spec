@@ -63,7 +63,7 @@ CheckNotTaggedHole,
 CheckNumber,
 CheckReceiver,
 CheckReceiverOrNullOrUndefined,
-CheckSmi,
+CheckSmi,v1,e1,c1
 CheckString,
 CheckSymbol,
 CheckedFloat64ToInt32,b1,v1
@@ -225,7 +225,7 @@ Float64Max,v1,v2
 Float64Min,v1,v2
 Float64Mod,v1,v2
 Float64Mul,v1,v2
-Float64Neg,
+Float64Neg,v1
 Float64Pow,
 Float64RoundDown,v1
 Float64RoundTiesAway,
@@ -406,7 +406,7 @@ I8x16UConvertI16x8,
 IfDefault,
 IfException,
 IfFalse,c1
-IfSuccess,
+IfSuccess,c1
 IfTrue,c1
 IfValue,
 InductionVariablePhi,
@@ -418,7 +418,7 @@ Int32Constant,b1
 Int32Div,v1,v2,c1
 Int32LessThan,v1,v2
 Int32LessThanOrEqual,v1,v2
-Int32Mod,
+Int32Mod,v1,v2,c1
 Int32Mul,v1,v2
 Int32MulHigh,
 Int32MulWithOverflow,v1,v2,c1
@@ -479,7 +479,7 @@ JSCreateLiteralRegExp,
 JSCreateObject,
 JSCreatePromise,
 JSCreateStringIterator,
-JSCreateTypedArray,
+JSCreateTypedArray,e1,c1
 JSCreateWithContext,
 JSDebugger,
 JSDecrement,
