@@ -86,6 +86,38 @@ let word32_shr_to_zero = word_logical_shift_test "simple" 32 "shr" 2 2 0
 let word32_shr_mod32_off =
   word_logical_shift_test "mod32_off" 32 "shr" (-2147483648) (-1073741808) 32768
 
+let int_width_op_with_ovf sign width op li ri expected =
+  let name =
+    Printf.sprintf "%s%d:ovf(%d%s%d)?"
+      (if sign then "Uint" else "Int")
+      width li op ri
+  in
+
+  let mk_int, opsem =
+    match (width, op) with
+    | 32, "+" -> (Int32.of_int, Machine.int32_add_with_overflow)
+    | _ -> failwith "not implemented"
+  in
+  let msg = "\027[91m" ^ name ^ "\027[0m" in
+  let eq = Value.eq in
+  let result =
+    state
+    |> opsem (li |> mk_int) (ri |> mk_int) Bool.tr
+    |> State.register_file |> RegisterFile.find "0" |> Composed.second_of
+  in
+  let expected = if expected then Value.tr else Value.fl in
+  let _ = value_eq eq result expected in
+  name >:: fun _ ->
+  assert_equal ~msg ~cmp:(value_eq eq) ~printer:value_printer expected result
+
+let int32_add_with_overflow_ovf =
+  int_width_op_with_ovf true 32 "+" 1775384701 1775384701 true
+
+let int32_add_with_overflow_udf =
+  int_width_op_with_ovf true 32 "+" (-1775384701) (-1775384701) true
+
+let int32_add_with_overflow_no = int_width_op_with_ovf true 32 "+" 0 1 false
+
 let suite =
   "Test suite for machine-level operator semantics"
   >::: [
@@ -104,6 +136,9 @@ let suite =
          word32_shr_simple;
          word32_shr_to_zero;
          word32_shr_mod32_off;
+         int32_add_with_overflow_ovf;
+         int32_add_with_overflow_udf;
+         int32_add_with_overflow_no;
        ]
 
 let _ = OUnit2.run_test_tt_main suite

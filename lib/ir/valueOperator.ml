@@ -151,6 +151,8 @@ module Make_Integer_Operator (I : IntValue) = struct
 
   (* assume turbofan consider 'overflow' as overflow \/ underflow *)
   let add_would_overflow lval rval =
+    let lval = lval |> from_value in
+    let rval = rval |> from_value in
     Z3utils.Bool.not
       (Z3utils.Bool.ands
          [
@@ -159,6 +161,8 @@ module Make_Integer_Operator (I : IntValue) = struct
          ])
 
   let mul_would_overflow lval rval =
+    let lval = lval |> from_value in
+    let rval = rval |> from_value in
     Z3utils.Bool.not
       (Z3utils.Bool.ands
          [
@@ -168,6 +172,8 @@ module Make_Integer_Operator (I : IntValue) = struct
 
   (* assume turbofan consider 'overflow' as overflow \/ underflow *)
   let sub_would_overflow lval rval =
+    let lval = lval |> from_value in
+    let rval = rval |> from_value in
     Z3utils.Bool.not
       (Z3utils.Bool.ands
          [

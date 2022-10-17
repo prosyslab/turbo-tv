@@ -1,0 +1,46 @@
+#43:Int32Constant[0]()()()
+#92:Int32Constant[-1775384701]()()()
+#45:ExternalConstant[0x55a71157f2f0]()()()
+#36:Int64Constant[0]()()()
+#0:Start()()()  [Type: Internal]
+#46:Load[kRepWord64](#45:ExternalConstant, #36:Int64Constant)(#0:Start)(#0:Start)
+#47:StackPointerGreaterThan[JSFunctionEntry](#46:Load)(#46:Load)()
+#48:Branch[True](#47:StackPointerGreaterThan)()(#0:Start)
+#49:IfTrue()()(#48:Branch)
+#56:HeapConstant[0x08770014b209 <CodeDataContainer BUILTIN CEntry_Return1_DontSaveFPRegs_ArgvOnStack_NoBuiltinExit>]()()()
+#53:LoadStackCheckOffset()()()
+#54:ExternalConstant[0x55a710513740<StackGuardWithGap.entry>]()()()
+#55:Int32Constant[1]()()()
+#7:HeapConstant[0x087700183aa9 <NativeContext[273]>]()()()  [Type: HeapConstant(0x55a71160b4c8 {0x087700183aa9 <NativeContext[273]>})]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#10:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, sparse:^^^](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#11:TypedStateValues[, sparse:...]()()()  [Type: Internal]
+#38:TypedStateValues[, sparse:.]()()()
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#28:HeapConstant[0x087700202755 <JSFunction v0 (sfi = 0x87700199eb1)>]()()()  [Type: HeapConstant(0x55a71160b4d8)]
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x087700199eb1 <SharedFunctionInfo v0>](#10:TypedStateValues, #11:TypedStateValues, #38:TypedStateValues, #5:Parameter, #28:HeapConstant)()()  [Type: Internal]
+#50:IfFalse()()(#48:Branch)
+#9:Call[Code:StackGuardWithGap:r1s1i5f1](#56:HeapConstant, #53:LoadStackCheckOffset, #54:ExternalConstant, #55:Int32Constant, #7:HeapConstant, #14:FrameState)(#47:StackPointerGreaterThan)(#50:IfFalse)
+#51:Merge()()(#49:IfTrue, #9:Call)
+#67:Int32AddWithOverflow(#92:Int32Constant, #92:Int32Constant)()(#51:Merge)
+#68:Projection[1](#67:Int32AddWithOverflow)()(#51:Merge)
+#69:Branch[False](#68:Projection)()(#51:Merge)
+#73:IfFalse()()(#69:Branch)
+#74:Projection[0](#67:Int32AddWithOverflow)()(#73:IfFalse)
+#75:BitcastWord32ToWord64(#74:Projection)()()
+#52:EffectPhi()(#47:StackPointerGreaterThan, #9:Call)(#51:Merge)
+#87:Return(#43:Int32Constant, #75:BitcastWord32ToWord64)(#52:EffectPhi)(#73:IfFalse)
+#77:Int64Constant[12]()()()
+#91:Dead()()()  [Type: None]
+#70:IfTrue()()(#69:Branch)
+#71:Merge()()(#91:Dead, #70:IfTrue)
+#78:AllocateRaw[Any, Young](#77:Int64Constant)(#52:EffectPhi)(#71:Merge)
+#60:Int64Constant[-1775384701]()()()
+#76:ChangeInt64ToFloat64(#60:Int64Constant)()()
+#79:HeapConstant[0x0877000023fd <Map[12](HEAP_NUMBER_TYPE)>]()()()
+#80:StoreField[Map, tagged base, 0, OtherInternal, kRepMapWord|kTypeAny, MapWriteBarrier, mutable (initializing or transitioning store)](#78:AllocateRaw, #79:HeapConstant)(#78:AllocateRaw)(#78:AllocateRaw)
+#81:StoreField[HeapNumberValue, tagged base, 4, Number, kRepFloat64|kTypeNumber, NoWriteBarrier, mutable (initializing or transitioning store)](#78:AllocateRaw, #76:ChangeInt64ToFloat64)(#80:StoreField)(#78:AllocateRaw)
+#88:Return(#43:Int32Constant, #78:AllocateRaw)(#81:StoreField)(#78:AllocateRaw)
+#25:End()()(#87:Return, #88:Return)
