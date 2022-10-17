@@ -54,8 +54,15 @@ let projection idx incoming state =
  * assertion:
  *  ct = ite well-defined (precond ^ cond, precond ^ not cond) (UB, UB) *)
 let branch cond precond state =
-  let for_true = Bool.and_ precond (Value.is_true cond) in
-  let for_false = Bool.and_ precond (Value.is_false cond) in
+  let rf = state.State.register_file in
+  let for_true =
+    Bool.and_ precond
+      (Bool.ors [ Value.is_true cond; Constant.is_true_cst rf cond ])
+  in
+  let for_false =
+    Bool.and_ precond
+      (Bool.ors [ Value.is_true cond; Constant.is_false_cst rf cond ])
+  in
   let control = ControlTuple.from_tf for_true for_false in
   state |> State.update ~control
 

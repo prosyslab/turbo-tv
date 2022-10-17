@@ -1,0 +1,34 @@
+#41:NumberConstant[0]()()()  [Type: Range(0, 0)]
+#19:NumberConstant[-1.7976931348623157e+308]()()()  [Type: Range(-179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368, -179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368)]
+#15:NumberConstant[902160.16061657132]()()()  [Type: OtherNumberConstant(902160.16061657132)]
+#48:HeapConstant[0x3873000024f9 <false>]()()()  [Type: HeapConstant(0x565005e9dab0 {0x3873000024f9 <false>})]
+#7:HeapConstant[0x387300183aa9 <NativeContext[273]>]()()()  [Type: HeapConstant(0x565005e9d4c8 {0x387300183aa9 <NativeContext[273]>})]
+#0:Start()()()  [Type: Internal]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#10:StateValues[dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#11:StateValues[sparse:......]()()()  [Type: Internal]
+#12:HeapConstant[0x3873000028c1 <Odd Oddball: optimized_out>]()()()  [Type: HeapConstant(0x565005e9dad0 {0x3873000028c1 <Odd Oddball: optimized_out>})]
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#46:HeapConstant[0x387300202755 <JSFunction v0 (sfi = 0x387300199ee1)>]()()()  [Type: HeapConstant(0x565005e9d4d8)]
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x387300199ee1 <SharedFunctionInfo v0>](#10:StateValues, #11:StateValues, #12:HeapConstant, #5:Parameter, #46:HeapConstant)()()  [Type: Internal]
+#9:JSStackCheck[JSFunctionEntry]()(#0:Start)(#0:Start)
+#24:Branch[None](#48:HeapConstant)()(#9:JSStackCheck)
+#27:IfTrue()()(#24:Branch)
+#25:IfFalse()()(#24:Branch)
+#28:Merge()()(#27:IfTrue, #25:IfFalse)
+#29:Phi[kRepTagged](#19:NumberConstant, #15:NumberConstant)()(#28:Merge)  [Type: (None | Range(-179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368, -179769313486231570814527423731704356798070567525844996598917476803157260780028538760589558632766878171540458953514382464234321326889464182768467546703537516986049910576551282076245490090389328944075868508455133942304583236903222948165808559332123348274797826204144723168738177180919299881250404026184124858368) | OtherNumberConstant(902160.16061657132))]
+#17:FrameState[UNOPTIMIZED_FRAME, 2, Ignore, 0x387300199ee1 <SharedFunctionInfo v0>](#10:StateValues, #11:StateValues, #15:NumberConstant, #5:Parameter, #46:HeapConstant)()()  [Type: Internal]
+#16:Checkpoint()(#9:JSStackCheck)(#9:JSStackCheck)
+#18:SpeculativeNumberShiftRightLogical[Number](#3:Parameter, #15:NumberConstant)(#16:Checkpoint)(#9:JSStackCheck)  [Type: Unsigned32]
+#22:SpeculativeNumberLessThanOrEqual[Number](#15:NumberConstant, #19:NumberConstant)(#18:SpeculativeNumberShiftRightLogical)(#9:JSStackCheck)  [Type: HeapConstant(0x565005e9dab0 {0x3873000024f9 <false>})]
+#30:ToBoolean(#22:SpeculativeNumberLessThanOrEqual)()()  [Type: HeapConstant(0x565005e9dab0 {0x3873000024f9 <false>})]
+#31:Branch[None](#30:ToBoolean)()(#28:Merge)
+#32:IfFalse()()(#31:Branch)
+#39:SpeculativeNumberMultiply[Number](#19:NumberConstant, #18:SpeculativeNumberShiftRightLogical)(#22:SpeculativeNumberLessThanOrEqual)(#32:IfFalse)  [Type: (MinusZero | Range(-inf, 0))]
+#34:IfTrue()()(#31:Branch)
+#35:Merge()()(#34:IfTrue, #32:IfFalse)
+#40:EffectPhi()(#22:SpeculativeNumberLessThanOrEqual, #39:SpeculativeNumberMultiply)(#35:Merge)
+#42:Return(#41:NumberConstant, #29:Phi)(#40:EffectPhi)(#35:Merge)
+#43:End()()(#42:Return)
