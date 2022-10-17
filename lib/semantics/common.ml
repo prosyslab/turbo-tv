@@ -61,7 +61,7 @@ let branch cond precond state =
   in
   let for_false =
     Bool.and_ precond
-      (Bool.ors [ Value.is_true cond; Constant.is_false_cst rf cond ])
+      (Bool.ors [ Value.is_false cond; Constant.is_false_cst rf cond ])
   in
   let control = ControlTuple.from_tf for_true for_false in
   state |> State.update ~control
