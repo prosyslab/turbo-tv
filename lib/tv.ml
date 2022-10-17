@@ -852,6 +852,9 @@ let encode program
   | ChangeUint32ToUint64 -> encode_machine_unary change_uint32_to_uint64
   | RoundFloat64ToInt32 -> encode_machine_unary round_float64_to_int32
   | Empty -> nop
+  | StateValues | Checkpoint | EffectPhi | TypedStateValues | FrameState
+  | LoadStackCheckOffset ->
+      nop
   | _ ->
       Format.printf "not implemented: %s\n" (opcode |> Opcode.to_str);
       nop

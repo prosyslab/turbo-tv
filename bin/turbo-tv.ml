@@ -70,6 +70,7 @@ let unknown_ops =
     Opcode.JSStoreContext;
     Opcode.JSCreateEmptyLiteralArray;
     Opcode.JSToNumber;
+    Opcode.JSIncrement;
     Opcode.Loop;
   ]
 
