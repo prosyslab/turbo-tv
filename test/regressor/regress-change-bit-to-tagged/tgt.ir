@@ -1,0 +1,34 @@
+#49:Int32Constant[0]()()()
+#61:Int32Constant[1]()()()
+#50:ChangeBitToTagged(#61:Int32Constant)()()
+#0:Start()()()  [Type: Internal]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#10:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#15:NumberConstant[-855407.70120559097]()()()  [Type: OtherNumberConstant(-855407.70120559097)]
+#17:TypedStateValues[kRepTagged|kTypeAny, sparse:...^](#15:NumberConstant)()()  [Type: Internal]
+#45:TypedStateValues[kRepTagged|kTypeAny, dense](#15:NumberConstant)()()
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#37:HeapConstant[0x1b480004ada5 <JSFunction v0 (sfi = 0x1b4800199ec1)>]()()()  [Type: HeapConstant(0x55680ebb24b8)]
+#18:FrameState[UNOPTIMIZED_FRAME, 5, Ignore, 0x1b4800199ec1 <SharedFunctionInfo v0>](#10:TypedStateValues, #17:TypedStateValues, #45:TypedStateValues, #5:Parameter, #37:HeapConstant)()()  [Type: Internal]
+#51:ExternalConstant[0x55680eb262f0]()()()
+#44:Int64Constant[0]()()()
+#52:Load[kRepWord64](#51:ExternalConstant, #44:Int64Constant)(#0:Start)(#0:Start)
+#53:StackPointerGreaterThan[JSFunctionEntry](#52:Load)(#52:Load)()
+#62:HeapConstant[0x1b480014b209 <CodeDataContainer BUILTIN CEntry_Return1_DontSaveFPRegs_ArgvOnStack_NoBuiltinExit>]()()()
+#59:LoadStackCheckOffset()()()
+#60:ExternalConstant[0x55680d445740<StackGuardWithGap.entry>]()()()
+#7:HeapConstant[0x1b4800183aa9 <NativeContext[273]>]()()()  [Type: HeapConstant(0x55680ebb24a8 {0x1b4800183aa9 <NativeContext[273]>})]
+#11:TypedStateValues[, sparse:....]()()()  [Type: Internal]
+#46:TypedStateValues[, sparse:.]()()()
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x1b4800199ec1 <SharedFunctionInfo v0>](#10:TypedStateValues, #11:TypedStateValues, #46:TypedStateValues, #5:Parameter, #37:HeapConstant)()()  [Type: Internal]
+#54:Branch[True](#53:StackPointerGreaterThan)()(#0:Start)
+#56:IfFalse()()(#54:Branch)
+#9:Call[Code:StackGuardWithGap:r1s1i5f1](#62:HeapConstant, #59:LoadStackCheckOffset, #60:ExternalConstant, #61:Int32Constant, #7:HeapConstant, #14:FrameState)(#53:StackPointerGreaterThan)(#56:IfFalse)
+#55:IfTrue()()(#54:Branch)
+#57:Merge()()(#55:IfTrue, #9:Call)
+#58:EffectPhi()(#53:StackPointerGreaterThan, #9:Call)(#57:Merge)
+#16:Checkpoint()(#58:EffectPhi)(#57:Merge)
+#33:Return(#49:Int32Constant, #50:ChangeBitToTagged)(#16:Checkpoint)(#57:Merge)
+#34:End()()(#33:Return)

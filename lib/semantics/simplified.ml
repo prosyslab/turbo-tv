@@ -366,15 +366,18 @@ let object_is_nan pval mem state =
   state |> State.update ~value ~deopt
 
 (* simplified: type-conversion *)
-(* well-defined condition
-   - IsBool(pval)
-   assertion:
-    value = ite well-defined (ite pval true false) UB *)
 let change_bit_to_tagged pval state =
   let rf = State.register_file state in
   let true_constant = RegisterFile.find "true" rf in
   let false_constant = RegisterFile.find "false" rf in
-  let value = Bool.ite (Value.eq Value.tr pval) true_constant false_constant in
+  let value =
+    Bool.ite
+      (pval |> Value.has_type Type.bool)
+      (Bool.ite (pval |> Value.is_true) true_constant false_constant)
+      (* if [pval] is not coming from cmp operator (e.g, Wor32Cmp), just compare
+         LSB 32-bit with 0*)
+      (Bool.ite (pval |> Word32.eq Value.fl) false_constant true_constant)
+  in
   state |> State.update ~value
 
 let change_float64_to_tagged mode pval mem state =
