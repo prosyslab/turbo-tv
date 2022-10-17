@@ -31,7 +31,7 @@ let value_printer ?(indent = 0) e =
   let indent = repeat "  " indent in
   String.concat "\n"
     [
-      Format.sprintf "%sFormatted: %s" indent
+      Format.sprintf "\n%sFormatted: %s" indent
         (e |> Printer.value_to_string model state.register_file state.memory);
       Format.sprintf "%sRaw: %s" indent (e |> Expr.to_simplified_string);
     ]

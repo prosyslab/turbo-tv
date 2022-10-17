@@ -251,8 +251,10 @@ let number_equal lnum rnum mem state =
   state |> State.update ~value
 
 let number_less_than lnum rnum mem state =
+  (* https://tc39.es/ecma262/#sec-relational-operators-runtime-semantics-evaluation *)
   let value =
-    Bool.ite (Value.is_true (Number.less_than lnum rnum mem)) Value.tr Value.fl
+    let r = Number.less_than lnum rnum mem in
+    Bool.ite (Bool.ors [ r |> Value.is_undefined ]) Value.fl r
   in
   state |> State.update ~value
 
