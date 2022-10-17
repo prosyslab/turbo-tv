@@ -56,35 +56,11 @@ let simple_not_in_range =
     (Types.Range (-1., 1.))
     Bool.fl
 
-let i32_minus_one_in_0_and_4294967295 =
-  check "i32:-1_in_0_and_4294967295"
-    (Value.from_int (-1) |> Value.cast Type.int32)
-    (Types.Range (0., 4294967295.))
-    Bool.tr
-
-let i32_zero_in_4294967295_and_4294967296 =
-  check "i32:0_in_4294967295_and_4294967296"
-    (Value.from_int 0 |> Value.cast Type.int32)
-    (Types.Range (4294967295., 4294967296.))
-    Bool.tr
-
-let i32_in_u32_range =
-  check "i32_in_unsigned_range"
-    (Value.from_int (-1199570816) |> Value.cast Type.int32)
-    (Types.Range (0., 4294967295.))
-    Bool.tr
-
 let i64_minus_one_not_in_0_and_4294967295 =
   check "i64:-1_not_in_0_and_4294967295"
     (Value.from_int (-1) |> Value.cast Type.int64)
     (Types.Range (0., 4294967295.))
     Bool.fl
-
-let u32_zero_in_4294967295_and_4294967296 =
-  check "u32:0_in_4294967295_and_4294967296"
-    (Value.from_int 0 |> Value.cast Type.uint32)
-    (Types.Range (4294967295., 4294967296.))
-    Bool.tr
 
 let suite =
   "typer test suite"
@@ -100,11 +76,7 @@ let suite =
          mz_is_not_u32_or_nan;
          simple_in_range;
          simple_not_in_range;
-         i32_in_u32_range;
-         i32_minus_one_in_0_and_4294967295;
-         i32_zero_in_4294967295_and_4294967296;
          i64_minus_one_not_in_0_and_4294967295;
-         u32_zero_in_4294967295_and_4294967296;
        ]
 
 let _ = OUnit2.run_test_tt_main suite
