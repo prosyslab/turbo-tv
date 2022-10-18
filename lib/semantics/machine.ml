@@ -37,7 +37,7 @@ let float64_min lval rval state =
   state |> State.update ~value
 
 let float64_mod lval rval state =
-  let value = Float64.rem lval rval in
+  let value = Float64.modulo lval rval in
   state |> State.update ~value
 
 let float64_mul lval rval state =

@@ -552,6 +552,11 @@ module Float64 = struct
     let rf = rval |> from_value in
     Float.add lf rf |> to_value
 
+  let sub lval rval =
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
+    Float.sub lf rf |> to_value
+
   let ceil value = Float.round Float.rtp_mode (value |> from_value) |> to_value
 
   let div lval rval =
@@ -568,10 +573,14 @@ module Float64 = struct
     let f = value |> from_value in
     Float.neg f |> to_value
 
+  let trunc value = Float.round Float.rtz_mode (value |> from_value) |> to_value
+
   let rem lval rval =
     Float.rem (lval |> from_value) (rval |> from_value) |> to_value
 
-  let trunc value = Float.round Float.rtz_mode (value |> from_value) |> to_value
+  let modulo lval rval =
+    let q = div lval rval in
+    sub lval (mul rval (q |> trunc))
 
   let round_down = floor
 
@@ -579,11 +588,6 @@ module Float64 = struct
 
   let round_nearest_to_even value =
     Float.round Float.rne_mode (value |> from_value) |> to_value
-
-  let sub lval rval =
-    let lf = lval |> from_value in
-    let rf = rval |> from_value in
-    Float.sub lf rf |> to_value
 
   (* comparison *)
   let eq lval rval =

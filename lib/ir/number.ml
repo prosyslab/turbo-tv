@@ -323,10 +323,7 @@ let remainder n d mem =
   (* https://tc39.es/ecma262/#sec-numeric-types-number-remainder *)
   let n_f64 = n |> to_float64 mem in
   let d_f64 = d |> to_float64 mem in
-  let r_f64 =
-    let q_f64 = Float64.div n_f64 d_f64 in
-    Float64.sub n_f64 (Float64.mul d_f64 (q_f64 |> Float64.trunc))
-  in
+  let r_f64 = Float64.modulo n_f64 d_f64 in
 
   let is_inf_or_ninf num =
     Bool.ors [ Float64.is_inf num; Float64.is_ninf num ]
@@ -385,11 +382,11 @@ let left_shift x y mem =
   let shift_count =
     Uint32.modulo rnum (32 |> Value.from_int |> Value.cast Type.uint32)
   in
-  let res = Uint32.shl lnum shift_count in
+  let res = Int32.shl lnum shift_count in
   Bool.ite
-    (res |> Uint32.is_in_smi_range)
-    (res |> Uint32.to_tagged_signed)
-    (res |> Uint32.to_float64)
+    (res |> Int32.is_in_smi_range)
+    (res |> Int32.to_tagged_signed)
+    (res |> Int32.to_float64)
 
 let unsigned_right_shift x y mem =
   (* https://tc39.es/ecma262/#sec-numeric-types-number-unsignedRightShift *)
