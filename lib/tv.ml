@@ -143,11 +143,15 @@ let encode program
       let c_str = Operands.const_of_nth operands 0 in
       number_constant c_str
   (* common: control *)
-  | Projection ->
+  | Projection -> (
       let idx = Operands.const_of_nth operands 0 |> int_of_string in
       let id = Operands.id_of_nth operands 1 in
-      let incoming = RegisterFile.find id rf in
-      projection idx incoming
+      let _, ctrl_opcode, _ = IR.instr_of (id |> int_of_string) program in
+      match ctrl_opcode with
+      | Dead -> nop
+      | _ ->
+          let incoming = RegisterFile.find id rf in
+          projection idx incoming)
   | Branch ->
       let cond_id = Operands.id_of_nth operands 0 in
       let prev_id = Operands.id_of_nth operands 1 in
