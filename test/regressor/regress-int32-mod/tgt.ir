@@ -1,0 +1,19 @@
+#37:Int32Constant[0]()()()
+#35:Int32Constant[2073398154]()()()
+#36:Int32Constant[-725421424]()()()
+#0:Start()()()  [Type: Internal]
+#39:Int32Mod(#35:Int32Constant, #36:Int32Constant)()(#0:Start)
+#41:ChangeInt31ToTaggedSigned(#39:Int32Mod)()()
+#7:HeapConstant[0x160f00183aa9 <NativeContext[273]>]()()()  [Type: HeapConstant(0x558c370a7698 {0x160f00183aa9 <NativeContext[273]>})]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#10:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#11:TypedStateValues[, sparse:.]()()()  [Type: Internal]
+#40:TypedStateValues[, sparse:.]()()()
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#25:HeapConstant[0x160f0004ace9 <JSFunction v0 (sfi = 0x160f00199ea1)>]()()()  [Type: HeapConstant(0x558c370a76a8 {0x160f0004ace9 <JSFunction v0 (sfi = 0x160f00199ea1)>})]
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x160f00199ea1 <SharedFunctionInfo v0>](#10:TypedStateValues, #11:TypedStateValues, #40:TypedStateValues, #5:Parameter, #25:HeapConstant)()()  [Type: Internal]
+#9:JSStackCheck[JSFunctionEntry]()(#0:Start)(#0:Start)
+#21:Return(#37:Int32Constant, #41:ChangeInt31ToTaggedSigned)(#9:JSStackCheck)(#9:JSStackCheck)
+#22:End()()(#21:Return)

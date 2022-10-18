@@ -1,0 +1,18 @@
+#20:NumberConstant[0]()()()  [Type: Range(0, 0)]
+#15:NumberConstant[2073398154]()()()  [Type: Range(2073398154, 2073398154)]
+#18:NumberConstant[-725421424]()()()  [Type: Range(-725421424, -725421424)]
+#30:NumberModulus(#15:NumberConstant, #18:NumberConstant)()()  [Type: Range(0, 725421423)]
+#7:HeapConstant[0x160f00183aa9 <NativeContext[273]>]()()()  [Type: HeapConstant(0x558c370a7698 {0x160f00183aa9 <NativeContext[273]>})]
+#0:Start()()()  [Type: Internal]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#10:StateValues[dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#11:StateValues[sparse:.]()()()  [Type: Internal]
+#12:HeapConstant[0x160f000028c1 <Odd Oddball: optimized_out>]()()()  [Type: HeapConstant(0x558c370a7bf0 {0x160f000028c1 <Odd Oddball: optimized_out>})]
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#25:HeapConstant[0x160f0004ace9 <JSFunction v0 (sfi = 0x160f00199ea1)>]()()()  [Type: HeapConstant(0x558c370a76a8 {0x160f0004ace9 <JSFunction v0 (sfi = 0x160f00199ea1)>})]
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x160f00199ea1 <SharedFunctionInfo v0>](#10:StateValues, #11:StateValues, #12:HeapConstant, #5:Parameter, #25:HeapConstant)()()  [Type: Internal]
+#9:JSStackCheck[JSFunctionEntry]()(#0:Start)(#0:Start)
+#21:Return(#20:NumberConstant, #30:NumberModulus)(#9:JSStackCheck)(#9:JSStackCheck)
+#22:End()()(#21:Return)

@@ -140,14 +140,13 @@ module Make_Integer_Operator (I : IntValue) = struct
       BitVec.sdivb (lval |> from_value) (rval |> from_value) |> to_value
     else BitVec.udivb (lval |> from_value) (rval |> from_value) |> to_value
 
-  let modulo lval rval =
-    BitVec.modb (lval |> from_value) (rval |> from_value) |> to_value
-
   let srem lval rval =
     BitVec.sremb (lval |> from_value) (rval |> from_value) |> to_value
 
   let urem lval rval =
     BitVec.uremb (lval |> from_value) (rval |> from_value) |> to_value
+
+  let modulo = if sign then srem else urem
 
   (* assume turbofan consider 'overflow' as overflow \/ underflow *)
   let add_would_overflow lval rval =
