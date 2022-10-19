@@ -506,6 +506,15 @@ let checked_tagged_to_tagged_signed pval _checkpoint control state =
   let deopt = Bool.not (pval |> Value.has_type Type.tagged_signed) in
   state |> State.update ~value:pval ~control ~deopt
 
+let truncate_tagged_to_word32 pval mem state =
+  let value =
+    Bool.ite
+      (pval |> Value.has_type Type.tagged_signed)
+      (TaggedSigned.to_int32 pval)
+      (HeapNumber.load pval mem |> HeapNumber.to_float64 |> Float64.to_int32)
+  in
+  state |> State.update ~value
+
 let checked_truncate_tagged_to_word32 hint pval mem state =
   let deopt =
     let map_check =
@@ -518,13 +527,7 @@ let checked_truncate_tagged_to_word32 hint pval mem state =
           [ pval |> Value.has_type Type.tagged_pointer; Bool.not map_check ];
       ]
   in
-  let value =
-    Bool.ite
-      (pval |> Value.has_type Type.tagged_signed)
-      (TaggedSigned.to_int32 pval)
-      (HeapNumber.load pval mem |> HeapNumber.to_float64 |> Float64.to_int32)
-  in
-  state |> State.update ~value ~deopt
+  state |> truncate_tagged_to_word32 pval mem |> State.update ~deopt
 
 let checked_uint32_to_int32 pval state =
   let deopt = Int32.is_negative pval in

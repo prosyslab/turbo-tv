@@ -723,6 +723,10 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       truncate_tagged_to_bit pval mem
+  | TruncateTaggedToWord32 ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      truncate_tagged_to_word32 pval mem
   (* simplified: bound-check *)
   | CheckIf ->
       let pid = Operands.id_of_nth operands 0 in

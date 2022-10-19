@@ -777,7 +777,7 @@ TruncateInt64ToInt32,v1
 TruncateTaggedPointerToBit,
 TruncateTaggedToBit,v1
 TruncateTaggedToFloat64,
-TruncateTaggedToWord32,
+TruncateTaggedToWord32,v1
 TryTruncateFloat32ToInt64,
 TryTruncateFloat32ToUint64,
 TryTruncateFloat64ToInt64,

@@ -663,7 +663,6 @@ type t =
   | TruncateFloat64ToUint32
   | TruncateTaggedPointerToBit
   | TruncateTaggedToFloat64
-  | TruncateTaggedToWord32
   | TryTruncateFloat32ToInt64
   | TryTruncateFloat32ToUint64
   | TryTruncateFloat64ToInt64
@@ -790,6 +789,7 @@ type t =
   | TruncateFloat64ToWord32
   | TruncateInt64ToInt32
   | TruncateTaggedToBit
+  | TruncateTaggedToWord32
   | Word32ReverseBytes
   | Word64ReverseBytes
   (* c1 *)
@@ -1099,7 +1099,7 @@ let get_kind opcode =
   | TrapUnless | TruncateBigIntToWord64 | TruncateFloat32ToInt32
   | TruncateFloat32ToUint32 | TruncateFloat64ToFloat32 | TruncateFloat64ToInt64
   | TruncateFloat64ToUint32 | TruncateTaggedPointerToBit
-  | TruncateTaggedToFloat64 | TruncateTaggedToWord32 | TryTruncateFloat32ToInt64
+  | TruncateTaggedToFloat64 | TryTruncateFloat32ToInt64
   | TryTruncateFloat32ToUint64 | TryTruncateFloat64ToInt64
   | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf | TypedObjectState
   | TypedStateValues | Uint32MulHigh | Uint64Div | Uint64Mod | UnalignedLoad
@@ -1137,8 +1137,8 @@ let get_kind opcode =
   | NumberSign | NumberSin | NumberToBoolean | NumberToInt32 | NumberToUint32
   | NumberTrunc | ObjectIsMinusZero | ObjectIsNaN | RoundFloat64ToInt32
   | StackPointerGreaterThan | ToBoolean | TruncateFloat64ToWord32
-  | TruncateInt64ToInt32 | TruncateTaggedToBit | Word32ReverseBytes
-  | Word64ReverseBytes ->
+  | TruncateInt64ToInt32 | TruncateTaggedToBit | TruncateTaggedToWord32
+  | Word32ReverseBytes | Word64ReverseBytes ->
       V1
   | IfFalse | IfSuccess | IfTrue -> C1
   | AllocateRaw -> V1C1
@@ -1857,7 +1857,6 @@ let of_str str =
   | "TruncateFloat64ToUint32" -> TruncateFloat64ToUint32
   | "TruncateTaggedPointerToBit" -> TruncateTaggedPointerToBit
   | "TruncateTaggedToFloat64" -> TruncateTaggedToFloat64
-  | "TruncateTaggedToWord32" -> TruncateTaggedToWord32
   | "TryTruncateFloat32ToInt64" -> TryTruncateFloat32ToInt64
   | "TryTruncateFloat32ToUint64" -> TryTruncateFloat32ToUint64
   | "TryTruncateFloat64ToInt64" -> TryTruncateFloat64ToInt64
@@ -1982,6 +1981,7 @@ let of_str str =
   | "TruncateFloat64ToWord32" -> TruncateFloat64ToWord32
   | "TruncateInt64ToInt32" -> TruncateInt64ToInt32
   | "TruncateTaggedToBit" -> TruncateTaggedToBit
+  | "TruncateTaggedToWord32" -> TruncateTaggedToWord32
   | "Word32ReverseBytes" -> Word32ReverseBytes
   | "Word64ReverseBytes" -> Word64ReverseBytes
   | "IfFalse" -> IfFalse
@@ -2728,7 +2728,6 @@ let to_str opcode =
   | TruncateFloat64ToUint32 -> "TruncateFloat64ToUint32"
   | TruncateTaggedPointerToBit -> "TruncateTaggedPointerToBit"
   | TruncateTaggedToFloat64 -> "TruncateTaggedToFloat64"
-  | TruncateTaggedToWord32 -> "TruncateTaggedToWord32"
   | TryTruncateFloat32ToInt64 -> "TryTruncateFloat32ToInt64"
   | TryTruncateFloat32ToUint64 -> "TryTruncateFloat32ToUint64"
   | TryTruncateFloat64ToInt64 -> "TryTruncateFloat64ToInt64"
@@ -2853,6 +2852,7 @@ let to_str opcode =
   | TruncateFloat64ToWord32 -> "TruncateFloat64ToWord32"
   | TruncateInt64ToInt32 -> "TruncateInt64ToInt32"
   | TruncateTaggedToBit -> "TruncateTaggedToBit"
+  | TruncateTaggedToWord32 -> "TruncateTaggedToWord32"
   | Word32ReverseBytes -> "Word32ReverseBytes"
   | Word64ReverseBytes -> "Word64ReverseBytes"
   | IfFalse -> "IfFalse"
