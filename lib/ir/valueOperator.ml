@@ -479,6 +479,14 @@ module Make_Word_Operator (W : WordValue) = struct
   let xor lval rval =
     BitVec.xor (lval |> from_value) (rval |> from_value) |> to_value
 
+  let rol lval rval =
+    BitVec.rolb (lval |> from_value) (andi rval (width - 1) |> from_value)
+    |> to_value
+
+  let ror lval rval =
+    BitVec.rorb (lval |> from_value) (andi rval (width - 1) |> from_value)
+    |> to_value
+
   let shl lval rval =
     BitVec.shlb (lval |> from_value) (andi rval (width - 1) |> from_value)
     |> to_value

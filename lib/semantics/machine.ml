@@ -124,6 +124,14 @@ let uint32_mod lval rval control state =
   let value = Uint32.modulo lval rval in
   state |> State.update ~value ~control
 
+let word32_rol lval rval state =
+  let value = Word32.rol lval rval in
+  state |> State.update ~value
+
+let word32_ror lval rval state =
+  let value = Word32.ror lval rval in
+  state |> State.update ~value
+
 (* well-defined conditions:
  * (hint = "ShiftOutZero") ^ (cnt = (rval mod 32)) -> lval[-cnt:] = 0
  * assertion:
@@ -149,6 +157,14 @@ let word32_shr lval rval state =
 
 let word32_xor lval rval state =
   let value = Word32.xor lval rval in
+  state |> State.update ~value
+
+let word64_rol lval rval state =
+  let value = Word64.rol lval rval in
+  state |> State.update ~value
+
+let word64_ror lval rval state =
+  let value = Word64.ror lval rval in
   state |> State.update ~value
 
 (* well-defined conditions:

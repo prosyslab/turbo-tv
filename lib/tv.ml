@@ -796,10 +796,14 @@ let encode program
       let rval = RegisterFile.find rpid rf in
       let ctrl = ControlFile.find ctrl_id cf in
       uint32_mod lval rval ctrl
+  | Word32Rol -> encode_machine_binary word32_rol
+  | Word32Ror -> encode_machine_binary word32_ror
   | Word32Sar -> encode_machine_binary_with_hint word32_sar
   | Word32Shl -> encode_machine_binary word32_shl
   | Word32Shr -> encode_machine_binary word32_shr
   | Word32Xor -> encode_machine_binary word32_xor
+  | Word64Rol -> encode_machine_binary word64_rol
+  | Word64Ror -> encode_machine_binary word64_ror
   | Word64Sar -> encode_machine_binary_with_hint word64_sar
   | Word64Shl -> encode_machine_binary word64_shl
   | Word32ReverseBytes -> encode_machine_unary word32_reverse_bytes

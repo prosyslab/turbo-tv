@@ -830,8 +830,8 @@ Word32PairShr,
 Word32Popcnt,
 Word32ReverseBits,
 Word32ReverseBytes,v1
-Word32Rol,
-Word32Ror,
+Word32Rol,v1,v2
+Word32Ror,v1,v2
 Word32Sar,b1,v1,v2
 Word32Select,
 Word32Shl,v1,v2
@@ -856,9 +856,9 @@ Word64Or,
 Word64Popcnt,
 Word64ReverseBits,
 Word64ReverseBytes,v1
-Word64Rol,
+Word64Rol,v1,v2
 Word64RolLowerable,
-Word64Ror,
+Word64Ror,v1,v2
 Word64RorLowerable,
 Word64Sar,b1,v1,v2
 Word64Select,

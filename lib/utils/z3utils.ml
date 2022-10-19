@@ -299,6 +299,10 @@ module BitVec = struct
 
   let notb bv = BV.mk_not ctx bv
 
+  let rolb bv off = BV.mk_ext_rotate_left ctx bv off
+
+  let rorb bv off = BV.mk_ext_rotate_right ctx bv off
+
   let shlb bv off = BV.mk_shl ctx bv off
 
   let shli bv off =

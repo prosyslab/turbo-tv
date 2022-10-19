@@ -705,8 +705,6 @@ type t =
   | Word32PairShr
   | Word32Popcnt
   | Word32ReverseBits
-  | Word32Rol
-  | Word32Ror
   | Word32Select
   | Word64And
   | Word64AtomicAdd
@@ -725,9 +723,7 @@ type t =
   | Word64Or
   | Word64Popcnt
   | Word64ReverseBits
-  | Word64Rol
   | Word64RolLowerable
-  | Word64Ror
   | Word64RorLowerable
   | Word64Select
   | Word64Shr
@@ -895,10 +891,14 @@ type t =
   | Word32And
   | Word32Equal
   | Word32Or
+  | Word32Rol
+  | Word32Ror
   | Word32Shl
   | Word32Shr
   | Word32Xor
   | Word64Equal
+  | Word64Rol
+  | Word64Ror
   | Word64Shl
   (* v1v2c1 *)
   | Int32AddWithOverflow
@@ -1111,13 +1111,13 @@ let get_kind opcode =
   | Word32AtomicPairStore | Word32AtomicPairSub | Word32AtomicPairXor
   | Word32AtomicStore | Word32AtomicSub | Word32AtomicXor | Word32Clz
   | Word32Ctz | Word32PairSar | Word32PairShl | Word32PairShr | Word32Popcnt
-  | Word32ReverseBits | Word32Rol | Word32Ror | Word32Select | Word64And
-  | Word64AtomicAdd | Word64AtomicAnd | Word64AtomicCompareExchange
-  | Word64AtomicExchange | Word64AtomicLoad | Word64AtomicOr | Word64AtomicStore
-  | Word64AtomicSub | Word64AtomicXor | Word64Clz | Word64ClzLowerable
-  | Word64Ctz | Word64CtzLowerable | Word64Or | Word64Popcnt | Word64ReverseBits
-  | Word64Rol | Word64RolLowerable | Word64Ror | Word64RorLowerable
-  | Word64Select | Word64Shr | Word64Xor ->
+  | Word32ReverseBits | Word32Select | Word64And | Word64AtomicAdd
+  | Word64AtomicAnd | Word64AtomicCompareExchange | Word64AtomicExchange
+  | Word64AtomicLoad | Word64AtomicOr | Word64AtomicStore | Word64AtomicSub
+  | Word64AtomicXor | Word64Clz | Word64ClzLowerable | Word64Ctz
+  | Word64CtzLowerable | Word64Or | Word64Popcnt | Word64ReverseBits
+  | Word64RolLowerable | Word64RorLowerable | Word64Select | Word64Shr
+  | Word64Xor ->
       UNIMPL
   | Allocate | CheckIf | CheckSmi | CheckedInt64ToInt32
   | CheckedTaggedToTaggedPointer | CheckedTaggedToTaggedSigned
@@ -1171,7 +1171,8 @@ let get_kind opcode =
   | SpeculativeNumberBitwiseOr | SpeculativeNumberBitwiseXor
   | SpeculativeNumberEqual | Uint32LessThan | Uint32LessThanOrEqual
   | Uint64LessThan | Uint64LessThanOrEqual | Word32And | Word32Equal | Word32Or
-  | Word32Shl | Word32Shr | Word32Xor | Word64Equal | Word64Shl ->
+  | Word32Rol | Word32Ror | Word32Shl | Word32Shr | Word32Xor | Word64Equal
+  | Word64Rol | Word64Ror | Word64Shl ->
       V1V2
   | Int32AddWithOverflow | Int32Div | Int32Mod | Int32MulWithOverflow
   | Int32SubWithOverflow | Uint32Div | Uint32Mod ->
@@ -1898,8 +1899,6 @@ let of_str str =
   | "Word32PairShr" -> Word32PairShr
   | "Word32Popcnt" -> Word32Popcnt
   | "Word32ReverseBits" -> Word32ReverseBits
-  | "Word32Rol" -> Word32Rol
-  | "Word32Ror" -> Word32Ror
   | "Word32Select" -> Word32Select
   | "Word64And" -> Word64And
   | "Word64AtomicAdd" -> Word64AtomicAdd
@@ -1918,9 +1917,7 @@ let of_str str =
   | "Word64Or" -> Word64Or
   | "Word64Popcnt" -> Word64Popcnt
   | "Word64ReverseBits" -> Word64ReverseBits
-  | "Word64Rol" -> Word64Rol
   | "Word64RolLowerable" -> Word64RolLowerable
-  | "Word64Ror" -> Word64Ror
   | "Word64RorLowerable" -> Word64RorLowerable
   | "Word64Select" -> Word64Select
   | "Word64Shr" -> Word64Shr
@@ -2075,10 +2072,14 @@ let of_str str =
   | "Word32And" -> Word32And
   | "Word32Equal" -> Word32Equal
   | "Word32Or" -> Word32Or
+  | "Word32Rol" -> Word32Rol
+  | "Word32Ror" -> Word32Ror
   | "Word32Shl" -> Word32Shl
   | "Word32Shr" -> Word32Shr
   | "Word32Xor" -> Word32Xor
   | "Word64Equal" -> Word64Equal
+  | "Word64Rol" -> Word64Rol
+  | "Word64Ror" -> Word64Ror
   | "Word64Shl" -> Word64Shl
   | "Int32AddWithOverflow" -> Int32AddWithOverflow
   | "Int32Div" -> Int32Div
@@ -2769,8 +2770,6 @@ let to_str opcode =
   | Word32PairShr -> "Word32PairShr"
   | Word32Popcnt -> "Word32Popcnt"
   | Word32ReverseBits -> "Word32ReverseBits"
-  | Word32Rol -> "Word32Rol"
-  | Word32Ror -> "Word32Ror"
   | Word32Select -> "Word32Select"
   | Word64And -> "Word64And"
   | Word64AtomicAdd -> "Word64AtomicAdd"
@@ -2789,9 +2788,7 @@ let to_str opcode =
   | Word64Or -> "Word64Or"
   | Word64Popcnt -> "Word64Popcnt"
   | Word64ReverseBits -> "Word64ReverseBits"
-  | Word64Rol -> "Word64Rol"
   | Word64RolLowerable -> "Word64RolLowerable"
-  | Word64Ror -> "Word64Ror"
   | Word64RorLowerable -> "Word64RorLowerable"
   | Word64Select -> "Word64Select"
   | Word64Shr -> "Word64Shr"
@@ -2946,10 +2943,14 @@ let to_str opcode =
   | Word32And -> "Word32And"
   | Word32Equal -> "Word32Equal"
   | Word32Or -> "Word32Or"
+  | Word32Rol -> "Word32Rol"
+  | Word32Ror -> "Word32Ror"
   | Word32Shl -> "Word32Shl"
   | Word32Shr -> "Word32Shr"
   | Word32Xor -> "Word32Xor"
   | Word64Equal -> "Word64Equal"
+  | Word64Rol -> "Word64Rol"
+  | Word64Ror -> "Word64Ror"
   | Word64Shl -> "Word64Shl"
   | Int32AddWithOverflow -> "Int32AddWithOverflow"
   | Int32Div -> "Int32Div"
