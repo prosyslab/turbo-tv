@@ -46,15 +46,13 @@ let sandboxed_pointer = BitVecVal.from_int ~len 18
 
 let bool = BitVecVal.from_int ~len 19
 
-let tagged_bool = BitVecVal.from_int ~len 20
+let none = BitVecVal.from_int ~len 20
 
-let none = BitVecVal.from_int ~len 21
+let empty = BitVecVal.from_int ~len 21
 
-let empty = BitVecVal.from_int ~len 22
+let const = BitVecVal.from_int ~len 22
 
-let const = BitVecVal.from_int ~len 23
-
-let undefined = BitVecVal.from_int ~len 24
+let undefined = BitVecVal.from_int ~len 23
 
 let int_types = [ int8; int16; int32; int64 ]
 
@@ -87,8 +85,10 @@ let to_string model t =
     | 17 -> "any_compressed"
     | 18 -> "sandboxed_pointer"
     | 19 -> "bool"
-    | 20 -> "tagged_bool"
-    | 21 -> "none"
+    | 20 -> "none"
+    | 21 -> "empty"
+    | 22 -> "const"
+    | 23 -> "undefined"
     | _ -> failwith "unreachable"
   with _ -> ty_str
 
@@ -115,7 +115,6 @@ let from_machine_type (mt : MachineType.t) =
   | AnyCompressed -> any_compressed
   | SandboxedPointer -> sandboxed_pointer
   | Bool -> bool
-  | TaggedBool -> tagged_bool
   | None -> none
 
 let from_repr (repr : MachineType.Repr.t) =
