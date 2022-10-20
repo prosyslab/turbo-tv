@@ -323,40 +323,7 @@ let remainder n d mem =
   (* https://tc39.es/ecma262/#sec-numeric-types-number-remainder *)
   let n_f64 = n |> to_float64 mem in
   let d_f64 = d |> to_float64 mem in
-  let r_f64 = Float64.modulo n_f64 d_f64 in
-
-  let is_inf_or_ninf num =
-    Bool.ors [ Float64.is_inf num; Float64.is_ninf num ]
-  in
-  let is_zero_or_minus_zero num =
-    Bool.ors [ Float64.is_zero num; Float64.is_minus_zero num ]
-  in
-  Bool.ite
-    (* n = nan \/ d = nan -> nan *)
-    (Bool.ors [ Float64.is_nan n_f64; Float64.is_nan d_f64 ])
-    Float64.nan
-    (* n = inf \/ n = -inf -> nan *)
-    (Bool.ite (is_inf_or_ninf n_f64) Float64.nan
-       (Bool.ite
-          (* d = inf \/ d = -inf -> n *)
-          (is_inf_or_ninf d_f64)
-          n_f64
-          (Bool.ite
-             (* d = zero \/ d = -zero -> nan *)
-             (is_zero_or_minus_zero d_f64)
-             Float64.nan
-             (Bool.ite
-                (* n = zero \/ n = -zero -> n *)
-                (is_zero_or_minus_zero n_f64)
-                n_f64
-                (Bool.ite
-                   (* r = 0 \/ n < -0 -> -0 else, r *)
-                   (Bool.ands
-                      [
-                        Float64.is_zero r_f64;
-                        Float64.lt n_f64 Float64.minus_zero;
-                      ])
-                   Float64.minus_zero r_f64)))))
+  Float64.modulo n_f64 d_f64
 
 (* bitwise *)
 let bitwise op x y mem =

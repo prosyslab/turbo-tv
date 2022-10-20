@@ -582,13 +582,6 @@ module Float64 = struct
 
   let trunc value = Float.round Float.rtz_mode (value |> from_value) |> to_value
 
-  let rem lval rval =
-    Float.rem (lval |> from_value) (rval |> from_value) |> to_value
-
-  let modulo lval rval =
-    let q = div lval rval in
-    sub lval (mul rval (q |> trunc))
-
   let round_down = floor
 
   let round_up = ceil
@@ -777,6 +770,38 @@ module Float64 = struct
   let to_uint64 value = value |> to_intx ~sign:false 64
 
   let to_tagged_signed value = value |> to_int32 |> Int32.to_tagged_signed
+
+  let rem lval rval =
+    let q = trunc (div lval rval) in
+    let r_f64 = sub lval (mul q rval) in
+    let is_inf_or_ninf num = Bool.ors [ is_inf num; is_ninf num ] in
+    let is_zero_or_minus_zero num =
+      Bool.ors [ is_zero num; is_minus_zero num ]
+    in
+    Bool.ite
+      (* n = nan \/ d = nan -> nan *)
+      (Bool.ors [ is_nan lval; is_nan rval ])
+      nan
+      (* n = inf \/ n = -inf -> nan *)
+      (Bool.ite (is_inf_or_ninf lval) nan
+         (Bool.ite
+            (* d = inf \/ d = -inf -> n *)
+            (is_inf_or_ninf rval)
+            lval
+            (Bool.ite
+               (* d = zero \/ d = -zero -> nan *)
+               (is_zero_or_minus_zero rval)
+               nan
+               (Bool.ite
+                  (* n = zero \/ n = -zero -> n *)
+                  (is_zero_or_minus_zero lval)
+                  lval
+                  (Bool.ite
+                     (* r = 0 \/ n < -0 -> -0 else, r *)
+                     (Bool.ands [ is_zero r_f64; lt lval minus_zero ])
+                     minus_zero r_f64)))))
+
+  let modulo = rem
 
   (* pp *)
   let to_string model value =
