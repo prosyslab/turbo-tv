@@ -3,6 +3,7 @@
 NCPU="$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)"
 OCAML_VERSION="4.13.1"
 JSTV_OPAM_SWITCH="jstv-4.13.1"
+opam update
 opam init --compiler=$OCAML_VERSION -j $NCPU --no-setup
 
 switch_exists=no
@@ -20,7 +21,6 @@ else
 fi
 
 eval $(SHELL=bash opam env --switch=$JSTV_OPAM_SWITCH)
-opam update
 opam install core_unix cmdliner dune ocamlgraph z3 ocamlformat=0.22.4 
 
 # generate source codes from `specs/opcodes.spec`
