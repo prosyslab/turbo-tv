@@ -346,23 +346,13 @@ let number_is_nan pval mem state =
 let object_is_minus_zero pval mem state =
   (* when non-number type values are given, set deopt flag to avoid mis-verification *)
   let deopt = Bool.not (Number.is_number pval mem) in
-  let rf = State.register_file state in
-  let true_constant = RegisterFile.find "true" rf in
-  let false_constant = RegisterFile.find "false" rf in
-  let value =
-    Bool.ite (pval |> Number.is_minus_zero mem) true_constant false_constant
-  in
+  let value = Bool.ite (pval |> Number.is_minus_zero mem) Value.tr Value.fl in
   state |> State.update ~value ~deopt
 
 let object_is_nan pval mem state =
   (* when non-number type values are given, set deopt flag to avoid mis-verification *)
   let deopt = Bool.not (Number.is_number pval mem) in
-  let rf = State.register_file state in
-  let true_constant = RegisterFile.find "true" rf in
-  let false_constant = RegisterFile.find "false" rf in
-  let value =
-    Bool.ite (pval |> Number.is_nan mem) true_constant false_constant
-  in
+  let value = Bool.ite (pval |> Number.is_nan mem) Value.tr Value.fl in
   state |> State.update ~value ~deopt
 
 (* simplified: type-conversion *)
@@ -374,7 +364,7 @@ let change_bit_to_tagged pval state =
     Bool.ite
       (pval |> Value.has_type Type.bool)
       (Bool.ite (pval |> Value.is_true) true_constant false_constant)
-      (* if [pval] is not coming from cmp operator (e.g, Wor32Cmp), just compare
+      (* if [pval] is not coming from cmp operator (e.g, Word32Cmp), just compare
          LSB 32-bit with 0*)
       (Bool.ite (pval |> Word32.eq Value.fl) false_constant true_constant)
   in

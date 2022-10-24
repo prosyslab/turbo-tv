@@ -22,37 +22,43 @@ let int64 = BitVecVal.from_int ~len 6
 
 let uint64 = BitVecVal.from_int ~len 7
 
-let float32 = BitVecVal.from_int ~len 8
+let signed_big_int64 = BitVecVal.from_int ~len 8
 
-let float64 = BitVecVal.from_int ~len 9
+let unsigned_big_int64 = BitVecVal.from_int ~len 9
 
-let simd128 = BitVecVal.from_int ~len 10
+let float32 = BitVecVal.from_int ~len 10
 
-let pointer = BitVecVal.from_int ~len 11
+let float64 = BitVecVal.from_int ~len 11
 
-let tagged_pointer = BitVecVal.from_int ~len 12
+let simd128 = BitVecVal.from_int ~len 12
 
-let map_in_header = BitVecVal.from_int ~len 13
+let simd256 = BitVecVal.from_int ~len 13
 
-let tagged_signed = BitVecVal.from_int ~len 14
+let pointer = BitVecVal.from_int ~len 14
 
-let any_tagged = BitVecVal.from_int ~len 15
+let tagged_pointer = BitVecVal.from_int ~len 15
 
-let compressed_pointer = BitVecVal.from_int ~len 16
+let map_in_header = BitVecVal.from_int ~len 16
 
-let any_compressed = BitVecVal.from_int ~len 17
+let tagged_signed = BitVecVal.from_int ~len 17
 
-let sandboxed_pointer = BitVecVal.from_int ~len 18
+let any_tagged = BitVecVal.from_int ~len 18
 
-let bool = BitVecVal.from_int ~len 19
+let compressed_pointer = BitVecVal.from_int ~len 19
 
-let none = BitVecVal.from_int ~len 20
+let any_compressed = BitVecVal.from_int ~len 20
 
-let empty = BitVecVal.from_int ~len 21
+let sandboxed_pointer = BitVecVal.from_int ~len 21
 
-let const = BitVecVal.from_int ~len 22
+let bool = BitVecVal.from_int ~len 22
 
-let undefined = BitVecVal.from_int ~len 23
+let none = BitVecVal.from_int ~len 23
+
+let empty = BitVecVal.from_int ~len 24
+
+let const = BitVecVal.from_int ~len 25
+
+let undefined = BitVecVal.from_int ~len 26
 
 let int_types = [ int8; int16; int32; int64 ]
 
@@ -73,22 +79,25 @@ let to_string model t =
     | 5 -> "uint32"
     | 6 -> "int64"
     | 7 -> "uint64"
-    | 8 -> "float32"
-    | 9 -> "float64"
-    | 10 -> "simd128"
-    | 11 -> "pointer"
-    | 12 -> "tagged_pointer"
-    | 13 -> "map_in_header"
-    | 14 -> "tagged_signed"
-    | 15 -> "any_tagged"
-    | 16 -> "compressed_pointer"
-    | 17 -> "any_compressed"
-    | 18 -> "sandboxed_pointer"
-    | 19 -> "bool"
-    | 20 -> "none"
-    | 21 -> "empty"
-    | 22 -> "const"
-    | 23 -> "undefined"
+    | 8 -> "signed_big_int64"
+    | 9 -> "unsigned_big_int64"
+    | 10 -> "float32"
+    | 11 -> "float64"
+    | 12 -> "simd128"
+    | 13 -> "simd256"
+    | 14 -> "pointer"
+    | 15 -> "tagged_pointer"
+    | 16 -> "map_in_header"
+    | 17 -> "tagged_signed"
+    | 18 -> "any_tagged"
+    | 19 -> "compressed_pointer"
+    | 20 -> "any_compressed"
+    | 21 -> "sandboxed_pointer"
+    | 22 -> "bool"
+    | 23 -> "none"
+    | 24 -> "empty"
+    | 25 -> "const"
+    | 26 -> "undefined"
     | _ -> failwith "unreachable"
   with _ -> ty_str
 
