@@ -207,7 +207,12 @@ let speculative_safe_integer_subtract lval rval control mem state =
  * assertion:
  *  value = ite well-defined (not pval) UB *)
 let boolean_not pval state =
-  let value = Bool.ite (Value.eq Value.fl pval) Value.tr Value.fl in
+  let rf = state.State.register_file in
+  let value =
+    Bool.ite
+      (Bool.ors [ pval |> Value.is_false; pval |> Constant.is_false_cst rf ])
+      Value.tr Value.fl
+  in
   state |> State.update ~value
 
 (* 2V -> 1V *)
