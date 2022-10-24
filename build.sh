@@ -21,7 +21,7 @@ else
 fi
 
 eval $(SHELL=bash opam env --switch=$JSTV_OPAM_SWITCH)
-opam install core_unix cmdliner dune ocamlgraph z3 ocamlformat=0.22.4 
+opam install core_unix cmdliner dune ocamlgraph z3 ocamlformat=0.22.4 oUnit
 
 # generate source codes from `specs/opcodes.spec`
 scripts/fetch-spec.py
