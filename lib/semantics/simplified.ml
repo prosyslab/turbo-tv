@@ -5,7 +5,7 @@ module Repr = MachineType.Repr
 
 (* helper functions *)
 let check_map_for_heap_number_or_oddball_to_float64 hint pval mem =
-  let is_heap_number = pval |> Objects.is_heap_number mem in
+  let is_heap_number = pval |> Value.has_type Type.float64 in
   let is_boolean = pval |> Objects.is_boolean mem in
   match hint with
   | "Number" -> is_heap_number
@@ -501,12 +501,12 @@ let checked_tagged_to_tagged_signed pval _checkpoint control state =
   let deopt = Bool.not (pval |> Value.has_type Type.tagged_signed) in
   state |> State.update ~value:pval ~control ~deopt
 
-let truncate_tagged_to_word32 pval mem state =
+let truncate_tagged_to_word32 pval state =
   let value =
     Bool.ite
       (pval |> Value.has_type Type.tagged_signed)
       (TaggedSigned.to_int32 pval)
-      (HeapNumber.load pval mem |> HeapNumber.to_float64 |> Float64.to_int32)
+      (pval |> Float64.to_int32)
   in
   state |> State.update ~value
 
@@ -522,7 +522,7 @@ let checked_truncate_tagged_to_word32 hint pval mem state =
           [ pval |> Value.has_type Type.tagged_pointer; Bool.not map_check ];
       ]
   in
-  state |> truncate_tagged_to_word32 pval mem |> State.update ~deopt
+  state |> truncate_tagged_to_word32 pval |> State.update ~deopt
 
 let checked_uint32_to_int32 pval state =
   let deopt = Int32.is_negative pval in

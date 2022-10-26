@@ -88,7 +88,7 @@ let weak_eq ?(repr = Repr.Word64) lval rval =
 
 let fl = empty |> cast Type.bool
 
-let is_false value = weak_eq fl value
+let is_false value = weak_eq ~repr:Repr.Word32 fl value
 
 let tr = BitVec.addi empty 1 |> cast Type.bool
 

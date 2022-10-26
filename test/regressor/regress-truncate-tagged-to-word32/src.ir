@@ -1,0 +1,36 @@
+#46:Int32Constant[0]()()()
+#38:NumberConstant[-inf]()()()  [Type: Range(-inf, -inf)]
+#44:TruncateTaggedToWord32(#38:NumberConstant)()()
+#0:Start()()()  [Type: Internal]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#10:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#11:TypedStateValues[, sparse:.]()()()  [Type: Internal]
+#43:TypedStateValues[, sparse:.]()()()
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#31:HeapConstant[0x0e6200199dfd <JSFunction foo (sfi = 0xe6200199d05)>]()()()  [Type: HeapConstant(0x560656022c88 {0x0e6200199dfd <JSFunction foo (sfi = 0xe6200199d05)>})]
+#16:FrameState[UNOPTIMIZED_FRAME, 0, Ignore, 0x0e6200199d05 <SharedFunctionInfo foo>](#10:TypedStateValues, #11:TypedStateValues, #43:TypedStateValues, #5:Parameter, #31:HeapConstant)()()  [Type: Internal]
+#48:ExternalConstant[0x560655f97700]()()()
+#42:Int64Constant[0]()()()
+#49:Load[kRepWord64](#48:ExternalConstant, #42:Int64Constant)(#0:Start)(#0:Start)
+#50:StackPointerGreaterThan[JSFunctionEntry](#49:Load)(#49:Load)()
+#59:HeapConstant[0x0e620014b24d <CodeDataContainer BUILTIN CEntry_Return1_DontSaveFPRegs_ArgvOnStack_NoBuiltinExit>]()()()
+#56:LoadStackCheckOffset()()()
+#57:ExternalConstant[0x5606537789a0<StackGuardWithGap.entry>]()()()
+#58:Int32Constant[1]()()()
+#7:HeapConstant[0x0e6200183aa9 <NativeContext[275]>]()()()  [Type: HeapConstant(0x560656022c78 {0x0e6200183aa9 <NativeContext[275]>})]
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x0e6200199d05 <SharedFunctionInfo foo>](#10:TypedStateValues, #11:TypedStateValues, #43:TypedStateValues, #5:Parameter, #31:HeapConstant)()()  [Type: Internal]
+#51:Branch[True](#50:StackPointerGreaterThan)()(#0:Start)
+#53:IfFalse()()(#51:Branch)
+#9:Call[Code:StackGuardWithGap:r1s1i5f1](#59:HeapConstant, #56:LoadStackCheckOffset, #57:ExternalConstant, #58:Int32Constant, #7:HeapConstant, #14:FrameState)(#50:StackPointerGreaterThan)(#53:IfFalse)
+#52:IfTrue()()(#51:Branch)
+#54:Merge()()(#52:IfTrue, #9:Call)
+#55:EffectPhi()(#50:StackPointerGreaterThan, #9:Call)(#54:Merge)
+#15:Checkpoint()(#55:EffectPhi)(#54:Merge)
+#45:CheckedTruncateTaggedToWord32[Number, FeedbackSource(INVALID)](#2:Parameter)(#15:Checkpoint)(#54:Merge)
+#23:Word32And(#44:TruncateTaggedToWord32, #45:CheckedTruncateTaggedToWord32)()()  [Type: Range(-2147483648, 2147483647)]
+#39:Word32Equal(#23:Word32And, #46:Int32Constant)()()  [Type: Boolean]
+#47:ChangeBitToTagged(#39:Word32Equal)()()
+#27:Return(#46:Int32Constant, #47:ChangeBitToTagged)(#45:CheckedTruncateTaggedToWord32)(#54:Merge)
+#28:End()()(#27:Return)
