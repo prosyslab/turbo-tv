@@ -654,7 +654,7 @@ ObjectIsNonCallable,
 ObjectIsNumber,
 ObjectIsReceiver,
 ObjectIsSafeInteger,
-ObjectIsSmi,
+ObjectIsSmi,v1
 ObjectIsString,
 ObjectIsSymbol,
 ObjectIsUndetectable,

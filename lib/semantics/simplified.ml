@@ -360,6 +360,10 @@ let object_is_nan pval mem state =
   let value = Bool.ite (pval |> Number.is_nan mem) Value.tr Value.fl in
   state |> State.update ~value ~deopt
 
+let object_is_smi pval state =
+  let value = Bool.ite (Word32.eqi (Word32.andi pval 1) 0) Value.tr Value.fl in
+  state |> State.update ~value
+
 (* simplified: type-conversion *)
 let change_bit_to_tagged pval state =
   let rf = State.register_file state in
@@ -614,27 +618,26 @@ let to_boolean pval mem (state : State.t) =
 
 let truncate_tagged_to_bit pval mem (state : State.t) =
   let rf = state.register_file in
-  let _uif =
-    let value_sort = BV.mk_sort ctx Value.len in
-    Z3.FuncDecl.mk_func_decl_s ctx "to_boolean" [ value_sort ] Bool.mk_sort
+  (* ObjectIsSmi *)
+  let is_smi pval =
+    Bool.ands
+      [
+        Word32.eqi (Word32.andi pval 1) 0;
+        Bool.not (pval |> Value.has_type Type.float64);
+      ]
   in
   let value =
-    let number = HeapNumber.load pval mem in
-    Bool.ite
+    Bool.ite (pval |> is_smi)
       (* if [pval] is smi, return [pval] != 0 *)
-      (pval |> Value.has_type Type.tagged_signed)
       (Bool.ite (TaggedSigned.is_zero pval) Value.fl Value.tr)
       (Bool.ite
          (* if [pval] is heap number, return [pval] != 0.0, -0.0 or NaN *)
-         (pval |> Objects.is_heap_number mem)
-         (Bool.ite
-            (Bool.ors
-               [
-                 HeapNumber.is_minus_zero number;
-                 HeapNumber.is_zero number;
-                 HeapNumber.is_nan number;
-               ])
-            Value.fl Value.tr)
+         (Bool.ors
+            [
+              pval |> Objects.is_heap_number mem;
+              pval |> Value.has_type Type.float64;
+            ])
+         (pval |> Number.to_boolean mem)
          (Bool.ite
             (* if [pval] is undefined, return false *)
             (pval |> Constant.is_undefined rf)
@@ -657,6 +660,7 @@ let truncate_tagged_to_bit pval mem (state : State.t) =
                         Value.fl (* otherwise return true: can be improved *)
                         Value.tr))))))
   in
+
   state |> State.update ~value
 
 (* check *)

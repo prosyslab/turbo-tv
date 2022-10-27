@@ -625,6 +625,10 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       object_is_nan pval mem
+  | ObjectIsSmi ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      object_is_smi pval
   (* simplified: type-conversion *)
   | ChangeBitToTagged ->
       let pid = Operands.id_of_nth operands 0 in

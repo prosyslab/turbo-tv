@@ -467,11 +467,13 @@ module Make_Word_Operator (W : WordValue) = struct
 
   let eq lval rval = Z3utils.Bool.eq (lval |> from_value) (rval |> from_value)
 
+  let eqi lval ri = BitVec.eqi (lval |> from_value) ri
+
   (* bitwise *)
   let and_ lval rval =
     BitVec.andb (lval |> from_value) (rval |> from_value) |> to_value
 
-  let andi lval rval = BitVec.andi (lval |> from_value) rval |> to_value
+  let andi lval ri = BitVec.andi (lval |> from_value) ri |> to_value
 
   let or_ lval rval =
     BitVec.orb (lval |> from_value) (rval |> from_value) |> to_value

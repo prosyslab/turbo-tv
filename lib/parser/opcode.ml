@@ -574,7 +574,6 @@ type t =
   | ObjectIsNumber
   | ObjectIsReceiver
   | ObjectIsSafeInteger
-  | ObjectIsSmi
   | ObjectIsString
   | ObjectIsSymbol
   | ObjectIsUndetectable
@@ -783,6 +782,7 @@ type t =
   | NumberTrunc
   | ObjectIsMinusZero
   | ObjectIsNaN
+  | ObjectIsSmi
   | RoundFloat64ToInt32
   | StackPointerGreaterThan
   | ToBoolean
@@ -1074,18 +1074,18 @@ let get_kind opcode =
   | ObjectIsArrayBufferView | ObjectIsBigInt | ObjectIsCallable
   | ObjectIsConstructor | ObjectIsDetectableCallable | ObjectIsFiniteNumber
   | ObjectIsInteger | ObjectIsNonCallable | ObjectIsNumber | ObjectIsReceiver
-  | ObjectIsSafeInteger | ObjectIsSmi | ObjectIsString | ObjectIsSymbol
-  | ObjectIsUndetectable | ObjectState | OsrValue | PlainPrimitiveToFloat64
-  | PlainPrimitiveToNumber | PlainPrimitiveToWord32 | Plug | PointerConstant
-  | ProtectedLoad | ProtectedStore | RelocatableInt32Constant
-  | RelocatableInt64Constant | RestLength | Retain | RoundInt32ToFloat32
-  | RoundInt64ToFloat32 | RoundInt64ToFloat64 | RoundUint32ToFloat32
-  | RoundUint64ToFloat32 | RoundUint64ToFloat64 | RuntimeAbort | S128And
-  | S128AndNot | S128Const | S128Not | S128Or | S128Select | S128Xor | S128Zero
-  | SLVerifierHint | SameValueNumbersOnly | SignExtendWord16ToInt32
-  | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
-  | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeBigIntAdd
-  | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
+  | ObjectIsSafeInteger | ObjectIsString | ObjectIsSymbol | ObjectIsUndetectable
+  | ObjectState | OsrValue | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber
+  | PlainPrimitiveToWord32 | Plug | PointerConstant | ProtectedLoad
+  | ProtectedStore | RelocatableInt32Constant | RelocatableInt64Constant
+  | RestLength | Retain | RoundInt32ToFloat32 | RoundInt64ToFloat32
+  | RoundInt64ToFloat64 | RoundUint32ToFloat32 | RoundUint64ToFloat32
+  | RoundUint64ToFloat64 | RuntimeAbort | S128And | S128AndNot | S128Const
+  | S128Not | S128Or | S128Select | S128Xor | S128Zero | SLVerifierHint
+  | SameValueNumbersOnly | SignExtendWord16ToInt32 | SignExtendWord16ToInt64
+  | SignExtendWord32ToInt64 | SignExtendWord8ToInt32 | SignExtendWord8ToInt64
+  | Simd128ReverseBytes | SpeculativeBigIntAdd | SpeculativeBigIntAsIntN
+  | SpeculativeBigIntAsUintN | SpeculativeBigIntNegate
   | SpeculativeBigIntSubtract | SpeculativeNumberPow | StackSlot | Start
   | StateValues | StaticAssert | StoreDataViewElement | StoreLane | StoreMessage
   | StoreSignedSmallElement | StoreToObject | StoreTypedElement
@@ -1135,10 +1135,10 @@ let get_kind opcode =
   | Float64RoundTruncate | Float64RoundUp | Float64Sin | NumberAbs | NumberCeil
   | NumberExpm1 | NumberFloor | NumberIsMinusZero | NumberIsNaN | NumberRound
   | NumberSign | NumberSin | NumberToBoolean | NumberToInt32 | NumberToUint32
-  | NumberTrunc | ObjectIsMinusZero | ObjectIsNaN | RoundFloat64ToInt32
-  | StackPointerGreaterThan | ToBoolean | TruncateFloat64ToWord32
-  | TruncateInt64ToInt32 | TruncateTaggedToBit | TruncateTaggedToWord32
-  | Word32ReverseBytes | Word64ReverseBytes ->
+  | NumberTrunc | ObjectIsMinusZero | ObjectIsNaN | ObjectIsSmi
+  | RoundFloat64ToInt32 | StackPointerGreaterThan | ToBoolean
+  | TruncateFloat64ToWord32 | TruncateInt64ToInt32 | TruncateTaggedToBit
+  | TruncateTaggedToWord32 | Word32ReverseBytes | Word64ReverseBytes ->
       V1
   | IfFalse | IfSuccess | IfTrue -> C1
   | AllocateRaw -> V1C1
@@ -1768,7 +1768,6 @@ let of_str str =
   | "ObjectIsNumber" -> ObjectIsNumber
   | "ObjectIsReceiver" -> ObjectIsReceiver
   | "ObjectIsSafeInteger" -> ObjectIsSafeInteger
-  | "ObjectIsSmi" -> ObjectIsSmi
   | "ObjectIsString" -> ObjectIsString
   | "ObjectIsSymbol" -> ObjectIsSymbol
   | "ObjectIsUndetectable" -> ObjectIsUndetectable
@@ -1975,6 +1974,7 @@ let of_str str =
   | "NumberTrunc" -> NumberTrunc
   | "ObjectIsMinusZero" -> ObjectIsMinusZero
   | "ObjectIsNaN" -> ObjectIsNaN
+  | "ObjectIsSmi" -> ObjectIsSmi
   | "RoundFloat64ToInt32" -> RoundFloat64ToInt32
   | "StackPointerGreaterThan" -> StackPointerGreaterThan
   | "ToBoolean" -> ToBoolean
@@ -2639,7 +2639,6 @@ let to_str opcode =
   | ObjectIsNumber -> "ObjectIsNumber"
   | ObjectIsReceiver -> "ObjectIsReceiver"
   | ObjectIsSafeInteger -> "ObjectIsSafeInteger"
-  | ObjectIsSmi -> "ObjectIsSmi"
   | ObjectIsString -> "ObjectIsString"
   | ObjectIsSymbol -> "ObjectIsSymbol"
   | ObjectIsUndetectable -> "ObjectIsUndetectable"
@@ -2846,6 +2845,7 @@ let to_str opcode =
   | NumberTrunc -> "NumberTrunc"
   | ObjectIsMinusZero -> "ObjectIsMinusZero"
   | ObjectIsNaN -> "ObjectIsNaN"
+  | ObjectIsSmi -> "ObjectIsSmi"
   | RoundFloat64ToInt32 -> "RoundFloat64ToInt32"
   | StackPointerGreaterThan -> "StackPointerGreaterThan"
   | ToBoolean -> "ToBoolean"
