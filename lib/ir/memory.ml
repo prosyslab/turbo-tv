@@ -85,6 +85,6 @@ let can_access ptr sz t =
     (Bool.not (Bool.ors [ out_of_lb; out_of_ub ]))
 
 (* can read as [repr] *)
-let can_access_as pos repr t =
+let can_access_as ptr repr t =
   let repr_sz = MachineType.Repr.size_of repr in
-  can_access pos repr_sz t
+  can_access ptr repr_sz t

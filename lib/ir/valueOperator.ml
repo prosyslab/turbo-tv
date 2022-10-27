@@ -55,7 +55,7 @@ module TaggedPointer = struct
      32-64: bid
      64-69: ty
   *)
-  (* High |-ty-|-reserved-|--bid--|-offset-(1)-| Low *)
+  (* High |-ty-|---bid---|-offset-(1)-| Low *)
 
   let bid_len = 32
 
@@ -83,9 +83,9 @@ module TaggedPointer = struct
   (* method *)
   let next t = BitVec.addi t 1
 
-  let move t pos = BitVec.addb t pos |> next
+  let move t pos = BitVec.addb t pos
 
-  let movei t pos = BitVec.addi t pos |> next
+  let movei t pos = BitVec.addi t pos
 
   let to_string model t =
     let bid =

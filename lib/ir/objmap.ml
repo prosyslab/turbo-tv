@@ -26,6 +26,15 @@ let oddball_map = BitVecVal.from_int ~len 8
 
 let string_map = BitVecVal.from_int ~len 9
 
+let names = [ "Map[12](HEAP_NUMBER_TYPE)" ]
+
+let is_known_map name = List.mem name names
+
+let map_of name =
+  match name with
+  | "Map[12](HEAP_NUMBER_TYPE)" -> heap_number_map
+  | _ -> failwith (Format.sprintf "not implemented: %s" name)
+
 let to_string model t =
   let map_bstr = t |> Model.eval model |> Expr.to_string in
   let map =

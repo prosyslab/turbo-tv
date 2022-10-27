@@ -120,6 +120,10 @@ let encode program
       (* if constant is default constant, use pre-defined value in register file *)
       if Constant.is_constant name then
         heap_constant (RegisterFile.find name rf)
+      else if Objmap.is_known_map name then
+        heap_constant
+          (Objmap.map_of name |> BitVec.zero_extend 32
+          |> Value.entype Type.tagged_pointer)
       else heap_constant ptr
   | ExternalConstant ->
       let addr_re = Re.Pcre.regexp "(0x[0-9a-f]+)" in
