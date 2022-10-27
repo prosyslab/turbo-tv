@@ -249,7 +249,7 @@ let uint64_less_than lval rval state =
   state |> State.update ~value
 
 let uint64_less_than_or_equal lval rval state =
-  let value = Bool.ite (Uint32.le lval rval) Value.tr Value.fl in
+  let value = Bool.ite (Uint64.le lval rval) Value.tr Value.fl in
   state |> State.update ~value
 
 (* machine: memory *)
@@ -259,9 +259,9 @@ let uint64_less_than_or_equal lval rval state =
  * assertion:
  *   mem = ite well-defined Store(ptr, pos, repr, mem) mem *)
 let store ptr pos repr value mem state =
-  let base_ptr = TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer in
-  let ub = Bool.not (Memory.can_access_as base_ptr repr mem) in
-  let mem = mem |> Memory.store_as (Bool.not ub) base_ptr repr value in
+  let ub = Bool.not (Memory.can_access_as ptr repr mem) in
+  let raw_ptr = TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer in
+  let mem = mem |> Memory.store_as (Bool.not ub) raw_ptr repr value in
   state |> State.update ~mem ~ub
 
 (* well-defined condition:
@@ -270,11 +270,11 @@ let store ptr pos repr value mem state =
  * assertion:
  *   value = (Mem[pos+size]) *)
 let load ptr pos repr mem state =
-  let base_ptr = TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer in
-  let ub = Bool.not (Memory.can_access_as base_ptr repr mem) in
+  let ub = Bool.not (Memory.can_access_as ptr repr mem) in
+  let raw_ptr = TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer in
   let ty = Type.from_repr repr |> List.hd in
   let value =
-    Memory.load_as base_ptr repr mem
+    Memory.load_as raw_ptr repr mem
     |> BitVec.zero_extend (64 - Repr.width_of repr)
     |> Value.entype ty
   in
