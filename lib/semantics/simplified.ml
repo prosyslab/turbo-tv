@@ -315,9 +315,17 @@ let reference_equal lval rval mem state =
   state |> State.update ~value
 
 let same_value lval rval mem state =
-  (* when non-number type values are given, set deopt flag to avoid mis-verification *)
-  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
-  state |> number_same_value lval rval mem |> State.update ~deopt
+  let rf = state.State.register_file in
+  let true_cst = RegisterFile.find "true" rf in
+  let false_cst = RegisterFile.find "false" rf in
+  let value =
+    Bool.ite
+      (Number.are_numbers [ lval; rval ] mem)
+      (Bool.ite (Number.same_value lval rval mem) true_cst false_cst)
+      (Bool.ite (Value.eq lval rval) true_cst false_cst)
+  in
+
+  state |> number_same_value lval rval mem |> State.update ~value
 
 let speculative_number_equal lval rval mem state =
   let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
