@@ -78,6 +78,7 @@ let unknown_ops =
     Opcode.JSToNumeric;
     Opcode.JSShiftRightLogical;
     Opcode.JSStoreContext;
+    Opcode.JSStoreNamed;
     Opcode.JSCreateEmptyLiteralArray;
     Opcode.JSSetKeyedProperty;
     Opcode.JSToNumber;
