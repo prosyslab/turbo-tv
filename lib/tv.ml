@@ -123,7 +123,7 @@ let encode program
       else if Objmap.is_known_map name then
         heap_constant
           (Objmap.map_of name |> BitVec.zero_extend 32
-          |> Value.entype Type.tagged_pointer)
+          |> Value.entype Type.map_in_header)
       else heap_constant ptr
   | ExternalConstant ->
       let addr_re = Re.Pcre.regexp "(0x[0-9a-f]+)" in
@@ -1072,30 +1072,32 @@ let run nparams src_program tgt_program =
 
   let retval_is_same =
     let src_retval = State.retval src_state in
+    let src_mem = State.memory src_state in
     let tgt_retval = State.retval tgt_state in
+    let tgt_mem = State.memory tgt_state in
 
-    (* assume if return value is number, it is smi or heap number(float64). *)
-    let to_float64 value =
-      Bool.ite
-        (value |> Value.has_type Type.tagged_signed)
-        (value |> TaggedSigned.to_float64)
-        value
+    let is_tagged_signed_or_heap_number_or_float64 mem value =
+      Bool.ors
+        [
+          Value.has_type Type.tagged_signed value;
+          Bool.ands
+            [
+              value |> Value.has_type Type.tagged_pointer;
+              value |> Objects.is_heap_number mem;
+            ];
+          Value.has_type Type.float64 value;
+        ]
     in
+
     Bool.ite
       (Bool.ands
          [
-           Bool.ors
-             [
-               src_retval |> Value.has_type Type.tagged_signed;
-               src_retval |> Value.has_type Type.float64;
-             ];
-           Bool.ors
-             [
-               tgt_retval |> Value.has_type Type.tagged_signed;
-               tgt_retval |> Value.has_type Type.float64;
-             ];
+           src_retval |> is_tagged_signed_or_heap_number_or_float64 src_mem;
+           tgt_retval |> is_tagged_signed_or_heap_number_or_float64 tgt_mem;
          ])
-      (Bool.eq (to_float64 src_retval) (to_float64 tgt_retval))
+      (Bool.eq
+         (src_retval |> Number.to_float64 src_mem)
+         (tgt_retval |> Number.to_float64 tgt_mem))
       (Bool.eq src_retval tgt_retval)
   in
 
