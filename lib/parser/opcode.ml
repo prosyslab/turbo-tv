@@ -74,7 +74,6 @@ type t =
   | CheckFloat64Hole
   | CheckHeapObject
   | CheckInternalizedString
-  | CheckMaps
   | CheckNotTaggedHole
   | CheckNumber
   | CheckReceiver
@@ -496,6 +495,7 @@ type t =
   | JSStoreInArrayLiteral
   | JSStoreMessage
   | JSStoreModule
+  | JSStoreNamed
   | JSStrictEqual
   | JSSubtract
   | JSToLength
@@ -727,6 +727,7 @@ type t =
   (* v1e1c1 *)
   | Allocate
   | CheckIf
+  | CheckMaps
   | CheckSmi
   | CheckedInt64ToInt32
   | CheckedTaggedToTaggedPointer
@@ -951,30 +952,29 @@ let get_kind opcode =
   | ChangeTaggedToInt32 | ChangeTaggedToInt64 | ChangeTaggedToTaggedSigned
   | ChangeTaggedToUint32 | ChangeUint64ToBigInt | CheckBigInt | CheckClosure
   | CheckEqualsInternalizedString | CheckEqualsSymbol | CheckFloat64Hole
-  | CheckHeapObject | CheckInternalizedString | CheckMaps | CheckNotTaggedHole
-  | CheckNumber | CheckReceiver | CheckReceiverOrNullOrUndefined | CheckString
-  | CheckSymbol | CheckedFloat64ToInt64 | CheckedInt32Mod
-  | CheckedInt32ToTaggedSigned | CheckedInt64ToTaggedSigned
-  | CheckedTaggedToArrayIndex | CheckedTaggedToInt32 | CheckedTaggedToInt64
-  | CheckedUint32Mod | CheckedUint32ToTaggedSigned | CheckedUint64Bounds
-  | CheckedUint64ToInt32 | CheckedUint64ToTaggedSigned | Checkpoint | Comment
-  | CompareMaps | CompressedHeapConstant | ConvertReceiver
-  | ConvertTaggedHoleToUndefined | DateNow | Dead | DeadValue | DebugBreak
-  | DelayedStringConstant | EffectPhi | F32x4Abs | F32x4Add | F32x4Ceil
-  | F32x4DemoteF64x2Zero | F32x4Div | F32x4Eq | F32x4ExtractLane | F32x4Floor
-  | F32x4Ge | F32x4Gt | F32x4Le | F32x4Lt | F32x4Max | F32x4Min | F32x4Mul
-  | F32x4Ne | F32x4NearestInt | F32x4Neg | F32x4Pmax | F32x4Pmin | F32x4Qfma
-  | F32x4Qfms | F32x4RecipApprox | F32x4RecipSqrtApprox | F32x4RelaxedMax
-  | F32x4RelaxedMin | F32x4ReplaceLane | F32x4SConvertI32x4 | F32x4Splat
-  | F32x4Sqrt | F32x4Sub | F32x4Trunc | F32x4UConvertI32x4 | F64x2Abs | F64x2Add
-  | F64x2Ceil | F64x2ConvertLowI32x4S | F64x2ConvertLowI32x4U | F64x2Div
-  | F64x2Eq | F64x2ExtractLane | F64x2Floor | F64x2Le | F64x2Lt | F64x2Max
-  | F64x2Min | F64x2Mul | F64x2Ne | F64x2NearestInt | F64x2Neg | F64x2Pmax
-  | F64x2Pmin | F64x2PromoteLowF32x4 | F64x2Qfma | F64x2Qfms | F64x2RelaxedMax
-  | F64x2RelaxedMin | F64x2ReplaceLane | F64x2Splat | F64x2Sqrt | F64x2Sub
-  | F64x2Trunc | FastApiCall | FindOrderedHashMapEntry
-  | FindOrderedHashMapEntryForInt32Key | Float32Abs | Float32Add
-  | Float32Constant | Float32Div | Float32Equal | Float32LessThan
+  | CheckHeapObject | CheckInternalizedString | CheckNotTaggedHole | CheckNumber
+  | CheckReceiver | CheckReceiverOrNullOrUndefined | CheckString | CheckSymbol
+  | CheckedFloat64ToInt64 | CheckedInt32Mod | CheckedInt32ToTaggedSigned
+  | CheckedInt64ToTaggedSigned | CheckedTaggedToArrayIndex
+  | CheckedTaggedToInt32 | CheckedTaggedToInt64 | CheckedUint32Mod
+  | CheckedUint32ToTaggedSigned | CheckedUint64Bounds | CheckedUint64ToInt32
+  | CheckedUint64ToTaggedSigned | Checkpoint | Comment | CompareMaps
+  | CompressedHeapConstant | ConvertReceiver | ConvertTaggedHoleToUndefined
+  | DateNow | Dead | DeadValue | DebugBreak | DelayedStringConstant | EffectPhi
+  | F32x4Abs | F32x4Add | F32x4Ceil | F32x4DemoteF64x2Zero | F32x4Div | F32x4Eq
+  | F32x4ExtractLane | F32x4Floor | F32x4Ge | F32x4Gt | F32x4Le | F32x4Lt
+  | F32x4Max | F32x4Min | F32x4Mul | F32x4Ne | F32x4NearestInt | F32x4Neg
+  | F32x4Pmax | F32x4Pmin | F32x4Qfma | F32x4Qfms | F32x4RecipApprox
+  | F32x4RecipSqrtApprox | F32x4RelaxedMax | F32x4RelaxedMin | F32x4ReplaceLane
+  | F32x4SConvertI32x4 | F32x4Splat | F32x4Sqrt | F32x4Sub | F32x4Trunc
+  | F32x4UConvertI32x4 | F64x2Abs | F64x2Add | F64x2Ceil | F64x2ConvertLowI32x4S
+  | F64x2ConvertLowI32x4U | F64x2Div | F64x2Eq | F64x2ExtractLane | F64x2Floor
+  | F64x2Le | F64x2Lt | F64x2Max | F64x2Min | F64x2Mul | F64x2Ne
+  | F64x2NearestInt | F64x2Neg | F64x2Pmax | F64x2Pmin | F64x2PromoteLowF32x4
+  | F64x2Qfma | F64x2Qfms | F64x2RelaxedMax | F64x2RelaxedMin | F64x2ReplaceLane
+  | F64x2Splat | F64x2Sqrt | F64x2Sub | F64x2Trunc | FastApiCall
+  | FindOrderedHashMapEntry | FindOrderedHashMapEntryForInt32Key | Float32Abs
+  | Float32Add | Float32Constant | Float32Div | Float32Equal | Float32LessThan
   | Float32LessThanOrEqual | Float32Max | Float32Min | Float32Mul | Float32Neg
   | Float32RoundDown | Float32RoundTiesEven | Float32RoundTruncate
   | Float32RoundUp | Float32Select | Float32Sqrt | Float32Sub | Float64Acos
@@ -1055,14 +1055,14 @@ let get_kind opcode =
   | JSPromiseResolve | JSRegExpTest | JSRejectPromise | JSResolvePromise
   | JSSetKeyedProperty | JSSetNamedProperty | JSShiftLeft | JSShiftRight
   | JSShiftRightLogical | JSStoreContext | JSStoreGlobal | JSStoreInArrayLiteral
-  | JSStoreMessage | JSStoreModule | JSStrictEqual | JSSubtract | JSToLength
-  | JSToName | JSToNumber | JSToNumberConvertBigInt | JSToNumeric | JSToObject
-  | JSToString | JSWasmCall | LoadDataViewElement | LoadFieldByIndex
-  | LoadFramePointer | LoadFromObject | LoadImmutable | LoadImmutableFromObject
-  | LoadLane | LoadMessage | LoadParentFramePointer | LoadStackArgument
-  | LoadStackCheckOffset | LoadTransform | Loop | LoopExit | LoopExitEffect
-  | LoopExitValue | MapGuard | MaybeGrowFastElements | MemoryBarrier
-  | NewArgumentsElements | NewConsString | NewDoubleElements
+  | JSStoreMessage | JSStoreModule | JSStoreNamed | JSStrictEqual | JSSubtract
+  | JSToLength | JSToName | JSToNumber | JSToNumberConvertBigInt | JSToNumeric
+  | JSToObject | JSToString | JSWasmCall | LoadDataViewElement
+  | LoadFieldByIndex | LoadFramePointer | LoadFromObject | LoadImmutable
+  | LoadImmutableFromObject | LoadLane | LoadMessage | LoadParentFramePointer
+  | LoadStackArgument | LoadStackCheckOffset | LoadTransform | Loop | LoopExit
+  | LoopExitEffect | LoopExitValue | MapGuard | MaybeGrowFastElements
+  | MemoryBarrier | NewArgumentsElements | NewConsString | NewDoubleElements
   | NewSmiOrObjectElements | NumberAcos | NumberAcosh | NumberAsin | NumberAsinh
   | NumberAtan | NumberAtan2 | NumberAtanh | NumberCbrt | NumberClz32
   | NumberCos | NumberCosh | NumberExp | NumberFround | NumberIsFinite
@@ -1118,7 +1118,7 @@ let get_kind opcode =
   | Word64RolLowerable | Word64RorLowerable | Word64Select | Word64Shr
   | Word64Xor ->
       UNIMPL
-  | Allocate | CheckIf | CheckSmi | CheckedInt64ToInt32
+  | Allocate | CheckIf | CheckMaps | CheckSmi | CheckedInt64ToInt32
   | CheckedTaggedToTaggedPointer | CheckedTaggedToTaggedSigned
   | CheckedUint32ToInt32 | Deoptimize | SpeculativeToNumber ->
       V1E1C1
@@ -1268,7 +1268,6 @@ let of_str str =
   | "CheckFloat64Hole" -> CheckFloat64Hole
   | "CheckHeapObject" -> CheckHeapObject
   | "CheckInternalizedString" -> CheckInternalizedString
-  | "CheckMaps" -> CheckMaps
   | "CheckNotTaggedHole" -> CheckNotTaggedHole
   | "CheckNumber" -> CheckNumber
   | "CheckReceiver" -> CheckReceiver
@@ -1690,6 +1689,7 @@ let of_str str =
   | "JSStoreInArrayLiteral" -> JSStoreInArrayLiteral
   | "JSStoreMessage" -> JSStoreMessage
   | "JSStoreModule" -> JSStoreModule
+  | "JSStoreNamed" -> JSStoreNamed
   | "JSStrictEqual" -> JSStrictEqual
   | "JSSubtract" -> JSSubtract
   | "JSToLength" -> JSToLength
@@ -1920,6 +1920,7 @@ let of_str str =
   | "Word64Xor" -> Word64Xor
   | "Allocate" -> Allocate
   | "CheckIf" -> CheckIf
+  | "CheckMaps" -> CheckMaps
   | "CheckSmi" -> CheckSmi
   | "CheckedInt64ToInt32" -> CheckedInt64ToInt32
   | "CheckedTaggedToTaggedPointer" -> CheckedTaggedToTaggedPointer
@@ -2139,7 +2140,6 @@ let to_str opcode =
   | CheckFloat64Hole -> "CheckFloat64Hole"
   | CheckHeapObject -> "CheckHeapObject"
   | CheckInternalizedString -> "CheckInternalizedString"
-  | CheckMaps -> "CheckMaps"
   | CheckNotTaggedHole -> "CheckNotTaggedHole"
   | CheckNumber -> "CheckNumber"
   | CheckReceiver -> "CheckReceiver"
@@ -2561,6 +2561,7 @@ let to_str opcode =
   | JSStoreInArrayLiteral -> "JSStoreInArrayLiteral"
   | JSStoreMessage -> "JSStoreMessage"
   | JSStoreModule -> "JSStoreModule"
+  | JSStoreNamed -> "JSStoreNamed"
   | JSStrictEqual -> "JSStrictEqual"
   | JSSubtract -> "JSSubtract"
   | JSToLength -> "JSToLength"
@@ -2791,6 +2792,7 @@ let to_str opcode =
   | Word64Xor -> "Word64Xor"
   | Allocate -> "Allocate"
   | CheckIf -> "CheckIf"
+  | CheckMaps -> "CheckMaps"
   | CheckSmi -> "CheckSmi"
   | CheckedInt64ToInt32 -> "CheckedInt64ToInt32"
   | CheckedTaggedToTaggedPointer -> "CheckedTaggedToTaggedPointer"
