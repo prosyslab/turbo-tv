@@ -208,10 +208,12 @@ let speculative_safe_integer_subtract lval rval control mem state =
  *  value = ite well-defined (not pval) UB *)
 let boolean_not pval state =
   let rf = state.State.register_file in
+  let true_cst = RegisterFile.find "true" rf in
+  let false_cst = RegisterFile.find "false" rf in
   let value =
     Bool.ite
       (Bool.ors [ pval |> Value.is_false; pval |> Constant.is_false_cst rf ])
-      Value.tr Value.fl
+      true_cst false_cst
   in
   state |> State.update ~value
 
@@ -252,24 +254,37 @@ let speculative_number_shift_right_logical lval rval _eff control mem state =
 
 (* simplified: comparison *)
 let number_equal lnum rnum mem state =
-  let value = Number.equal lnum rnum mem in
+  let rf = state.State.register_file in
+  let true_cst = RegisterFile.find "true" rf in
+  let false_cst = RegisterFile.find "false" rf in
+  let value =
+    Bool.ite (Value.is_false (Number.equal lnum rnum mem)) false_cst true_cst
+  in
   state |> State.update ~value
 
 let number_less_than lnum rnum mem state =
+  let rf = state.State.register_file in
+  let true_cst = RegisterFile.find "true" rf in
+  let false_cst = RegisterFile.find "false" rf in
   (* https://tc39.es/ecma262/#sec-relational-operators-runtime-semantics-evaluation *)
   let value =
     let r = Number.less_than lnum rnum mem in
-    Bool.ite (Bool.ors [ r |> Value.is_undefined ]) Value.fl r
+    Bool.ite
+      (Bool.ors [ r |> Value.is_undefined; r |> Value.is_false ])
+      false_cst true_cst
   in
   state |> State.update ~value
 
 let number_less_than_or_equal lnum rnum mem state =
+  let rf = state.State.register_file in
+  let true_cst = RegisterFile.find "true" rf in
+  let false_cst = RegisterFile.find "false" rf in
   (* https://tc39.es/ecma262/#sec-relational-operators-runtime-semantics-evaluation *)
   let value =
     let r = Number.less_than rnum lnum mem in
     Bool.ite
       (Bool.ors [ r |> Value.is_true; r |> Value.is_undefined ])
-      Value.fl Value.tr
+      false_cst true_cst
   in
   state |> State.update ~value
 
@@ -278,6 +293,25 @@ let number_same_value lnum rnum mem state =
   let true_cst = RegisterFile.find "true" rf in
   let false_cst = RegisterFile.find "false" rf in
   let value = Bool.ite (Number.same_value lnum rnum mem) true_cst false_cst in
+  state |> State.update ~value
+
+let reference_equal lval rval mem state =
+  let is_heap_number_or_f64 value =
+    Bool.ors
+      [
+        value |> Value.has_type Type.float64;
+        value |> Objects.is_heap_number mem;
+      ]
+  in
+  let value =
+    Bool.ite
+      (Bool.ands [ is_heap_number_or_f64 lval; is_heap_number_or_f64 rval ])
+      (Number.equal lval rval mem)
+      (Bool.ite
+         (Bool.ors [ is_heap_number_or_f64 lval; is_heap_number_or_f64 rval ])
+         Value.fl
+         (Bool.ite (Word32.eq lval rval) Value.tr Value.fl))
+  in
   state |> State.update ~value
 
 let same_value lval rval mem state =

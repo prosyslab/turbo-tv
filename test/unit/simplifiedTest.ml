@@ -70,7 +70,9 @@ let number_comparison op f1 f2 expected =
     | _ -> failwith "unreachable"
   in
   let msg = "\027[91m" ^ name ^ "\027[0m" in
-  let expected = if expected then Value.tr else Value.fl in
+  let true_cst = RegisterFile.find "true" state.register_file in
+  let false_cst = RegisterFile.find "false" state.register_file in
+  let expected = if expected then true_cst else false_cst in
   let n1 = Float64.of_float f1 in
   let n2 = Float64.of_float f1 in
   let result =

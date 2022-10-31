@@ -55,7 +55,7 @@ module TaggedPointer = struct
      32-64: bid
      64-69: ty
   *)
-  (* High |-ty-|---bid---|-offset-(1)-| Low *)
+  (* High |-ty-|---offset-1--|---bid---| Low *)
 
   let bid_len = 32
 
@@ -465,7 +465,26 @@ module Make_Word_Operator (W : WordValue) = struct
   let to_value data =
     BitVec.zero_extend (Value.data_len - width) data |> Value.entype ty
 
-  let eq lval rval = Z3utils.Bool.eq (lval |> from_value) (rval |> from_value)
+  let eq lval rval =
+    if width = 32 then
+      Bool.ite
+        (Bool.ands
+           [
+             lval |> Value.has_type Type.tagged_pointer;
+             rval |> Value.has_type Type.tagged_pointer;
+           ])
+        (BitVec.eqb
+           (lval |> TaggedPointer.bid_of)
+           (rval |> TaggedPointer.bid_of))
+        (Bool.ite
+           (Bool.ors
+              [
+                lval |> Value.has_type Type.tagged_pointer;
+                rval |> Value.has_type Type.tagged_pointer;
+              ])
+           Bool.fl
+           (Z3utils.Bool.eq (lval |> from_value) (rval |> from_value)))
+    else Z3utils.Bool.eq (lval |> from_value) (rval |> from_value)
 
   let eqi lval ri = BitVec.eqi (lval |> from_value) ri
 

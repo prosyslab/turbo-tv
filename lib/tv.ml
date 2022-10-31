@@ -512,7 +512,7 @@ let encode program
       let rpid = Operands.id_of_nth operands 1 in
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
-      word32_equal lval rval
+      reference_equal lval rval mem
   | SpeculativeNumberEqual ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
