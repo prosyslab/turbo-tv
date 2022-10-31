@@ -529,6 +529,7 @@ module Make_Word_Operator (W : WordValue) = struct
   let mask lval rval =
     BitVec.modb (lval |> from_value)
       (BitVec.shlb (BitVecVal.from_int ~len:width 1) (rval |> from_value))
+    |> to_value
 end
 
 module Word8 = Make_Word_Operator (struct
