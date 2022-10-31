@@ -61,11 +61,13 @@ let unknown_ops =
     Opcode.JSDecrement;
     Opcode.JSLoadContext;
     Opcode.JSCallRuntime;
+    Opcode.JSCreateLiteralArray;
     Opcode.JSStrictEqual;
     Opcode.JSLessThan;
     Opcode.JSLessThanOrEqual;
     Opcode.JSGreaterThanOrEqual;
     Opcode.JSLoadGlobal;
+    Opcode.JSLoadProperty;
     Opcode.JSBitwiseOr;
     Opcode.JSBitwiseAnd;
     Opcode.JSBitwiseNot;
@@ -77,6 +79,7 @@ let unknown_ops =
     Opcode.JSShiftRightLogical;
     Opcode.JSStoreContext;
     Opcode.JSCreateEmptyLiteralArray;
+    Opcode.JSSetKeyedProperty;
     Opcode.JSToNumber;
     Opcode.JSIncrement;
     Opcode.JSStoreGlobal;

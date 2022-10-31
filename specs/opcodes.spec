@@ -50,7 +50,7 @@ ChangeUint32ToUint64,v1
 ChangeUint64ToBigInt,
 ChangeUint64ToTagged,v1
 CheckBigInt,
-CheckBounds,
+CheckBounds,b2,v1,v2,e1,c1
 CheckClosure,
 CheckEqualsInternalizedString,
 CheckEqualsSymbol,
@@ -108,7 +108,7 @@ DeoptimizeIf,v1,v2,e1,c1
 DeoptimizeUnless,v1,v2,e1,c1
 EffectPhi,
 End,cv
-EnsureWritableFastElements,
+EnsureWritableFastElements,v1,v2,e1,c1
 ExternalConstant,b1
 F32x4Abs,
 F32x4Add,

@@ -11,12 +11,12 @@ type kind =
   | V1E1
   | B1
   | B1V1
-  | V1V2E1C1
-  | V2
-  | B1V1V2E1C1
-  | B1V1E1C1
   | B2V1V2E1C1
   | B2
+  | V2
+  | V1V2E1C1
+  | B1V1V2E1C1
+  | B1V1E1C1
   | CV
   | V1V2
   | V1V2C1
@@ -68,7 +68,6 @@ type t =
   | ChangeTaggedToUint32
   | ChangeUint64ToBigInt
   | CheckBigInt
-  | CheckBounds
   | CheckClosure
   | CheckEqualsInternalizedString
   | CheckEqualsSymbol
@@ -106,7 +105,6 @@ type t =
   | DebugBreak
   | DelayedStringConstant
   | EffectPhi
-  | EnsureWritableFastElements
   | F32x4Abs
   | F32x4Add
   | F32x4Ceil
@@ -814,6 +812,9 @@ type t =
   | ChangeFloat64ToTagged
   | CheckedFloat64ToInt32
   | Projection
+  (* b2v1v2e1c1 *)
+  | CheckBounds
+  | CheckedUint32Bounds
   (* v1v2e1c1 *)
   | CheckedInt32Add
   | CheckedInt32Div
@@ -821,6 +822,7 @@ type t =
   | CheckedUint32Div
   | DeoptimizeIf
   | DeoptimizeUnless
+  | EnsureWritableFastElements
   | SpeculativeNumberDivide
   | SpeculativeNumberLessThan
   | SpeculativeNumberLessThanOrEqual
@@ -837,8 +839,6 @@ type t =
   (* b1v1e1c1 *)
   | CheckedTaggedToFloat64
   | CheckedTruncateTaggedToWord32
-  (* b2v1v2e1c1 *)
-  | CheckedUint32Bounds
   (* cv *)
   | End
   | Merge
@@ -949,19 +949,18 @@ let get_kind opcode =
   | ChangeFloat64ToTaggedPointer | ChangeFloat64ToUint32 | ChangeFloat64ToUint64
   | ChangeInt64ToBigInt | ChangeTaggedToBit | ChangeTaggedToFloat64
   | ChangeTaggedToInt32 | ChangeTaggedToInt64 | ChangeTaggedToTaggedSigned
-  | ChangeTaggedToUint32 | ChangeUint64ToBigInt | CheckBigInt | CheckBounds
-  | CheckClosure | CheckEqualsInternalizedString | CheckEqualsSymbol
-  | CheckFloat64Hole | CheckHeapObject | CheckInternalizedString | CheckMaps
-  | CheckNotTaggedHole | CheckNumber | CheckReceiver
-  | CheckReceiverOrNullOrUndefined | CheckString | CheckSymbol
-  | CheckedFloat64ToInt64 | CheckedInt32Mod | CheckedInt32ToTaggedSigned
-  | CheckedInt64ToTaggedSigned | CheckedTaggedToArrayIndex
-  | CheckedTaggedToInt32 | CheckedTaggedToInt64 | CheckedUint32Mod
-  | CheckedUint32ToTaggedSigned | CheckedUint64Bounds | CheckedUint64ToInt32
-  | CheckedUint64ToTaggedSigned | Checkpoint | Comment | CompareMaps
-  | CompressedHeapConstant | ConvertReceiver | ConvertTaggedHoleToUndefined
-  | DateNow | Dead | DeadValue | DebugBreak | DelayedStringConstant | EffectPhi
-  | EnsureWritableFastElements | F32x4Abs | F32x4Add | F32x4Ceil
+  | ChangeTaggedToUint32 | ChangeUint64ToBigInt | CheckBigInt | CheckClosure
+  | CheckEqualsInternalizedString | CheckEqualsSymbol | CheckFloat64Hole
+  | CheckHeapObject | CheckInternalizedString | CheckMaps | CheckNotTaggedHole
+  | CheckNumber | CheckReceiver | CheckReceiverOrNullOrUndefined | CheckString
+  | CheckSymbol | CheckedFloat64ToInt64 | CheckedInt32Mod
+  | CheckedInt32ToTaggedSigned | CheckedInt64ToTaggedSigned
+  | CheckedTaggedToArrayIndex | CheckedTaggedToInt32 | CheckedTaggedToInt64
+  | CheckedUint32Mod | CheckedUint32ToTaggedSigned | CheckedUint64Bounds
+  | CheckedUint64ToInt32 | CheckedUint64ToTaggedSigned | Checkpoint | Comment
+  | CompareMaps | CompressedHeapConstant | ConvertReceiver
+  | ConvertTaggedHoleToUndefined | DateNow | Dead | DeadValue | DebugBreak
+  | DelayedStringConstant | EffectPhi | F32x4Abs | F32x4Add | F32x4Ceil
   | F32x4DemoteF64x2Zero | F32x4Div | F32x4Eq | F32x4ExtractLane | F32x4Floor
   | F32x4Ge | F32x4Gt | F32x4Le | F32x4Lt | F32x4Max | F32x4Min | F32x4Mul
   | F32x4Ne | F32x4NearestInt | F32x4Neg | F32x4Pmax | F32x4Pmin | F32x4Qfma
@@ -1147,17 +1146,18 @@ let get_kind opcode =
   | Int64Constant | NumberConstant | Parameter ->
       B1
   | ChangeFloat64ToTagged | CheckedFloat64ToInt32 | Projection -> B1V1
+  | CheckBounds | CheckedUint32Bounds -> B2V1V2E1C1
   | CheckedInt32Add | CheckedInt32Div | CheckedInt32Sub | CheckedUint32Div
-  | DeoptimizeIf | DeoptimizeUnless | SpeculativeNumberDivide
-  | SpeculativeNumberLessThan | SpeculativeNumberLessThanOrEqual
-  | SpeculativeNumberModulus | SpeculativeNumberMultiply
-  | SpeculativeNumberShiftLeft | SpeculativeNumberShiftRight
-  | SpeculativeNumberShiftRightLogical | SpeculativeNumberSubtract
-  | SpeculativeSafeIntegerAdd | SpeculativeSafeIntegerSubtract ->
+  | DeoptimizeIf | DeoptimizeUnless | EnsureWritableFastElements
+  | SpeculativeNumberDivide | SpeculativeNumberLessThan
+  | SpeculativeNumberLessThanOrEqual | SpeculativeNumberModulus
+  | SpeculativeNumberMultiply | SpeculativeNumberShiftLeft
+  | SpeculativeNumberShiftRight | SpeculativeNumberShiftRightLogical
+  | SpeculativeNumberSubtract | SpeculativeSafeIntegerAdd
+  | SpeculativeSafeIntegerSubtract ->
       V1V2E1C1
   | CheckedInt32Mul -> B1V1V2E1C1
   | CheckedTaggedToFloat64 | CheckedTruncateTaggedToWord32 -> B1V1E1C1
-  | CheckedUint32Bounds -> B2V1V2E1C1
   | End | Merge -> CV
   | Float64Add | Float64Div | Float64Equal | Float64LessThan
   | Float64LessThanOrEqual | Float64Max | Float64Min | Float64Mod | Float64Mul
@@ -1203,12 +1203,12 @@ let split_kind kind =
   | V1E1 -> [ V1; E1 ]
   | B1 -> [ B1 ]
   | B1V1 -> [ B1; V1 ]
-  | V1V2E1C1 -> [ V1; V2; E1; C1 ]
-  | V2 -> [ V2 ]
-  | B1V1V2E1C1 -> [ B1; V1; V2; E1; C1 ]
-  | B1V1E1C1 -> [ B1; V1; E1; C1 ]
   | B2V1V2E1C1 -> [ B2; V1; V2; E1; C1 ]
   | B2 -> [ B2 ]
+  | V2 -> [ V2 ]
+  | V1V2E1C1 -> [ V1; V2; E1; C1 ]
+  | B1V1V2E1C1 -> [ B1; V1; V2; E1; C1 ]
+  | B1V1E1C1 -> [ B1; V1; E1; C1 ]
   | CV -> [ CV ]
   | V1V2 -> [ V1; V2 ]
   | V1V2C1 -> [ V1; V2; C1 ]
@@ -1262,7 +1262,6 @@ let of_str str =
   | "ChangeTaggedToUint32" -> ChangeTaggedToUint32
   | "ChangeUint64ToBigInt" -> ChangeUint64ToBigInt
   | "CheckBigInt" -> CheckBigInt
-  | "CheckBounds" -> CheckBounds
   | "CheckClosure" -> CheckClosure
   | "CheckEqualsInternalizedString" -> CheckEqualsInternalizedString
   | "CheckEqualsSymbol" -> CheckEqualsSymbol
@@ -1300,7 +1299,6 @@ let of_str str =
   | "DebugBreak" -> DebugBreak
   | "DelayedStringConstant" -> DelayedStringConstant
   | "EffectPhi" -> EffectPhi
-  | "EnsureWritableFastElements" -> EnsureWritableFastElements
   | "F32x4Abs" -> F32x4Abs
   | "F32x4Add" -> F32x4Add
   | "F32x4Ceil" -> F32x4Ceil
@@ -2001,12 +1999,15 @@ let of_str str =
   | "ChangeFloat64ToTagged" -> ChangeFloat64ToTagged
   | "CheckedFloat64ToInt32" -> CheckedFloat64ToInt32
   | "Projection" -> Projection
+  | "CheckBounds" -> CheckBounds
+  | "CheckedUint32Bounds" -> CheckedUint32Bounds
   | "CheckedInt32Add" -> CheckedInt32Add
   | "CheckedInt32Div" -> CheckedInt32Div
   | "CheckedInt32Sub" -> CheckedInt32Sub
   | "CheckedUint32Div" -> CheckedUint32Div
   | "DeoptimizeIf" -> DeoptimizeIf
   | "DeoptimizeUnless" -> DeoptimizeUnless
+  | "EnsureWritableFastElements" -> EnsureWritableFastElements
   | "SpeculativeNumberDivide" -> SpeculativeNumberDivide
   | "SpeculativeNumberLessThan" -> SpeculativeNumberLessThan
   | "SpeculativeNumberLessThanOrEqual" -> SpeculativeNumberLessThanOrEqual
@@ -2021,7 +2022,6 @@ let of_str str =
   | "CheckedInt32Mul" -> CheckedInt32Mul
   | "CheckedTaggedToFloat64" -> CheckedTaggedToFloat64
   | "CheckedTruncateTaggedToWord32" -> CheckedTruncateTaggedToWord32
-  | "CheckedUint32Bounds" -> CheckedUint32Bounds
   | "End" -> End
   | "Merge" -> Merge
   | "Float64Add" -> Float64Add
@@ -2133,7 +2133,6 @@ let to_str opcode =
   | ChangeTaggedToUint32 -> "ChangeTaggedToUint32"
   | ChangeUint64ToBigInt -> "ChangeUint64ToBigInt"
   | CheckBigInt -> "CheckBigInt"
-  | CheckBounds -> "CheckBounds"
   | CheckClosure -> "CheckClosure"
   | CheckEqualsInternalizedString -> "CheckEqualsInternalizedString"
   | CheckEqualsSymbol -> "CheckEqualsSymbol"
@@ -2171,7 +2170,6 @@ let to_str opcode =
   | DebugBreak -> "DebugBreak"
   | DelayedStringConstant -> "DelayedStringConstant"
   | EffectPhi -> "EffectPhi"
-  | EnsureWritableFastElements -> "EnsureWritableFastElements"
   | F32x4Abs -> "F32x4Abs"
   | F32x4Add -> "F32x4Add"
   | F32x4Ceil -> "F32x4Ceil"
@@ -2872,12 +2870,15 @@ let to_str opcode =
   | ChangeFloat64ToTagged -> "ChangeFloat64ToTagged"
   | CheckedFloat64ToInt32 -> "CheckedFloat64ToInt32"
   | Projection -> "Projection"
+  | CheckBounds -> "CheckBounds"
+  | CheckedUint32Bounds -> "CheckedUint32Bounds"
   | CheckedInt32Add -> "CheckedInt32Add"
   | CheckedInt32Div -> "CheckedInt32Div"
   | CheckedInt32Sub -> "CheckedInt32Sub"
   | CheckedUint32Div -> "CheckedUint32Div"
   | DeoptimizeIf -> "DeoptimizeIf"
   | DeoptimizeUnless -> "DeoptimizeUnless"
+  | EnsureWritableFastElements -> "EnsureWritableFastElements"
   | SpeculativeNumberDivide -> "SpeculativeNumberDivide"
   | SpeculativeNumberLessThan -> "SpeculativeNumberLessThan"
   | SpeculativeNumberLessThanOrEqual -> "SpeculativeNumberLessThanOrEqual"
@@ -2892,7 +2893,6 @@ let to_str opcode =
   | CheckedInt32Mul -> "CheckedInt32Mul"
   | CheckedTaggedToFloat64 -> "CheckedTaggedToFloat64"
   | CheckedTruncateTaggedToWord32 -> "CheckedTruncateTaggedToWord32"
-  | CheckedUint32Bounds -> "CheckedUint32Bounds"
   | End -> "End"
   | Merge -> "Merge"
   | Float64Add -> "Float64Add"

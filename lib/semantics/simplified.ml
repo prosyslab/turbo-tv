@@ -338,34 +338,41 @@ let allocate_raw size control mem state =
   let ptr, mem = Memory.allocate size mem in
   state |> State.update ~value:ptr ~control ~mem
 
-let load_element tag_value header_size repr bid ind mem state =
-  let fixed_off = header_size - tag_value in
+let load_element header_size repr bid ind mem state =
   let off =
     BitVec.addi
       (BitVec.shli ind (MachineType.Repr.element_size_log2_of repr))
-      fixed_off
+      header_size
   in
   state |> Machine.load bid off repr mem
 
-let load_field _tag_value offset repr ptr _eff control mem state =
+let load_field offset repr ptr _eff control mem state =
   let off = offset |> BitVecVal.from_int ~len:Value.len in
   state |> Machine.load ptr off repr mem |> State.update ~control
 
 let load_typed_element array_type base extern ind mem state =
   let bid = BitVec.addb base extern in
-  let taggedness, header_size, machine_type =
+  let _, header_size, machine_type =
     MachineType.for_type_array_element array_type true
   in
   let repr = MachineType.repr machine_type in
-  state |> load_element taggedness header_size repr bid ind mem
+  state |> load_element header_size repr bid ind mem
 
 (* V2E1C1 -> E1 *)
-let store_element _tag_value header_size repr bid ind value mem control state =
-  let fixed_off = header_size in
+let store_element header_size repr bid ind value mem control state =
   let off =
     BitVec.addi
       (BitVec.shli ind (MachineType.Repr.element_size_log2_of repr))
-      fixed_off
+      header_size
+  in
+  let ty = Type.from_repr repr |> List.hd in
+  let value =
+    Bool.ite
+      (value |> Value.has_type Type.float64)
+      (if ty = Type.tagged_signed then Float64.to_tagged_signed value
+      else if ty = Type.int32 then Float64.to_int32 value
+      else failwith "not implemented")
+      value
   in
   state |> Machine.store bid off repr value mem |> State.update ~control
 
@@ -703,11 +710,28 @@ let check_if cond _eff control state =
   state |> State.update ~deopt ~control
 
 (* bound-check *)
+let check_bounds flag lval rval _eff control mem state =
+  let check = Uint64.lt lval rval in
+  let deopt =
+    if flag = 0 then
+      Bool.ors [ Bool.not check; lval |> Number.is_minus_zero mem ]
+    else if flag = 1 then Bool.not check (* ConvertStringAndMinusZero *)
+    else if flag = 2 then
+      lval |> Number.is_minus_zero mem (* AbortOnOutOfBounds *)
+    else Bool.fl
+  in
+  let ub = if flag = 2 || flag = 3 then Bool.not check else Bool.fl in
+  state |> State.update ~value:lval ~deopt ~ub ~control
+
 let checked_uint32_bounds flag lval rval _eff control state =
   let check = Uint32.lt lval rval in
-  if flag = "0" then
+  if flag = 0 then
     state |> State.update ~value:lval ~deopt:(Bool.not check) ~control
-  else if flag = "2" then
+  else if flag = 2 then
     (* AbortOnOutOfBounds *)
     state |> State.update ~value:lval ~ub:(Bool.not check) ~control
   else failwith "not implemented"
+
+let ensure_writable_fast_elements _lval rval _eff control state =
+  let value = rval in
+  state |> State.update ~value ~control

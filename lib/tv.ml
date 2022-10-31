@@ -254,6 +254,7 @@ let encode program
       let retctrls = ControlFile.find_all (operands |> Operands.id_of_all) cf in
       end_ retvals () retctrls
   (* common: region *)
+  | BeginRegion -> nop
   | FinishRegion ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -549,8 +550,6 @@ let encode program
       let ct = ControlFile.find ct_id cf in
       allocate_raw size_value ct mem
   | LoadElement ->
-      let base_is_tagged = Operands.const_of_nth operands 0 in
-      let tag_value = tag base_is_tagged in
       let header_size = Operands.const_of_nth operands 1 |> int_of_string in
       let machine_type = Operands.const_of_nth operands 2 in
       let repr = MachineType.Repr.of_rs_string machine_type in
@@ -558,10 +557,8 @@ let encode program
       let bid = RegisterFile.find bid_id rf in
       let ind_id = Operands.id_of_nth operands 4 in
       let ind = RegisterFile.find ind_id rf in
-      load_element tag_value header_size repr bid ind mem
+      load_element header_size repr bid ind mem
   | LoadField ->
-      let base_is_tagged = Operands.const_of_nth operands 0 in
-      let tag_value = tag base_is_tagged in
       let offset = Operands.const_of_nth operands 1 |> int_of_string in
       let machine_type = Operands.const_of_nth operands 2 in
       let repr = MachineType.Repr.of_rs_string machine_type in
@@ -571,7 +568,7 @@ let encode program
          let _eff = () in *)
       let ctrl_id = Operands.id_of_nth operands 5 in
       let ctrl = ControlFile.find ctrl_id cf in
-      load_field tag_value offset repr bid () ctrl mem
+      load_field offset repr bid () ctrl mem
   | LoadTypedElement ->
       let array_type = Operands.const_of_nth operands 0 |> int_of_string in
       let base_id = Operands.id_of_nth operands 1 in
@@ -582,8 +579,6 @@ let encode program
       let ind = RegisterFile.find ind_id rf in
       load_typed_element array_type base extern ind mem
   | StoreElement ->
-      let base_is_tagged = Operands.const_of_nth operands 0 in
-      let tag_value = tag base_is_tagged in
       let header_size = Operands.const_of_nth operands 1 |> int_of_string in
       let machine_type = Operands.const_of_nth operands 2 in
       let repr = MachineType.Repr.of_rs_string machine_type in
@@ -597,7 +592,7 @@ let encode program
          let _eff = () in *)
       let ctrl_id = Operands.id_of_nth operands 7 in
       let ctrl = ControlFile.find ctrl_id cf in
-      store_element tag_value header_size repr bid ind value mem ctrl
+      store_element header_size repr bid ind value mem ctrl
   | StoreField ->
       let ptr_id = Operands.id_of_nth operands 0 in
       let ptr = RegisterFile.find ptr_id rf in
@@ -743,8 +738,9 @@ let encode program
       let pval = RegisterFile.find pid rf in
       let ctrl = ControlFile.find cid cf in
       check_if pval () ctrl
-  | CheckedUint32Bounds ->
-      let hint = Operands.const_of_nth operands 0 in
+  | CheckMaps -> nop
+  | CheckBounds ->
+      let flag = Operands.const_of_nth operands 0 |> int_of_string in
       let lpid = Operands.id_of_nth operands 1 in
       let rpid = Operands.id_of_nth operands 2 in
       let _eid = Operands.id_of_nth operands 3 in
@@ -752,7 +748,24 @@ let encode program
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
       let ctrl = ControlFile.find cid cf in
-      checked_uint32_bounds hint lval rval () ctrl
+      check_bounds flag lval rval () ctrl mem
+  | CheckedUint32Bounds ->
+      let flag = Operands.const_of_nth operands 0 |> int_of_string in
+      let lpid = Operands.id_of_nth operands 1 in
+      let rpid = Operands.id_of_nth operands 2 in
+      let _eid = Operands.id_of_nth operands 3 in
+      let cid = Operands.id_of_nth operands 4 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      let ctrl = ControlFile.find cid cf in
+      checked_uint32_bounds flag lval rval () ctrl
+  | EnsureWritableFastElements ->
+      let rpid = Operands.id_of_nth operands 1 in
+      let _eid = Operands.id_of_nth operands 2 in
+      let cid = Operands.id_of_nth operands 3 in
+      let rval = RegisterFile.find rpid rf in
+      let ctrl = ControlFile.find cid cf in
+      ensure_writable_fast_elements () rval () ctrl
   (* machine: arithmetic *)
   | Float64Abs -> encode_machine_unary float64_abs
   | Float64Add -> encode_machine_binary float64_add
