@@ -289,10 +289,7 @@ let number_less_than_or_equal lnum rnum mem state =
   state |> State.update ~value
 
 let number_same_value lnum rnum mem state =
-  let rf = State.register_file state in
-  let true_cst = RegisterFile.find "true" rf in
-  let false_cst = RegisterFile.find "false" rf in
-  let value = Bool.ite (Number.same_value lnum rnum mem) true_cst false_cst in
+  let value = Bool.ite (Number.same_value lnum rnum mem) Value.tr Value.fl in
   state |> State.update ~value
 
 let reference_equal lval rval mem state =
@@ -378,7 +375,7 @@ let store_element header_size repr bid ind value mem control state =
     Bool.ite
       (value |> Value.has_type Type.float64)
       (if ty = Type.tagged_signed then Float64.to_tagged_signed value
-      else if ty = Type.any_tagged then value
+      else if ty = Type.any_tagged || ty = Type.float64 then value
       else
         Format.sprintf "not implemented: %s" (ty |> Expr.to_simplified_string)
         |> failwith)
