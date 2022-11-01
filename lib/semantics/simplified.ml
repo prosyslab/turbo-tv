@@ -378,8 +378,10 @@ let store_element header_size repr bid ind value mem control state =
     Bool.ite
       (value |> Value.has_type Type.float64)
       (if ty = Type.tagged_signed then Float64.to_tagged_signed value
-      else if ty = Type.int32 then Float64.to_int32 value
-      else failwith "not implemented")
+      else if ty = Type.any_tagged then value
+      else
+        Format.sprintf "not implemented: %s" (ty |> Expr.to_simplified_string)
+        |> failwith)
       value
   in
   state |> Machine.store bid off repr value mem |> State.update ~control
