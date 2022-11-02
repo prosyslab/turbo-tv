@@ -608,6 +608,9 @@ module Float64 = struct
 
   let round_up = ceil
 
+  let round_nearest_to_away value =
+    Float.round Float.rna_mode (value |> from_value) |> to_value
+
   let round_nearest_to_even value =
     Float.round Float.rne_mode (value |> from_value) |> to_value
 

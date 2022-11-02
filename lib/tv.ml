@@ -801,6 +801,8 @@ let encode program
   | Float64RoundDown -> encode_machine_unary float64_round_down
   | Float64RoundUp -> encode_machine_unary float64_round_up
   | Float64RoundTruncate -> encode_machine_unary float64_round_truncate
+  | Float64RoundTiesAway -> encode_machine_unary float64_round_ties_away
+  | Float64RoundTiesEven -> encode_machine_unary float64_round_ties_even
   | Float64Sin -> encode_machine_unary float64_sin
   | Int32Add -> encode_machine_binary int32_add
   | Int32AddWithOverflow -> encode_machine_ovf int32_add_with_overflow

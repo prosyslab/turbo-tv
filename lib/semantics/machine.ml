@@ -56,6 +56,14 @@ let float64_round_up pval state =
   let value = pval |> Float64.round_up in
   state |> State.update ~value
 
+let float64_round_ties_away pval state =
+  let value = pval |> Float64.round_nearest_to_away in
+  state |> State.update ~value
+
+let float64_round_ties_even pval state =
+  let value = pval |> Float64.round_nearest_to_even in
+  state |> State.update ~value
+
 let float64_round_truncate pval state =
   let value = pval |> Float64.trunc in
   state |> State.update ~value

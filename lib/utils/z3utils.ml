@@ -124,6 +124,8 @@ end
 module Float = struct
   type t = E.expr
 
+  let rna_mode = Fl.RoundingMode.mk_rna ctx
+
   let rne_mode = Fl.RoundingMode.mk_rne ctx
 
   let rtn_mode = Fl.RoundingMode.mk_rtn ctx
