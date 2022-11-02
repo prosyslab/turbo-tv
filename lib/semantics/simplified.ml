@@ -397,16 +397,36 @@ let number_is_nan pval mem state =
   state |> State.update ~value
 
 let object_is_minus_zero pval mem state =
-  (* when non-number type values are given, set deopt flag to avoid mis-verification *)
-  let deopt = Bool.not (Number.is_number pval mem) in
-  let value = Bool.ite (pval |> Number.is_minus_zero mem) Value.tr Value.fl in
-  state |> State.update ~value ~deopt
+  let rf = state.State.register_file in
+  let true_cst = RegisterFile.find "true" rf in
+  let false_cst = RegisterFile.find "false" rf in
+  let value =
+    Bool.ite
+      (Bool.ors
+         [
+           pval |> Objects.is_heap_number mem;
+           pval |> Value.has_type Type.float64;
+         ])
+      (Bool.ite (pval |> Number.is_minus_zero mem) true_cst false_cst)
+      false_cst
+  in
+  state |> State.update ~value
 
 let object_is_nan pval mem state =
-  (* when non-number type values are given, set deopt flag to avoid mis-verification *)
-  let deopt = Bool.not (Number.is_number pval mem) in
-  let value = Bool.ite (pval |> Number.is_nan mem) Value.tr Value.fl in
-  state |> State.update ~value ~deopt
+  let rf = state.State.register_file in
+  let true_cst = RegisterFile.find "true" rf in
+  let false_cst = RegisterFile.find "false" rf in
+  let value =
+    Bool.ite
+      (Bool.ors
+         [
+           pval |> Objects.is_heap_number mem;
+           pval |> Value.has_type Type.float64;
+         ])
+      (Bool.ite (pval |> Number.is_nan mem) true_cst false_cst)
+      false_cst
+  in
+  state |> State.update ~value
 
 let object_is_smi pval state =
   let value = Bool.ite (Word32.eqi (Word32.andi pval 1) 0) Value.tr Value.fl in
@@ -415,16 +435,23 @@ let object_is_smi pval state =
 (* simplified: type-conversion *)
 let change_bit_to_tagged pval state =
   let rf = State.register_file state in
-  let true_constant = RegisterFile.find "true" rf in
-  let false_constant = RegisterFile.find "false" rf in
+  let true_cst = RegisterFile.find "true" rf in
+  let false_cst = RegisterFile.find "false" rf in
   let value =
     Bool.ite
       (pval |> Value.has_type Type.bool)
-      (Bool.ite (pval |> Value.is_true) true_constant false_constant)
+      (Bool.ite (pval |> Value.is_true) true_cst false_cst)
       (* if [pval] is not coming from cmp operator (e.g, Word32Cmp), just compare
          LSB 32-bit with 0*)
-      (Bool.ite (pval |> Word32.eq Value.fl) false_constant true_constant)
+      (Bool.ite
+         (pval |> Constant.is_true_cst rf)
+         true_cst
+         (Bool.ite
+            (pval |> Constant.is_false_cst rf)
+            false_cst
+            (Bool.ite (pval |> Word32.eq Value.fl) false_cst true_cst)))
   in
+
   state |> State.update ~value
 
 let change_float64_to_tagged mode pval mem state =
