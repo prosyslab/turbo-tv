@@ -429,6 +429,19 @@ let encode program
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
       number_bitwise "&" lval rval mem
+  | NumberShiftLeft ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      number_shift_left lval rval mem
+  | NumberShiftRight ->
+      let lpid = Operands.id_of_nth operands 0 in
+      let rpid = Operands.id_of_nth operands 1 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      number_shift_right lval rval mem
+  (* simplified: comparison *)
   | NumberShiftRightLogical ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
