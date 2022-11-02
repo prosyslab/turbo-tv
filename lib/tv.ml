@@ -852,6 +852,8 @@ let encode program
   | Word64Ror -> encode_machine_binary word64_ror
   | Word64Sar -> encode_machine_binary_with_hint word64_sar
   | Word64Shl -> encode_machine_binary word64_shl
+  | Word64Shr -> encode_machine_binary word64_shr
+  | Word64Xor -> encode_machine_binary word64_xor
   | Word32ReverseBytes -> encode_machine_unary word32_reverse_bytes
   | Word64ReverseBytes -> encode_machine_unary word64_reverse_bytes
   (* machine: logic *)
@@ -865,6 +867,7 @@ let encode program
   | Int32LessThan -> encode_machine_binary int32_less_than
   | Int32LessThanOrEqual -> encode_machine_binary int32_less_than_or_equal
   | Int64LessThan -> encode_machine_binary int64_less_than
+  | Int64LessThanOrEqual -> encode_machine_binary int64_less_than_or_equal
   | Uint32LessThan -> encode_machine_binary uint32_less_than
   | Uint32LessThanOrEqual -> encode_machine_binary uint32_less_than_or_equal
   | Uint64LessThan -> encode_machine_binary uint64_less_than
@@ -899,6 +902,8 @@ let encode program
   (* machine: type-conversion *)
   | ChangeFloat64ToInt32 -> encode_machine_unary change_float64_to_int32
   | ChangeFloat64ToInt64 -> encode_machine_unary change_float64_to_int64
+  | ChangeFloat64ToUint32 -> encode_machine_unary change_float64_to_uint32
+  | ChangeFloat64ToUint64 -> encode_machine_unary change_float64_to_uint64
   | ChangeInt32ToFloat64 -> encode_machine_unary change_int32_to_float64
   | ChangeInt32ToInt64 -> encode_machine_unary change_int32_to_int64
   | ChangeInt64ToFloat64 -> encode_machine_unary change_int64_to_float64

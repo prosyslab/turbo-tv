@@ -186,6 +186,14 @@ let word64_shl lval rval state =
   let value = Word64.shl lval rval in
   state |> State.update ~value
 
+let word64_shr lval rval state =
+  let value = Word64.lshr lval rval in
+  state |> State.update ~value
+
+let word64_xor lval rval state =
+  let value = Word64.xor lval rval in
+  state |> State.update ~value
+
 let word32_reverse_bytes v state =
   let value = v |> Word32.swap in
   state |> State.update ~value
@@ -216,40 +224,58 @@ let float64_less_than_or_equal lval rval state =
   let value = Bool.ite (Float64.le lval rval) Value.tr Value.fl in
   state |> State.update ~value
 
-let int32_less_than lval rval state =
-  let value = Bool.ite (Int32.lt lval rval) Value.tr Value.fl in
+let int_cmp sign width op lval rval state =
+  let value =
+    Bool.ite
+      (match (sign, width, op) with
+      | true, 32, "<" -> Int32.lt lval rval
+      | true, 32, "<=" -> Int32.le lval rval
+      | true, 32, "==" -> Int32.eq lval rval
+      | true, 64, "<" -> Int64.lt lval rval
+      | true, 64, "<=" -> Int64.le lval rval
+      | true, 64, "==" -> Int64.eq lval rval
+      | false, 32, "<" -> Uint32.lt lval rval
+      | false, 32, "<=" -> Uint32.le lval rval
+      | false, 32, "==" -> Uint32.eq lval rval
+      | false, 64, "<" -> Uint64.lt lval rval
+      | false, 64, "<=" -> Uint64.le lval rval
+      | false, 64, "==" -> Uint64.eq lval rval
+      | _ -> failwith "int_cmp: not implemented")
+      Value.tr Value.fl
+  in
   state |> State.update ~value
 
-let int32_less_than_or_equal lval rval state =
-  let value = Bool.ite (Int32.le lval rval) Value.tr Value.fl in
-  state |> State.update ~value
+let int32_less_than = int_cmp true 32 "<"
 
-let int64_less_than lval rval state =
-  let value = Bool.ite (Int64.lt lval rval) Value.tr Value.fl in
-  state |> State.update ~value
+let int32_less_than_or_equal = int_cmp true 32 "<="
 
+let int32_equal = int_cmp true 32 "=="
+
+let int64_less_than = int_cmp true 64 "<"
+
+let int64_less_than_or_equal = int_cmp true 64 "<="
+
+let int64_equal = int_cmp true 64 "=="
+
+let uint32_less_than = int_cmp false 32 "<"
+
+let uint32_less_than_or_equal = int_cmp false 32 "<="
+
+let uint32_equal = int_cmp false 32 "=="
+
+let uint64_less_than = int_cmp false 64 "<"
+
+let uint64_less_than_or_equal = int_cmp false 64 "<="
+
+let uint64_equal = int_cmp false 64 "=="
+
+(* machine: conversion *)
 let word32_equal lval rval state =
   let value = Bool.ite (Word32.eq lval rval) Value.tr Value.fl in
   state |> State.update ~value
 
 let word64_equal lval rval state =
   let value = Bool.ite (Word64.eq lval rval) Value.tr Value.fl in
-  state |> State.update ~value
-
-let uint32_less_than lval rval state =
-  let value = Bool.ite (Uint32.lt lval rval) Value.tr Value.fl in
-  state |> State.update ~value
-
-let uint32_less_than_or_equal lval rval state =
-  let value = Bool.ite (Uint32.le lval rval) Value.tr Value.fl in
-  state |> State.update ~value
-
-let uint64_less_than lval rval state =
-  let value = Bool.ite (Uint64.lt lval rval) Value.tr Value.fl in
-  state |> State.update ~value
-
-let uint64_less_than_or_equal lval rval state =
-  let value = Bool.ite (Uint64.le lval rval) Value.tr Value.fl in
   state |> State.update ~value
 
 (* machine: memory *)
@@ -310,6 +336,14 @@ let change_float64_to_int32 pval state =
 
 let change_float64_to_int64 pval state =
   let value = pval |> Float64.to_int64 in
+  state |> State.update ~value
+
+let change_float64_to_uint32 pval state =
+  let value = pval |> Float64.to_uint32 in
+  state |> State.update ~value
+
+let change_float64_to_uint64 pval state =
+  let value = pval |> Float64.to_uint64 in
   state |> State.update ~value
 
 let change_int32_to_float64 pval state =
