@@ -7,6 +7,7 @@ ArgumentsLengthState,
 AssertType,
 BeginRegion,
 BigIntAdd,
+BigIntMultiply,
 BigIntNegate,
 BigIntSubtract,
 BitcastFloat32ToInt32,v1
@@ -50,6 +51,7 @@ ChangeUint32ToUint64,v1
 ChangeUint64ToBigInt,
 ChangeUint64ToTagged,v1
 CheckBigInt,
+CheckBigInt64,
 CheckBounds,b2,v1,v2,e1,c1
 CheckClosure,
 CheckEqualsInternalizedString,
@@ -106,6 +108,8 @@ DelayedStringConstant,
 Deoptimize,v1,e1,c1
 DeoptimizeIf,v1,v2,e1,c1
 DeoptimizeUnless,v1,v2,e1,c1
+DoubleArrayMax,
+DoubleArrayMin,
 EffectPhi,
 End,cv
 EnsureWritableFastElements,v1,v2,e1,c1
@@ -175,6 +179,7 @@ F64x2Trunc,
 FastApiCall,
 FindOrderedHashMapEntry,
 FindOrderedHashMapEntryForInt32Key,
+FindOrderedHashSetEntry,
 FinishRegion,v1,e1
 Float32Abs,
 Float32Add,
@@ -436,6 +441,7 @@ Int64LessThan,v1,v2
 Int64LessThanOrEqual,
 Int64Mod,
 Int64Mul,
+Int64MulWithOverflow,
 Int64Sub,v1,v2
 Int64SubWithOverflow,
 JSAdd,
@@ -624,8 +630,8 @@ NumberMultiply,v1,v2
 NumberPow,
 NumberRound,v1
 NumberSameValue,v1,v2
-NumberShiftLeft,
-NumberShiftRight,
+NumberShiftLeft,v1,v2
+NumberShiftRight,v1,v2
 NumberShiftRightLogical,v1,v2
 NumberSign,v1
 NumberSilenceNaN,
@@ -706,6 +712,8 @@ Simd128ReverseBytes,
 SpeculativeBigIntAdd,
 SpeculativeBigIntAsIntN,
 SpeculativeBigIntAsUintN,
+SpeculativeBigIntDivide,
+SpeculativeBigIntMultiply,
 SpeculativeBigIntNegate,
 SpeculativeBigIntSubtract,
 SpeculativeNumberAdd,v1,v2
@@ -800,6 +808,7 @@ UnalignedLoad,
 UnalignedStore,
 Unreachable,e1,c1
 UnsafePointerAdd,
+Unsigned32Divide,
 V128AnyTrue,
 VerifyType,
 Word32And,v1,v2
