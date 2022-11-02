@@ -28,8 +28,8 @@ ChangeFloat64ToInt32,v1
 ChangeFloat64ToInt64,v1
 ChangeFloat64ToTagged,b1,v1
 ChangeFloat64ToTaggedPointer,
-ChangeFloat64ToUint32,
-ChangeFloat64ToUint64,
+ChangeFloat64ToUint32,v1
+ChangeFloat64ToUint64,v1
 ChangeInt31ToTaggedSigned,v1
 ChangeInt32ToFloat64,v1
 ChangeInt32ToInt64,v1
@@ -233,8 +233,8 @@ Float64Mul,v1,v2
 Float64Neg,v1
 Float64Pow,
 Float64RoundDown,v1
-Float64RoundTiesAway,
-Float64RoundTiesEven,
+Float64RoundTiesAway,v1
+Float64RoundTiesEven,v1
 Float64RoundTruncate,v1
 Float64RoundUp,v1
 Float64Select,
@@ -438,9 +438,9 @@ Int64AddWithOverflow,
 Int64Constant,b1
 Int64Div,
 Int64LessThan,v1,v2
-Int64LessThanOrEqual,
+Int64LessThanOrEqual,v1,v2
 Int64Mod,
-Int64Mul,
+Int64Mul,v1,v2
 Int64MulWithOverflow,
 Int64Sub,v1,v2
 Int64SubWithOverflow,
@@ -613,10 +613,10 @@ NumberFround,
 NumberImul,v1,v2
 NumberIsFinite,
 NumberIsFloat64Hole,
-NumberIsInteger,
+NumberIsInteger,v1
 NumberIsMinusZero,v1
 NumberIsNaN,v1
-NumberIsSafeInteger,
+NumberIsSafeInteger,v1
 NumberLessThan,v1,v2
 NumberLessThanOrEqual,v1,v2
 NumberLog,
@@ -873,5 +873,5 @@ Word64RorLowerable,
 Word64Sar,b1,v1,v2
 Word64Select,
 Word64Shl,v1,v2
-Word64Shr,
-Word64Xor,
+Word64Shr,v1,v2
+Word64Xor,v1,v2
