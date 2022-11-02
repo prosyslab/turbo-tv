@@ -827,6 +827,7 @@ let encode program
   | Int32Sub -> encode_machine_binary int32_sub
   | Int32SubWithOverflow -> encode_machine_ovf int32_sub_with_overflow
   | Int64Add -> encode_machine_binary int64_add
+  | Int64Mul -> encode_machine_binary int64_mul
   | Int64Sub -> encode_machine_binary int64_sub
   | Uint32Div ->
       let lpid = Operands.id_of_nth operands 0 in

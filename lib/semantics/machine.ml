@@ -72,9 +72,30 @@ let float64_sin pval state =
   let value = pval |> Float64.sin in
   state |> State.update ~value
 
-let int32_add lval rval state =
-  let value = Int32.add lval rval in
+let int_arith width op lval rval state =
+  let value =
+    match (width, op) with
+    | 32, "+" -> Int32.add lval rval
+    | 32, "-" -> Int32.sub lval rval
+    | 32, "*" -> Int32.mul lval rval
+    | 64, "+" -> Int64.add lval rval
+    | 64, "-" -> Int64.sub lval rval
+    | 64, "*" -> Int64.mul lval rval
+    | _ -> failwith "int_arith: not implemented"
+  in
   state |> State.update ~value
+
+let int32_add lval rval state = int_arith 32 "+" lval rval state
+
+let int32_sub lval rval state = int_arith 32 "-" lval rval state
+
+let int32_mul lval rval state = int_arith 32 "*" lval rval state
+
+let int64_add lval rval state = int_arith 64 "+" lval rval state
+
+let int64_sub lval rval state = int_arith 64 "-" lval rval state
+
+let int64_mul lval rval state = int_arith 64 "*" lval rval state
 
 (* assertion:
  * value = ((lval + rval) mod 2**32) :: (lval + rval > smi_max) *)
@@ -92,33 +113,17 @@ let int32_mod lval rval control state =
   let value = Int32.modulo lval rval in
   state |> State.update ~value ~control
 
-let int32_mul lval rval state =
-  let value = Int32.mul lval rval in
-  state |> State.update ~value
-
 let int32_mul_with_overflow lval rval control state =
   let multiplied = Int32.mul lval rval in
   let ovf = Bool.ite (Int32.mul_would_overflow lval rval) Value.tr Value.fl in
   let value = Composed.from_values [ multiplied; ovf ] in
   state |> State.update ~value ~control
 
-let int32_sub lval rval state =
-  let value = Int32.sub lval rval in
-  state |> State.update ~value
-
 let int32_sub_with_overflow lval rval control state =
   let subtracted = Int32.sub lval rval in
   let ovf = Bool.ite (Int32.sub_would_overflow lval rval) Value.tr Value.fl in
   let value = Composed.from_values [ subtracted; ovf ] in
   state |> State.update ~value ~control
-
-let int64_add lval rval state =
-  let value = Int64.add lval rval in
-  state |> State.update ~value
-
-let int64_sub lval rval state =
-  let value = Int64.sub lval rval in
-  state |> State.update ~value
 
 let round_float64_to_int32 pval state =
   let value = Float64.to_int32 pval in
