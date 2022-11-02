@@ -388,6 +388,14 @@ let store_field ptr off repr value _eff control mem state =
   state |> Machine.store ptr off repr value mem |> State.update ~control
 
 (* simplified: type-check *)
+let number_is_integer pval mem state =
+  let value = Bool.ite (pval |> Number.is_integer mem) Value.tr Value.fl in
+  state |> State.update ~value
+
+let number_is_safe_integer pval mem state =
+  let value = Bool.ite (pval |> Number.is_safe_integer mem) Value.tr Value.fl in
+  state |> State.update ~value
+
 let number_is_minus_zero pval mem state =
   let value = Bool.ite (pval |> Number.is_minus_zero mem) Value.tr Value.fl in
   state |> State.update ~value

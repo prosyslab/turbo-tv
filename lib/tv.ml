@@ -621,6 +621,10 @@ let encode program
       let ctrl = ControlFile.find ctrl_id cf in
       store_field ptr off repr value () ctrl mem
   (* simplified: type-check *)
+  | NumberIsInteger ->
+      let pid = Operands.id_of_nth operands 0 in
+      let value = RegisterFile.find pid rf in
+      number_is_integer value mem
   | NumberIsMinusZero ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -629,6 +633,10 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       number_is_nan pval mem
+  | NumberIsSafeInteger ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      number_is_safe_integer pval mem
   | ObjectIsMinusZero ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
