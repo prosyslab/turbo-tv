@@ -242,7 +242,21 @@ let encode program
         let param = List.nth params (pidx - 1) in
         parameter param
       else nop
-  | Call -> call
+  | Call ->
+      let fname = Operands.const_of_nth operands 0 in
+      let args_regexp =
+        Str.regexp {|[a-zA-Z0-9: ]*r[0-9]+s[0-9]+i\([0-9]+\)f[0-9]+|}
+      in
+      if Str.string_match args_regexp fname 0 then
+        let n = Str.matched_group 1 fname |> int_of_string in
+        let args =
+          List.init n (fun i ->
+              let pid = Operands.id_of_nth operands (i + 1) in
+              RegisterFile.find pid rf)
+        in
+        call fname args
+      else
+        failwith (Printf.sprintf "Unexpected function name for Call: %s" fname)
   | Return ->
       let pid = Operands.id_of_nth operands 0 in
       let cid = Operands.id_of_nth operands 1 in

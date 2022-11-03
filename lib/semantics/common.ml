@@ -171,7 +171,13 @@ let finish_region pval state = state |> State.update ~value:pval
 (* temporary *)
 let js_stack_check _eff control state = state |> State.update ~control
 
-let call state = state |> State.update ~value:Value.tr ~control:Bool.tr
+let call fname args state =
+  let bv_sort = BV.mk_sort ctx Value.len in
+  let args_sort = List.map (fun _ -> bv_sort) args in
+  let f_decl = Z3.FuncDecl.mk_func_decl_s ctx fname args_sort bv_sort in
+  let return = Z3.FuncDecl.apply f_decl args in
+  state |> State.update ~value:return ~control:Bool.tr
 
-let stack_pointer_greater_than = call
+let stack_pointer_greater_than state =
+  state |> State.update ~value:Value.tr ~control:Bool.tr
 (* temporary-over *)

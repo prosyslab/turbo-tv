@@ -9,7 +9,9 @@ type kind =
   | C1
   | V1C1
   | V1E1
+  | B1VV
   | B1
+  | VV
   | B1V1
   | B2V1V2E1C1
   | B2
@@ -31,7 +33,6 @@ type kind =
   | V3
   | V4
   | VVC1
-  | VV
   | V2C1E1
   | V1V2V3
   | V1V2B1V3
@@ -80,6 +81,10 @@ type t =
   | CheckReceiverOrNullOrUndefined
   | CheckString
   | CheckSymbol
+  | CheckedBitInt64Add
+  | CheckedBitInt64Div
+  | CheckedBitInt64Mul
+  | CheckedBitInt64Sub
   | CheckedFloat64ToInt64
   | CheckedInt32Mod
   | CheckedInt32ToTaggedSigned
@@ -803,8 +808,9 @@ type t =
   (* v1e1 *)
   | Branch
   | FinishRegion
-  (* b1 *)
+  (* b1vv *)
   | Call
+  (* b1 *)
   | ExternalConstant
   | Float64Constant
   | HeapConstant
@@ -964,21 +970,22 @@ let get_kind opcode =
   | CheckFloat64Hole | CheckHeapObject | CheckInternalizedString
   | CheckNotTaggedHole | CheckNumber | CheckReceiver
   | CheckReceiverOrNullOrUndefined | CheckString | CheckSymbol
-  | CheckedFloat64ToInt64 | CheckedInt32Mod | CheckedInt32ToTaggedSigned
-  | CheckedInt64ToTaggedSigned | CheckedTaggedToArrayIndex
-  | CheckedTaggedToInt32 | CheckedTaggedToInt64 | CheckedUint32Mod
-  | CheckedUint32ToTaggedSigned | CheckedUint64Bounds | CheckedUint64ToInt32
-  | CheckedUint64ToTaggedSigned | Checkpoint | Comment | CompareMaps
-  | CompressedHeapConstant | ConvertReceiver | ConvertTaggedHoleToUndefined
-  | DateNow | Dead | DeadValue | DebugBreak | DelayedStringConstant
-  | DoubleArrayMax | DoubleArrayMin | EffectPhi | F32x4Abs | F32x4Add
-  | F32x4Ceil | F32x4DemoteF64x2Zero | F32x4Div | F32x4Eq | F32x4ExtractLane
-  | F32x4Floor | F32x4Ge | F32x4Gt | F32x4Le | F32x4Lt | F32x4Max | F32x4Min
-  | F32x4Mul | F32x4Ne | F32x4NearestInt | F32x4Neg | F32x4Pmax | F32x4Pmin
-  | F32x4Qfma | F32x4Qfms | F32x4RecipApprox | F32x4RecipSqrtApprox
-  | F32x4RelaxedMax | F32x4RelaxedMin | F32x4ReplaceLane | F32x4SConvertI32x4
-  | F32x4Splat | F32x4Sqrt | F32x4Sub | F32x4Trunc | F32x4UConvertI32x4
-  | F64x2Abs | F64x2Add | F64x2Ceil | F64x2ConvertLowI32x4S
+  | CheckedBitInt64Add | CheckedBitInt64Div | CheckedBitInt64Mul
+  | CheckedBitInt64Sub | CheckedFloat64ToInt64 | CheckedInt32Mod
+  | CheckedInt32ToTaggedSigned | CheckedInt64ToTaggedSigned
+  | CheckedTaggedToArrayIndex | CheckedTaggedToInt32 | CheckedTaggedToInt64
+  | CheckedUint32Mod | CheckedUint32ToTaggedSigned | CheckedUint64Bounds
+  | CheckedUint64ToInt32 | CheckedUint64ToTaggedSigned | Checkpoint | Comment
+  | CompareMaps | CompressedHeapConstant | ConvertReceiver
+  | ConvertTaggedHoleToUndefined | DateNow | Dead | DeadValue | DebugBreak
+  | DelayedStringConstant | DoubleArrayMax | DoubleArrayMin | EffectPhi
+  | F32x4Abs | F32x4Add | F32x4Ceil | F32x4DemoteF64x2Zero | F32x4Div | F32x4Eq
+  | F32x4ExtractLane | F32x4Floor | F32x4Ge | F32x4Gt | F32x4Le | F32x4Lt
+  | F32x4Max | F32x4Min | F32x4Mul | F32x4Ne | F32x4NearestInt | F32x4Neg
+  | F32x4Pmax | F32x4Pmin | F32x4Qfma | F32x4Qfms | F32x4RecipApprox
+  | F32x4RecipSqrtApprox | F32x4RelaxedMax | F32x4RelaxedMin | F32x4ReplaceLane
+  | F32x4SConvertI32x4 | F32x4Splat | F32x4Sqrt | F32x4Sub | F32x4Trunc
+  | F32x4UConvertI32x4 | F64x2Abs | F64x2Add | F64x2Ceil | F64x2ConvertLowI32x4S
   | F64x2ConvertLowI32x4U | F64x2Div | F64x2Eq | F64x2ExtractLane | F64x2Floor
   | F64x2Le | F64x2Lt | F64x2Max | F64x2Min | F64x2Mul | F64x2Ne
   | F64x2NearestInt | F64x2Neg | F64x2Pmax | F64x2Pmin | F64x2PromoteLowF32x4
@@ -1153,7 +1160,8 @@ let get_kind opcode =
   | IfFalse | IfSuccess | IfTrue -> C1
   | AllocateRaw -> V1C1
   | Branch | FinishRegion -> V1E1
-  | Call | ExternalConstant | Float64Constant | HeapConstant | Int32Constant
+  | Call -> B1VV
+  | ExternalConstant | Float64Constant | HeapConstant | Int32Constant
   | Int64Constant | NumberConstant | Parameter ->
       B1
   | ChangeFloat64ToTagged | CheckedFloat64ToInt32 | Projection -> B1V1
@@ -1213,7 +1221,9 @@ let split_kind kind =
   | C1 -> [ C1 ]
   | V1C1 -> [ V1; C1 ]
   | V1E1 -> [ V1; E1 ]
+  | B1VV -> [ B1; VV ]
   | B1 -> [ B1 ]
+  | VV -> [ VV ]
   | B1V1 -> [ B1; V1 ]
   | B2V1V2E1C1 -> [ B2; V1; V2; E1; C1 ]
   | B2 -> [ B2 ]
@@ -1235,7 +1245,6 @@ let split_kind kind =
   | V3 -> [ V3 ]
   | V4 -> [ V4 ]
   | VVC1 -> [ VV; C1 ]
-  | VV -> [ VV ]
   | V2C1E1 -> [ V2; C1; E1 ]
   | V1V2V3 -> [ V1; V2; V3 ]
   | V1V2B1V3 -> [ V1; V2; B1; V3 ]
@@ -1286,6 +1295,10 @@ let of_str str =
   | "CheckReceiverOrNullOrUndefined" -> CheckReceiverOrNullOrUndefined
   | "CheckString" -> CheckString
   | "CheckSymbol" -> CheckSymbol
+  | "CheckedBitInt64Add" -> CheckedBitInt64Add
+  | "CheckedBitInt64Div" -> CheckedBitInt64Div
+  | "CheckedBitInt64Mul" -> CheckedBitInt64Mul
+  | "CheckedBitInt64Sub" -> CheckedBitInt64Sub
   | "CheckedFloat64ToInt64" -> CheckedFloat64ToInt64
   | "CheckedInt32Mod" -> CheckedInt32Mod
   | "CheckedInt32ToTaggedSigned" -> CheckedInt32ToTaggedSigned
@@ -2167,6 +2180,10 @@ let to_str opcode =
   | CheckReceiverOrNullOrUndefined -> "CheckReceiverOrNullOrUndefined"
   | CheckString -> "CheckString"
   | CheckSymbol -> "CheckSymbol"
+  | CheckedBitInt64Add -> "CheckedBitInt64Add"
+  | CheckedBitInt64Div -> "CheckedBitInt64Div"
+  | CheckedBitInt64Mul -> "CheckedBitInt64Mul"
+  | CheckedBitInt64Sub -> "CheckedBitInt64Sub"
   | CheckedFloat64ToInt64 -> "CheckedFloat64ToInt64"
   | CheckedInt32Mod -> "CheckedInt32Mod"
   | CheckedInt32ToTaggedSigned -> "CheckedInt32ToTaggedSigned"

@@ -21,7 +21,7 @@ BitcastWordToTagged,v1
 BitcastWordToTaggedSigned,
 BooleanNot,v1
 Branch,v1,e1
-Call,b1
+Call,b1,vv
 ChangeBitToTagged,v1
 ChangeFloat32ToFloat64,v1
 ChangeFloat64ToInt32,v1
@@ -68,6 +68,10 @@ CheckReceiverOrNullOrUndefined,
 CheckSmi,v1,e1,c1
 CheckString,
 CheckSymbol,
+CheckedBitInt64Add,
+CheckedBitInt64Div,
+CheckedBitInt64Mul,
+CheckedBitInt64Sub,
 CheckedFloat64ToInt32,b1,v1
 CheckedFloat64ToInt64,
 CheckedInt32Add,v1,v2,e1,c1
