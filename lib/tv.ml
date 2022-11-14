@@ -245,7 +245,7 @@ let encode program
   | Call ->
       let fname = Operands.const_of_nth operands 0 in
       let args_regexp =
-        Str.regexp {|[a-zA-Z0-9: ]*r[0-9]+s[0-9]+i\([0-9]+\)f[0-9]+|}
+        Str.regexp {|[a-zA-Z0-9:_ ]*r[0-9]+s[0-9]+i\([0-9]+\)f[0-9]+|}
       in
       if Str.string_match args_regexp fname 0 then
         let n = Str.matched_group 1 fname |> int_of_string in
