@@ -9,7 +9,22 @@ let float64_constant c state =
   let value = c |> Value.cast Type.float64 in
   state |> State.update ~value
 
-let heap_constant c state = state |> State.update ~value:c
+let heap_constant name addr mem state =
+  let value, mem =
+    (* if constant is default constant, use pre-defined value in register file *)
+    if Constant.is_constant name then
+      (RegisterFile.find name state.State.register_file, mem)
+    else if Objmap.is_known_map name then
+      ( Objmap.map_of name |> BitVec.zero_extend 32
+        |> Value.entype Type.map_in_header,
+        mem )
+    else if String.starts_with ~prefix:"String" name then
+      let re = Re.Pcre.regexp "String\\[[0-9]*\\]: #(.*)" in
+      let str = Stdlib.Array.get (Re.Pcre.extract ~rex:re name) 0 in
+      Strings.from_string str |> Strings.promote state.State.memory
+    else (addr, mem)
+  in
+  state |> State.update ~value ~mem
 
 (* assertion: value = c *)
 let int32_constant c state =
@@ -175,7 +190,20 @@ let call fname args state =
   let bv_sort = BV.mk_sort ctx Value.len in
   let args_sort = List.map (fun _ -> bv_sort) args in
   let f_decl = Z3.FuncDecl.mk_func_decl_s ctx fname args_sort bv_sort in
-  let return = Z3.FuncDecl.apply f_decl args in
+
+  let normalized_args =
+    args
+    |> List.map (fun arg ->
+           Bool.ite
+             (* TaggedSigned | HeapNumber | Int32 | Uint32 | Float64 *)
+             (Number.is_number arg state.State.memory)
+             (arg |> Number.to_float64 state.State.memory)
+             (* Int64 *)
+             (Bool.ite
+                (arg |> Value.has_type Type.int64)
+                (arg |> Int64.to_float64) arg))
+  in
+  let return = Z3.FuncDecl.apply f_decl normalized_args in
   state |> State.update ~value:return ~control:Bool.tr
 
 let stack_pointer_greater_than state =

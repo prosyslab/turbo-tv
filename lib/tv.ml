@@ -109,22 +109,15 @@ let encode program
       in
       float64_constant c
   | HeapConstant ->
-      let addr_name_re = Re.Pcre.regexp "(0x[0-9a-f]+) <([^>]*)>" in
       let operand = Operands.const_of_nth operands 0 in
-      let addr_name = Re.exec addr_name_re operand in
-      let ptr =
+      let re = Re.Pcre.regexp "(0x[0-9a-f]+) <([^>]*)>" in
+      let addr_name = Re.exec re operand in
+      let addr =
         Re.Group.get addr_name 1 |> BitVecVal.from_istring
         |> Value.entype Type.pointer
       in
       let name = Re.Group.get addr_name 2 in
-      (* if constant is default constant, use pre-defined value in register file *)
-      if Constant.is_constant name then
-        heap_constant (RegisterFile.find name rf)
-      else if Objmap.is_known_map name then
-        heap_constant
-          (Objmap.map_of name |> BitVec.zero_extend 32
-          |> Value.entype Type.map_in_header)
-      else heap_constant ptr
+      heap_constant name addr mem
   | ExternalConstant ->
       let addr_re = Re.Pcre.regexp "(0x[0-9a-f]+)" in
       let operand = Operands.const_of_nth operands 0 in

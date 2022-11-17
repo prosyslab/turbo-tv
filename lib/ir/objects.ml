@@ -149,6 +149,13 @@ let is_undefined mem ptr =
       ptr |> has_map_of Objmap.undefined_map mem;
     ]
 
+let is_string mem ptr =
+  Bool.ands
+    [
+      ptr |> Value.has_type Type.tagged_pointer;
+      ptr |> has_map_of Objmap.string_map mem;
+    ]
+
 let are_heap_nubmer mem ptrs =
   Bool.ands (List.map (has_map_of Objmap.heap_number_map mem) ptrs)
 

@@ -25,6 +25,7 @@
   valueOperator
   deopt
   exprMap
+  strings
   ;tv
   tv
   ;v8
