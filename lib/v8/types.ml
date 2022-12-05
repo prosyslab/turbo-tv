@@ -36,6 +36,7 @@ type t =
   | WasmObject
   (* Proper Atomic Bitset Type High List *)
   | SandboxedPointer
+  | Machine
   (* Proper Bitset Type List *)
   | None
   | Signed31
@@ -248,6 +249,7 @@ let rec of_string str =
   | "OtherBigInt" -> OtherBigInt
   | "WasmObject" -> WasmObject
   | "SandboxedPointer" -> SandboxedPointer
+  | "Machine" -> Machine
   | "None" -> None
   | "Signed31" -> Signed31
   | "Signed32" -> Signed32
@@ -354,6 +356,7 @@ let rec to_string t =
   | OtherBigInt -> "OtherBigInt"
   | WasmObject -> "WasmObject"
   | SandboxedPointer -> "SandboxedPointer"
+  | Machine -> "Machine"
   | None -> "None"
   | Signed31 -> "Signed31"
   | Signed32 -> "Signed32"
@@ -878,6 +881,7 @@ let decompose t =
       ]
   | ExternalPointer -> [ ExternalPointer ]
   | SandboxedPointer -> [ SandboxedPointer ]
+  | Machine -> [ Machine ]
   | OtherInternal -> [ OtherInternal ]
   | Internal -> [ ExternalPointer; SandboxedPointer; OtherInternal; Hole ]
   | NonInternal ->

@@ -115,7 +115,7 @@ def gen_re_from_kind(kind):
     if kind == "UNIMPL" or kind.startswith("B"):
         return ""
 
-    p_operand_re = "#(\\\\d*)"
+    p_operand_re = "#(\\\\d*):"
     p_re_prefix = "\\\\("
     p_re_suffix = "[^\\\\)]*\\\\)"
 

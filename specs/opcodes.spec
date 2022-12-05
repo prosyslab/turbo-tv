@@ -117,6 +117,8 @@ DoubleArrayMin,
 EffectPhi,
 End,cv
 EnsureWritableFastElements,v1,v2,e1,c1
+EnterMachineGraph,
+ExitMachineGraph,
 ExternalConstant,b1
 F32x4Abs,
 F32x4Add,
@@ -716,9 +718,15 @@ Simd128ReverseBytes,
 SpeculativeBigIntAdd,
 SpeculativeBigIntAsIntN,
 SpeculativeBigIntAsUintN,
+SpeculativeBigIntBitwiseAnd,
+SpeculativeBigIntBitwiseOr,
+SpeculativeBigIntBitwiseXor,
 SpeculativeBigIntDivide,
+SpeculativeBigIntModulus,
 SpeculativeBigIntMultiply,
 SpeculativeBigIntNegate,
+SpeculativeBigIntShiftLeft,
+SpeculativeBigIntShiftRight,
 SpeculativeBigIntSubtract,
 SpeculativeNumberAdd,v1,v2
 SpeculativeNumberBitwiseAnd,v1,v2
