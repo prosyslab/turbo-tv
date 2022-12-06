@@ -797,8 +797,25 @@ module Float64 = struct
   let to_tagged_signed value = value |> to_int32 |> Int32.to_tagged_signed
 
   let rem lval rval =
-    let q = trunc (div lval rval) in
-    let r_f64 = sub lval (mul q rval) in
+    let lf = lval |> from_value in
+    let rf = rval |> from_value in
+    let r_f64 =
+      let r = Float.rem lf rf |> to_value in
+      Bool.ite
+        (Bool.ors
+           [
+             Bool.ands [ gt lval zero; gt rval zero; lt r zero ];
+             Bool.ands [ lt lval zero; lt rval zero; gt r zero ];
+           ])
+        (add r rval)
+        (Bool.ite
+           (Bool.ors
+              [
+                Bool.ands [ gt lval zero; lt rval zero; lt r zero ];
+                Bool.ands [ lt lval zero; gt rval zero; gt r zero ];
+              ])
+           (sub r rval) r)
+    in
     let is_inf_or_ninf num = Bool.ors [ is_inf num; is_ninf num ] in
     let is_zero_or_minus_zero num =
       Bool.ors [ is_zero num; is_minus_zero num ]
