@@ -37,6 +37,7 @@ type t = {
   check_type : bool;
   assertion : BitVec.t;
   deopt : Bool.t;
+  not_target : bool;
 }
 
 let install_constants state =
@@ -83,6 +84,7 @@ let init nparams ?check_type stage : t =
     check_type = Option.value check_type ~default:false;
     assertion = Bool.tr;
     deopt = Bool.fl;
+    not_target = false;
   }
   |> install_constants
 
@@ -110,6 +112,8 @@ let retval t = t.retval
 let assertion t = t.assertion
 
 let deopt t = t.deopt
+
+let not_target t = t.not_target
 
 let value_of id t = RegisterFile.find id (register_file t)
 

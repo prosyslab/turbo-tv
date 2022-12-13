@@ -81,6 +81,7 @@ type t =
   | CheckReceiverOrNullOrUndefined
   | CheckString
   | CheckSymbol
+  | CheckedBigInt64Add
   | CheckedBitInt64Add
   | CheckedBitInt64Div
   | CheckedBitInt64Mul
@@ -88,6 +89,7 @@ type t =
   | CheckedFloat64ToInt64
   | CheckedInt32Mod
   | CheckedInt32ToTaggedSigned
+  | CheckedInt64Mul
   | CheckedInt64ToTaggedSigned
   | CheckedTaggedToArrayIndex
   | CheckedTaggedToInt32
@@ -96,6 +98,7 @@ type t =
   | CheckedUint32ToTaggedSigned
   | CheckedUint64Bounds
   | CheckedUint64ToInt32
+  | CheckedUint64ToInt64
   | CheckedUint64ToTaggedSigned
   | Checkpoint
   | Comment
@@ -978,12 +981,13 @@ let get_kind opcode =
   | CheckFloat64Hole | CheckHeapObject | CheckInternalizedString
   | CheckNotTaggedHole | CheckNumber | CheckReceiver
   | CheckReceiverOrNullOrUndefined | CheckString | CheckSymbol
-  | CheckedBitInt64Add | CheckedBitInt64Div | CheckedBitInt64Mul
-  | CheckedBitInt64Sub | CheckedFloat64ToInt64 | CheckedInt32Mod
-  | CheckedInt32ToTaggedSigned | CheckedInt64ToTaggedSigned
-  | CheckedTaggedToArrayIndex | CheckedTaggedToInt32 | CheckedTaggedToInt64
-  | CheckedUint32Mod | CheckedUint32ToTaggedSigned | CheckedUint64Bounds
-  | CheckedUint64ToInt32 | CheckedUint64ToTaggedSigned | Checkpoint | Comment
+  | CheckedBigInt64Add | CheckedBitInt64Add | CheckedBitInt64Div
+  | CheckedBitInt64Mul | CheckedBitInt64Sub | CheckedFloat64ToInt64
+  | CheckedInt32Mod | CheckedInt32ToTaggedSigned | CheckedInt64Mul
+  | CheckedInt64ToTaggedSigned | CheckedTaggedToArrayIndex
+  | CheckedTaggedToInt32 | CheckedTaggedToInt64 | CheckedUint32Mod
+  | CheckedUint32ToTaggedSigned | CheckedUint64Bounds | CheckedUint64ToInt32
+  | CheckedUint64ToInt64 | CheckedUint64ToTaggedSigned | Checkpoint | Comment
   | CompareMaps | CompressedHeapConstant | ConvertReceiver
   | ConvertTaggedHoleToUndefined | DateNow | Dead | DeadValue | DebugBreak
   | DelayedStringConstant | DoubleArrayMax | DoubleArrayMin | EffectPhi
@@ -1307,6 +1311,7 @@ let of_str str =
   | "CheckReceiverOrNullOrUndefined" -> CheckReceiverOrNullOrUndefined
   | "CheckString" -> CheckString
   | "CheckSymbol" -> CheckSymbol
+  | "CheckedBigInt64Add" -> CheckedBigInt64Add
   | "CheckedBitInt64Add" -> CheckedBitInt64Add
   | "CheckedBitInt64Div" -> CheckedBitInt64Div
   | "CheckedBitInt64Mul" -> CheckedBitInt64Mul
@@ -1314,6 +1319,7 @@ let of_str str =
   | "CheckedFloat64ToInt64" -> CheckedFloat64ToInt64
   | "CheckedInt32Mod" -> CheckedInt32Mod
   | "CheckedInt32ToTaggedSigned" -> CheckedInt32ToTaggedSigned
+  | "CheckedInt64Mul" -> CheckedInt64Mul
   | "CheckedInt64ToTaggedSigned" -> CheckedInt64ToTaggedSigned
   | "CheckedTaggedToArrayIndex" -> CheckedTaggedToArrayIndex
   | "CheckedTaggedToInt32" -> CheckedTaggedToInt32
@@ -1322,6 +1328,7 @@ let of_str str =
   | "CheckedUint32ToTaggedSigned" -> CheckedUint32ToTaggedSigned
   | "CheckedUint64Bounds" -> CheckedUint64Bounds
   | "CheckedUint64ToInt32" -> CheckedUint64ToInt32
+  | "CheckedUint64ToInt64" -> CheckedUint64ToInt64
   | "CheckedUint64ToTaggedSigned" -> CheckedUint64ToTaggedSigned
   | "Checkpoint" -> Checkpoint
   | "Comment" -> Comment
@@ -2200,6 +2207,7 @@ let to_str opcode =
   | CheckReceiverOrNullOrUndefined -> "CheckReceiverOrNullOrUndefined"
   | CheckString -> "CheckString"
   | CheckSymbol -> "CheckSymbol"
+  | CheckedBigInt64Add -> "CheckedBigInt64Add"
   | CheckedBitInt64Add -> "CheckedBitInt64Add"
   | CheckedBitInt64Div -> "CheckedBitInt64Div"
   | CheckedBitInt64Mul -> "CheckedBitInt64Mul"
@@ -2207,6 +2215,7 @@ let to_str opcode =
   | CheckedFloat64ToInt64 -> "CheckedFloat64ToInt64"
   | CheckedInt32Mod -> "CheckedInt32Mod"
   | CheckedInt32ToTaggedSigned -> "CheckedInt32ToTaggedSigned"
+  | CheckedInt64Mul -> "CheckedInt64Mul"
   | CheckedInt64ToTaggedSigned -> "CheckedInt64ToTaggedSigned"
   | CheckedTaggedToArrayIndex -> "CheckedTaggedToArrayIndex"
   | CheckedTaggedToInt32 -> "CheckedTaggedToInt32"
@@ -2215,6 +2224,7 @@ let to_str opcode =
   | CheckedUint32ToTaggedSigned -> "CheckedUint32ToTaggedSigned"
   | CheckedUint64Bounds -> "CheckedUint64Bounds"
   | CheckedUint64ToInt32 -> "CheckedUint64ToInt32"
+  | CheckedUint64ToInt64 -> "CheckedUint64ToInt64"
   | CheckedUint64ToTaggedSigned -> "CheckedUint64ToTaggedSigned"
   | Checkpoint -> "Checkpoint"
   | Comment -> "Comment"

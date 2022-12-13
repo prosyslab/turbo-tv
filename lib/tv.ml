@@ -40,6 +40,7 @@ let encode program
        _;
      } as state) =
   let nop state = state in
+  let not_implemented state = { state with State.not_target = true } in
 
   let _, opcode, operands = IR.instr_of pc program in
   let encode_machine_unary op =
@@ -927,7 +928,7 @@ let encode program
       nop
   | _ ->
       Format.printf "not implemented: %s\n" (opcode |> Opcode.to_str);
-      nop
+      not_implemented
 
 let propagate program state =
   let pc = State.pc state in
@@ -1161,7 +1162,12 @@ let run nparams src_program tgt_program =
       ]
   in
 
-  let status = Solver.check validator assertion in
+  let is_not_target =
+    State.not_target src_state || State.not_target tgt_state
+  in
+  let status =
+    if is_not_target then S.UNKNOWN else Solver.check validator assertion
+  in
   match status with
   | SATISFIABLE ->
       let model = Option.get (Solver.get_model validator) in
@@ -1175,4 +1181,4 @@ let run nparams src_program tgt_program =
   | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
   | UNKNOWN ->
       let reason = Z3.Solver.get_reason_unknown validator in
-      Printf.printf "Result: Unknown\nReason: %s" reason
+      Printf.printf "Result: Unknown\nReason: %s\n" reason

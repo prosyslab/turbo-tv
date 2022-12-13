@@ -68,6 +68,7 @@ CheckReceiverOrNullOrUndefined,
 CheckSmi,v1,e1,c1
 CheckString,
 CheckSymbol,
+CheckedBigInt64Add,
 CheckedBitInt64Add,
 CheckedBitInt64Div,
 CheckedBitInt64Mul,
@@ -80,6 +81,7 @@ CheckedInt32Mod,
 CheckedInt32Mul,b1,v1,v2,e1,c1
 CheckedInt32Sub,v1,v2,e1,c1
 CheckedInt32ToTaggedSigned,
+CheckedInt64Mul,
 CheckedInt64ToInt32,v1,e1,c1
 CheckedInt64ToTaggedSigned, 
 CheckedTaggedSignedToInt32,v1
@@ -97,6 +99,7 @@ CheckedUint32ToInt32,v1,e1,c1
 CheckedUint32ToTaggedSigned,
 CheckedUint64Bounds,
 CheckedUint64ToInt32,
+CheckedUint64ToInt64,
 CheckedUint64ToTaggedSigned,
 Checkpoint,
 Comment,
