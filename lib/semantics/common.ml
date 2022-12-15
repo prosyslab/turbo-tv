@@ -14,6 +14,27 @@ let heap_constant name addr mem state =
     (* if constant is default constant, use pre-defined value in register file *)
     if Constant.is_constant name then
       (RegisterFile.find name state.State.register_file, mem)
+    else if String.starts_with ~prefix:"BigInt" name then
+      let values = name |> String.split_on_char ' ' |> List.tl |> List.tl in
+      let length = List.length values in
+      let size = length * !bvlen / 8 in
+      let ptr, mem = Memory.allocate (Value.from_int size) mem in
+      let big_int_value =
+        values
+        |> List.map (fun s -> BitVecVal.from_istring_trunc s)
+        |> Composed.from_values
+      in
+      let mem =
+        mem
+        |> Memory.store Bool.tr
+             (ptr |> TaggedPointer.to_raw_pointer)
+             Objmap.size Objmap.big_int_map
+        |> Memory.store Bool.tr
+             (TaggedPointer.movei ptr Objmap.size
+             |> TaggedPointer.to_raw_pointer)
+             size big_int_value
+      in
+      (ptr, mem)
     else if Objmap.is_known_map name then
       ( Objmap.map_of name |> BitVec.zero_extend 32
         |> Value.entype Type.map_in_header,

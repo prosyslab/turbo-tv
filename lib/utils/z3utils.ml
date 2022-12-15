@@ -268,6 +268,8 @@ module BitVecVal = struct
     in
     BV.mk_numeral ctx dec_str len
 
+  let from_istring_trunc ?(len = !bvlen) str = BV.mk_numeral ctx str len
+
   let from_f64string str =
     Float.from_string ~sort:Float.double_sort str |> Float.to_ieee_bv
 
