@@ -26,6 +26,7 @@
   deopt
   exprMap
   strings
+  bigint
   ;tv
   tv
   ;v8

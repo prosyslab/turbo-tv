@@ -280,6 +280,7 @@ let encode program
   | CheckedInt32Mul ->
       encode_checked_simplified_binary_with_hint checked_int32_mul
   | CheckedInt32Sub -> encode_checked_simplified_binary checked_int32_sub
+  | CheckedInt64Add -> encode_checked_simplified_binary checked_int64_add
   | CheckedUint32Div -> encode_checked_simplified_binary checked_uint32_div
   | NumberAdd ->
       let lpid = Operands.id_of_nth operands 0 in
@@ -630,6 +631,12 @@ let encode program
       let ctrl = ControlFile.find ctrl_id cf in
       store_field ptr off repr value () ctrl mem
   (* simplified: type-check *)
+  | CheckBigInt ->
+      let value_id = Operands.id_of_nth operands 0 in
+      let value = RegisterFile.find value_id rf in
+      let ctrl_id = Operands.id_of_nth operands 2 in
+      let ctrl = ControlFile.find ctrl_id cf in
+      check_big_int value ctrl mem
   | NumberIsInteger ->
       let pid = Operands.id_of_nth operands 0 in
       let value = RegisterFile.find pid rf in
@@ -658,7 +665,7 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       object_is_smi pval
-  (* simplified: type-conversion *)
+      (* simplified: type-conversion *)
   | ChangeBitToTagged ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -676,6 +683,10 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       change_int32_to_tagged pval
+  | ChangeInt64ToBigInt ->
+      let value_id = Operands.id_of_nth operands 0 in
+      let value = RegisterFile.find value_id rf in
+      change_int64_to_big_int value mem
   | ChangeInt64ToTagged ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -692,6 +703,12 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       change_uint64_to_tagged pval
+  | CheckedBigIntToBigInt64 ->
+      let value_id = Operands.id_of_nth operands 0 in
+      let value = RegisterFile.find value_id rf in
+      let ctrl_id = Operands.id_of_nth operands 2 in
+      let ctrl = ControlFile.find ctrl_id cf in
+      checked_big_int_to_big_int64 value ctrl mem
   | CheckedFloat64ToInt32 ->
       let hint = Operands.const_of_nth operands 0 in
       let pid = Operands.id_of_nth operands 1 in
@@ -752,6 +769,10 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       to_boolean pval mem
+  | TruncateBigIntToWord64 ->
+      let value_id = Operands.id_of_nth operands 0 in
+      let value = RegisterFile.find value_id rf in
+      truncate_big_int_to_word64 value mem
   | TruncateTaggedToBit ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -827,6 +848,7 @@ let encode program
   | Int32SubWithOverflow ->
       encode_machine_binary_with_control int32_sub_with_overflow
   | Int64Add -> encode_machine_binary int64_add
+  | Int64AddWithOverflow -> encode_machine_ovf int64_add_with_overflow
   | Int64Mul -> encode_machine_binary int64_mul
   | Int64Sub -> encode_machine_binary int64_sub
   | Int64Div -> encode_machine_binary_with_control int64_div

@@ -112,6 +112,16 @@ let int32_mul lval rval state = int_arith 32 "*" lval rval state
 let int32_div lval rval control state =
   int_arith 32 "/" lval rval ~control state
 
+let int64_add lval rval state = int_arith 64 "+" lval rval state
+
+let int64_add_with_overflow lval rval control state =
+  let added = Int64.add lval rval in
+  let ovf = Bool.ite (Int64.add_would_overflow lval rval) Value.tr Value.fl in
+  let value = Composed.from_values [ added; ovf ] in
+  state |> State.update ~value ~control
+
+let int64_sub lval rval state = int_arith 64 "-" lval rval state
+
 let int32_mod lval rval control state =
   int_arith 32 "%" lval rval ~control state
 

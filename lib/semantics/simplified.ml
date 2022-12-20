@@ -55,6 +55,10 @@ let checked_int32_sub lval rval _eff control state =
   let deopt = Int32.sub_would_overflow lval rval in
   state |> Machine.int32_sub lval rval |> State.update ~deopt ~control
 
+let checked_int64_add lval rval _eff control state =
+  let deopt = Int64.add_would_overflow lval rval in
+  state |> Machine.int64_add lval rval |> State.update ~deopt ~control
+
 let checked_uint32_div lval rval _eff control state =
   let deopt =
     let division_by_zero = Uint32.is_zero rval in
@@ -388,6 +392,16 @@ let store_field ptr off repr value _eff control mem state =
   state |> Machine.store ptr off repr value mem |> State.update ~control
 
 (* simplified: type-check *)
+let check_big_int value control mem state =
+  let deopt =
+    Bool.ors
+      [
+        Value.has_type Type.tagged_signed value;
+        Bool.not (Objects.is_big_int mem value);
+      ]
+  in
+  state |> State.update ~value ~deopt ~control
+
 let number_is_integer pval mem state =
   let value = Bool.ite (pval |> Number.is_integer mem) Value.tr Value.fl in
   state |> State.update ~value
@@ -489,6 +503,14 @@ let change_int32_to_tagged pval state =
   let value = Bool.ite is_in_smi_range smi heap_number in
   state |> State.update ~value
 
+let change_int64_to_big_int value mem state =
+  let data = Value.data_of value in
+  let sign = BitVec.lshri data 63 |> BitVec.extract 7 0 in
+  let sign_mask = BitVec.ashri data 63 in
+  let abs_value = BitVec.subb (BitVec.xor data sign_mask) sign_mask in
+  let ptr, mem = Bigint.allocate_big_int (Bigint.create sign abs_value) mem in
+  state |> State.update ~value:ptr ~mem
+
 (* assertion:
  *  value = ite well-defined (tagged(pval)) UB *)
 let change_int64_to_tagged pval state =
@@ -516,6 +538,16 @@ let change_uint64_to_tagged pval state =
   let heap_number = pval |> Uint64.to_float64 in
   let value = Bool.ite is_in_smi_range smi heap_number in
   state |> State.update ~value
+
+let checked_big_int_to_big_int64 value control mem state =
+  let loaded = Bigint.load value mem in
+  let is_int64_min =
+    Bool.ands
+      [ Bigint.is_negative loaded; BitVec.eqb loaded.value Int64.min_limit ]
+  in
+  let is_in_range = BitVec.uleb loaded.value Int64.max_limit in
+  let deopt = Bool.ands [ Bool.not is_in_range; Bool.not is_int64_min ] in
+  state |> State.update ~value ~control ~deopt
 
 (* Deoptimization condition =
  *  LostPrecision(pval)
@@ -587,6 +619,11 @@ let checked_tagged_to_tagged_pointer pval _checkpoint control state =
 let checked_tagged_to_tagged_signed pval _checkpoint control state =
   let deopt = Bool.not (pval |> Value.has_type Type.tagged_signed) in
   state |> State.update ~value:pval ~control ~deopt
+
+let truncate_big_int_to_word64 value mem state =
+  let loaded = Bigint.load value mem in
+  let value = Bigint.to_int64 loaded in
+  state |> State.update ~value
 
 let truncate_tagged_to_word32 pval state =
   let value =
