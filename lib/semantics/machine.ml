@@ -44,6 +44,10 @@ let float64_mul lval rval state =
   let value = Float64.mul lval rval in
   state |> State.update ~value
 
+let float64_pow lval rval state =
+  let value = Float64.pow lval rval in
+  state |> State.update ~value
+
 let float64_sub lval rval state =
   let value = Float64.sub lval rval in
   state |> State.update ~value
@@ -72,18 +76,24 @@ let float64_sin pval state =
   let value = pval |> Float64.sin in
   state |> State.update ~value
 
-let int_arith width op lval rval state =
+let int_arith width op lval rval ?control state =
   let value =
     match (width, op) with
     | 32, "+" -> Int32.add lval rval
     | 32, "-" -> Int32.sub lval rval
     | 32, "*" -> Int32.mul lval rval
+    | 32, "/" -> Int32.div lval rval
+    | 32, "%" -> Int32.div lval rval
     | 64, "+" -> Int64.add lval rval
     | 64, "-" -> Int64.sub lval rval
     | 64, "*" -> Int64.mul lval rval
+    | 64, "/" -> Int32.div lval rval
+    | 64, "%" -> Int32.div lval rval
     | _ -> failwith "int_arith: not implemented"
   in
-  state |> State.update ~value
+  match control with
+  | None -> State.update ~value state
+  | Some control -> State.update ~value ~control state
 
 let int32_add lval rval state = int_arith 32 "+" lval rval state
 
@@ -91,26 +101,16 @@ let int32_sub lval rval state = int_arith 32 "-" lval rval state
 
 let int32_mul lval rval state = int_arith 32 "*" lval rval state
 
-let int64_add lval rval state = int_arith 64 "+" lval rval state
+let int32_div lval rval control state =
+  int_arith 32 "/" lval rval ~control state
 
-let int64_sub lval rval state = int_arith 64 "-" lval rval state
+let int32_mod lval rval control state =
+  int_arith 32 "%" lval rval ~control state
 
-let int64_mul lval rval state = int_arith 64 "*" lval rval state
-
-(* assertion:
- * value = ((lval + rval) mod 2**32) :: (lval + rval > smi_max) *)
 let int32_add_with_overflow lval rval control state =
   let added = Int32.add lval rval in
   let ovf = Bool.ite (Int32.add_would_overflow lval rval) Value.tr Value.fl in
   let value = Composed.from_values [ added; ovf ] in
-  state |> State.update ~value ~control
-
-let int32_div lval rval control state =
-  let value = Int32.div lval rval in
-  state |> State.update ~value ~control
-
-let int32_mod lval rval control state =
-  let value = Int32.modulo lval rval in
   state |> State.update ~value ~control
 
 let int32_mul_with_overflow lval rval control state =
@@ -122,6 +122,24 @@ let int32_mul_with_overflow lval rval control state =
 let int32_sub_with_overflow lval rval control state =
   let subtracted = Int32.sub lval rval in
   let ovf = Bool.ite (Int32.sub_would_overflow lval rval) Value.tr Value.fl in
+  let value = Composed.from_values [ subtracted; ovf ] in
+  state |> State.update ~value ~control
+
+let int64_add lval rval state = int_arith 64 "+" lval rval state
+
+let int64_sub lval rval state = int_arith 64 "-" lval rval state
+
+let int64_mul lval rval state = int_arith 64 "*" lval rval state
+
+let int64_div lval rval control state =
+  int_arith 64 "/" lval rval ~control state
+
+let int64_mod lval rval control state =
+  int_arith 64 "%" lval rval ~control state
+
+let int64_sub_with_overflow lval rval control state =
+  let subtracted = Int64.sub lval rval in
+  let ovf = Bool.ite (Int64.sub_would_overflow lval rval) Value.tr Value.fl in
   let value = Composed.from_values [ subtracted; ovf ] in
   state |> State.update ~value ~control
 

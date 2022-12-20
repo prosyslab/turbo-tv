@@ -247,6 +247,10 @@ module Make_Integer_Operator (I : IntValue) = struct
   let is_positive value =
     if sign then BitVec.sgti (value |> from_value) 0 else Bool.tr
 
+  let is_odd value = BitVec.eqi (BitVec.extract 0 0 (value |> from_value)) 1
+
+  let is_even value = Bool.not (is_odd value)
+
   let is_zero value = BitVec.eqi (value |> from_value) 0
 
   let is_in_smi_range value =
@@ -640,109 +644,7 @@ module Float64 = struct
     let rf = rval |> from_value in
     Float.gt lf rf
 
-  (* methods *)
-
-  let is_zero value = Float.is_zero (value |> from_value)
-
-  let is_minus_zero value = Float.is_minus_zero (value |> from_value)
-
-  let is_nan value = Float.is_nan (value |> from_value)
-
-  let is_inf value = Float.is_pinf (value |> from_value)
-
-  let is_ninf value = Float.is_ninf (value |> from_value)
-
-  let is_negative value =
-    BitVec.eqi (BitVec.extract 63 63 (value |> Value.data_of)) 1
-
-  let is_positive value =
-    BitVec.eqi (BitVec.extract 63 63 (value |> Value.data_of)) 0
-
-  let is_integer value =
-    Bool.ite
-      (Bool.ors [ value |> is_inf; value |> is_ninf; value |> is_nan ])
-      Bool.fl
-      (eq value (value |> floor))
-
-  let is_safe_integer value =
-    Bool.ands
-      [ is_integer value; ge value safe_integer_min; le value safe_integer_max ]
-
-  let is_in_smi_range value =
-    Bool.ands
-      [
-        ge value (of_float (TaggedSigned.min_limit |> float_of_int));
-        le value (of_float (TaggedSigned.max_limit |> float_of_int));
-      ]
-
-  let is_in_range value lb ub =
-    Bool.ands [ ge value (of_float lb); le value (of_float ub) ]
-
-  let can_be_smi value =
-    Bool.ands [ value |> is_integer; value |> is_in_smi_range ]
-
-  let max lval rval =
-    (* UCOMISD: https://www.felixcloutier.com/x86/ucomisd *)
-    Bool.ite
-      (* nan, nan -> nan *)
-      (Bool.ors [ lval |> is_nan; rval |> is_nan ])
-      nan
-      (Bool.ite
-         (* -0, 0 -> 0 *)
-         (Bool.ands [ lval |> is_minus_zero; rval |> is_zero ])
-         zero
-         (Bool.ite
-            (* 0, -0 -> 0 *)
-            (Bool.ands [ lval |> is_zero; rval |> is_minus_zero ])
-            zero
-            (* n1, n2 -> n1 > n2 ? n1 : n2 *)
-            (Bool.ite (gt lval rval) lval rval)))
-
-  let min lval rval =
-    (* UCOMISD: https://www.felixcloutier.com/x86/ucomisd *)
-    Bool.ite
-      (* nan, nan -> nan *)
-      (Bool.ors [ lval |> is_nan; rval |> is_nan ])
-      nan
-      (Bool.ite
-         (* -0, 0 -> -0 *)
-         (Bool.ands [ lval |> is_minus_zero; rval |> is_zero ])
-         minus_zero
-         (Bool.ite
-            (* 0, -0 -> -0 *)
-            (Bool.ands [ lval |> is_zero; rval |> is_minus_zero ])
-            minus_zero
-            (* n1, n2 -> n1 < n2 ? n1 : n2 *)
-            (Bool.ite (lt lval rval) lval rval)))
-
-  let expm1 value =
-    let float_sort = Z3utils.Float.double_sort in
-    let expm_decl =
-      Z3.FuncDecl.mk_func_decl_s ctx "float64_expm1" [ float_sort ] float_sort
-    in
-    (* if num is NaN or 0 or -0 or inf, return num*)
-    Bool.ite
-      (Bool.ors
-         [ is_nan value; is_zero value; is_minus_zero value; is_inf value ])
-      value
-      (* if num is -inf, return -1 *)
-      (Bool.ite (is_ninf value) (of_float (-1.0))
-         (Z3.FuncDecl.apply expm_decl [ value |> from_value ] |> to_value))
-
-  let sin value =
-    let float_sort = Z3utils.Float.double_sort in
-    let uif =
-      Z3.FuncDecl.mk_func_decl_s ctx "float64_sin" [ float_sort ] float_sort
-    in
-    (* https://tc39.es/ecma262/#sec-math.sin *)
-    Bool.ite
-      (Bool.ors [ value |> is_nan; value |> is_zero; value |> is_minus_zero ])
-      value
-      (Bool.ite
-         (Bool.ors [ value |> is_inf; value |> is_ninf ])
-         nan
-         (Z3.FuncDecl.apply uif [ value |> from_value ] |> to_value))
-
+  (* conversion *)
   let to_intx ?(sign = true) width value =
     (* https://tc39.es/ecma262/#sec-toint32 *)
     let value_w_bit =
@@ -795,6 +697,157 @@ module Float64 = struct
   let to_uint64 value = value |> to_intx ~sign:false 64
 
   let to_tagged_signed value = value |> to_int32 |> Int32.to_tagged_signed
+
+  (* methods *)
+
+  let is_zero value = Float.is_zero (value |> from_value)
+
+  let is_minus_zero value = Float.is_minus_zero (value |> from_value)
+
+  let is_nan value = Float.is_nan (value |> from_value)
+
+  let is_inf value = Float.is_pinf (value |> from_value)
+
+  let is_ninf value = Float.is_ninf (value |> from_value)
+
+  let is_negative value =
+    BitVec.eqi (BitVec.extract 63 63 (value |> Value.data_of)) 1
+
+  let is_positive value =
+    BitVec.eqi (BitVec.extract 63 63 (value |> Value.data_of)) 0
+
+  let is_integer value =
+    Bool.ite
+      (Bool.ors [ value |> is_inf; value |> is_ninf; value |> is_nan ])
+      Bool.fl
+      (eq value (value |> floor))
+
+  let is_odd_integer value =
+    (* approximate value ranges int64 *)
+    Bool.ands [ is_integer value; value |> to_int64 |> Int64.is_odd ]
+
+  let is_even_integer value =
+    Bool.ands [ is_integer value; Bool.not (value |> is_odd_integer) ]
+
+  let is_safe_integer value =
+    Bool.ands
+      [ is_integer value; ge value safe_integer_min; le value safe_integer_max ]
+
+  let is_in_smi_range value =
+    Bool.ands
+      [
+        ge value (of_float (TaggedSigned.min_limit |> float_of_int));
+        le value (of_float (TaggedSigned.max_limit |> float_of_int));
+      ]
+
+  let is_in_range value lb ub =
+    Bool.ands [ ge value (of_float lb); le value (of_float ub) ]
+
+  let can_be_smi value =
+    Bool.ands [ value |> is_integer; value |> is_in_smi_range ]
+
+  let max lval rval =
+    (* UCOMISD: https://www.felixcloutier.com/x86/ucomisd *)
+    Bool.ite
+      (* nan, nan -> nan *)
+      (Bool.ors [ lval |> is_nan; rval |> is_nan ])
+      nan
+      (Bool.ite
+         (* -0, 0 -> 0 *)
+         (Bool.ands [ lval |> is_minus_zero; rval |> is_zero ])
+         zero
+         (Bool.ite
+            (* 0, -0 -> 0 *)
+            (Bool.ands [ lval |> is_zero; rval |> is_minus_zero ])
+            zero
+            (* n1, n2 -> n1 > n2 ? n1 : n2 *)
+            (Bool.ite (gt lval rval) lval rval)))
+
+  let min lval rval =
+    (* UCOMISD: https://www.felixcloutier.com/x86/ucomisd *)
+    Bool.ite
+      (* nan, nan -> nan *)
+      (Bool.ors [ lval |> is_nan; rval |> is_nan ])
+      nan
+      (Bool.ite
+         (* -0, 0 -> -0 *)
+         (Bool.ands [ lval |> is_minus_zero; rval |> is_zero ])
+         minus_zero
+         (Bool.ite
+            (* 0, -0 -> -0 *)
+            (Bool.ands [ lval |> is_zero; rval |> is_minus_zero ])
+            minus_zero
+            (* n1, n2 -> n1 < n2 ? n1 : n2 *)
+            (Bool.ite (lt lval rval) lval rval)))
+
+  let pow base exp =
+    let float_sort = Z3utils.Float.double_sort in
+    let pow_decl =
+      Z3.FuncDecl.mk_func_decl_s ctx "float64_pow" [ float_sort; float_sort ]
+        float_sort
+    in
+    (* https://tc39.es/ecma262/#sec-numeric-types-number-exponentiate *)
+    Bool.ite (is_nan exp) nan
+      (Bool.ite
+         (Bool.ors [ is_zero exp; is_minus_zero exp ])
+         one
+         (Bool.ite (is_nan base) nan
+            (Bool.ite (is_inf base)
+               (Bool.ite (is_positive exp) inf zero)
+               (Bool.ite (is_ninf base)
+                  (Bool.ite (is_positive exp)
+                     (Bool.ite (is_odd_integer exp) ninf inf)
+                     (Bool.ite (is_odd_integer exp) minus_zero zero))
+                  (Bool.ite (is_zero base)
+                     (Bool.ite (is_positive exp) zero inf)
+                     (Bool.ite (is_minus_zero base)
+                        (Bool.ite (is_positive exp)
+                           (Bool.ite (is_odd_integer exp) minus_zero zero)
+                           (Bool.ite (is_odd_integer exp) ninf inf))
+                        (Bool.ite (is_inf exp)
+                           (Bool.ite (gt base one) inf
+                              (Bool.ite (lt base one) zero nan))
+                           (Bool.ite (is_ninf exp)
+                              (Bool.ite (gt base one) zero
+                                 (Bool.ite (lt base one) inf nan))
+                              (Bool.ite
+                                 (Bool.ands
+                                    [
+                                      lt base minus_zero;
+                                      Bool.not (is_integer exp);
+                                    ])
+                                 nan
+                                 (Z3.FuncDecl.apply pow_decl
+                                    [ base |> from_value; exp |> from_value ]
+                                 |> to_value))))))))))
+
+  let expm1 value =
+    let float_sort = Z3utils.Float.double_sort in
+    let expm_decl =
+      Z3.FuncDecl.mk_func_decl_s ctx "float64_expm1" [ float_sort ] float_sort
+    in
+    (* if num is NaN or 0 or -0 or inf, return num*)
+    Bool.ite
+      (Bool.ors
+         [ is_nan value; is_zero value; is_minus_zero value; is_inf value ])
+      value
+      (* if num is -inf, return -1 *)
+      (Bool.ite (is_ninf value) (of_float (-1.0))
+         (Z3.FuncDecl.apply expm_decl [ value |> from_value ] |> to_value))
+
+  let sin value =
+    let float_sort = Z3utils.Float.double_sort in
+    let uif =
+      Z3.FuncDecl.mk_func_decl_s ctx "float64_sin" [ float_sort ] float_sort
+    in
+    (* https://tc39.es/ecma262/#sec-math.sin *)
+    Bool.ite
+      (Bool.ors [ value |> is_nan; value |> is_zero; value |> is_minus_zero ])
+      value
+      (Bool.ite
+         (Bool.ors [ value |> is_inf; value |> is_ninf ])
+         nan
+         (Z3.FuncDecl.apply uif [ value |> from_value ] |> to_value))
 
   let rem lval rval =
     let lf = lval |> from_value in

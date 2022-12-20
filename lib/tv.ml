@@ -57,7 +57,7 @@ let encode program
     op lval rval
   in
 
-  let encode_machine_ovf op =
+  let encode_machine_2v1c op =
     let lpid = Operands.id_of_nth operands 0 in
     let rpid = Operands.id_of_nth operands 1 in
     let cid = Operands.id_of_nth operands 2 in
@@ -814,46 +814,20 @@ let encode program
   | Float64RoundTiesEven -> encode_machine_unary float64_round_ties_even
   | Float64Sin -> encode_machine_unary float64_sin
   | Int32Add -> encode_machine_binary int32_add
-  | Int32AddWithOverflow -> encode_machine_ovf int32_add_with_overflow
-  | Int32Div ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let ctrl_id = Operands.id_of_nth operands 2 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find ctrl_id cf in
-      int32_div lval rval ctrl
-  | Int32Mod ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let ctrl_id = Operands.id_of_nth operands 2 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find ctrl_id cf in
-      int32_mod lval rval ctrl
+  | Int32AddWithOverflow -> encode_machine_2v1c int32_add_with_overflow
+  | Int32Div -> encode_machine_2v1c int32_div
+  | Int32Mod -> encode_machine_2v1c int32_mod
   | Int32Mul -> encode_machine_binary int32_mul
-  | Int32MulWithOverflow -> encode_machine_ovf int32_mul_with_overflow
+  | Int32MulWithOverflow -> encode_machine_2v1c int32_mul_with_overflow
   | Int32Sub -> encode_machine_binary int32_sub
-  | Int32SubWithOverflow -> encode_machine_ovf int32_sub_with_overflow
+  | Int32SubWithOverflow -> encode_machine_2v1c int32_sub_with_overflow
   | Int64Add -> encode_machine_binary int64_add
   | Int64Mul -> encode_machine_binary int64_mul
   | Int64Sub -> encode_machine_binary int64_sub
-  | Uint32Div ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let ctrl_id = Operands.id_of_nth operands 2 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find ctrl_id cf in
-      uint32_div lval rval ctrl
-  | Uint32Mod ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let ctrl_id = Operands.id_of_nth operands 2 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find ctrl_id cf in
-      uint32_mod lval rval ctrl
+  | Int64Div -> encode_machine_2v1c int64_div
+  | Int64Mod -> encode_machine_2v1c int64_mod
+  | Uint32Div -> encode_machine_2v1c uint32_div
+  | Uint32Mod -> encode_machine_2v1c uint32_mod
   | Word32Rol -> encode_machine_binary word32_rol
   | Word32Ror -> encode_machine_binary word32_ror
   | Word32Sar -> encode_machine_binary_with_hint word32_sar

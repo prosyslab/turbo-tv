@@ -6,7 +6,7 @@ ArgumentsLength,
 ArgumentsLengthState,
 AssertType,
 BeginRegion,
-BigIntAdd,
+BigIntAdd,v1,v2,e1,c1
 BigIntMultiply,
 BigIntNegate,
 BigIntSubtract,
@@ -34,7 +34,7 @@ ChangeInt31ToTaggedSigned,v1
 ChangeInt32ToFloat64,v1
 ChangeInt32ToInt64,v1
 ChangeInt32ToTagged,v1
-ChangeInt64ToBigInt,
+ChangeInt64ToBigInt,v1
 ChangeInt64ToFloat64,v1
 ChangeInt64ToTagged,v1
 ChangeTaggedSignedToInt32,v1
@@ -50,7 +50,7 @@ ChangeUint32ToTagged,v1
 ChangeUint32ToUint64,v1
 ChangeUint64ToBigInt,
 ChangeUint64ToTagged,v1
-CheckBigInt,
+CheckBigInt,v1,e1,c1
 CheckBigInt64,
 CheckBounds,b2,v1,v2,e1,c1
 CheckClosure,
@@ -69,6 +69,7 @@ CheckSmi,v1,e1,c1
 CheckString,
 CheckSymbol,
 CheckedBigInt64Add,
+CheckedBigIntToBigInt64,v1,e1,c1
 CheckedBitInt64Add,
 CheckedBitInt64Div,
 CheckedBitInt64Mul,
@@ -81,6 +82,7 @@ CheckedInt32Mod,
 CheckedInt32Mul,b1,v1,v2,e1,c1
 CheckedInt32Sub,v1,v2,e1,c1
 CheckedInt32ToTaggedSigned,
+CheckedInt64Add,v1,v2,e1,c1
 CheckedInt64Mul,
 CheckedInt64ToInt32,v1,e1,c1
 CheckedInt64ToTaggedSigned, 
@@ -240,7 +242,7 @@ Float64Min,v1,v2
 Float64Mod,v1,v2
 Float64Mul,v1,v2
 Float64Neg,v1
-Float64Pow,
+Float64Pow,v1,v2
 Float64RoundDown,v1
 Float64RoundTiesAway,v1
 Float64RoundTiesEven,v1
@@ -443,16 +445,16 @@ Int32Sub,v1,v2
 Int32SubWithOverflow,v1,v2,c1
 Int64AbsWithOverflow,
 Int64Add,v1,v2
-Int64AddWithOverflow,
+Int64AddWithOverflow,v1,v2,c1
 Int64Constant,b1
-Int64Div,
+Int64Div,v1,v2,c1
 Int64LessThan,v1,v2
 Int64LessThanOrEqual,v1,v2
-Int64Mod,
+Int64Mod,v1,v2,c1
 Int64Mul,v1,v2
 Int64MulWithOverflow,
 Int64Sub,v1,v2
-Int64SubWithOverflow,
+Int64SubWithOverflow,v1,v2,c1
 JSAdd,
 JSAsyncFunctionEnter,
 JSAsyncFunctionReject,
@@ -790,7 +792,7 @@ TransitionAndStoreNumberElement,
 TransitionElementsKind,
 TrapIf,
 TrapUnless,
-TruncateBigIntToWord64,
+TruncateBigIntToWord64,v1
 TruncateFloat32ToInt32,
 TruncateFloat32ToUint32,
 TruncateFloat64ToFloat32,
