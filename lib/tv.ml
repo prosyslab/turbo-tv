@@ -57,7 +57,7 @@ let encode program
     op lval rval
   in
 
-  let encode_machine_2v1c op =
+  let encode_machine_binary_with_control op =
     let lpid = Operands.id_of_nth operands 0 in
     let rpid = Operands.id_of_nth operands 1 in
     let cid = Operands.id_of_nth operands 2 in
@@ -814,26 +814,33 @@ let encode program
   | Float64RoundTiesEven -> encode_machine_unary float64_round_ties_even
   | Float64Sin -> encode_machine_unary float64_sin
   | Int32Add -> encode_machine_binary int32_add
-  | Int32AddWithOverflow -> encode_machine_2v1c int32_add_with_overflow
-  | Int32Div -> encode_machine_2v1c int32_div
-  | Int32Mod -> encode_machine_2v1c int32_mod
+  | Int32AddWithOverflow ->
+      encode_machine_binary_with_control int32_add_with_overflow
+  | Int32Div -> encode_machine_binary_with_control int32_div
+  | Int32Mod -> encode_machine_binary_with_control int32_mod
   | Int32Mul -> encode_machine_binary int32_mul
-  | Int32MulWithOverflow -> encode_machine_2v1c int32_mul_with_overflow
+  | Int32MulWithOverflow ->
+      encode_machine_binary_with_control int32_mul_with_overflow
   | Int32Sub -> encode_machine_binary int32_sub
-  | Int32SubWithOverflow -> encode_machine_2v1c int32_sub_with_overflow
+  | Int32SubWithOverflow ->
+      encode_machine_binary_with_control int32_sub_with_overflow
   | Int64Add -> encode_machine_binary int64_add
   | Int64Mul -> encode_machine_binary int64_mul
   | Int64Sub -> encode_machine_binary int64_sub
-  | Int64Div -> encode_machine_2v1c int64_div
-  | Int64Mod -> encode_machine_2v1c int64_mod
-  | Uint32Div -> encode_machine_2v1c uint32_div
-  | Uint32Mod -> encode_machine_2v1c uint32_mod
+  | Int64Div -> encode_machine_binary_with_control int64_div
+  | Int64Mod -> encode_machine_binary_with_control int64_mod
+  | Uint32Div -> encode_machine_binary_with_control uint32_div
+  | Uint32Mod -> encode_machine_binary_with_control uint32_mod
+  | Word32And -> encode_machine_binary word32_and
+  | Word32Or -> encode_machine_binary word32_or
   | Word32Rol -> encode_machine_binary word32_rol
   | Word32Ror -> encode_machine_binary word32_ror
   | Word32Sar -> encode_machine_binary_with_hint word32_sar
   | Word32Shl -> encode_machine_binary word32_shl
   | Word32Shr -> encode_machine_binary word32_shr
   | Word32Xor -> encode_machine_binary word32_xor
+  | Word64And -> encode_machine_binary word64_and
+  | Word64Or -> encode_machine_binary word64_or
   | Word64Rol -> encode_machine_binary word64_rol
   | Word64Ror -> encode_machine_binary word64_ror
   | Word64Sar -> encode_machine_binary_with_hint word64_sar
@@ -846,8 +853,6 @@ let encode program
   | Float64Equal -> encode_machine_binary float64_equal
   | Float64LessThan -> encode_machine_binary float64_less_than
   | Float64LessThanOrEqual -> encode_machine_binary float64_less_than_or_equal
-  | Word32And -> encode_machine_binary word32_and
-  | Word32Or -> encode_machine_binary word32_or
   (* machine: comparison *)
   | StackPointerGreaterThan -> stack_pointer_greater_than
   | Int32LessThan -> encode_machine_binary int32_less_than

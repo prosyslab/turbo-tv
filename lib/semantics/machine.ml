@@ -155,18 +155,37 @@ let uint32_mod lval rval control state =
   let value = Uint32.modulo lval rval in
   state |> State.update ~value ~control
 
-let word32_rol lval rval state =
-  let value = Word32.rol lval rval in
+let word_opsem width op lval rval state =
+  let value =
+    match (width, op) with
+    | 32, "and" -> Word32.and_ lval rval
+    | 32, "or" -> Word32.or_ lval rval
+    | 32, "xor" -> Word32.xor lval rval
+    | 32, "shl" -> Word32.shl lval rval
+    | 32, "lshr" -> Word32.lshr lval rval
+    | 32, "ashr" -> Word32.ashr lval rval
+    | 32, "rol" -> Word32.rol lval rval
+    | 32, "ror" -> Word32.ror lval rval
+    | 64, "and" -> Word64.and_ lval rval
+    | 64, "or" -> Word64.or_ lval rval
+    | 64, "xor" -> Word64.xor lval rval
+    | 64, "shl" -> Word64.shl lval rval
+    | 64, "lshr" -> Word64.lshr lval rval
+    | 64, "ashr" -> Word64.ashr lval rval
+    | 64, "rol" -> Word64.rol lval rval
+    | 64, "ror" -> Word64.ror lval rval
+    | _ -> failwith "word_opsem: not implemented"
+  in
   state |> State.update ~value
 
-let word32_ror lval rval state =
-  let value = Word32.ror lval rval in
-  state |> State.update ~value
+let word32_and lval rval state = word_opsem 32 "and" lval rval state
 
-(* well-defined conditions:
- * (hint = "ShiftOutZero") ^ (cnt = (rval mod 32)) -> lval[-cnt:] = 0
- * assertion:
- * value = ite well-defined (lval >> (rval mod 32)) UB *)
+let word32_or lval rval state = word_opsem 32 "or" lval rval state
+
+let word32_rol lval rval state = word_opsem 32 "rol" lval rval state
+
+let word32_ror lval rval state = word_opsem 32 "ror" lval rval state
+
 let word32_sar hint lval rval state =
   let cnt = Uint32.modulo rval (32 |> Value.from_int) in
   let shift_out = Word32.mask lval cnt in
@@ -174,34 +193,23 @@ let word32_sar hint lval rval state =
   let wd_cond =
     if hint_is_shift_out_zero then Word32.eq shift_out Uint32.zero else Bool.tr
   in
-  let value = Word32.ashr lval cnt in
   let ub = Bool.not wd_cond in
-  state |> State.update ~value ~ub
+  state |> word_opsem 32 "ashr" lval rval |> State.update ~ub
 
-let word32_shl lval rval state =
-  let value = Word32.shl lval rval in
-  state |> State.update ~value
+let word32_shl lval rval state = word_opsem 32 "shl" lval rval state
 
-let word32_shr lval rval state =
-  let value = Word32.lshr lval rval in
-  state |> State.update ~value
+let word32_shr lval rval state = word_opsem 32 "lshr" lval rval state
 
-let word32_xor lval rval state =
-  let value = Word32.xor lval rval in
-  state |> State.update ~value
+let word32_xor lval rval state = word_opsem 32 "xor" lval rval state
 
-let word64_rol lval rval state =
-  let value = Word64.rol lval rval in
-  state |> State.update ~value
+let word64_and lval rval state = word_opsem 64 "and" lval rval state
 
-let word64_ror lval rval state =
-  let value = Word64.ror lval rval in
-  state |> State.update ~value
+let word64_or lval rval state = word_opsem 64 "or" lval rval state
 
-(* well-defined conditions:
- * (hint = "ShiftOutZero") ^ (cnt = (rval mod 64)) -> lval[-cnt:] = 0
- * assertion:
- * value = ite well-defined (lval >> (rval mod 64)) UB *)
+let word64_rol lval rval state = word_opsem 64 "rol" lval rval state
+
+let word64_ror lval rval state = word_opsem 64 "ror" lval rval state
+
 let word64_sar hint lval rval state =
   let cnt = Uint64.modulo rval (64 |> Value.from_int) in
   let shift_out = Word64.mask lval cnt in
@@ -209,21 +217,14 @@ let word64_sar hint lval rval state =
   let wd_cond =
     if hint_is_shift_out_zero then Word64.eq shift_out Uint64.zero else Bool.tr
   in
-  let value = Word64.ashr lval cnt in
   let ub = Bool.not wd_cond in
-  state |> State.update ~value ~ub
+  state |> word_opsem 64 "ashr" lval rval |> State.update ~ub
 
-let word64_shl lval rval state =
-  let value = Word64.shl lval rval in
-  state |> State.update ~value
+let word64_shl lval rval state = word_opsem 64 "shl" lval rval state
 
-let word64_shr lval rval state =
-  let value = Word64.lshr lval rval in
-  state |> State.update ~value
+let word64_shr lval rval state = word_opsem 64 "lshr" lval rval state
 
-let word64_xor lval rval state =
-  let value = Word64.xor lval rval in
-  state |> State.update ~value
+let word64_xor lval rval state = word_opsem 64 "xor" lval rval state
 
 let word32_reverse_bytes v state =
   let value = v |> Word32.swap in
@@ -231,15 +232,6 @@ let word32_reverse_bytes v state =
 
 let word64_reverse_bytes v state =
   let value = v |> Word64.swap in
-  state |> State.update ~value
-
-(* machine: logic *)
-let word32_and lval rval state =
-  let value = Word32.and_ lval rval in
-  state |> State.update ~value
-
-let word32_or lval rval state =
-  let value = Word32.or_ lval rval in
   state |> State.update ~value
 
 (* machine: comparison *)

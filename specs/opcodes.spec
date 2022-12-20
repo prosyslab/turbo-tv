@@ -864,7 +864,7 @@ Word32Select,
 Word32Shl,v1,v2
 Word32Shr,v1,v2
 Word32Xor,v1,v2
-Word64And,
+Word64And,v1,v2
 Word64AtomicAdd,
 Word64AtomicAnd,
 Word64AtomicCompareExchange,
@@ -879,7 +879,7 @@ Word64ClzLowerable,
 Word64Ctz,
 Word64CtzLowerable,
 Word64Equal,v1,v2
-Word64Or,
+Word64Or,v1,v2
 Word64Popcnt,
 Word64ReverseBits,
 Word64ReverseBytes,v1
