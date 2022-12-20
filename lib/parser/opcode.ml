@@ -199,8 +199,6 @@ type t =
   | Float32Sub
   | Float64Acos
   | Float64Acosh
-  | Float64Asin
-  | Float64Asinh
   | Float64Atan
   | Float64Atan2
   | Float64Atanh
@@ -767,6 +765,8 @@ type t =
   | ChangeUint64ToTagged
   | CheckedTaggedSignedToInt32
   | Float64Abs
+  | Float64Asin
+  | Float64Asinh
   | Float64ExtractHighWord32
   | Float64Neg
   | Float64RoundDown
@@ -1010,13 +1010,13 @@ let get_kind opcode =
   | Float32LessThanOrEqual | Float32Max | Float32Min | Float32Mul | Float32Neg
   | Float32RoundDown | Float32RoundTiesEven | Float32RoundTruncate
   | Float32RoundUp | Float32Select | Float32Sqrt | Float32Sub | Float64Acos
-  | Float64Acosh | Float64Asin | Float64Asinh | Float64Atan | Float64Atan2
-  | Float64Atanh | Float64Cbrt | Float64Cos | Float64Cosh | Float64Exp
-  | Float64Expm1 | Float64ExtractLowWord32 | Float64InsertHighWord32
-  | Float64InsertLowWord32 | Float64Log | Float64Log10 | Float64Log1p
-  | Float64Log2 | Float64Select | Float64SilenceNaN | Float64Sinh | Float64Sqrt
-  | Float64Tan | Float64Tanh | FoldConstant | FrameState | I16x8Abs | I16x8Add
-  | I16x8AddSatS | I16x8AddSatU | I16x8AllTrue | I16x8BitMask | I16x8Eq
+  | Float64Acosh | Float64Atan | Float64Atan2 | Float64Atanh | Float64Cbrt
+  | Float64Cos | Float64Cosh | Float64Exp | Float64Expm1
+  | Float64ExtractLowWord32 | Float64InsertHighWord32 | Float64InsertLowWord32
+  | Float64Log | Float64Log10 | Float64Log1p | Float64Log2 | Float64Select
+  | Float64SilenceNaN | Float64Sinh | Float64Sqrt | Float64Tan | Float64Tanh
+  | FoldConstant | FrameState | I16x8Abs | I16x8Add | I16x8AddSatS
+  | I16x8AddSatU | I16x8AllTrue | I16x8BitMask | I16x8Eq
   | I16x8ExtAddPairwiseI8x16S | I16x8ExtAddPairwiseI8x16U
   | I16x8ExtMulHighI8x16S | I16x8ExtMulHighI8x16U | I16x8ExtMulLowI8x16S
   | I16x8ExtMulLowI8x16U | I16x8ExtractLaneS | I16x8ExtractLaneU | I16x8GeS
@@ -1162,8 +1162,8 @@ let get_kind opcode =
   | ChangeInt64ToBigInt | ChangeInt64ToFloat64 | ChangeInt64ToTagged
   | ChangeTaggedSignedToInt32 | ChangeTaggedSignedToInt64
   | ChangeUint32ToFloat64 | ChangeUint32ToTagged | ChangeUint32ToUint64
-  | ChangeUint64ToTagged | CheckedTaggedSignedToInt32 | Float64Abs
-  | Float64ExtractHighWord32 | Float64Neg | Float64RoundDown
+  | ChangeUint64ToTagged | CheckedTaggedSignedToInt32 | Float64Abs | Float64Asin
+  | Float64Asinh | Float64ExtractHighWord32 | Float64Neg | Float64RoundDown
   | Float64RoundTiesAway | Float64RoundTiesEven | Float64RoundTruncate
   | Float64RoundUp | Float64Sin | NumberAbs | NumberCeil | NumberExpm1
   | NumberFloor | NumberIsInteger | NumberIsMinusZero | NumberIsNaN
@@ -1432,8 +1432,6 @@ let of_str str =
   | "Float32Sub" -> Float32Sub
   | "Float64Acos" -> Float64Acos
   | "Float64Acosh" -> Float64Acosh
-  | "Float64Asin" -> Float64Asin
-  | "Float64Asinh" -> Float64Asinh
   | "Float64Atan" -> Float64Atan
   | "Float64Atan2" -> Float64Atan2
   | "Float64Atanh" -> Float64Atanh
@@ -1998,6 +1996,8 @@ let of_str str =
   | "ChangeUint64ToTagged" -> ChangeUint64ToTagged
   | "CheckedTaggedSignedToInt32" -> CheckedTaggedSignedToInt32
   | "Float64Abs" -> Float64Abs
+  | "Float64Asin" -> Float64Asin
+  | "Float64Asinh" -> Float64Asinh
   | "Float64ExtractHighWord32" -> Float64ExtractHighWord32
   | "Float64Neg" -> Float64Neg
   | "Float64RoundDown" -> Float64RoundDown
@@ -2330,8 +2330,6 @@ let to_str opcode =
   | Float32Sub -> "Float32Sub"
   | Float64Acos -> "Float64Acos"
   | Float64Acosh -> "Float64Acosh"
-  | Float64Asin -> "Float64Asin"
-  | Float64Asinh -> "Float64Asinh"
   | Float64Atan -> "Float64Atan"
   | Float64Atan2 -> "Float64Atan2"
   | Float64Atanh -> "Float64Atanh"
@@ -2896,6 +2894,8 @@ let to_str opcode =
   | ChangeUint64ToTagged -> "ChangeUint64ToTagged"
   | CheckedTaggedSignedToInt32 -> "CheckedTaggedSignedToInt32"
   | Float64Abs -> "Float64Abs"
+  | Float64Asin -> "Float64Asin"
+  | Float64Asinh -> "Float64Asinh"
   | Float64ExtractHighWord32 -> "Float64ExtractHighWord32"
   | Float64Neg -> "Float64Neg"
   | Float64RoundDown -> "Float64RoundDown"

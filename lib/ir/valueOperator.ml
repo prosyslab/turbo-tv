@@ -733,6 +733,10 @@ module Float64 = struct
     Bool.ands
       [ is_integer value; ge value safe_integer_min; le value safe_integer_max ]
 
+  let is_finite value =
+    Bool.not
+      (Bool.ors [ value |> is_inf; value |> is_ninf; value |> is_minus_zero ])
+
   let is_in_smi_range value =
     Bool.ands
       [
@@ -834,6 +838,36 @@ module Float64 = struct
       (* if num is -inf, return -1 *)
       (Bool.ite (is_ninf value) (of_float (-1.0))
          (Z3.FuncDecl.apply expm_decl [ value |> from_value ] |> to_value))
+
+  let asin value =
+    let float_sort = Z3utils.Float.double_sort in
+    let uif =
+      Z3.FuncDecl.mk_func_decl_s ctx "float64_asin" [ float_sort ] float_sort
+    in
+    (* https://tc39.es/ecma262/#sec-math.asin *)
+    Bool.ite
+      (Bool.ors [ value |> is_nan; value |> is_zero; value |> is_minus_zero ])
+      value
+      (Bool.ite
+         (Bool.ors [ gt value one; lt value (neg one) ])
+         nan
+         (Z3.FuncDecl.apply uif [ value |> from_value ] |> to_value))
+
+  let asinh value =
+    let float_sort = Z3utils.Float.double_sort in
+    let uif =
+      Z3.FuncDecl.mk_func_decl_s ctx "float64_asinh" [ float_sort ] float_sort
+    in
+    (* https://tc39.es/ecma262/#sec-math.asinh *)
+    Bool.ite
+      (Bool.ors
+         [
+           Bool.not (value |> is_finite);
+           value |> is_zero;
+           value |> is_minus_zero;
+         ])
+      value
+      (Z3.FuncDecl.apply uif [ value |> from_value ] |> to_value)
 
   let sin value =
     let float_sort = Z3utils.Float.double_sort in

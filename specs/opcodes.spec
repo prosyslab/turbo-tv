@@ -214,8 +214,8 @@ Float64Abs,v1
 Float64Acos,
 Float64Acosh,
 Float64Add,v1,v2
-Float64Asin,
-Float64Asinh,
+Float64Asin,v1
+Float64Asinh,v1
 Float64Atan,
 Float64Atan2,
 Float64Atanh,

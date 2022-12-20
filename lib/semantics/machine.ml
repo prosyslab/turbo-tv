@@ -12,6 +12,14 @@ let float64_add lval rval state =
   let value = Float64.add lval rval in
   state |> State.update ~value
 
+let float64_asin value state =
+  let value = Float64.asin value in
+  state |> State.update ~value
+
+let float64_asinh value state =
+  let value = Float64.asinh value in
+  state |> State.update ~value
+
 let float64_div lval rval state =
   let value = Float64.div lval rval in
   state |> State.update ~value

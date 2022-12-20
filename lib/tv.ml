@@ -799,6 +799,8 @@ let encode program
   (* machine: arithmetic *)
   | Float64Abs -> encode_machine_unary float64_abs
   | Float64Add -> encode_machine_binary float64_add
+  | Float64Asin -> encode_machine_unary float64_asin
+  | Float64Asinh -> encode_machine_unary float64_asinh
   | Float64Div -> encode_machine_binary float64_div
   | Float64ExtractHighWord32 -> encode_machine_unary float64_extract_high_word32
   | Float64Max -> encode_machine_binary float64_max
