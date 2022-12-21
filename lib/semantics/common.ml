@@ -15,7 +15,7 @@ let heap_constant name addr mem state =
     if Constant.is_constant name then
       (RegisterFile.find name state.State.register_file, mem)
     else if String.starts_with ~prefix:"BigInt" name then
-      Bigint.parse_big_int_const name mem
+      Bigint.allocate (Bigint.from_string name) mem
     else if Objmap.is_known_map name then
       ( Objmap.map_of name |> BitVec.zero_extend 32
         |> Value.entype Type.map_in_header,
