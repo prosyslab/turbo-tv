@@ -24,12 +24,6 @@ let validator =
   in
   Solver.init_with_tactic tactic
 
-let tag base_is_tagged =
-  match base_is_tagged with
-  | "tagged base" -> 1
-  | "untagged base" -> 0
-  | _ -> failwith (Printf.sprintf "invalid input: %s" base_is_tagged)
-
 let encode program
     ({
        State.pc;
@@ -43,13 +37,19 @@ let encode program
   let not_implemented state = { state with State.not_target = true } in
 
   let _, opcode, operands = IR.instr_of pc program in
-  let encode_machine_unary op =
+  let encode_v1 op =
     let pid = Operands.id_of_nth operands 0 in
     let pval = RegisterFile.find pid rf in
     op pval
   in
 
-  let encode_machine_binary op =
+  let encode_v1m op =
+    let pid = Operands.id_of_nth operands 0 in
+    let pval = RegisterFile.find pid rf in
+    op pval mem
+  in
+
+  let encode_v2 op =
     let lpid = Operands.id_of_nth operands 0 in
     let rpid = Operands.id_of_nth operands 1 in
     let lval = RegisterFile.find lpid rf in
@@ -57,7 +57,15 @@ let encode program
     op lval rval
   in
 
-  let encode_machine_binary_with_control op =
+  let encode_v2m op =
+    let lpid = Operands.id_of_nth operands 0 in
+    let rpid = Operands.id_of_nth operands 1 in
+    let lval = RegisterFile.find lpid rf in
+    let rval = RegisterFile.find rpid rf in
+    op lval rval mem
+  in
+
+  let encode_v2c1 op =
     let lpid = Operands.id_of_nth operands 0 in
     let rpid = Operands.id_of_nth operands 1 in
     let cid = Operands.id_of_nth operands 2 in
@@ -67,7 +75,17 @@ let encode program
     op lval rval ctrl
   in
 
-  let encode_machine_binary_with_hint op =
+  let encode_v2c1m op =
+    let lpid = Operands.id_of_nth operands 0 in
+    let rpid = Operands.id_of_nth operands 1 in
+    let cid = Operands.id_of_nth operands 2 in
+    let lval = RegisterFile.find lpid rf in
+    let rval = RegisterFile.find rpid rf in
+    let ctrl = ControlFile.find cid cf in
+    op lval rval ctrl mem
+  in
+
+  let encode_h1v2 op =
     let hint = Operands.const_of_nth operands 0 in
     let lpid = Operands.id_of_nth operands 1 in
     let rpid = Operands.id_of_nth operands 2 in
@@ -76,7 +94,7 @@ let encode program
     op hint lval rval
   in
 
-  let encode_checked_simplified_binary_with_hint op =
+  let encode_h1v2e1c1 op =
     let hint = Operands.const_of_nth operands 0 in
     let lpid = Operands.id_of_nth operands 1 in
     let rpid = Operands.id_of_nth operands 2 in
@@ -88,7 +106,7 @@ let encode program
     op hint lval rval () ctrl
   in
 
-  let encode_checked_simplified_binary op =
+  let encode_v2e1c1 op =
     let lpid = Operands.id_of_nth operands 0 in
     let rpid = Operands.id_of_nth operands 1 in
     let _eid = Operands.id_of_nth operands 2 in
@@ -274,100 +292,30 @@ let encode program
       let cid = Operands.id_of_nth operands 1 in
       let ctrl = ControlFile.find cid cf in
       js_stack_check () ctrl
-  (* simplified: numeric *)
-  | CheckedInt32Add -> encode_checked_simplified_binary checked_int32_add
-  | CheckedInt32Div -> encode_checked_simplified_binary checked_int32_div
-  | CheckedInt32Mul ->
-      encode_checked_simplified_binary_with_hint checked_int32_mul
-  | CheckedInt32Sub -> encode_checked_simplified_binary checked_int32_sub
-  | CheckedInt64Add -> encode_checked_simplified_binary checked_int64_add
-  | CheckedUint32Div -> encode_checked_simplified_binary checked_uint32_div
-  | NumberAdd ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      number_add lval rval mem
-  | NumberAbs ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      number_abs pval mem
-  | NumberCeil ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      number_ceil pval mem
-  | NumberDivide ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      number_divide lval rval mem
-  | NumberImul ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      number_imul lval rval mem
-  | NumberExpm1 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      number_expm1 pval mem
-  | NumberFloor ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      number_floor pval mem
-  | NumberMax ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      number_max lval rval mem
-  | NumberMin ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      number_min lval rval mem
-  | NumberMultiply ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      number_multiply lval rval mem
-  | NumberModulus ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      number_modulus lval rval mem
-  | NumberRound ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      number_round pval mem
-  | NumberSign ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      number_sign pval mem
-  | NumberSin ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      number_sign pval mem
-  | NumberSubtract ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      number_subtract lval rval mem
-  | NumberTrunc ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      number_trunc pval mem
-  | SpeculativeNumberAdd ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      speculative_number_add lval rval mem
+  (* simplified: number-arith *)
+  | CheckedInt32Add -> encode_v2e1c1 checked_int32_add
+  | CheckedInt32Div -> encode_v2e1c1 checked_int32_div
+  | CheckedInt32Mul -> encode_h1v2e1c1 checked_int32_mul
+  | CheckedInt32Sub -> encode_v2e1c1 checked_int32_sub
+  | CheckedInt64Add -> encode_v2e1c1 checked_int64_add
+  | CheckedUint32Div -> encode_v2e1c1 checked_uint32_div
+  | NumberAdd -> encode_v2m number_add
+  | NumberAbs -> encode_v1m number_abs
+  | NumberCeil -> encode_v1m number_ceil
+  | NumberDivide -> encode_v2m number_divide
+  | NumberImul -> encode_v2m number_imul
+  | NumberExpm1 -> encode_v1m number_expm1
+  | NumberFloor -> encode_v1m number_floor
+  | NumberMax -> encode_v2m number_max
+  | NumberMin -> encode_v2m number_min
+  | NumberMultiply -> encode_v2m number_multiply
+  | NumberModulus -> encode_v2m number_modulus
+  | NumberRound -> encode_v1m number_round
+  | NumberSign -> encode_v1m number_sign
+  | NumberSin -> encode_v1m number_sin
+  | NumberSubtract -> encode_v2m number_subtract
+  | NumberTrunc -> encode_v1m number_trunc
+  | SpeculativeNumberAdd -> encode_v2m speculative_number_add
   | SpeculativeNumberDivide ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
@@ -400,82 +348,21 @@ let encode program
       let rval = RegisterFile.find rpid rf in
       let ctrl = ControlFile.find ctrl_id cf in
       speculative_number_subtract lval rval () ctrl mem
-  | SpeculativeSafeIntegerAdd ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let cid = Operands.id_of_nth operands 3 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find cid cf in
-      speculative_safe_integer_add lval rval ctrl mem
+  | SpeculativeSafeIntegerAdd -> encode_v2c1m speculative_safe_integer_add
   | SpeculativeSafeIntegerSubtract ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let cid = Operands.id_of_nth operands 3 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find cid cf in
-      speculative_safe_integer_subtract lval rval ctrl mem
+      encode_v2c1m speculative_safe_integer_subtract
   (* simplified: bitwise *)
-  | BooleanNot ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      boolean_not pval
-  | NumberBitwiseAnd ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      number_bitwise "&" lval rval mem
-  | NumberBitwiseOr ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      number_bitwise "|" lval rval mem
-  | NumberBitwiseXor ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      number_bitwise "&" lval rval mem
-  | NumberShiftLeft ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      number_shift_left lval rval mem
-  | NumberShiftRight ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      number_shift_right lval rval mem
+  | BooleanNot -> encode_v1 boolean_not
+  | NumberBitwiseAnd -> encode_v2m (number_bitwise "&")
+  | NumberBitwiseOr -> encode_v2m (number_bitwise "|")
+  | NumberBitwiseXor -> encode_v2m (number_bitwise "^")
+  | NumberShiftLeft -> encode_v2m number_shift_left
+  | NumberShiftRight -> encode_v2m number_shift_right
   (* simplified: comparison *)
-  | NumberShiftRightLogical ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      number_shift_right_logical lval rval mem
-  | SpeculativeNumberBitwiseAnd ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      speculative_number_bitwise "&" lval rval mem
-  | SpeculativeNumberBitwiseOr ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      speculative_number_bitwise "|" lval rval mem
-  | SpeculativeNumberBitwiseXor ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      speculative_number_bitwise "^" lval rval mem
+  | NumberShiftRightLogical -> encode_v2m number_shift_right_logical
+  | SpeculativeNumberBitwiseAnd -> encode_v2m (speculative_number_bitwise "&")
+  | SpeculativeNumberBitwiseOr -> encode_v2m (speculative_number_bitwise "|")
+  | SpeculativeNumberBitwiseXor -> encode_v2m (speculative_number_bitwise "^")
   | SpeculativeNumberShiftLeft ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in
@@ -559,6 +446,11 @@ let encode program
       let rval = RegisterFile.find rpid rf in
       let ctrl = ControlFile.find ctrl_id cf in
       speculative_number_less_than_or_equal lval rval () ctrl mem
+  (* simplified: bigint *)
+  | BigIntAdd -> encode_v2m bigint_add
+  | BigIntSubtract -> encode_v2m bigint_subtract
+  | BigIntMultiply -> encode_v2m bigint_multiply
+  | BigIntNegate -> encode_v1m bigint_negate
   (* simplified: memory *)
   | Allocate ->
       let size_id = Operands.id_of_nth operands 0 in
@@ -818,78 +710,74 @@ let encode program
       let ctrl = ControlFile.find cid cf in
       ensure_writable_fast_elements () rval () ctrl
   (* machine: arithmetic *)
-  | Float64Abs -> encode_machine_unary float64_abs
-  | Float64Add -> encode_machine_binary float64_add
-  | Float64Asin -> encode_machine_unary float64_asin
-  | Float64Asinh -> encode_machine_unary float64_asinh
-  | Float64Div -> encode_machine_binary float64_div
-  | Float64ExtractHighWord32 -> encode_machine_unary float64_extract_high_word32
-  | Float64Max -> encode_machine_binary float64_max
-  | Float64Min -> encode_machine_binary float64_min
-  | Float64Mod -> encode_machine_binary float64_mod
-  | Float64Mul -> encode_machine_binary float64_mul
-  | Float64Neg -> encode_machine_unary float64_neg
-  | Float64Sub -> encode_machine_binary float64_sub
-  | Float64RoundDown -> encode_machine_unary float64_round_down
-  | Float64RoundUp -> encode_machine_unary float64_round_up
-  | Float64RoundTruncate -> encode_machine_unary float64_round_truncate
-  | Float64RoundTiesAway -> encode_machine_unary float64_round_ties_away
-  | Float64RoundTiesEven -> encode_machine_unary float64_round_ties_even
-  | Float64Sin -> encode_machine_unary float64_sin
-  | Int32Add -> encode_machine_binary int32_add
-  | Int32AddWithOverflow ->
-      encode_machine_binary_with_control int32_add_with_overflow
-  | Int32Div -> encode_machine_binary_with_control int32_div
-  | Int32Mod -> encode_machine_binary_with_control int32_mod
-  | Int32Mul -> encode_machine_binary int32_mul
-  | Int32MulWithOverflow ->
-      encode_machine_binary_with_control int32_mul_with_overflow
-  | Int32Sub -> encode_machine_binary int32_sub
-  | Int32SubWithOverflow ->
-      encode_machine_binary_with_control int32_sub_with_overflow
-  | Int64Add -> encode_machine_binary int64_add
-  | Int64AddWithOverflow ->
-      encode_machine_binary_with_control int64_add_with_overflow
-  | Int64Mul -> encode_machine_binary int64_mul
-  | Int64Sub -> encode_machine_binary int64_sub
-  | Int64Div -> encode_machine_binary_with_control int64_div
-  | Int64Mod -> encode_machine_binary_with_control int64_mod
-  | Uint32Div -> encode_machine_binary_with_control uint32_div
-  | Uint32Mod -> encode_machine_binary_with_control uint32_mod
-  | Word32And -> encode_machine_binary word32_and
-  | Word32Or -> encode_machine_binary word32_or
-  | Word32Rol -> encode_machine_binary word32_rol
-  | Word32Ror -> encode_machine_binary word32_ror
-  | Word32Sar -> encode_machine_binary_with_hint word32_sar
-  | Word32Shl -> encode_machine_binary word32_shl
-  | Word32Shr -> encode_machine_binary word32_shr
-  | Word32Xor -> encode_machine_binary word32_xor
-  | Word64And -> encode_machine_binary word64_and
-  | Word64Or -> encode_machine_binary word64_or
-  | Word64Rol -> encode_machine_binary word64_rol
-  | Word64Ror -> encode_machine_binary word64_ror
-  | Word64Sar -> encode_machine_binary_with_hint word64_sar
-  | Word64Shl -> encode_machine_binary word64_shl
-  | Word64Shr -> encode_machine_binary word64_shr
-  | Word64Xor -> encode_machine_binary word64_xor
-  | Word32ReverseBytes -> encode_machine_unary word32_reverse_bytes
-  | Word64ReverseBytes -> encode_machine_unary word64_reverse_bytes
+  | Float64Abs -> encode_v1 float64_abs
+  | Float64Add -> encode_v2 float64_add
+  | Float64Asin -> encode_v1 float64_asin
+  | Float64Asinh -> encode_v1 float64_asinh
+  | Float64Div -> encode_v2 float64_div
+  | Float64ExtractHighWord32 -> encode_v1 float64_extract_high_word32
+  | Float64Max -> encode_v2 float64_max
+  | Float64Min -> encode_v2 float64_min
+  | Float64Mod -> encode_v2 float64_mod
+  | Float64Mul -> encode_v2 float64_mul
+  | Float64Neg -> encode_v1 float64_neg
+  | Float64Sub -> encode_v2 float64_sub
+  | Float64RoundDown -> encode_v1 float64_round_down
+  | Float64RoundUp -> encode_v1 float64_round_up
+  | Float64RoundTruncate -> encode_v1 float64_round_truncate
+  | Float64RoundTiesAway -> encode_v1 float64_round_ties_away
+  | Float64RoundTiesEven -> encode_v1 float64_round_ties_even
+  | Float64Sin -> encode_v1 float64_sin
+  | Int32Add -> encode_v2 int32_add
+  | Int32AddWithOverflow -> encode_v2c1 int32_add_with_overflow
+  | Int32Div -> encode_v2c1 int32_div
+  | Int32Mod -> encode_v2c1 int32_mod
+  | Int32Mul -> encode_v2 int32_mul
+  | Int32MulWithOverflow -> encode_v2c1 int32_mul_with_overflow
+  | Int32Sub -> encode_v2 int32_sub
+  | Int32SubWithOverflow -> encode_v2c1 int32_sub_with_overflow
+  | Int64Add -> encode_v2 int64_add
+  | Int64AddWithOverflow -> encode_v2c1 int64_add_with_overflow
+  | Int64Mul -> encode_v2 int64_mul
+  | Int64Sub -> encode_v2 int64_sub
+  | Int64Div -> encode_v2c1 int64_div
+  | Int64Mod -> encode_v2c1 int64_mod
+  | Uint32Div -> encode_v2c1 uint32_div
+  | Uint32Mod -> encode_v2c1 uint32_mod
+  | Word32And -> encode_v2 word32_and
+  | Word32Or -> encode_v2 word32_or
+  | Word32Rol -> encode_v2 word32_rol
+  | Word32Ror -> encode_v2 word32_ror
+  | Word32Sar -> encode_h1v2 word32_sar
+  | Word32Shl -> encode_v2 word32_shl
+  | Word32Shr -> encode_v2 word32_shr
+  | Word32Xor -> encode_v2 word32_xor
+  | Word64And -> encode_v2 word64_and
+  | Word64Or -> encode_v2 word64_or
+  | Word64Rol -> encode_v2 word64_rol
+  | Word64Ror -> encode_v2 word64_ror
+  | Word64Sar -> encode_h1v2 word64_sar
+  | Word64Shl -> encode_v2 word64_shl
+  | Word64Shr -> encode_v2 word64_shr
+  | Word64Xor -> encode_v2 word64_xor
+  | Word32ReverseBytes -> encode_v1 word32_reverse_bytes
+  | Word64ReverseBytes -> encode_v1 word64_reverse_bytes
   (* machine: logic *)
-  | Float64Equal -> encode_machine_binary float64_equal
-  | Float64LessThan -> encode_machine_binary float64_less_than
-  | Float64LessThanOrEqual -> encode_machine_binary float64_less_than_or_equal
+  | Float64Equal -> encode_v2 float64_equal
+  | Float64LessThan -> encode_v2 float64_less_than
+  | Float64LessThanOrEqual -> encode_v2 float64_less_than_or_equal
   (* machine: comparison *)
   | StackPointerGreaterThan -> stack_pointer_greater_than
-  | Int32LessThan -> encode_machine_binary int32_less_than
-  | Int32LessThanOrEqual -> encode_machine_binary int32_less_than_or_equal
-  | Int64LessThan -> encode_machine_binary int64_less_than
-  | Int64LessThanOrEqual -> encode_machine_binary int64_less_than_or_equal
-  | Uint32LessThan -> encode_machine_binary uint32_less_than
-  | Uint32LessThanOrEqual -> encode_machine_binary uint32_less_than_or_equal
-  | Uint64LessThan -> encode_machine_binary uint64_less_than
-  | Uint64LessThanOrEqual -> encode_machine_binary uint64_less_than_or_equal
-  | Word32Equal -> encode_machine_binary word32_equal
-  | Word64Equal -> encode_machine_binary word64_equal
+  | Int32LessThan -> encode_v2 int32_less_than
+  | Int32LessThanOrEqual -> encode_v2 int32_less_than_or_equal
+  | Int64LessThan -> encode_v2 int64_less_than
+  | Int64LessThanOrEqual -> encode_v2 int64_less_than_or_equal
+  | Uint32LessThan -> encode_v2 uint32_less_than
+  | Uint32LessThanOrEqual -> encode_v2 uint32_less_than_or_equal
+  | Uint64LessThan -> encode_v2 uint64_less_than
+  | Uint64LessThanOrEqual -> encode_v2 uint64_less_than_or_equal
+  | Word32Equal -> encode_v2 word32_equal
+  | Word64Equal -> encode_v2 word64_equal
   (* machine: memory *)
   | Store ->
       let ptr_id = Operands.id_of_nth operands 0 in
@@ -908,24 +796,24 @@ let encode program
       let repr = Operands.const_of_nth operands 2 |> Repr.of_rs_string in
       load ptr pos repr mem
   (* machine: bitcast *)
-  | BitcastFloat32ToInt32 -> encode_machine_unary bitcast_float32_to_int32
-  | BitcastFloat64ToInt64 -> encode_machine_unary bitcast_float64_to_int64
-  | BitcastTaggedToWord -> encode_machine_unary bitcast_tagged_to_word
-  | BitcastWord32ToWord64 -> encode_machine_unary bitcast_word32_to_word64
-  | BitcastWordToTagged -> encode_machine_unary bitcast_word_to_tagged
-  | TruncateFloat64ToWord32 -> encode_machine_unary truncate_float64_to_word32
-  | TruncateInt64ToInt32 -> encode_machine_unary truncate_int64_to_int32
+  | BitcastFloat32ToInt32 -> encode_v1 bitcast_float32_to_int32
+  | BitcastFloat64ToInt64 -> encode_v1 bitcast_float64_to_int64
+  | BitcastTaggedToWord -> encode_v1 bitcast_tagged_to_word
+  | BitcastWord32ToWord64 -> encode_v1 bitcast_word32_to_word64
+  | BitcastWordToTagged -> encode_v1 bitcast_word_to_tagged
+  | TruncateFloat64ToWord32 -> encode_v1 truncate_float64_to_word32
+  | TruncateInt64ToInt32 -> encode_v1 truncate_int64_to_int32
   (* machine: type-conversion *)
-  | ChangeFloat64ToInt32 -> encode_machine_unary change_float64_to_int32
-  | ChangeFloat64ToInt64 -> encode_machine_unary change_float64_to_int64
-  | ChangeFloat64ToUint32 -> encode_machine_unary change_float64_to_uint32
-  | ChangeFloat64ToUint64 -> encode_machine_unary change_float64_to_uint64
-  | ChangeInt32ToFloat64 -> encode_machine_unary change_int32_to_float64
-  | ChangeInt32ToInt64 -> encode_machine_unary change_int32_to_int64
-  | ChangeInt64ToFloat64 -> encode_machine_unary change_int64_to_float64
-  | ChangeUint32ToFloat64 -> encode_machine_unary change_uint32_to_float64
-  | ChangeUint32ToUint64 -> encode_machine_unary change_uint32_to_uint64
-  | RoundFloat64ToInt32 -> encode_machine_unary round_float64_to_int32
+  | ChangeFloat64ToInt32 -> encode_v1 change_float64_to_int32
+  | ChangeFloat64ToInt64 -> encode_v1 change_float64_to_int64
+  | ChangeFloat64ToUint32 -> encode_v1 change_float64_to_uint32
+  | ChangeFloat64ToUint64 -> encode_v1 change_float64_to_uint64
+  | ChangeInt32ToFloat64 -> encode_v1 change_int32_to_float64
+  | ChangeInt32ToInt64 -> encode_v1 change_int32_to_int64
+  | ChangeInt64ToFloat64 -> encode_v1 change_int64_to_float64
+  | ChangeUint32ToFloat64 -> encode_v1 change_uint32_to_float64
+  | ChangeUint32ToUint64 -> encode_v1 change_uint32_to_uint64
+  | RoundFloat64ToInt32 -> encode_v1 round_float64_to_int32
   | Empty -> nop
   | StateValues | Checkpoint | EffectPhi | TypedStateValues | FrameState
   | LoadStackCheckOffset ->
