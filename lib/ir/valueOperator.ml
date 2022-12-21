@@ -50,6 +50,8 @@ end
 module TaggedPointer = struct
   type t = Value.t
 
+  let sort = BitVec.mk_sort 64
+
   (* const *)
   (* 0-32: offset
      32-64: bid
@@ -427,9 +429,12 @@ module Composed = struct
   let init name size = BitVec.init ~len:(Value.len * size) name
 
   let from_values values =
-    List.fold_left
-      (fun res value -> BitVec.concat res value)
-      (List.hd values) (List.tl values)
+    match values with
+    | [] -> failwith "Composed.from_values: empty list"
+    | _ ->
+        List.fold_left
+          (fun res value -> BitVec.concat res value)
+          (List.hd values) (List.tl values)
 
   let size_of t = BitVec.length_of t / Value.len
 

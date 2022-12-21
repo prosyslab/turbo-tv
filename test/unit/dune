@@ -17,3 +17,8 @@
  (name machineTest)
  (modules machineTest)
  (libraries helper))
+
+(test
+ (name bigintTest)
+ (modules bigintTest)
+ (libraries helper))

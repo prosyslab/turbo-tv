@@ -166,4 +166,7 @@ let to_string model mem ptr =
   | "heap_number" ->
       let obj = HeapNumber.load ptr mem in
       HeapNumber.to_string model obj
+  | "big_int" ->
+      let obj = Bigint.load ptr mem in
+      Bigint.to_string model obj
   | s -> s ^ " object: not implemented yet"
