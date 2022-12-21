@@ -135,9 +135,21 @@ let int32_sub_with_overflow lval rval control state =
 
 let int64_add lval rval state = int_arith 64 "+" lval rval state
 
+let int64_add_with_overflow lval rval control state =
+  let added = Int64.add lval rval in
+  let ovf = Bool.ite (Int64.add_would_overflow lval rval) Value.tr Value.fl in
+  let value = Composed.from_values [ added; ovf ] in
+  state |> State.update ~value ~control
+
 let int64_sub lval rval state = int_arith 64 "-" lval rval state
 
 let int64_mul lval rval state = int_arith 64 "*" lval rval state
+
+let int64_mul_with_overflow lval rval control state =
+  let multiplied = Int64.mul lval rval in
+  let ovf = Bool.ite (Int64.mul_would_overflow lval rval) Value.tr Value.fl in
+  let value = Composed.from_values [ multiplied; ovf ] in
+  state |> State.update ~value ~control
 
 let int64_div lval rval control state =
   int_arith 64 "/" lval rval ~control state
