@@ -848,7 +848,8 @@ let encode program
   | Int32SubWithOverflow ->
       encode_machine_binary_with_control int32_sub_with_overflow
   | Int64Add -> encode_machine_binary int64_add
-  | Int64AddWithOverflow -> encode_machine_ovf int64_add_with_overflow
+  | Int64AddWithOverflow ->
+      encode_machine_binary_with_control int64_add_with_overflow
   | Int64Mul -> encode_machine_binary int64_mul
   | Int64Sub -> encode_machine_binary int64_sub
   | Int64Div -> encode_machine_binary_with_control int64_div
