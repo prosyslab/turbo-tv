@@ -91,12 +91,12 @@ let int_arith width op lval rval ?control state =
     | 32, "-" -> Int32.sub lval rval
     | 32, "*" -> Int32.mul lval rval
     | 32, "/" -> Int32.div lval rval
-    | 32, "%" -> Int32.div lval rval
+    | 32, "%" -> Int32.modulo lval rval
     | 64, "+" -> Int64.add lval rval
     | 64, "-" -> Int64.sub lval rval
     | 64, "*" -> Int64.mul lval rval
     | 64, "/" -> Int32.div lval rval
-    | 64, "%" -> Int32.div lval rval
+    | 64, "%" -> Int32.modulo lval rval
     | _ -> failwith "int_arith: not implemented"
   in
   match control with
@@ -135,21 +135,9 @@ let int32_sub_with_overflow lval rval control state =
 
 let int64_add lval rval state = int_arith 64 "+" lval rval state
 
-let int64_add_with_overflow lval rval control state =
-  let added = Int64.add lval rval in
-  let ovf = Bool.ite (Int64.add_would_overflow lval rval) Value.tr Value.fl in
-  let value = Composed.from_values [ added; ovf ] in
-  state |> State.update ~value ~control
-
 let int64_sub lval rval state = int_arith 64 "-" lval rval state
 
 let int64_mul lval rval state = int_arith 64 "*" lval rval state
-
-let int64_mul_with_overflow lval rval control state =
-  let multiplied = Int64.mul lval rval in
-  let ovf = Bool.ite (Int64.mul_would_overflow lval rval) Value.tr Value.fl in
-  let value = Composed.from_values [ multiplied; ovf ] in
-  state |> State.update ~value ~control
 
 let int64_div lval rval control state =
   int_arith 64 "/" lval rval ~control state
@@ -167,6 +155,12 @@ let int64_sub_with_overflow lval rval control state =
   let subtracted = Int64.sub lval rval in
   let ovf = Bool.ite (Int64.sub_would_overflow lval rval) Value.tr Value.fl in
   let value = Composed.from_values [ subtracted; ovf ] in
+  state |> State.update ~value ~control
+
+let int64_mul_with_overflow lval rval control state =
+  let multiplied = Int64.mul lval rval in
+  let ovf = Bool.ite (Int64.mul_would_overflow lval rval) Value.tr Value.fl in
+  let value = Composed.from_values [ multiplied; ovf ] in
   state |> State.update ~value ~control
 
 let round_float64_to_int32 pval state =

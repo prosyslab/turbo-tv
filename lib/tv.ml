@@ -298,6 +298,7 @@ let encode program
   | CheckedInt32Mul -> encode_h1v2e1c1 checked_int32_mul
   | CheckedInt32Sub -> encode_v2e1c1 checked_int32_sub
   | CheckedInt64Add -> encode_v2e1c1 checked_int64_add
+  | CheckedInt64Mul -> encode_v2e1c1 checked_int64_mul
   | CheckedUint32Div -> encode_v2e1c1 checked_uint32_div
   | NumberAdd -> encode_v2m number_add
   | NumberAbs -> encode_v1m number_abs
@@ -743,6 +744,7 @@ let encode program
   | Int64Add -> encode_v2 int64_add
   | Int64AddWithOverflow -> encode_v2c1 int64_add_with_overflow
   | Int64Mul -> encode_v2 int64_mul
+  | Int64MulWithOverflow -> encode_v2c1 int64_mul_with_overflow
   | Int64Sub -> encode_v2 int64_sub
   | Int64Div -> encode_v2c1 int64_div
   | Int64Mod -> encode_v2c1 int64_mod
