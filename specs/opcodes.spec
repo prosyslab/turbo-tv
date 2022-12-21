@@ -6,10 +6,10 @@ ArgumentsLength,
 ArgumentsLengthState,
 AssertType,
 BeginRegion,
-BigIntAdd,v1,v2,e1,c1
-BigIntMultiply,
-BigIntNegate,
-BigIntSubtract,
+BigIntAdd,v1,v2
+BigIntMultiply,v1,v2
+BigIntNegate,v1
+BigIntSubtract,v1,v2
 BitcastFloat32ToInt32,v1
 BitcastFloat64ToInt64,v1
 BitcastInt32ToFloat32,
@@ -83,7 +83,7 @@ CheckedInt32Mul,b1,v1,v2,e1,c1
 CheckedInt32Sub,v1,v2,e1,c1
 CheckedInt32ToTaggedSigned,
 CheckedInt64Add,v1,v2,e1,c1
-CheckedInt64Mul,
+CheckedInt64Mul,v1,v2,e1,c1
 CheckedInt64ToInt32,v1,e1,c1
 CheckedInt64ToTaggedSigned, 
 CheckedTaggedSignedToInt32,v1
@@ -452,7 +452,7 @@ Int64LessThan,v1,v2
 Int64LessThanOrEqual,v1,v2
 Int64Mod,v1,v2,c1
 Int64Mul,v1,v2
-Int64MulWithOverflow,
+Int64MulWithOverflow,v1,v2,c1
 Int64Sub,v1,v2
 Int64SubWithOverflow,v1,v2,c1
 JSAdd,
@@ -720,7 +720,7 @@ SignExtendWord32ToInt64,
 SignExtendWord8ToInt32,
 SignExtendWord8ToInt64,
 Simd128ReverseBytes,
-SpeculativeBigIntAdd,
+SpeculativeBigIntAdd,v1,v2
 SpeculativeBigIntAsIntN,
 SpeculativeBigIntAsUintN,
 SpeculativeBigIntBitwiseAnd,
@@ -728,11 +728,11 @@ SpeculativeBigIntBitwiseOr,
 SpeculativeBigIntBitwiseXor,
 SpeculativeBigIntDivide,
 SpeculativeBigIntModulus,
-SpeculativeBigIntMultiply,
-SpeculativeBigIntNegate,
+SpeculativeBigIntMultiply,v1,v2
+SpeculativeBigIntNegate,v1
 SpeculativeBigIntShiftLeft,
 SpeculativeBigIntShiftRight,
-SpeculativeBigIntSubtract,
+SpeculativeBigIntSubtract,v1,v2
 SpeculativeNumberAdd,v1,v2
 SpeculativeNumberBitwiseAnd,v1,v2
 SpeculativeNumberBitwiseOr,v1,v2

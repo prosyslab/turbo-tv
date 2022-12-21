@@ -451,6 +451,10 @@ let encode program
   | BigIntSubtract -> encode_v2m bigint_subtract
   | BigIntMultiply -> encode_v2m bigint_multiply
   | BigIntNegate -> encode_v1m bigint_negate
+  | SpeculativeBigIntAdd -> encode_v2m speculative_bigint_add
+  | SpeculativeBigIntSubtract -> encode_v2m speculative_bigint_subtract
+  | SpeculativeBigIntMultiply -> encode_v2m speculative_bigint_multiply
+  | SpeculativeBigIntNegate -> encode_v1m speculative_bigint_negate
   (* simplified: memory *)
   | Allocate ->
       let size_id = Operands.id_of_nth operands 0 in

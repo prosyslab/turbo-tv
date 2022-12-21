@@ -454,6 +454,24 @@ let truncate_big_int_to_word64 value mem state =
   let value = Bigint.to_int64 loaded in
   state |> State.update ~value
 
+let speculative_bigint_arith op lval rval mem state =
+  let deopt =
+    Bool.not
+      (Bool.ands
+         [ lval |> Objects.is_big_int mem; rval |> Objects.is_big_int mem ])
+  in
+  state |> op lval rval mem |> State.update ~deopt
+
+let speculative_bigint_add = speculative_bigint_arith bigint_add
+
+let speculative_bigint_subtract = speculative_bigint_arith bigint_subtract
+
+let speculative_bigint_multiply = speculative_bigint_arith bigint_multiply
+
+let speculative_bigint_negate pval mem state =
+  let deopt = Bool.not pval |> Objects.is_big_int mem in
+  state |> bigint_negate pval mem |> State.update ~deopt
+
 (* simplified: object *)
 
 let object_is_minus_zero pval mem state =
