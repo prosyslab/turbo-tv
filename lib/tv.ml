@@ -449,15 +449,19 @@ let encode program
       speculative_number_less_than_or_equal lval rval () ctrl mem
   (* simplified: bigint *)
   | BigIntAdd -> encode_v2m bigint_add
-  | BigIntSubtract -> encode_v2m bigint_subtract
+  | BigIntDivide -> encode_v2m bigint_divide
+  | BigIntModulus -> encode_v2m bigint_modulus
   | BigIntMultiply -> encode_v2m bigint_multiply
+  | BigIntSubtract -> encode_v2m bigint_subtract
   | BigIntNegate -> encode_v1m bigint_negate
   | BigIntShiftLeft -> encode_v2m bigint_shift_left
+  | BigIntShiftRight -> encode_v2m bigint_shift_right
   | SpeculativeBigIntAdd -> encode_v2m speculative_bigint_add
   | SpeculativeBigIntSubtract -> encode_v2m speculative_bigint_subtract
   | SpeculativeBigIntMultiply -> encode_v2m speculative_bigint_multiply
   | SpeculativeBigIntNegate -> encode_v1m speculative_bigint_negate
   | SpeculativeBigIntShiftLeft -> encode_v2m speculative_bigint_shift_left
+  | SpeculativeBigIntShiftRight -> encode_v2m speculative_bigint_shift_right
   (* simplified: memory *)
   | Allocate ->
       let size_id = Operands.id_of_nth operands 0 in

@@ -607,8 +607,6 @@ type t =
   | SpeculativeBigIntBitwiseAnd
   | SpeculativeBigIntBitwiseOr
   | SpeculativeBigIntBitwiseXor
-  | SpeculativeBigIntDivide
-  | SpeculativeBigIntModulus
   | SpeculativeNumberPow
   | StackSlot
   | Start
@@ -785,7 +783,6 @@ type t =
   | ObjectIsSmi
   | RoundFloat64ToInt32
   | SpeculativeBigIntNegate
-  | SpeculativeBigIntShiftRight
   | StackPointerGreaterThan
   | ToBoolean
   | TruncateBigIntToWord64
@@ -803,6 +800,8 @@ type t =
   | AllocateRaw
   (* v1v2 *)
   | BigIntAdd
+  | BigIntDivide
+  | BigIntModulus
   | BigIntMultiply
   | BigIntShiftLeft
   | BigIntShiftRight
@@ -849,8 +848,11 @@ type t =
   | ReferenceEqual
   | SameValue
   | SpeculativeBigIntAdd
+  | SpeculativeBigIntDivide
+  | SpeculativeBigIntModulus
   | SpeculativeBigIntMultiply
   | SpeculativeBigIntShiftLeft
+  | SpeculativeBigIntShiftRight
   | SpeculativeBigIntSubtract
   | SpeculativeNumberAdd
   | SpeculativeNumberBitwiseAnd
@@ -1113,8 +1115,7 @@ let get_kind opcode =
   | SignExtendWord32ToInt64 | SignExtendWord8ToInt32 | SignExtendWord8ToInt64
   | Simd128ReverseBytes | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN
   | SpeculativeBigIntBitwiseAnd | SpeculativeBigIntBitwiseOr
-  | SpeculativeBigIntBitwiseXor | SpeculativeBigIntDivide
-  | SpeculativeBigIntModulus | SpeculativeNumberPow | StackSlot | Start
+  | SpeculativeBigIntBitwiseXor | SpeculativeNumberPow | StackSlot | Start
   | StateValues | StaticAssert | StoreDataViewElement | StoreLane | StoreMessage
   | StoreSignedSmallElement | StoreToObject | StoreTypedElement
   | StringCharCodeAt | StringCodePointAt | StringConcat | StringEqual
@@ -1167,32 +1168,33 @@ let get_kind opcode =
   | NumberIsNaN | NumberIsSafeInteger | NumberRound | NumberSign | NumberSin
   | NumberToBoolean | NumberToInt32 | NumberToUint32 | NumberTrunc
   | ObjectIsMinusZero | ObjectIsNaN | ObjectIsSmi | RoundFloat64ToInt32
-  | SpeculativeBigIntNegate | SpeculativeBigIntShiftRight
-  | StackPointerGreaterThan | ToBoolean | TruncateBigIntToWord64
-  | TruncateFloat64ToWord32 | TruncateInt64ToInt32 | TruncateTaggedToBit
-  | TruncateTaggedToWord32 | Word32ReverseBytes | Word64ReverseBytes ->
+  | SpeculativeBigIntNegate | StackPointerGreaterThan | ToBoolean
+  | TruncateBigIntToWord64 | TruncateFloat64ToWord32 | TruncateInt64ToInt32
+  | TruncateTaggedToBit | TruncateTaggedToWord32 | Word32ReverseBytes
+  | Word64ReverseBytes ->
       V1
   | IfFalse | IfSuccess | IfTrue -> C1
   | AllocateRaw -> V1C1
-  | BigIntAdd | BigIntMultiply | BigIntShiftLeft | BigIntShiftRight
-  | BigIntSubtract | Float64Add | Float64Div | Float64Equal | Float64LessThan
-  | Float64LessThanOrEqual | Float64Max | Float64Min | Float64Mod | Float64Mul
-  | Float64Pow | Float64Sub | Int32Add | Int32LessThan | Int32LessThanOrEqual
-  | Int32Mul | Int32Sub | Int64Add | Int64LessThan | Int64LessThanOrEqual
-  | Int64Mul | Int64Sub | NumberAdd | NumberBitwiseAnd | NumberBitwiseOr
-  | NumberBitwiseXor | NumberDivide | NumberEqual | NumberImul | NumberLessThan
-  | NumberLessThanOrEqual | NumberMax | NumberMin | NumberModulus
-  | NumberMultiply | NumberSameValue | NumberShiftLeft | NumberShiftRight
-  | NumberShiftRightLogical | NumberSubtract | ReferenceEqual | SameValue
-  | SpeculativeBigIntAdd | SpeculativeBigIntMultiply
-  | SpeculativeBigIntShiftLeft | SpeculativeBigIntSubtract
-  | SpeculativeNumberAdd | SpeculativeNumberBitwiseAnd
-  | SpeculativeNumberBitwiseOr | SpeculativeNumberBitwiseXor
-  | SpeculativeNumberEqual | Uint32LessThan | Uint32LessThanOrEqual
-  | Uint64LessThan | Uint64LessThanOrEqual | Word32And | Word32Equal | Word32Or
-  | Word32Rol | Word32Ror | Word32Shl | Word32Shr | Word32Xor | Word64And
-  | Word64Equal | Word64Or | Word64Rol | Word64Ror | Word64Shl | Word64Shr
-  | Word64Xor ->
+  | BigIntAdd | BigIntDivide | BigIntModulus | BigIntMultiply | BigIntShiftLeft
+  | BigIntShiftRight | BigIntSubtract | Float64Add | Float64Div | Float64Equal
+  | Float64LessThan | Float64LessThanOrEqual | Float64Max | Float64Min
+  | Float64Mod | Float64Mul | Float64Pow | Float64Sub | Int32Add | Int32LessThan
+  | Int32LessThanOrEqual | Int32Mul | Int32Sub | Int64Add | Int64LessThan
+  | Int64LessThanOrEqual | Int64Mul | Int64Sub | NumberAdd | NumberBitwiseAnd
+  | NumberBitwiseOr | NumberBitwiseXor | NumberDivide | NumberEqual | NumberImul
+  | NumberLessThan | NumberLessThanOrEqual | NumberMax | NumberMin
+  | NumberModulus | NumberMultiply | NumberSameValue | NumberShiftLeft
+  | NumberShiftRight | NumberShiftRightLogical | NumberSubtract | ReferenceEqual
+  | SameValue | SpeculativeBigIntAdd | SpeculativeBigIntDivide
+  | SpeculativeBigIntModulus | SpeculativeBigIntMultiply
+  | SpeculativeBigIntShiftLeft | SpeculativeBigIntShiftRight
+  | SpeculativeBigIntSubtract | SpeculativeNumberAdd
+  | SpeculativeNumberBitwiseAnd | SpeculativeNumberBitwiseOr
+  | SpeculativeNumberBitwiseXor | SpeculativeNumberEqual | Uint32LessThan
+  | Uint32LessThanOrEqual | Uint64LessThan | Uint64LessThanOrEqual | Word32And
+  | Word32Equal | Word32Or | Word32Rol | Word32Ror | Word32Shl | Word32Shr
+  | Word32Xor | Word64And | Word64Equal | Word64Or | Word64Rol | Word64Ror
+  | Word64Shl | Word64Shr | Word64Xor ->
       V1V2
   | Branch | FinishRegion -> V1E1
   | Call -> B1VV
@@ -1841,8 +1843,6 @@ let of_str str =
   | "SpeculativeBigIntBitwiseAnd" -> SpeculativeBigIntBitwiseAnd
   | "SpeculativeBigIntBitwiseOr" -> SpeculativeBigIntBitwiseOr
   | "SpeculativeBigIntBitwiseXor" -> SpeculativeBigIntBitwiseXor
-  | "SpeculativeBigIntDivide" -> SpeculativeBigIntDivide
-  | "SpeculativeBigIntModulus" -> SpeculativeBigIntModulus
   | "SpeculativeNumberPow" -> SpeculativeNumberPow
   | "StackSlot" -> StackSlot
   | "Start" -> Start
@@ -2017,7 +2017,6 @@ let of_str str =
   | "ObjectIsSmi" -> ObjectIsSmi
   | "RoundFloat64ToInt32" -> RoundFloat64ToInt32
   | "SpeculativeBigIntNegate" -> SpeculativeBigIntNegate
-  | "SpeculativeBigIntShiftRight" -> SpeculativeBigIntShiftRight
   | "StackPointerGreaterThan" -> StackPointerGreaterThan
   | "ToBoolean" -> ToBoolean
   | "TruncateBigIntToWord64" -> TruncateBigIntToWord64
@@ -2032,6 +2031,8 @@ let of_str str =
   | "IfTrue" -> IfTrue
   | "AllocateRaw" -> AllocateRaw
   | "BigIntAdd" -> BigIntAdd
+  | "BigIntDivide" -> BigIntDivide
+  | "BigIntModulus" -> BigIntModulus
   | "BigIntMultiply" -> BigIntMultiply
   | "BigIntShiftLeft" -> BigIntShiftLeft
   | "BigIntShiftRight" -> BigIntShiftRight
@@ -2078,8 +2079,11 @@ let of_str str =
   | "ReferenceEqual" -> ReferenceEqual
   | "SameValue" -> SameValue
   | "SpeculativeBigIntAdd" -> SpeculativeBigIntAdd
+  | "SpeculativeBigIntDivide" -> SpeculativeBigIntDivide
+  | "SpeculativeBigIntModulus" -> SpeculativeBigIntModulus
   | "SpeculativeBigIntMultiply" -> SpeculativeBigIntMultiply
   | "SpeculativeBigIntShiftLeft" -> SpeculativeBigIntShiftLeft
+  | "SpeculativeBigIntShiftRight" -> SpeculativeBigIntShiftRight
   | "SpeculativeBigIntSubtract" -> SpeculativeBigIntSubtract
   | "SpeculativeNumberAdd" -> SpeculativeNumberAdd
   | "SpeculativeNumberBitwiseAnd" -> SpeculativeNumberBitwiseAnd
@@ -2741,8 +2745,6 @@ let to_str opcode =
   | SpeculativeBigIntBitwiseAnd -> "SpeculativeBigIntBitwiseAnd"
   | SpeculativeBigIntBitwiseOr -> "SpeculativeBigIntBitwiseOr"
   | SpeculativeBigIntBitwiseXor -> "SpeculativeBigIntBitwiseXor"
-  | SpeculativeBigIntDivide -> "SpeculativeBigIntDivide"
-  | SpeculativeBigIntModulus -> "SpeculativeBigIntModulus"
   | SpeculativeNumberPow -> "SpeculativeNumberPow"
   | StackSlot -> "StackSlot"
   | Start -> "Start"
@@ -2917,7 +2919,6 @@ let to_str opcode =
   | ObjectIsSmi -> "ObjectIsSmi"
   | RoundFloat64ToInt32 -> "RoundFloat64ToInt32"
   | SpeculativeBigIntNegate -> "SpeculativeBigIntNegate"
-  | SpeculativeBigIntShiftRight -> "SpeculativeBigIntShiftRight"
   | StackPointerGreaterThan -> "StackPointerGreaterThan"
   | ToBoolean -> "ToBoolean"
   | TruncateBigIntToWord64 -> "TruncateBigIntToWord64"
@@ -2932,6 +2933,8 @@ let to_str opcode =
   | IfTrue -> "IfTrue"
   | AllocateRaw -> "AllocateRaw"
   | BigIntAdd -> "BigIntAdd"
+  | BigIntDivide -> "BigIntDivide"
+  | BigIntModulus -> "BigIntModulus"
   | BigIntMultiply -> "BigIntMultiply"
   | BigIntShiftLeft -> "BigIntShiftLeft"
   | BigIntShiftRight -> "BigIntShiftRight"
@@ -2978,8 +2981,11 @@ let to_str opcode =
   | ReferenceEqual -> "ReferenceEqual"
   | SameValue -> "SameValue"
   | SpeculativeBigIntAdd -> "SpeculativeBigIntAdd"
+  | SpeculativeBigIntDivide -> "SpeculativeBigIntDivide"
+  | SpeculativeBigIntModulus -> "SpeculativeBigIntModulus"
   | SpeculativeBigIntMultiply -> "SpeculativeBigIntMultiply"
   | SpeculativeBigIntShiftLeft -> "SpeculativeBigIntShiftLeft"
+  | SpeculativeBigIntShiftRight -> "SpeculativeBigIntShiftRight"
   | SpeculativeBigIntSubtract -> "SpeculativeBigIntSubtract"
   | SpeculativeNumberAdd -> "SpeculativeNumberAdd"
   | SpeculativeNumberBitwiseAnd -> "SpeculativeNumberBitwiseAnd"

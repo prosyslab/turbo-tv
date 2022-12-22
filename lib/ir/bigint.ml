@@ -188,13 +188,61 @@ let mul l r =
     (* 2. multiply *)
     let res = BitVec.mulb l_value r_value in
     let sign =
-      Bool.ite (Bool.eq l.sign r.sign)
-        (BitVecVal.zero ~len:sign_length ())
-        (BitVecVal.from_int ~len:sign_length 1)
+      Bool.ite
+        (Bool.ors
+           [ Bool.eq l.sign r.sign; BitVec.eqi l.value 0; BitVec.eqi r.value 0 ])
+        pos_sign neg_sign
     in
     let value =
       Bool.ite need_extension (FD.apply approx [ l_value; r_value ]) res
     in
+    create sign value
+
+let div l r =
+  let approx =
+    FD.mk_func_decl_s ctx "BigInt.div"
+      [
+        BitVec.mk_sort (num_digits l * digit_length);
+        BitVec.mk_sort (num_digits r * digit_length);
+      ]
+      (BitVec.mk_sort 64)
+  in
+
+  (* Assume l and r only have one digit *)
+  if (not (has_one_digit l)) || not (has_one_digit r) then
+    create pos_sign (FD.apply approx [ l.value; r.value ])
+  else
+    let l_value = l.value in
+    let r_value = r.value in
+
+    let sign =
+      Bool.ite
+        (Bool.ors
+           [ Bool.eq l.sign r.sign; BitVec.eqi l.value 0; BitVec.eqi r.value 0 ])
+        pos_sign neg_sign
+    in
+    let value = BitVec.udivb l_value r_value in
+    create sign value
+
+let rem l r =
+  let approx =
+    FD.mk_func_decl_s ctx "BigInt.rem"
+      [
+        BitVec.mk_sort (num_digits l * digit_length);
+        BitVec.mk_sort (num_digits r * digit_length);
+      ]
+      (BitVec.mk_sort 64)
+  in
+
+  (* Assume l and r only have one digit *)
+  if (not (has_one_digit l)) || not (has_one_digit r) then
+    create pos_sign (FD.apply approx [ l.value; r.value ])
+  else
+    let l_value = l.value in
+    let r_value = r.value in
+
+    let value = BitVec.modb l_value r_value in
+    let sign = Bool.ite (BitVec.eqi value 0) pos_sign l.sign in
     create sign value
 
 (* bitwise *)
@@ -225,6 +273,21 @@ let shift_left v o =
         (FD.apply approx [ v.value; o.value ])
         (BitVec.shlb v.value o.value)
     in
+    { v with value }
+
+let shift_right v o =
+  let approx =
+    FD.mk_func_decl_s ctx "BigInt.right_shift"
+      [
+        BitVec.mk_sort (num_digits v * digit_length);
+        BitVec.mk_sort (num_digits o * digit_length);
+      ]
+      (BitVec.mk_sort 64)
+  in
+  if (not (has_one_digit v)) || not (has_one_digit o) then
+    create pos_sign (FD.apply approx [ v.value; o.value ])
+  else
+    let value = BitVec.lshrb v.value o.value in
     { v with value }
 
 (* stringify *)

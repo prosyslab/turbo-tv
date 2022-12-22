@@ -7,6 +7,8 @@ ArgumentsLengthState,
 AssertType,
 BeginRegion,
 BigIntAdd,v1,v2
+BigIntDivide,v1,v2
+BigIntModulus,v1,v2
 BigIntMultiply,v1,v2
 BigIntNegate,v1
 BigIntShiftLeft,v1,v2
@@ -728,12 +730,12 @@ SpeculativeBigIntAsUintN,
 SpeculativeBigIntBitwiseAnd,
 SpeculativeBigIntBitwiseOr,
 SpeculativeBigIntBitwiseXor,
-SpeculativeBigIntDivide,
-SpeculativeBigIntModulus,
+SpeculativeBigIntDivide,v1,v2
+SpeculativeBigIntModulus,v1,v2
 SpeculativeBigIntMultiply,v1,v2
 SpeculativeBigIntNegate,v1
 SpeculativeBigIntShiftLeft,v1,v2
-SpeculativeBigIntShiftRight,v1
+SpeculativeBigIntShiftRight,v1,v2
 SpeculativeBigIntSubtract,v1,v2
 SpeculativeNumberAdd,v1,v2
 SpeculativeNumberBitwiseAnd,v1,v2

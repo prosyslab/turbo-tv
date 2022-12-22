@@ -427,6 +427,10 @@ let bigint_subtract = bigint_binary Bigint.sub
 
 let bigint_multiply = bigint_binary Bigint.mul
 
+let bigint_divide = bigint_binary Bigint.div
+
+let bigint_modulus = bigint_binary Bigint.rem
+
 let bigint_negate pval mem state =
   let p_bn = Bigint.load pval mem in
   let v_bn = Bigint.neg p_bn in
@@ -434,6 +438,8 @@ let bigint_negate pval mem state =
   state |> State.update ~value ~mem
 
 let bigint_shift_left = bigint_binary Bigint.shift_left
+
+let bigint_shift_right = bigint_binary Bigint.shift_right
 
 let check_big_int value control mem state =
   let deopt =
@@ -474,11 +480,18 @@ let speculative_bigint_subtract = speculative_bigint_binary bigint_subtract
 
 let speculative_bigint_multiply = speculative_bigint_binary bigint_multiply
 
+let speculative_bigint_divide = speculative_bigint_binary bigint_divide
+
+let speculative_bigint_modulus = speculative_bigint_binary bigint_modulus
+
 let speculative_bigint_negate pval mem state =
   let deopt = Bool.not pval |> Objects.is_big_int mem in
   state |> bigint_negate pval mem |> State.update ~deopt
 
 let speculative_bigint_shift_left = speculative_bigint_binary bigint_shift_left
+
+let speculative_bigint_shift_right =
+  speculative_bigint_binary bigint_shift_right
 
 (* simplified: object *)
 
