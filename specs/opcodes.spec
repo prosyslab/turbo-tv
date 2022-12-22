@@ -9,6 +9,8 @@ BeginRegion,
 BigIntAdd,v1,v2
 BigIntMultiply,v1,v2
 BigIntNegate,v1
+BigIntShiftLeft,v1,v2
+BigIntShiftRight,v1,v2
 BigIntSubtract,v1,v2
 BitcastFloat32ToInt32,v1
 BitcastFloat64ToInt64,v1
@@ -730,8 +732,8 @@ SpeculativeBigIntDivide,
 SpeculativeBigIntModulus,
 SpeculativeBigIntMultiply,v1,v2
 SpeculativeBigIntNegate,v1
-SpeculativeBigIntShiftLeft,
-SpeculativeBigIntShiftRight,
+SpeculativeBigIntShiftLeft,v1,v2
+SpeculativeBigIntShiftRight,v1
 SpeculativeBigIntSubtract,v1,v2
 SpeculativeNumberAdd,v1,v2
 SpeculativeNumberBitwiseAnd,v1,v2

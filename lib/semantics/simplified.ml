@@ -414,24 +414,26 @@ let number_is_nan pval mem state =
   state |> State.update ~value
 
 (* simplified: bigint *)
-let bigint_arith op lval rval mem state =
+let bigint_binary op lval rval mem state =
   let l_bn = Bigint.load lval mem in
   let r_bn = Bigint.load rval mem in
   let v_bn = op l_bn r_bn in
   let value, mem = Bigint.allocate v_bn mem in
   state |> State.update ~value ~mem
 
-let bigint_add = bigint_arith Bigint.add
+let bigint_add = bigint_binary Bigint.add
 
-let bigint_subtract = bigint_arith Bigint.sub
+let bigint_subtract = bigint_binary Bigint.sub
 
-let bigint_multiply = bigint_arith Bigint.mul
+let bigint_multiply = bigint_binary Bigint.mul
 
 let bigint_negate pval mem state =
   let p_bn = Bigint.load pval mem in
   let v_bn = Bigint.neg p_bn in
   let value, mem = Bigint.allocate v_bn mem in
   state |> State.update ~value ~mem
+
+let bigint_shift_left = bigint_binary Bigint.shift_left
 
 let check_big_int value control mem state =
   let deopt =
@@ -458,7 +460,7 @@ let truncate_big_int_to_word64 value mem state =
   let value = Bigint.to_int64 loaded in
   state |> State.update ~value
 
-let speculative_bigint_arith op lval rval mem state =
+let speculative_bigint_binary op lval rval mem state =
   let deopt =
     Bool.not
       (Bool.ands
@@ -466,15 +468,17 @@ let speculative_bigint_arith op lval rval mem state =
   in
   state |> op lval rval mem |> State.update ~deopt
 
-let speculative_bigint_add = speculative_bigint_arith bigint_add
+let speculative_bigint_add = speculative_bigint_binary bigint_add
 
-let speculative_bigint_subtract = speculative_bigint_arith bigint_subtract
+let speculative_bigint_subtract = speculative_bigint_binary bigint_subtract
 
-let speculative_bigint_multiply = speculative_bigint_arith bigint_multiply
+let speculative_bigint_multiply = speculative_bigint_binary bigint_multiply
 
 let speculative_bigint_negate pval mem state =
   let deopt = Bool.not pval |> Objects.is_big_int mem in
   state |> bigint_negate pval mem |> State.update ~deopt
+
+let speculative_bigint_shift_left = speculative_bigint_binary bigint_shift_left
 
 (* simplified: object *)
 

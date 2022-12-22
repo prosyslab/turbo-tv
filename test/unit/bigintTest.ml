@@ -110,7 +110,40 @@ let mul_tests =
       (Bigint.from_int 0x10a233c535a41281);
   ]
 
+let shift_left_tests =
+  let name = "BigInt::shift_left" in
+  let msg = "\027[91m" ^ name ^ "\027[0m" in
+  let shift_left_eq_test v n expected =
+    let actual = Bigint.shift_left v (Bigint.from_int n) in
+    let eq = Bigint.equal in
+    let _ = value_eq eq actual expected in
+    name >:: fun _ ->
+    assert_equal ~msg ~cmp:(value_eq eq) ~printer:(bigint_printer ~indent:1)
+      expected actual
+  in
+  [
+    shift_left_eq_test Bigint.zero 0 Bigint.zero;
+    shift_left_eq_test Bigint.zero 1 Bigint.zero;
+    shift_left_eq_test (Bigint.from_int 1) 0 (Bigint.from_int 1);
+    shift_left_eq_test (Bigint.from_int 1) 1 (Bigint.from_int 2);
+    shift_left_eq_test (Bigint.from_int 1) 2 (Bigint.from_int 4);
+    shift_left_eq_test (Bigint.from_int 1) 3 (Bigint.from_int 8);
+    shift_left_eq_test (Bigint.from_int 1) 4 (Bigint.from_int 16);
+    shift_left_eq_test (Bigint.from_int 1) 5 (Bigint.from_int 32);
+    shift_left_eq_test (Bigint.from_int 1) 6 (Bigint.from_int 64);
+    shift_left_eq_test (Bigint.from_int 1) 7 (Bigint.from_int 128);
+    shift_left_eq_test (Bigint.from_int 1) 8 (Bigint.from_int 256);
+    shift_left_eq_test (Bigint.from_int 1) 9 (Bigint.from_int 512);
+    shift_left_eq_test (Bigint.from_int 1) 10 (Bigint.from_int 1024);
+    shift_left_eq_test (Bigint.from_int 1) 11 (Bigint.from_int 2048);
+    shift_left_eq_test (Bigint.from_int 1) 12 (Bigint.from_int 4096);
+    shift_left_eq_test (Bigint.from_int 1) 13 (Bigint.from_int 8192);
+    shift_left_eq_test (Bigint.from_int 1) 14 (Bigint.from_int 16384);
+  ]
+
 let suite =
-  "suite" >::: from_string_tests @ neg_tests @ add_tests @ sub_tests @ mul_tests
+  "suite"
+  >::: from_string_tests @ neg_tests @ add_tests @ sub_tests @ mul_tests
+       @ shift_left_tests
 
 let _ = OUnit2.run_test_tt_main suite

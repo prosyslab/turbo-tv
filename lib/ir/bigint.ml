@@ -197,6 +197,36 @@ let mul l r =
     in
     create sign value
 
+(* bitwise *)
+let shift_left v o =
+  let approx =
+    FD.mk_func_decl_s ctx "BigInt.left_shift"
+      [
+        BitVec.mk_sort (num_digits v * digit_length);
+        BitVec.mk_sort (num_digits o * digit_length);
+      ]
+      (BitVec.mk_sort 64)
+  in
+  if (not (has_one_digit v)) || not (has_one_digit o) then
+    create pos_sign (FD.apply approx [ v.value; o.value ])
+  else
+    let shift_out =
+      BitVec.andb v.value
+        (BitVec.rorb
+           (BitVec.subi
+              (BitVec.shlb (BitVecVal.from_int ~len:digit_length 1) o.value)
+              1)
+           o.value)
+    in
+    let ovf = Bool.not (BitVec.eqb shift_out (BitVecVal.zero ())) in
+    (* if there is overflow, we ignore the result and apply uif *)
+    let value =
+      Bool.ite ovf
+        (FD.apply approx [ v.value; o.value ])
+        (BitVec.shlb v.value o.value)
+    in
+    { v with value }
+
 (* stringify *)
 let to_string model t =
   let sign_str =
