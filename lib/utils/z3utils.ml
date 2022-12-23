@@ -438,6 +438,8 @@ module BitVec = struct
 
   let neg bv = BV.mk_neg ctx bv
 
+  let neg_no_overflow bv = BV.mk_neg_no_overflow ctx bv
+
   let ashrb lbv rbv = BV.mk_ashr ctx lbv rbv
 
   let ashri lbv rval =

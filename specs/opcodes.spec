@@ -7,6 +7,9 @@ ArgumentsLengthState,
 AssertType,
 BeginRegion,
 BigIntAdd,v1,v2
+BigIntBitwiseAnd,v1,v2
+BigIntBitwiseOr,v1,v2
+BigIntBitwiseXor,v1,v2
 BigIntDivide,v1,v2
 BigIntModulus,v1,v2
 BigIntMultiply,v1,v2
@@ -52,10 +55,9 @@ ChangeTaggedToUint32,
 ChangeUint32ToFloat64,v1
 ChangeUint32ToTagged,v1
 ChangeUint32ToUint64,v1
-ChangeUint64ToBigInt,
+ChangeUint64ToBigInt,v1
 ChangeUint64ToTagged,v1
 CheckBigInt,v1,e1,c1
-CheckBigInt64,
 CheckBounds,b2,v1,v2,e1,c1
 CheckClosure,
 CheckEqualsInternalizedString,
@@ -72,12 +74,7 @@ CheckReceiverOrNullOrUndefined,
 CheckSmi,v1,e1,c1
 CheckString,
 CheckSymbol,
-CheckedBigInt64Add,
 CheckedBigIntToBigInt64,v1,e1,c1
-CheckedBitInt64Add,
-CheckedBitInt64Div,
-CheckedBitInt64Mul,
-CheckedBitInt64Sub,
 CheckedFloat64ToInt32,b1,v1
 CheckedFloat64ToInt64,
 CheckedInt32Add,v1,v2,e1,c1

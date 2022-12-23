@@ -437,6 +437,12 @@ let bigint_negate pval mem state =
   let value, mem = Bigint.allocate v_bn mem in
   state |> State.update ~value ~mem
 
+let bigint_bitwise_and = bigint_binary Bigint.bitwise_and
+
+let bigint_bitwise_or = bigint_binary Bigint.bitwise_or
+
+let bigint_bitwise_xor = bigint_binary Bigint.bitwise_xor
+
 let bigint_shift_left = bigint_binary Bigint.shift_left
 
 let bigint_shift_right = bigint_binary Bigint.shift_right
@@ -451,7 +457,7 @@ let check_big_int value control mem state =
   in
   state |> State.update ~value ~deopt ~control
 
-let checked_big_int_to_big_int64 value control mem state =
+let checked_bigint_to_bigint64 value control mem state =
   let loaded = Bigint.load value mem in
   let is_int64_min =
     Bool.ands
@@ -492,6 +498,14 @@ let speculative_bigint_shift_left = speculative_bigint_binary bigint_shift_left
 
 let speculative_bigint_shift_right =
   speculative_bigint_binary bigint_shift_right
+
+let speculative_bigint_bitwise_and =
+  speculative_bigint_binary bigint_bitwise_and
+
+let speculative_bigint_bitwise_or = speculative_bigint_binary bigint_bitwise_or
+
+let speculative_bigint_bitwise_xor =
+  speculative_bigint_binary bigint_bitwise_xor
 
 (* simplified: object *)
 
@@ -608,6 +622,11 @@ let change_uint32_to_tagged pval state =
   let heap_number = Uint32.to_float64 pval in
   let value = Bool.ite is_in_smi_range smi heap_number in
   state |> State.update ~value
+
+let change_uint64_to_bigint pval mem state =
+  let data = Value.data_of pval in
+  let value, mem = Bigint.allocate (Bigint.create Bigint.pos_sign data) mem in
+  state |> State.update ~value ~mem
 
 let change_uint64_to_tagged pval state =
   let is_in_smi_range = Uint64.is_in_smi_range pval in

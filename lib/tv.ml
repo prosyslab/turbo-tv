@@ -454,12 +454,18 @@ let encode program
   | BigIntMultiply -> encode_v2m bigint_multiply
   | BigIntSubtract -> encode_v2m bigint_subtract
   | BigIntNegate -> encode_v1m bigint_negate
+  | BigIntBitwiseAnd -> encode_v2m bigint_bitwise_and
+  | BigIntBitwiseOr -> encode_v2m bigint_bitwise_or
+  | BigIntBitwiseXor -> encode_v2m bigint_bitwise_xor
   | BigIntShiftLeft -> encode_v2m bigint_shift_left
   | BigIntShiftRight -> encode_v2m bigint_shift_right
   | SpeculativeBigIntAdd -> encode_v2m speculative_bigint_add
   | SpeculativeBigIntSubtract -> encode_v2m speculative_bigint_subtract
   | SpeculativeBigIntMultiply -> encode_v2m speculative_bigint_multiply
   | SpeculativeBigIntNegate -> encode_v1m speculative_bigint_negate
+  | SpeculativeBigIntBitwiseAnd -> encode_v2m speculative_bigint_bitwise_and
+  | SpeculativeBigIntBitwiseOr -> encode_v2m speculative_bigint_bitwise_or
+  | SpeculativeBigIntBitwiseXor -> encode_v2m speculative_bigint_bitwise_xor
   | SpeculativeBigIntShiftLeft -> encode_v2m speculative_bigint_shift_left
   | SpeculativeBigIntShiftRight -> encode_v2m speculative_bigint_shift_right
   (* simplified: memory *)
@@ -602,6 +608,10 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       change_uint32_to_tagged pval
+  | ChangeUint64ToBigInt ->
+      let value_id = Operands.id_of_nth operands 0 in
+      let value = RegisterFile.find value_id rf in
+      change_uint64_to_bigint value mem
   | ChangeUint64ToTagged ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -611,7 +621,7 @@ let encode program
       let value = RegisterFile.find value_id rf in
       let ctrl_id = Operands.id_of_nth operands 2 in
       let ctrl = ControlFile.find ctrl_id cf in
-      checked_big_int_to_big_int64 value ctrl mem
+      checked_bigint_to_bigint64 value ctrl mem
   | CheckedFloat64ToInt32 ->
       let hint = Operands.const_of_nth operands 0 in
       let pid = Operands.id_of_nth operands 1 in

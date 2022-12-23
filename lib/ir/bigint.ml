@@ -126,21 +126,27 @@ let add l r =
   let approx =
     FD.mk_func_decl_s ctx "BigInt.add"
       [
-        BitVec.mk_sort (num_digits l * digit_length);
-        BitVec.mk_sort (num_digits r * digit_length);
+        BitVec.mk_sort ((num_digits l * digit_length) + 1);
+        BitVec.mk_sort ((num_digits r * digit_length) + 1);
       ]
-      (BitVec.mk_sort 64)
+      (BitVec.mk_sort 65)
   in
 
   (* Assume l and r only have one digit *)
   if (not (has_one_digit l)) || not (has_one_digit r) then
-    create
-      (BitVecVal.zero ~len:sign_length ())
-      (FD.apply approx [ l.value; r.value ])
+    create pos_sign
+      (FD.apply approx [ l.value; r.value ]
+      |> BitVec.extract (digit_length - 1) 0)
   else
     (* 1. apply sign and extend *)
-    let l_value = Bool.ite (is_negative l) (BitVec.neg l.value) l.value in
-    let r_value = Bool.ite (is_negative r) (BitVec.neg r.value) r.value in
+    let l_value =
+      let extended = l.value |> BitVec.zero_extend 1 in
+      Bool.ite (is_negative l) (BitVec.neg extended) extended
+    in
+    let r_value =
+      let extended = r.value |> BitVec.zero_extend 1 in
+      Bool.ite (is_negative r) (BitVec.neg extended) extended
+    in
 
     (* 2. check whether extension is required *)
     let can_overflow = Bool.not (BitVec.add_no_overflow l_value r_value true) in
@@ -149,13 +155,12 @@ let add l r =
 
     (* 3. add *)
     let added = BitVec.addb l_value r_value in
-    let sign =
-      Bool.ite (BitVec.sltb added (BitVecVal.zero ())) neg_sign pos_sign
-    in
+    let sign = Bool.ite (BitVec.slti added 0) neg_sign pos_sign in
     let value =
       Bool.ite need_extension
         (FD.apply approx [ l_value; r_value ])
         (Bool.ite (Bool.eq sign neg_sign) (BitVec.neg added) added)
+      |> BitVec.extract (digit_length - 1) 0
     in
     create sign value
 
@@ -173,9 +178,7 @@ let mul l r =
 
   (* Assume l and r only have one digit *)
   if (not (has_one_digit l)) || not (has_one_digit r) then
-    create
-      (BitVecVal.zero ~len:sign_length ())
-      (FD.apply approx [ l.value; r.value ])
+    create pos_sign (FD.apply approx [ l.value; r.value ])
   else
     let l_value = l.value in
     let r_value = r.value in
@@ -289,6 +292,38 @@ let shift_right v o =
   else
     let value = BitVec.lshrb v.value o.value in
     { v with value }
+
+let bigint_bitwise op l r =
+  let op =
+    match op with
+    | "&" -> BitVec.andb
+    | "|" -> BitVec.orb
+    | "^" -> BitVec.xor
+    | _ -> failwith "unreachable"
+  in
+
+  let l_value =
+    let extended = l.value |> BitVec.zero_extend 1 in
+    Bool.ite (is_negative l) (BitVec.neg extended) extended
+  in
+  let r_value =
+    let extended = r.value |> BitVec.zero_extend 1 in
+    Bool.ite (is_negative r) (BitVec.neg extended) extended
+  in
+
+  let res = op l_value r_value in
+  let sign = Bool.ite (BitVec.slti res 0) neg_sign pos_sign in
+  let value =
+    Bool.ite (Bool.eq sign neg_sign) (BitVec.neg res) res
+    |> BitVec.extract (digit_length - 1) 0
+  in
+  create sign value
+
+let bitwise_and l r = bigint_bitwise "&" l r
+
+let bitwise_or l r = bigint_bitwise "|" l r
+
+let bitwise_xor l r = bigint_bitwise "^" l r
 
 (* stringify *)
 let to_string model t =

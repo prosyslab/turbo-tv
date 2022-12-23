@@ -178,6 +178,84 @@ let rem_tests =
       (Bigint.from_int 307665630);
   ]
 
+let bitwise_and_tests =
+  let name = "BigInt::bitwise_and" in
+  let msg = "\027[91m" ^ name ^ "\027[0m" in
+  let bitwise_and_eq_test l r expected =
+    let actual = Bigint.bitwise_and l r in
+    let eq = Bigint.equal in
+    let _ = value_eq eq actual expected in
+    name >:: fun _ ->
+    assert_equal ~msg ~cmp:(value_eq eq) ~printer:(bigint_printer ~indent:1)
+      expected actual
+  in
+  [
+    bitwise_and_eq_test Bigint.zero Bigint.zero Bigint.zero;
+    bitwise_and_eq_test Bigint.zero (Bigint.from_int 1) Bigint.zero;
+    bitwise_and_eq_test (Bigint.from_int 1) (Bigint.from_int (-1))
+      (Bigint.from_int 1);
+    bitwise_and_eq_test (Bigint.from_int (-1)) (Bigint.from_int (-2))
+      (Bigint.from_int (-2));
+    bitwise_and_eq_test
+      (Bigint.from_int 0xdeadbeef)
+      (Bigint.from_int 0xcafebabe)
+      (Bigint.from_int 0xcaacbaae);
+    bitwise_and_eq_test
+      (Bigint.from_int (-0x123456789abcdef))
+      (Bigint.from_int 0x41414141)
+      (Bigint.from_int 0x40400001);
+  ]
+
+let bitwise_or_tests =
+  let name = "BigInt::bitwise_or" in
+  let msg = "\027[91m" ^ name ^ "\027[0m" in
+  let bitwise_or_eq_test l r expected =
+    let actual = Bigint.bitwise_or l r in
+    let eq = Bigint.equal in
+    let _ = value_eq eq actual expected in
+    name >:: fun _ ->
+    assert_equal ~msg ~cmp:(value_eq eq) ~printer:(bigint_printer ~indent:1)
+      expected actual
+  in
+  [
+    bitwise_or_eq_test Bigint.zero Bigint.zero Bigint.zero;
+    bitwise_or_eq_test Bigint.zero (Bigint.from_int 1) (Bigint.from_int 1);
+    bitwise_or_eq_test (Bigint.from_int 1) (Bigint.from_int (-1))
+      (Bigint.from_int (-1));
+    bitwise_or_eq_test (Bigint.from_int (-1)) (Bigint.from_int (-1))
+      (Bigint.from_int (-1));
+    bitwise_or_eq_test
+      (Bigint.from_int 0xdeadbeef)
+      (Bigint.from_int 0xcafebabe)
+      (Bigint.from_int 0xdeffbeff);
+    bitwise_or_eq_test
+      (Bigint.from_int (-0x41414141))
+      (Bigint.from_int 0x41414142)
+      (Bigint.from_int (-1));
+  ]
+
+let bitwise_xor_tests =
+  let name = "BigInt::bitwise_xor" in
+  let msg = "\027[91m" ^ name ^ "\027[0m" in
+  let bitwise_xor_eq_test l r expected =
+    let actual = Bigint.bitwise_xor l r in
+    let eq = Bigint.equal in
+    let _ = value_eq eq actual expected in
+    name >:: fun _ ->
+    assert_equal ~msg ~cmp:(value_eq eq) ~printer:(bigint_printer ~indent:1)
+      expected actual
+  in
+  [
+    bitwise_xor_eq_test Bigint.zero Bigint.zero Bigint.zero;
+    bitwise_xor_eq_test Bigint.zero (Bigint.from_int 1) (Bigint.from_int 1);
+    bitwise_xor_eq_test (Bigint.from_int 1) (Bigint.from_int (-1))
+      (Bigint.from_int (-2));
+    bitwise_xor_eq_test (Bigint.from_int (-1)) (Bigint.from_int (-1))
+      Bigint.zero;
+    bitwise_xor_eq_test (Bigint.from_int (-1)) (Bigint.from_int 0)
+      (Bigint.from_int (-1));
+  ]
+
 let shift_left_tests =
   let name = "BigInt::shift_left" in
   let msg = "\027[91m" ^ name ^ "\027[0m" in
@@ -243,6 +321,7 @@ let shift_right_tests =
 let suite =
   "suite"
   >::: from_string_tests @ neg_tests @ add_tests @ sub_tests @ mul_tests
-       @ div_tests @ rem_tests @ shift_left_tests @ shift_right_tests
+       @ div_tests @ rem_tests @ bitwise_and_tests @ bitwise_or_tests
+       @ bitwise_xor_tests @ shift_left_tests @ shift_right_tests
 
 let _ = OUnit2.run_test_tt_main suite
