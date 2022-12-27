@@ -382,6 +382,7 @@ type t =
   | Int32PairMul
   | Int32PairSub
   | Int64AbsWithOverflow
+  | Integral32OrMinusZeroToBigInt
   | JSAdd
   | JSAsyncFunctionEnter
   | JSAsyncFunctionReject
@@ -486,6 +487,7 @@ type t =
   | JSStoreNamed
   | JSStrictEqual
   | JSSubtract
+  | JSToBigIntConvertNumber
   | JSToLength
   | JSToName
   | JSToNumber
@@ -846,6 +848,7 @@ type t =
   | SpeculativeBigIntBitwiseOr
   | SpeculativeBigIntBitwiseXor
   | SpeculativeBigIntDivide
+  | SpeculativeBigIntEqual
   | SpeculativeBigIntModulus
   | SpeculativeBigIntMultiply
   | SpeculativeBigIntShiftLeft
@@ -1053,12 +1056,13 @@ let get_kind opcode =
   | I8x16UConvertI16x8 | IfDefault | IfException | IfValue
   | InductionVariablePhi | InitializeImmutableInObject | Int32AbsWithOverflow
   | Int32MulHigh | Int32PairAdd | Int32PairMul | Int32PairSub
-  | Int64AbsWithOverflow | JSAdd | JSAsyncFunctionEnter | JSAsyncFunctionReject
-  | JSAsyncFunctionResolve | JSBitwiseAnd | JSBitwiseNot | JSBitwiseOr
-  | JSBitwiseXor | JSCall | JSCallForwardVarargs | JSCallRuntime
-  | JSCallWithArrayLike | JSCallWithSpread | JSCloneObject | JSConstruct
-  | JSConstructForwardVarargs | JSConstructWithArrayLike | JSConstructWithSpread
-  | JSCreate | JSCreateArguments | JSCreateArray | JSCreateArrayFromIterable
+  | Int64AbsWithOverflow | Integral32OrMinusZeroToBigInt | JSAdd
+  | JSAsyncFunctionEnter | JSAsyncFunctionReject | JSAsyncFunctionResolve
+  | JSBitwiseAnd | JSBitwiseNot | JSBitwiseOr | JSBitwiseXor | JSCall
+  | JSCallForwardVarargs | JSCallRuntime | JSCallWithArrayLike
+  | JSCallWithSpread | JSCloneObject | JSConstruct | JSConstructForwardVarargs
+  | JSConstructWithArrayLike | JSConstructWithSpread | JSCreate
+  | JSCreateArguments | JSCreateArray | JSCreateArrayFromIterable
   | JSCreateArrayIterator | JSCreateAsyncFunctionObject | JSCreateBlockContext
   | JSCreateBoundFunction | JSCreateCatchContext | JSCreateClosure
   | JSCreateCollectionIterator | JSCreateEmptyLiteralArray
@@ -1082,19 +1086,19 @@ let get_kind opcode =
   | JSSetKeyedProperty | JSSetNamedProperty | JSShiftLeft | JSShiftRight
   | JSShiftRightLogical | JSStoreContext | JSStoreGlobal | JSStoreInArrayLiteral
   | JSStoreMessage | JSStoreModule | JSStoreNamed | JSStrictEqual | JSSubtract
-  | JSToLength | JSToName | JSToNumber | JSToNumberConvertBigInt | JSToNumeric
-  | JSToObject | JSToString | JSWasmCall | LoadDataViewElement
-  | LoadFieldByIndex | LoadFramePointer | LoadFromObject | LoadImmutable
-  | LoadImmutableFromObject | LoadLane | LoadMessage | LoadParentFramePointer
-  | LoadStackArgument | LoadStackCheckOffset | LoadTransform | Loop | LoopExit
-  | LoopExitEffect | LoopExitValue | MapGuard | MaybeGrowFastElements
-  | MemoryBarrier | NewArgumentsElements | NewConsString | NewDoubleElements
-  | NewSmiOrObjectElements | NumberAcos | NumberAcosh | NumberAsin | NumberAsinh
-  | NumberAtan | NumberAtan2 | NumberAtanh | NumberCbrt | NumberClz32
-  | NumberCos | NumberCosh | NumberExp | NumberFround | NumberIsFinite
-  | NumberIsFloat64Hole | NumberLog | NumberLog10 | NumberLog1p | NumberLog2
-  | NumberPow | NumberSilenceNaN | NumberSinh | NumberSqrt | NumberTan
-  | NumberTanh | NumberToString | NumberToUint8Clamped | ObjectId
+  | JSToBigIntConvertNumber | JSToLength | JSToName | JSToNumber
+  | JSToNumberConvertBigInt | JSToNumeric | JSToObject | JSToString | JSWasmCall
+  | LoadDataViewElement | LoadFieldByIndex | LoadFramePointer | LoadFromObject
+  | LoadImmutable | LoadImmutableFromObject | LoadLane | LoadMessage
+  | LoadParentFramePointer | LoadStackArgument | LoadStackCheckOffset
+  | LoadTransform | Loop | LoopExit | LoopExitEffect | LoopExitValue | MapGuard
+  | MaybeGrowFastElements | MemoryBarrier | NewArgumentsElements | NewConsString
+  | NewDoubleElements | NewSmiOrObjectElements | NumberAcos | NumberAcosh
+  | NumberAsin | NumberAsinh | NumberAtan | NumberAtan2 | NumberAtanh
+  | NumberCbrt | NumberClz32 | NumberCos | NumberCosh | NumberExp | NumberFround
+  | NumberIsFinite | NumberIsFloat64Hole | NumberLog | NumberLog10 | NumberLog1p
+  | NumberLog2 | NumberPow | NumberSilenceNaN | NumberSinh | NumberSqrt
+  | NumberTan | NumberTanh | NumberToString | NumberToUint8Clamped | ObjectId
   | ObjectIsArrayBufferView | ObjectIsBigInt | ObjectIsCallable
   | ObjectIsConstructor | ObjectIsDetectableCallable | ObjectIsFiniteNumber
   | ObjectIsInteger | ObjectIsNonCallable | ObjectIsNumber | ObjectIsReceiver
@@ -1181,7 +1185,7 @@ let get_kind opcode =
   | NumberShiftRight | NumberShiftRightLogical | NumberSubtract | ReferenceEqual
   | SameValue | SpeculativeBigIntAdd | SpeculativeBigIntBitwiseAnd
   | SpeculativeBigIntBitwiseOr | SpeculativeBigIntBitwiseXor
-  | SpeculativeBigIntDivide | SpeculativeBigIntModulus
+  | SpeculativeBigIntDivide | SpeculativeBigIntEqual | SpeculativeBigIntModulus
   | SpeculativeBigIntMultiply | SpeculativeBigIntShiftLeft
   | SpeculativeBigIntShiftRight | SpeculativeBigIntSubtract
   | SpeculativeNumberAdd | SpeculativeNumberBitwiseAnd
@@ -1614,6 +1618,7 @@ let of_str str =
   | "Int32PairMul" -> Int32PairMul
   | "Int32PairSub" -> Int32PairSub
   | "Int64AbsWithOverflow" -> Int64AbsWithOverflow
+  | "Integral32OrMinusZeroToBigInt" -> Integral32OrMinusZeroToBigInt
   | "JSAdd" -> JSAdd
   | "JSAsyncFunctionEnter" -> JSAsyncFunctionEnter
   | "JSAsyncFunctionReject" -> JSAsyncFunctionReject
@@ -1718,6 +1723,7 @@ let of_str str =
   | "JSStoreNamed" -> JSStoreNamed
   | "JSStrictEqual" -> JSStrictEqual
   | "JSSubtract" -> JSSubtract
+  | "JSToBigIntConvertNumber" -> JSToBigIntConvertNumber
   | "JSToLength" -> JSToLength
   | "JSToName" -> JSToName
   | "JSToNumber" -> JSToNumber
@@ -2073,6 +2079,7 @@ let of_str str =
   | "SpeculativeBigIntBitwiseOr" -> SpeculativeBigIntBitwiseOr
   | "SpeculativeBigIntBitwiseXor" -> SpeculativeBigIntBitwiseXor
   | "SpeculativeBigIntDivide" -> SpeculativeBigIntDivide
+  | "SpeculativeBigIntEqual" -> SpeculativeBigIntEqual
   | "SpeculativeBigIntModulus" -> SpeculativeBigIntModulus
   | "SpeculativeBigIntMultiply" -> SpeculativeBigIntMultiply
   | "SpeculativeBigIntShiftLeft" -> SpeculativeBigIntShiftLeft
@@ -2513,6 +2520,7 @@ let to_str opcode =
   | Int32PairMul -> "Int32PairMul"
   | Int32PairSub -> "Int32PairSub"
   | Int64AbsWithOverflow -> "Int64AbsWithOverflow"
+  | Integral32OrMinusZeroToBigInt -> "Integral32OrMinusZeroToBigInt"
   | JSAdd -> "JSAdd"
   | JSAsyncFunctionEnter -> "JSAsyncFunctionEnter"
   | JSAsyncFunctionReject -> "JSAsyncFunctionReject"
@@ -2617,6 +2625,7 @@ let to_str opcode =
   | JSStoreNamed -> "JSStoreNamed"
   | JSStrictEqual -> "JSStrictEqual"
   | JSSubtract -> "JSSubtract"
+  | JSToBigIntConvertNumber -> "JSToBigIntConvertNumber"
   | JSToLength -> "JSToLength"
   | JSToName -> "JSToName"
   | JSToNumber -> "JSToNumber"
@@ -2972,6 +2981,7 @@ let to_str opcode =
   | SpeculativeBigIntBitwiseOr -> "SpeculativeBigIntBitwiseOr"
   | SpeculativeBigIntBitwiseXor -> "SpeculativeBigIntBitwiseXor"
   | SpeculativeBigIntDivide -> "SpeculativeBigIntDivide"
+  | SpeculativeBigIntEqual -> "SpeculativeBigIntEqual"
   | SpeculativeBigIntModulus -> "SpeculativeBigIntModulus"
   | SpeculativeBigIntMultiply -> "SpeculativeBigIntMultiply"
   | SpeculativeBigIntShiftLeft -> "SpeculativeBigIntShiftLeft"

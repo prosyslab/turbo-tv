@@ -456,6 +456,7 @@ Int64Mul,v1,v2
 Int64MulWithOverflow,v1,v2,c1
 Int64Sub,v1,v2
 Int64SubWithOverflow,v1,v2,c1
+Integral32OrMinusZeroToBigInt,
 JSAdd,
 JSAsyncFunctionEnter,
 JSAsyncFunctionReject,
@@ -562,6 +563,7 @@ JSStoreModule,
 JSStoreNamed,
 JSStrictEqual,
 JSSubtract,
+JSToBigIntConvertNumber,
 JSToLength,
 JSToName,
 JSToNumber,
@@ -728,6 +730,7 @@ SpeculativeBigIntBitwiseAnd,v1,v2
 SpeculativeBigIntBitwiseOr,v1,v2
 SpeculativeBigIntBitwiseXor,v1,v2
 SpeculativeBigIntDivide,v1,v2
+SpeculativeBigIntEqual,v1,v2
 SpeculativeBigIntModulus,v1,v2
 SpeculativeBigIntMultiply,v1,v2
 SpeculativeBigIntNegate,v1

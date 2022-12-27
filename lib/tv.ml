@@ -1054,6 +1054,14 @@ let run nparams src_program tgt_program =
         ]
     in
 
+    let is_big_int mem value =
+      Bool.ands
+        [
+          value |> Value.has_type Type.tagged_pointer;
+          value |> Objects.is_big_int mem;
+        ]
+    in
+
     Bool.ite
       (Bool.ands
          [
@@ -1063,7 +1071,13 @@ let run nparams src_program tgt_program =
       (Bool.eq
          (src_retval |> Number.to_float64 src_mem)
          (tgt_retval |> Number.to_float64 tgt_mem))
-      (Bool.eq src_retval tgt_retval)
+      (Bool.ite
+         (Bool.ands
+            [ is_big_int src_mem src_retval; is_big_int tgt_mem tgt_retval ])
+         (let src_big_int = Bigint.load src_retval src_mem in
+          let tgt_big_int = Bigint.load tgt_retval tgt_mem in
+          Bigint.equal src_big_int tgt_big_int)
+         (Bool.eq src_retval tgt_retval))
   in
 
   let assertion =
