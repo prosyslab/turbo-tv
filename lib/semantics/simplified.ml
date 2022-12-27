@@ -503,7 +503,7 @@ let speculative_bigint_divide = speculative_bigint_binary bigint_divide
 let speculative_bigint_modulus = speculative_bigint_binary bigint_modulus
 
 let speculative_bigint_negate pval mem state =
-  let deopt = Bool.not pval |> Objects.is_big_int mem in
+  let deopt = Bool.not (pval |> Objects.is_big_int mem) in
   state |> bigint_negate pval mem |> State.update ~deopt
 
 let speculative_bigint_shift_left = speculative_bigint_binary bigint_shift_left
