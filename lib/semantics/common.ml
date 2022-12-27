@@ -203,7 +203,8 @@ let call fname args state =
              (* Int64 *)
              (Bool.ite
                 (arg |> Value.has_type Type.int64)
-                (arg |> Int64.to_float64) arg))
+                (Int64.div arg (Int64.of_int 2) |> Int64.to_float64)
+                arg))
   in
   let return = Z3.FuncDecl.apply f_decl normalized_args in
   state |> State.update ~value:return ~control:Bool.tr

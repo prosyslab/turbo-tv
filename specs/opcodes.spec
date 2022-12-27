@@ -724,9 +724,9 @@ Simd128ReverseBytes,
 SpeculativeBigIntAdd,v1,v2
 SpeculativeBigIntAsIntN,
 SpeculativeBigIntAsUintN,
-SpeculativeBigIntBitwiseAnd,
-SpeculativeBigIntBitwiseOr,
-SpeculativeBigIntBitwiseXor,
+SpeculativeBigIntBitwiseAnd,v1,v2
+SpeculativeBigIntBitwiseOr,v1,v2
+SpeculativeBigIntBitwiseXor,v1,v2
 SpeculativeBigIntDivide,v1,v2
 SpeculativeBigIntModulus,v1,v2
 SpeculativeBigIntMultiply,v1,v2
