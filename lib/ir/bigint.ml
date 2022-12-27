@@ -89,11 +89,15 @@ let extend t = { t with value = BitVec.zero_extend digit_length t.value }
 let extend_n_digits n t =
   { t with value = BitVec.zero_extend (n * digit_length) t.value }
 
-let extend_to n t =
-  let len = BitVec.length_of t.value in
-  if len < n * digit_length then
-    { t with value = BitVec.zero_extend ((n * digit_length) - len) t.value }
-  else t
+(* fit a to b *)
+let fit a b =
+  let a_num_digits = num_digits a in
+  let b_num_digits = num_digits b in
+  if a_num_digits > b_num_digits then
+    (a, b |> extend_n_digits (a_num_digits - b_num_digits))
+  else if a_num_digits < b_num_digits then
+    (a |> extend_n_digits (b_num_digits - a_num_digits), b)
+  else (a, b)
 
 (* constants *)
 let zero = create pos_sign (BitVecVal.zero ~len:(digit_size * 8) ())
@@ -105,6 +109,10 @@ let is_negative t =
   let sign = t.sign in
   BitVec.eqb neg_sign sign
 
+let is_positive t =
+  let sign = t.sign in
+  BitVec.eqb pos_sign sign
+
 let has_one_digit t = t |> num_digits = 1
 
 (* conversion *)
@@ -113,7 +121,21 @@ let to_int64 t =
   |> Value.entype Type.int64
 
 (* comparison *)
-let equal l r = Bool.ands [ Bool.eq l.sign r.sign; Bool.eq l.value r.value ]
+let equal l r =
+  let l, r = fit l r in
+  Bool.ands [ Bool.eq l.sign r.sign; Bool.eq l.value r.value ]
+
+let less_than l r =
+  let l, r = fit l r in
+  Bool.ite
+    (Bool.ands [ l |> is_negative; r |> is_positive ])
+    Bool.tr
+    (Bool.ite
+       (Bool.ands [ l |> is_positive; r |> is_negative ])
+       Bool.fl
+       (BitVec.ultb l.value r.value))
+
+let less_than_or_equal l r = Bool.ors [ equal l r; less_than l r ]
 
 (* arithmetic *)
 let neg v =
@@ -328,8 +350,10 @@ let bitwise_xor l r = bigint_bitwise "^" l r
 (* stringify *)
 let to_string model t =
   let sign_str =
-    if BitVec.eqi t.sign 0 |> Model.eval model |> Expr.to_string = "true" then
-      "+"
+    if
+      BitVec.eqi t.sign 0 |> Model.eval model |> Expr.to_simplified_string
+      = "true"
+    then "+"
     else "-"
   in
   let value_str =

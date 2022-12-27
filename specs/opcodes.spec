@@ -11,6 +11,9 @@ BigIntBitwiseAnd,v1,v2
 BigIntBitwiseOr,v1,v2
 BigIntBitwiseXor,v1,v2
 BigIntDivide,v1,v2
+BigIntEqual,v1,v2
+BigIntLessThan,v1,v2
+BigIntLessThanOrEqual,v1,v2
 BigIntModulus,v1,v2
 BigIntMultiply,v1,v2
 BigIntNegate,v1
@@ -84,6 +87,8 @@ CheckedInt32Mul,b1,v1,v2,e1,c1
 CheckedInt32Sub,v1,v2,e1,c1
 CheckedInt32ToTaggedSigned,
 CheckedInt64Add,v1,v2,e1,c1
+CheckedInt64Div,
+CheckedInt64Mod,
 CheckedInt64Mul,v1,v2,e1,c1
 CheckedInt64ToInt32,v1,e1,c1
 CheckedInt64ToTaggedSigned, 
@@ -509,6 +514,7 @@ JSDeleteProperty,
 JSDivide,
 JSEqual,
 JSExponentiate,
+JSFindNonDefaultConstructorOrConstruct,
 JSForInEnumerate,
 JSForInNext,
 JSForInPrepare,
@@ -731,6 +737,8 @@ SpeculativeBigIntBitwiseOr,v1,v2
 SpeculativeBigIntBitwiseXor,v1,v2
 SpeculativeBigIntDivide,v1,v2
 SpeculativeBigIntEqual,v1,v2
+SpeculativeBigIntLessThan,v1,v2
+SpeculativeBigIntLessThanOrEqual,v1,v2
 SpeculativeBigIntModulus,v1,v2
 SpeculativeBigIntMultiply,v1,v2
 SpeculativeBigIntNegate,v1

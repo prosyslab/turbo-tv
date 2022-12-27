@@ -76,6 +76,8 @@ type t =
   | CheckedFloat64ToInt64
   | CheckedInt32Mod
   | CheckedInt32ToTaggedSigned
+  | CheckedInt64Div
+  | CheckedInt64Mod
   | CheckedInt64ToTaggedSigned
   | CheckedTaggedToArrayIndex
   | CheckedTaggedToInt32
@@ -434,6 +436,7 @@ type t =
   | JSDivide
   | JSEqual
   | JSExponentiate
+  | JSFindNonDefaultConstructorOrConstruct
   | JSForInEnumerate
   | JSForInNext
   | JSForInPrepare
@@ -797,6 +800,9 @@ type t =
   | BigIntBitwiseOr
   | BigIntBitwiseXor
   | BigIntDivide
+  | BigIntEqual
+  | BigIntLessThan
+  | BigIntLessThanOrEqual
   | BigIntModulus
   | BigIntMultiply
   | BigIntShiftLeft
@@ -849,6 +855,8 @@ type t =
   | SpeculativeBigIntBitwiseXor
   | SpeculativeBigIntDivide
   | SpeculativeBigIntEqual
+  | SpeculativeBigIntLessThan
+  | SpeculativeBigIntLessThanOrEqual
   | SpeculativeBigIntModulus
   | SpeculativeBigIntMultiply
   | SpeculativeBigIntShiftLeft
@@ -985,78 +993,78 @@ let get_kind opcode =
   | CheckHeapObject | CheckInternalizedString | CheckNotTaggedHole | CheckNumber
   | CheckReceiver | CheckReceiverOrNullOrUndefined | CheckString | CheckSymbol
   | CheckedFloat64ToInt64 | CheckedInt32Mod | CheckedInt32ToTaggedSigned
-  | CheckedInt64ToTaggedSigned | CheckedTaggedToArrayIndex
-  | CheckedTaggedToInt32 | CheckedTaggedToInt64 | CheckedUint32Mod
-  | CheckedUint32ToTaggedSigned | CheckedUint64Bounds | CheckedUint64ToInt32
-  | CheckedUint64ToInt64 | CheckedUint64ToTaggedSigned | Checkpoint | Comment
-  | CompareMaps | CompressedHeapConstant | ConvertReceiver
-  | ConvertTaggedHoleToUndefined | DateNow | Dead | DeadValue | DebugBreak
-  | DelayedStringConstant | DoubleArrayMax | DoubleArrayMin | EffectPhi
-  | EnterMachineGraph | ExitMachineGraph | F32x4Abs | F32x4Add | F32x4Ceil
-  | F32x4DemoteF64x2Zero | F32x4Div | F32x4Eq | F32x4ExtractLane | F32x4Floor
-  | F32x4Ge | F32x4Gt | F32x4Le | F32x4Lt | F32x4Max | F32x4Min | F32x4Mul
-  | F32x4Ne | F32x4NearestInt | F32x4Neg | F32x4Pmax | F32x4Pmin | F32x4Qfma
-  | F32x4Qfms | F32x4RecipApprox | F32x4RecipSqrtApprox | F32x4RelaxedMax
-  | F32x4RelaxedMin | F32x4ReplaceLane | F32x4SConvertI32x4 | F32x4Splat
-  | F32x4Sqrt | F32x4Sub | F32x4Trunc | F32x4UConvertI32x4 | F64x2Abs | F64x2Add
-  | F64x2Ceil | F64x2ConvertLowI32x4S | F64x2ConvertLowI32x4U | F64x2Div
-  | F64x2Eq | F64x2ExtractLane | F64x2Floor | F64x2Le | F64x2Lt | F64x2Max
-  | F64x2Min | F64x2Mul | F64x2Ne | F64x2NearestInt | F64x2Neg | F64x2Pmax
-  | F64x2Pmin | F64x2PromoteLowF32x4 | F64x2Qfma | F64x2Qfms | F64x2RelaxedMax
-  | F64x2RelaxedMin | F64x2ReplaceLane | F64x2Splat | F64x2Sqrt | F64x2Sub
-  | F64x2Trunc | FastApiCall | FindOrderedHashMapEntry
-  | FindOrderedHashMapEntryForInt32Key | FindOrderedHashSetEntry | Float32Abs
-  | Float32Add | Float32Constant | Float32Div | Float32Equal | Float32LessThan
-  | Float32LessThanOrEqual | Float32Max | Float32Min | Float32Mul | Float32Neg
-  | Float32RoundDown | Float32RoundTiesEven | Float32RoundTruncate
-  | Float32RoundUp | Float32Select | Float32Sqrt | Float32Sub | Float64Acos
-  | Float64Acosh | Float64Atan | Float64Atan2 | Float64Atanh | Float64Cbrt
-  | Float64Cos | Float64Cosh | Float64Exp | Float64Expm1
-  | Float64ExtractLowWord32 | Float64InsertHighWord32 | Float64InsertLowWord32
-  | Float64Log | Float64Log10 | Float64Log1p | Float64Log2 | Float64Select
-  | Float64SilenceNaN | Float64Sinh | Float64Sqrt | Float64Tan | Float64Tanh
-  | FoldConstant | FrameState | I16x8Abs | I16x8Add | I16x8AddSatS
-  | I16x8AddSatU | I16x8AllTrue | I16x8BitMask | I16x8Eq
-  | I16x8ExtAddPairwiseI8x16S | I16x8ExtAddPairwiseI8x16U
-  | I16x8ExtMulHighI8x16S | I16x8ExtMulHighI8x16U | I16x8ExtMulLowI8x16S
-  | I16x8ExtMulLowI8x16U | I16x8ExtractLaneS | I16x8ExtractLaneU | I16x8GeS
-  | I16x8GeU | I16x8GtS | I16x8GtU | I16x8LeS | I16x8LeU | I16x8LtS | I16x8LtU
-  | I16x8MaxS | I16x8MaxU | I16x8MinS | I16x8MinU | I16x8Mul | I16x8Ne
-  | I16x8Neg | I16x8Q15MulRSatS | I16x8RelaxedLaneSelect | I16x8ReplaceLane
-  | I16x8RoundingAverageU | I16x8SConvertI32x4 | I16x8SConvertI8x16High
-  | I16x8SConvertI8x16Low | I16x8Shl | I16x8ShrS | I16x8ShrU | I16x8Splat
-  | I16x8Sub | I16x8SubSatS | I16x8SubSatU | I16x8UConvertI32x4
-  | I16x8UConvertI8x16High | I16x8UConvertI8x16Low | I32x4Abs | I32x4Add
-  | I32x4AllTrue | I32x4BitMask | I32x4DotI16x8S | I32x4Eq
-  | I32x4ExtAddPairwiseI16x8S | I32x4ExtAddPairwiseI16x8U
-  | I32x4ExtMulHighI16x8S | I32x4ExtMulHighI16x8U | I32x4ExtMulLowI16x8S
-  | I32x4ExtMulLowI16x8U | I32x4ExtractLane | I32x4GeS | I32x4GeU | I32x4GtS
-  | I32x4GtU | I32x4LeS | I32x4LeU | I32x4LtS | I32x4LtU | I32x4MaxS | I32x4MaxU
-  | I32x4MinS | I32x4MinU | I32x4Mul | I32x4Ne | I32x4Neg
-  | I32x4RelaxedLaneSelect | I32x4RelaxedTruncF32x4S | I32x4RelaxedTruncF32x4U
-  | I32x4RelaxedTruncF64x2SZero | I32x4RelaxedTruncF64x2UZero | I32x4ReplaceLane
-  | I32x4SConvertF32x4 | I32x4SConvertI16x8High | I32x4SConvertI16x8Low
-  | I32x4Shl | I32x4ShrS | I32x4ShrU | I32x4Splat | I32x4Sub
-  | I32x4TruncSatF64x2SZero | I32x4TruncSatF64x2UZero | I32x4UConvertF32x4
-  | I32x4UConvertI16x8High | I32x4UConvertI16x8Low | I64x2Abs | I64x2Add
-  | I64x2AllTrue | I64x2BitMask | I64x2Eq | I64x2ExtMulHighI32x4S
-  | I64x2ExtMulHighI32x4U | I64x2ExtMulLowI32x4S | I64x2ExtMulLowI32x4U
-  | I64x2ExtractLane | I64x2GeS | I64x2GtS | I64x2Mul | I64x2Ne | I64x2Neg
-  | I64x2RelaxedLaneSelect | I64x2ReplaceLane | I64x2ReplaceLaneI32Pair
-  | I64x2SConvertI32x4High | I64x2SConvertI32x4Low | I64x2Shl | I64x2ShrS
-  | I64x2ShrU | I64x2Splat | I64x2SplatI32Pair | I64x2Sub
-  | I64x2UConvertI32x4High | I64x2UConvertI32x4Low | I8x16Abs | I8x16Add
-  | I8x16AddSatS | I8x16AddSatU | I8x16AllTrue | I8x16BitMask | I8x16Eq
-  | I8x16ExtractLaneS | I8x16ExtractLaneU | I8x16GeS | I8x16GeU | I8x16GtS
-  | I8x16GtU | I8x16LeS | I8x16LeU | I8x16LtS | I8x16LtU | I8x16MaxS | I8x16MaxU
-  | I8x16MinS | I8x16MinU | I8x16Ne | I8x16Neg | I8x16Popcnt
-  | I8x16RelaxedLaneSelect | I8x16ReplaceLane | I8x16RoundingAverageU
-  | I8x16SConvertI16x8 | I8x16Shl | I8x16ShrS | I8x16ShrU | I8x16Shuffle
-  | I8x16Splat | I8x16Sub | I8x16SubSatS | I8x16SubSatU | I8x16Swizzle
-  | I8x16UConvertI16x8 | IfDefault | IfException | IfValue
-  | InductionVariablePhi | InitializeImmutableInObject | Int32AbsWithOverflow
-  | Int32MulHigh | Int32PairAdd | Int32PairMul | Int32PairSub
-  | Int64AbsWithOverflow | Integral32OrMinusZeroToBigInt | JSAdd
+  | CheckedInt64Div | CheckedInt64Mod | CheckedInt64ToTaggedSigned
+  | CheckedTaggedToArrayIndex | CheckedTaggedToInt32 | CheckedTaggedToInt64
+  | CheckedUint32Mod | CheckedUint32ToTaggedSigned | CheckedUint64Bounds
+  | CheckedUint64ToInt32 | CheckedUint64ToInt64 | CheckedUint64ToTaggedSigned
+  | Checkpoint | Comment | CompareMaps | CompressedHeapConstant
+  | ConvertReceiver | ConvertTaggedHoleToUndefined | DateNow | Dead | DeadValue
+  | DebugBreak | DelayedStringConstant | DoubleArrayMax | DoubleArrayMin
+  | EffectPhi | EnterMachineGraph | ExitMachineGraph | F32x4Abs | F32x4Add
+  | F32x4Ceil | F32x4DemoteF64x2Zero | F32x4Div | F32x4Eq | F32x4ExtractLane
+  | F32x4Floor | F32x4Ge | F32x4Gt | F32x4Le | F32x4Lt | F32x4Max | F32x4Min
+  | F32x4Mul | F32x4Ne | F32x4NearestInt | F32x4Neg | F32x4Pmax | F32x4Pmin
+  | F32x4Qfma | F32x4Qfms | F32x4RecipApprox | F32x4RecipSqrtApprox
+  | F32x4RelaxedMax | F32x4RelaxedMin | F32x4ReplaceLane | F32x4SConvertI32x4
+  | F32x4Splat | F32x4Sqrt | F32x4Sub | F32x4Trunc | F32x4UConvertI32x4
+  | F64x2Abs | F64x2Add | F64x2Ceil | F64x2ConvertLowI32x4S
+  | F64x2ConvertLowI32x4U | F64x2Div | F64x2Eq | F64x2ExtractLane | F64x2Floor
+  | F64x2Le | F64x2Lt | F64x2Max | F64x2Min | F64x2Mul | F64x2Ne
+  | F64x2NearestInt | F64x2Neg | F64x2Pmax | F64x2Pmin | F64x2PromoteLowF32x4
+  | F64x2Qfma | F64x2Qfms | F64x2RelaxedMax | F64x2RelaxedMin | F64x2ReplaceLane
+  | F64x2Splat | F64x2Sqrt | F64x2Sub | F64x2Trunc | FastApiCall
+  | FindOrderedHashMapEntry | FindOrderedHashMapEntryForInt32Key
+  | FindOrderedHashSetEntry | Float32Abs | Float32Add | Float32Constant
+  | Float32Div | Float32Equal | Float32LessThan | Float32LessThanOrEqual
+  | Float32Max | Float32Min | Float32Mul | Float32Neg | Float32RoundDown
+  | Float32RoundTiesEven | Float32RoundTruncate | Float32RoundUp | Float32Select
+  | Float32Sqrt | Float32Sub | Float64Acos | Float64Acosh | Float64Atan
+  | Float64Atan2 | Float64Atanh | Float64Cbrt | Float64Cos | Float64Cosh
+  | Float64Exp | Float64Expm1 | Float64ExtractLowWord32
+  | Float64InsertHighWord32 | Float64InsertLowWord32 | Float64Log | Float64Log10
+  | Float64Log1p | Float64Log2 | Float64Select | Float64SilenceNaN | Float64Sinh
+  | Float64Sqrt | Float64Tan | Float64Tanh | FoldConstant | FrameState
+  | I16x8Abs | I16x8Add | I16x8AddSatS | I16x8AddSatU | I16x8AllTrue
+  | I16x8BitMask | I16x8Eq | I16x8ExtAddPairwiseI8x16S
+  | I16x8ExtAddPairwiseI8x16U | I16x8ExtMulHighI8x16S | I16x8ExtMulHighI8x16U
+  | I16x8ExtMulLowI8x16S | I16x8ExtMulLowI8x16U | I16x8ExtractLaneS
+  | I16x8ExtractLaneU | I16x8GeS | I16x8GeU | I16x8GtS | I16x8GtU | I16x8LeS
+  | I16x8LeU | I16x8LtS | I16x8LtU | I16x8MaxS | I16x8MaxU | I16x8MinS
+  | I16x8MinU | I16x8Mul | I16x8Ne | I16x8Neg | I16x8Q15MulRSatS
+  | I16x8RelaxedLaneSelect | I16x8ReplaceLane | I16x8RoundingAverageU
+  | I16x8SConvertI32x4 | I16x8SConvertI8x16High | I16x8SConvertI8x16Low
+  | I16x8Shl | I16x8ShrS | I16x8ShrU | I16x8Splat | I16x8Sub | I16x8SubSatS
+  | I16x8SubSatU | I16x8UConvertI32x4 | I16x8UConvertI8x16High
+  | I16x8UConvertI8x16Low | I32x4Abs | I32x4Add | I32x4AllTrue | I32x4BitMask
+  | I32x4DotI16x8S | I32x4Eq | I32x4ExtAddPairwiseI16x8S
+  | I32x4ExtAddPairwiseI16x8U | I32x4ExtMulHighI16x8S | I32x4ExtMulHighI16x8U
+  | I32x4ExtMulLowI16x8S | I32x4ExtMulLowI16x8U | I32x4ExtractLane | I32x4GeS
+  | I32x4GeU | I32x4GtS | I32x4GtU | I32x4LeS | I32x4LeU | I32x4LtS | I32x4LtU
+  | I32x4MaxS | I32x4MaxU | I32x4MinS | I32x4MinU | I32x4Mul | I32x4Ne
+  | I32x4Neg | I32x4RelaxedLaneSelect | I32x4RelaxedTruncF32x4S
+  | I32x4RelaxedTruncF32x4U | I32x4RelaxedTruncF64x2SZero
+  | I32x4RelaxedTruncF64x2UZero | I32x4ReplaceLane | I32x4SConvertF32x4
+  | I32x4SConvertI16x8High | I32x4SConvertI16x8Low | I32x4Shl | I32x4ShrS
+  | I32x4ShrU | I32x4Splat | I32x4Sub | I32x4TruncSatF64x2SZero
+  | I32x4TruncSatF64x2UZero | I32x4UConvertF32x4 | I32x4UConvertI16x8High
+  | I32x4UConvertI16x8Low | I64x2Abs | I64x2Add | I64x2AllTrue | I64x2BitMask
+  | I64x2Eq | I64x2ExtMulHighI32x4S | I64x2ExtMulHighI32x4U
+  | I64x2ExtMulLowI32x4S | I64x2ExtMulLowI32x4U | I64x2ExtractLane | I64x2GeS
+  | I64x2GtS | I64x2Mul | I64x2Ne | I64x2Neg | I64x2RelaxedLaneSelect
+  | I64x2ReplaceLane | I64x2ReplaceLaneI32Pair | I64x2SConvertI32x4High
+  | I64x2SConvertI32x4Low | I64x2Shl | I64x2ShrS | I64x2ShrU | I64x2Splat
+  | I64x2SplatI32Pair | I64x2Sub | I64x2UConvertI32x4High
+  | I64x2UConvertI32x4Low | I8x16Abs | I8x16Add | I8x16AddSatS | I8x16AddSatU
+  | I8x16AllTrue | I8x16BitMask | I8x16Eq | I8x16ExtractLaneS
+  | I8x16ExtractLaneU | I8x16GeS | I8x16GeU | I8x16GtS | I8x16GtU | I8x16LeS
+  | I8x16LeU | I8x16LtS | I8x16LtU | I8x16MaxS | I8x16MaxU | I8x16MinS
+  | I8x16MinU | I8x16Ne | I8x16Neg | I8x16Popcnt | I8x16RelaxedLaneSelect
+  | I8x16ReplaceLane | I8x16RoundingAverageU | I8x16SConvertI16x8 | I8x16Shl
+  | I8x16ShrS | I8x16ShrU | I8x16Shuffle | I8x16Splat | I8x16Sub | I8x16SubSatS
+  | I8x16SubSatU | I8x16Swizzle | I8x16UConvertI16x8 | IfDefault | IfException
+  | IfValue | InductionVariablePhi | InitializeImmutableInObject
+  | Int32AbsWithOverflow | Int32MulHigh | Int32PairAdd | Int32PairMul
+  | Int32PairSub | Int64AbsWithOverflow | Integral32OrMinusZeroToBigInt | JSAdd
   | JSAsyncFunctionEnter | JSAsyncFunctionReject | JSAsyncFunctionResolve
   | JSBitwiseAnd | JSBitwiseNot | JSBitwiseOr | JSBitwiseXor | JSCall
   | JSCallForwardVarargs | JSCallRuntime | JSCallWithArrayLike
@@ -1072,8 +1080,9 @@ let get_kind opcode =
   | JSCreateObject | JSCreatePromise | JSCreateStringIterator
   | JSCreateWithContext | JSDebugger | JSDecrement | JSDefineKeyedOwnProperty
   | JSDefineKeyedOwnPropertyInLiteral | JSDefineNamedOwnProperty
-  | JSDeleteProperty | JSDivide | JSEqual | JSExponentiate | JSForInEnumerate
-  | JSForInNext | JSForInPrepare | JSFulfillPromise | JSGeneratorRestoreContext
+  | JSDeleteProperty | JSDivide | JSEqual | JSExponentiate
+  | JSFindNonDefaultConstructorOrConstruct | JSForInEnumerate | JSForInNext
+  | JSForInPrepare | JSFulfillPromise | JSGeneratorRestoreContext
   | JSGeneratorRestoreContinuation | JSGeneratorRestoreInputOrDebugPos
   | JSGeneratorRestoreRegister | JSGeneratorStore | JSGetImportMeta
   | JSGetIterator | JSGetSuperConstructor | JSGetTemplateObject | JSGreaterThan
@@ -1173,19 +1182,21 @@ let get_kind opcode =
   | IfFalse | IfSuccess | IfTrue -> C1
   | AllocateRaw -> V1C1
   | BigIntAdd | BigIntBitwiseAnd | BigIntBitwiseOr | BigIntBitwiseXor
-  | BigIntDivide | BigIntModulus | BigIntMultiply | BigIntShiftLeft
-  | BigIntShiftRight | BigIntSubtract | Float64Add | Float64Div | Float64Equal
-  | Float64LessThan | Float64LessThanOrEqual | Float64Max | Float64Min
-  | Float64Mod | Float64Mul | Float64Pow | Float64Sub | Int32Add | Int32LessThan
-  | Int32LessThanOrEqual | Int32Mul | Int32Sub | Int64Add | Int64LessThan
-  | Int64LessThanOrEqual | Int64Mul | Int64Sub | NumberAdd | NumberBitwiseAnd
-  | NumberBitwiseOr | NumberBitwiseXor | NumberDivide | NumberEqual | NumberImul
-  | NumberLessThan | NumberLessThanOrEqual | NumberMax | NumberMin
-  | NumberModulus | NumberMultiply | NumberSameValue | NumberShiftLeft
-  | NumberShiftRight | NumberShiftRightLogical | NumberSubtract | ReferenceEqual
-  | SameValue | SpeculativeBigIntAdd | SpeculativeBigIntBitwiseAnd
+  | BigIntDivide | BigIntEqual | BigIntLessThan | BigIntLessThanOrEqual
+  | BigIntModulus | BigIntMultiply | BigIntShiftLeft | BigIntShiftRight
+  | BigIntSubtract | Float64Add | Float64Div | Float64Equal | Float64LessThan
+  | Float64LessThanOrEqual | Float64Max | Float64Min | Float64Mod | Float64Mul
+  | Float64Pow | Float64Sub | Int32Add | Int32LessThan | Int32LessThanOrEqual
+  | Int32Mul | Int32Sub | Int64Add | Int64LessThan | Int64LessThanOrEqual
+  | Int64Mul | Int64Sub | NumberAdd | NumberBitwiseAnd | NumberBitwiseOr
+  | NumberBitwiseXor | NumberDivide | NumberEqual | NumberImul | NumberLessThan
+  | NumberLessThanOrEqual | NumberMax | NumberMin | NumberModulus
+  | NumberMultiply | NumberSameValue | NumberShiftLeft | NumberShiftRight
+  | NumberShiftRightLogical | NumberSubtract | ReferenceEqual | SameValue
+  | SpeculativeBigIntAdd | SpeculativeBigIntBitwiseAnd
   | SpeculativeBigIntBitwiseOr | SpeculativeBigIntBitwiseXor
-  | SpeculativeBigIntDivide | SpeculativeBigIntEqual | SpeculativeBigIntModulus
+  | SpeculativeBigIntDivide | SpeculativeBigIntEqual | SpeculativeBigIntLessThan
+  | SpeculativeBigIntLessThanOrEqual | SpeculativeBigIntModulus
   | SpeculativeBigIntMultiply | SpeculativeBigIntShiftLeft
   | SpeculativeBigIntShiftRight | SpeculativeBigIntSubtract
   | SpeculativeNumberAdd | SpeculativeNumberBitwiseAnd
@@ -1312,6 +1323,8 @@ let of_str str =
   | "CheckedFloat64ToInt64" -> CheckedFloat64ToInt64
   | "CheckedInt32Mod" -> CheckedInt32Mod
   | "CheckedInt32ToTaggedSigned" -> CheckedInt32ToTaggedSigned
+  | "CheckedInt64Div" -> CheckedInt64Div
+  | "CheckedInt64Mod" -> CheckedInt64Mod
   | "CheckedInt64ToTaggedSigned" -> CheckedInt64ToTaggedSigned
   | "CheckedTaggedToArrayIndex" -> CheckedTaggedToArrayIndex
   | "CheckedTaggedToInt32" -> CheckedTaggedToInt32
@@ -1670,6 +1683,8 @@ let of_str str =
   | "JSDivide" -> JSDivide
   | "JSEqual" -> JSEqual
   | "JSExponentiate" -> JSExponentiate
+  | "JSFindNonDefaultConstructorOrConstruct" ->
+      JSFindNonDefaultConstructorOrConstruct
   | "JSForInEnumerate" -> JSForInEnumerate
   | "JSForInNext" -> JSForInNext
   | "JSForInPrepare" -> JSForInPrepare
@@ -2028,6 +2043,9 @@ let of_str str =
   | "BigIntBitwiseOr" -> BigIntBitwiseOr
   | "BigIntBitwiseXor" -> BigIntBitwiseXor
   | "BigIntDivide" -> BigIntDivide
+  | "BigIntEqual" -> BigIntEqual
+  | "BigIntLessThan" -> BigIntLessThan
+  | "BigIntLessThanOrEqual" -> BigIntLessThanOrEqual
   | "BigIntModulus" -> BigIntModulus
   | "BigIntMultiply" -> BigIntMultiply
   | "BigIntShiftLeft" -> BigIntShiftLeft
@@ -2080,6 +2098,8 @@ let of_str str =
   | "SpeculativeBigIntBitwiseXor" -> SpeculativeBigIntBitwiseXor
   | "SpeculativeBigIntDivide" -> SpeculativeBigIntDivide
   | "SpeculativeBigIntEqual" -> SpeculativeBigIntEqual
+  | "SpeculativeBigIntLessThan" -> SpeculativeBigIntLessThan
+  | "SpeculativeBigIntLessThanOrEqual" -> SpeculativeBigIntLessThanOrEqual
   | "SpeculativeBigIntModulus" -> SpeculativeBigIntModulus
   | "SpeculativeBigIntMultiply" -> SpeculativeBigIntMultiply
   | "SpeculativeBigIntShiftLeft" -> SpeculativeBigIntShiftLeft
@@ -2214,6 +2234,8 @@ let to_str opcode =
   | CheckedFloat64ToInt64 -> "CheckedFloat64ToInt64"
   | CheckedInt32Mod -> "CheckedInt32Mod"
   | CheckedInt32ToTaggedSigned -> "CheckedInt32ToTaggedSigned"
+  | CheckedInt64Div -> "CheckedInt64Div"
+  | CheckedInt64Mod -> "CheckedInt64Mod"
   | CheckedInt64ToTaggedSigned -> "CheckedInt64ToTaggedSigned"
   | CheckedTaggedToArrayIndex -> "CheckedTaggedToArrayIndex"
   | CheckedTaggedToInt32 -> "CheckedTaggedToInt32"
@@ -2572,6 +2594,8 @@ let to_str opcode =
   | JSDivide -> "JSDivide"
   | JSEqual -> "JSEqual"
   | JSExponentiate -> "JSExponentiate"
+  | JSFindNonDefaultConstructorOrConstruct ->
+      "JSFindNonDefaultConstructorOrConstruct"
   | JSForInEnumerate -> "JSForInEnumerate"
   | JSForInNext -> "JSForInNext"
   | JSForInPrepare -> "JSForInPrepare"
@@ -2930,6 +2954,9 @@ let to_str opcode =
   | BigIntBitwiseOr -> "BigIntBitwiseOr"
   | BigIntBitwiseXor -> "BigIntBitwiseXor"
   | BigIntDivide -> "BigIntDivide"
+  | BigIntEqual -> "BigIntEqual"
+  | BigIntLessThan -> "BigIntLessThan"
+  | BigIntLessThanOrEqual -> "BigIntLessThanOrEqual"
   | BigIntModulus -> "BigIntModulus"
   | BigIntMultiply -> "BigIntMultiply"
   | BigIntShiftLeft -> "BigIntShiftLeft"
@@ -2982,6 +3009,8 @@ let to_str opcode =
   | SpeculativeBigIntBitwiseXor -> "SpeculativeBigIntBitwiseXor"
   | SpeculativeBigIntDivide -> "SpeculativeBigIntDivide"
   | SpeculativeBigIntEqual -> "SpeculativeBigIntEqual"
+  | SpeculativeBigIntLessThan -> "SpeculativeBigIntLessThan"
+  | SpeculativeBigIntLessThanOrEqual -> "SpeculativeBigIntLessThanOrEqual"
   | SpeculativeBigIntModulus -> "SpeculativeBigIntModulus"
   | SpeculativeBigIntMultiply -> "SpeculativeBigIntMultiply"
   | SpeculativeBigIntShiftLeft -> "SpeculativeBigIntShiftLeft"

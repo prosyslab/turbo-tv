@@ -447,6 +447,18 @@ let bigint_shift_left = bigint_binary Bigint.shift_left
 
 let bigint_shift_right = bigint_binary Bigint.shift_right
 
+let bigint_compare op lval rval mem state =
+  let l_bn = Bigint.load lval mem in
+  let r_bn = Bigint.load rval mem in
+  let value = Bool.ite (op l_bn r_bn) Value.tr Value.fl in
+  state |> State.update ~value ~mem
+
+let bigint_equal = bigint_compare Bigint.equal
+
+let bigint_less_than = bigint_compare Bigint.less_than
+
+let bigint_less_than_or_equal = bigint_compare Bigint.less_than_or_equal
+
 let check_big_int value control mem state =
   let deopt =
     Bool.ors
@@ -506,6 +518,21 @@ let speculative_bigint_bitwise_or = speculative_bigint_binary bigint_bitwise_or
 
 let speculative_bigint_bitwise_xor =
   speculative_bigint_binary bigint_bitwise_xor
+
+let speculative_bigint_compare op lval rval mem state =
+  let deopt =
+    Bool.not
+      (Bool.ands
+         [ lval |> Objects.is_big_int mem; rval |> Objects.is_big_int mem ])
+  in
+  state |> op lval rval mem |> State.update ~deopt
+
+let speculative_bigint_equal = speculative_bigint_compare bigint_equal
+
+let speculative_bigint_less_than = speculative_bigint_compare bigint_less_than
+
+let speculative_bigint_less_than_or_equal =
+  speculative_bigint_compare bigint_less_than_or_equal
 
 (* simplified: object *)
 

@@ -318,10 +318,79 @@ let shift_right_tests =
     shift_right_eq_test (Bigint.from_int 16384) 14 (Bigint.from_int 1);
   ]
 
+let equal_tests =
+  let name = "BigInt::equal" in
+  let msg = "\027[91m" ^ name ^ "\027[0m" in
+  let equal_test v1 v2 expected =
+    let actual = Bigint.equal v1 v2 in
+    let expected = if expected then Bool.tr else Bool.fl in
+    let eq = Bool.eq in
+    let _ = value_eq eq actual expected in
+    name >:: fun _ ->
+    assert_equal ~msg ~cmp:(value_eq eq)
+      ~printer:(z3_expr_printer ~indent:1)
+      expected actual
+  in
+  [
+    equal_test Bigint.zero Bigint.zero true;
+    equal_test Bigint.zero (Bigint.from_int 1) false;
+    equal_test (Bigint.from_int 1) (Bigint.from_int 1) true;
+    equal_test (Bigint.from_int 1) (Bigint.from_int 2) false;
+    equal_test (Bigint.from_int 1) (Bigint.from_int (-1)) false;
+    equal_test (Bigint.from_int (-1)) (Bigint.from_int (-1)) true;
+    equal_test (Bigint.from_int (-1)) (Bigint.from_int 0) false;
+    equal_test Bigint.zero
+      (Bigint.from_string "BigInt + 4611686018427387903 4611686018427387903")
+      false;
+    equal_test
+      (Bigint.from_string "BigInt + 4611686018427387903 4611686018427387903")
+      (Bigint.from_string "BigInt + 4611686018427387903 4611686018427387903")
+      true;
+    equal_test
+      (Bigint.from_string "BigInt - 4611686018427387903 4611686018427387903")
+      (Bigint.from_string "BigInt + 4611686018427387903 4611686018427387903")
+      false;
+  ]
+
+let less_than_tests =
+  let name = "BigInt::less_than" in
+  let less_than_test v1 v2 expected =
+    let msg = Format.sprintf "\027[91m%s\027[0m" name in
+    let actual = Bigint.less_than v1 v2 in
+    let expected = if expected then Bool.tr else Bool.fl in
+    let eq = Bool.eq in
+    let _ = value_eq eq actual expected in
+    name >:: fun _ ->
+    assert_equal ~msg ~cmp:(value_eq eq)
+      ~printer:(z3_expr_printer ~indent:1)
+      expected actual
+  in
+  [
+    less_than_test Bigint.zero Bigint.zero false;
+    less_than_test Bigint.zero (Bigint.from_int 1) true;
+    less_than_test (Bigint.from_int 1) (Bigint.from_int 1) false;
+    less_than_test (Bigint.from_int 1) (Bigint.from_int 2) true;
+    less_than_test (Bigint.from_int 1) (Bigint.from_int (-1)) false;
+    less_than_test (Bigint.from_int (-1)) (Bigint.from_int (-1)) false;
+    less_than_test (Bigint.from_int (-1)) (Bigint.from_int 0) true;
+    less_than_test Bigint.zero
+      (Bigint.from_string "BigInt + 4611686018427387903 4611686018427387903")
+      true;
+    less_than_test
+      (Bigint.from_string "BigInt + 4611686018427387903 4611686018427387903")
+      (Bigint.from_string "BigInt + 4611686018427387903 4611686018427387903")
+      false;
+    less_than_test
+      (Bigint.from_string "BigInt - 4611686018427387903 4611686018427387903")
+      (Bigint.from_string "BigInt + 4611686018427387904 4611686018427387903")
+      true;
+  ]
+
 let suite =
   "suite"
   >::: from_string_tests @ neg_tests @ add_tests @ sub_tests @ mul_tests
        @ div_tests @ rem_tests @ bitwise_and_tests @ bitwise_or_tests
-       @ bitwise_xor_tests @ shift_left_tests @ shift_right_tests
+       @ bitwise_xor_tests @ shift_left_tests @ shift_right_tests @ equal_tests
+       @ less_than_tests
 
 let _ = OUnit2.run_test_tt_main suite

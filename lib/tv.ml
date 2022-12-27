@@ -459,6 +459,9 @@ let encode program
   | BigIntBitwiseXor -> encode_v2m bigint_bitwise_xor
   | BigIntShiftLeft -> encode_v2m bigint_shift_left
   | BigIntShiftRight -> encode_v2m bigint_shift_right
+  | BigIntEqual -> encode_v2m bigint_equal
+  | BigIntLessThan -> encode_v2m bigint_less_than
+  | BigIntLessThanOrEqual -> encode_v2m bigint_less_than_or_equal
   | SpeculativeBigIntAdd -> encode_v2m speculative_bigint_add
   | SpeculativeBigIntSubtract -> encode_v2m speculative_bigint_subtract
   | SpeculativeBigIntMultiply -> encode_v2m speculative_bigint_multiply
@@ -468,6 +471,10 @@ let encode program
   | SpeculativeBigIntBitwiseXor -> encode_v2m speculative_bigint_bitwise_xor
   | SpeculativeBigIntShiftLeft -> encode_v2m speculative_bigint_shift_left
   | SpeculativeBigIntShiftRight -> encode_v2m speculative_bigint_shift_right
+  | SpeculativeBigIntEqual -> encode_v2m speculative_bigint_equal
+  | SpeculativeBigIntLessThan -> encode_v2m speculative_bigint_less_than
+  | SpeculativeBigIntLessThanOrEqual ->
+      encode_v2m speculative_bigint_less_than_or_equal
   (* simplified: memory *)
   | Allocate ->
       let size_id = Operands.id_of_nth operands 0 in
