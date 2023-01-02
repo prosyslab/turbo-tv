@@ -314,11 +314,43 @@ let uint64_equal = int_cmp false 64 "=="
 
 (* machine: conversion *)
 let word32_equal lval rval state =
-  let value = Bool.ite (Word32.eq lval rval) Value.tr Value.fl in
+  let rf = state.State.register_file in
+  let lval_is_zero = Value.eq lval Int32.zero in
+  let rval_is_zero = Value.eq rval Int32.zero in
+  let check_for_tf_constants =
+    Bool.ors
+      [
+        Bool.ands [ Constant.is_false_cst rf lval; rval_is_zero ];
+        Bool.ands [ lval_is_zero; Constant.is_false_cst rf rval ];
+        Bool.ands [ Constant.is_true_cst rf lval; Bool.not rval_is_zero ];
+        Bool.ands [ Bool.not lval_is_zero; Constant.is_true_cst rf rval ];
+      ]
+  in
+  let value =
+    Bool.ite
+      (Bool.ors [ check_for_tf_constants; Word32.eq lval rval ])
+      Value.tr Value.fl
+  in
   state |> State.update ~value
 
 let word64_equal lval rval state =
-  let value = Bool.ite (Word64.eq lval rval) Value.tr Value.fl in
+  let rf = state.State.register_file in
+  let lval_is_zero = Value.eq lval Int64.zero in
+  let rval_is_zero = Value.eq rval Int64.zero in
+  let check_for_tf_constants =
+    Bool.ors
+      [
+        Bool.ands [ Constant.is_false_cst rf lval; rval_is_zero ];
+        Bool.ands [ lval_is_zero; Constant.is_false_cst rf rval ];
+        Bool.ands [ Constant.is_true_cst rf lval; Bool.not rval_is_zero ];
+        Bool.ands [ Bool.not lval_is_zero; Constant.is_true_cst rf rval ];
+      ]
+  in
+  let value =
+    Bool.ite
+      (Bool.ors [ check_for_tf_constants; Word64.eq lval rval ])
+      Value.tr Value.fl
+  in
   state |> State.update ~value
 
 (* machine: memory *)
