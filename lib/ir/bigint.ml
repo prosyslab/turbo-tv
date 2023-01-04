@@ -3,9 +3,13 @@ open ValueOperator
 module FD = Z3.FuncDecl
 module TP = ValueOperator.TaggedPointer
 
-let sign_size = 1
+let length_length = 31
 
-let sign_length = 1 * 8
+let sign_length = 1
+
+let header_size = 4
+
+let header_length = sign_length + length_length
 
 let pos_sign = BitVecVal.from_int ~len:sign_length 0
 
@@ -15,37 +19,36 @@ let digit_size = 8
 
 let digit_length = 8 * 8
 
-type t = { map : BitVec.t; sign : BitVec.t; value : BitVec.t }
+type t = { map : BitVec.t; length : int; sign : BitVec.t; value : BitVec.t }
 
 let num_digits t = BitVec.length_of t.value / digit_length
 
 (* initialize *)
-let create sign value = { map = Objmap.big_int_map; sign; value }
+let create sign value = { map = Objmap.big_int_map; length = 1; sign; value }
 
 let allocate t mem =
   let sign = t.sign in
-  let size = num_digits t * 8 in
+  let size = num_digits t * digit_size in
   let ptr, mem =
-    Memory.allocate (Value.from_int (Objmap.size + sign_size + size)) mem
+    Memory.allocate (Value.from_int (Objmap.size + header_size + size)) mem
   in
   let big_int_value = t.value in
+  let raw_ptr = ptr |> TaggedPointer.to_raw_pointer in
   let mem =
     mem
+    |> Memory.store Bool.tr raw_ptr Objmap.size Objmap.big_int_map
     |> Memory.store Bool.tr
-         (ptr |> TaggedPointer.to_raw_pointer)
-         Objmap.size Objmap.big_int_map
+         (TaggedPointer.movei raw_ptr Objmap.size)
+         header_size
+         (BitVec.concat (BitVecVal.from_int 1 ~len:length_length) sign)
     |> Memory.store Bool.tr
-         (TaggedPointer.movei ptr Objmap.size |> TaggedPointer.to_raw_pointer)
-         sign_size sign
-    |> Memory.store Bool.tr
-         (TaggedPointer.movei ptr (Objmap.size + sign_size)
-         |> TaggedPointer.to_raw_pointer)
+         (TaggedPointer.movei raw_ptr (Objmap.size + header_size))
          size big_int_value
   in
   (ptr, mem)
 
 let from_int i =
-  let sign = BitVecVal.from_int ~len:8 (if i < 0 then 1 else 0) in
+  let sign = BitVecVal.from_int ~len:sign_length (if i < 0 then 1 else 0) in
   let value =
     (* abs(i) returns negative value when i is Int.min_int *)
     if i <> Int.min_int then BitVecVal.from_int ~len:64 (abs i)
@@ -57,7 +60,7 @@ let from_string s =
   let sign_and_values = s |> String.split_on_char ' ' |> List.tl in
   let sign =
     (if String.equal (List.hd sign_and_values) "+" then 0 else 1)
-    |> BitVecVal.from_int ~len:8
+    |> BitVecVal.from_int ~len:sign_length
   in
   let values = List.tl sign_and_values in
 
@@ -72,17 +75,20 @@ let from_string s =
 let load ptr mem =
   let map = Memory.load (ptr |> TaggedPointer.to_raw_pointer) Objmap.size mem in
   let sign =
-    Memory.load
-      (TaggedPointer.movei ptr Objmap.size |> TaggedPointer.to_raw_pointer)
-      sign_size mem
+    BitVec.andi
+      (Memory.load
+         (TaggedPointer.movei ptr Objmap.size |> TaggedPointer.to_raw_pointer)
+         header_size mem)
+      1
+    |> BitVec.extract 0 0
   in
   let value =
     Memory.load
-      (TaggedPointer.movei ptr (Objmap.size + sign_size)
+      (TaggedPointer.movei ptr (Objmap.size + header_size)
       |> TaggedPointer.to_raw_pointer)
       8 mem
   in
-  { map; sign; value }
+  { map; length = 1; sign; value }
 
 let extend t = { t with value = BitVec.zero_extend digit_length t.value }
 
