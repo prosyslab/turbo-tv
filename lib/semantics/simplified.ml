@@ -361,7 +361,16 @@ let load_element header_size repr bid ind mem state =
 
 let load_field offset repr ptr _eff control mem state =
   let off = offset |> BitVecVal.from_int ~len:Value.len in
-  state |> Machine.load ptr off repr mem |> State.update ~control
+  let ptr = TaggedPointer.move ptr off in
+  let ub = Bool.not (Memory.can_access_as ptr repr mem) in
+  let raw_ptr = ptr |> TaggedPointer.to_raw_pointer in
+  let ty = Type.from_repr repr |> List.hd in
+  let value =
+    Memory.load_as raw_ptr repr mem
+    |> BitVec.zero_extend (64 - Repr.width_of repr)
+    |> Value.entype ty
+  in
+  state |> State.update ~value ~control ~ub
 
 let load_typed_element array_type base extern ind mem state =
   let bid = BitVec.addb base extern in

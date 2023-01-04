@@ -360,8 +360,9 @@ let word64_equal lval rval state =
  * assertion:
  *   mem = ite well-defined Store(ptr, pos, repr, mem) mem *)
 let store ptr pos repr value mem state =
+  let ptr = TaggedPointer.move ptr pos in
   let ub = Bool.not (Memory.can_access_as ptr repr mem) in
-  let raw_ptr = TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer in
+  let raw_ptr = ptr |> Value.data_of in
   let mem = mem |> Memory.store_as (Bool.not ub) raw_ptr repr value in
   state |> State.update ~mem ~ub
 
@@ -371,8 +372,9 @@ let store ptr pos repr value mem state =
  * assertion:
  *   value = (Mem[pos+size]) *)
 let load ptr pos repr mem state =
+  let ptr = TaggedPointer.move ptr pos in
   let ub = Bool.not (Memory.can_access_as ptr repr mem) in
-  let raw_ptr = TaggedPointer.move ptr pos |> TaggedPointer.to_raw_pointer in
+  let raw_ptr = ptr |> Value.data_of in
   let ty = Type.from_repr repr |> List.hd in
   let value =
     Memory.load_as raw_ptr repr mem
