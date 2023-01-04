@@ -57,7 +57,7 @@ module TaggedPointer = struct
      32-64: bid
      64-69: ty
   *)
-  (* High |-ty-|---offset-1--|---bid---| Low *)
+  (* High |-ty-|---bid---|---offset-t| Low *)
 
   let bid_len = 32
 
