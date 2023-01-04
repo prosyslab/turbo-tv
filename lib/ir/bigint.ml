@@ -365,7 +365,7 @@ let to_string model t =
   let value_str =
     t.value |> BitVec.to_uint |> Model.eval model |> Expr.to_simplified_string
   in
-  sign_str ^ value_str
+  Format.sprintf "BigInt(%s)" (sign_str ^ value_str)
 
 let to_bytestring model t =
   let map_bs = t.map |> Model.eval model |> Expr.to_string in
