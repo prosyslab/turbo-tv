@@ -96,7 +96,7 @@ CheckedTaggedSignedToInt32,v1
 CheckedTaggedToArrayIndex,
 CheckedTaggedToFloat64,b1,v1,e1,c1
 CheckedTaggedToInt32,
-CheckedTaggedToInt64,
+CheckedTaggedToInt64,b1,v1,e1,c1
 CheckedTaggedToTaggedPointer,v1,e1,c1
 CheckedTaggedToTaggedSigned,v1,e1,c1
 CheckedTruncateTaggedToWord32,b1,v1,e1,c1
@@ -105,7 +105,7 @@ CheckedUint32Div,v1,v2,e1,c1
 CheckedUint32Mod,
 CheckedUint32ToInt32,v1,e1,c1
 CheckedUint32ToTaggedSigned,
-CheckedUint64Bounds,
+CheckedUint64Bounds,b2,v1,v2,e1,c1
 CheckedUint64ToInt32,
 CheckedUint64ToInt64,
 CheckedUint64ToTaggedSigned,
@@ -503,7 +503,7 @@ JSCreateLiteralRegExp,
 JSCreateObject,
 JSCreatePromise,
 JSCreateStringIterator,
-JSCreateTypedArray,e1,c1
+JSCreateTypedArray,
 JSCreateWithContext,
 JSDebugger,
 JSDecrement,
@@ -762,6 +762,7 @@ SpeculativeNumberShiftRightLogical,v1,v2,e1,c1
 SpeculativeNumberSubtract,v1,v2,e1,c1
 SpeculativeSafeIntegerAdd,v1,v2,e1,c1
 SpeculativeSafeIntegerSubtract,v1,v2,e1,c1
+SpeculativeToBigInt,
 SpeculativeToNumber,v1,e1,c1
 StackPointerGreaterThan,v1
 StackSlot,

@@ -643,6 +643,11 @@ let encode program
       let pid = Operands.id_of_nth operands 1 in
       let pval = RegisterFile.find pid rf in
       checked_tagged_to_float64 hint pval mem
+  | CheckedTaggedToInt64 ->
+      let hint = Operands.const_of_nth operands 0 in
+      let pid = Operands.id_of_nth operands 1 in
+      let pval = RegisterFile.find pid rf in
+      checked_tagged_to_int64 hint pval mem
   | CheckedTaggedToTaggedPointer ->
       let pid = Operands.id_of_nth operands 0 in
       let _eid = Operands.id_of_nth operands 1 in
@@ -730,6 +735,16 @@ let encode program
       let rval = RegisterFile.find rpid rf in
       let ctrl = ControlFile.find cid cf in
       checked_uint32_bounds flag lval rval () ctrl
+  | CheckedUint64Bounds ->
+      let flag = Operands.const_of_nth operands 0 |> int_of_string in
+      let lpid = Operands.id_of_nth operands 1 in
+      let rpid = Operands.id_of_nth operands 2 in
+      let _eid = Operands.id_of_nth operands 3 in
+      let cid = Operands.id_of_nth operands 4 in
+      let lval = RegisterFile.find lpid rf in
+      let rval = RegisterFile.find rpid rf in
+      let ctrl = ControlFile.find cid cf in
+      checked_uint64_bounds flag lval rval () ctrl
   | EnsureWritableFastElements ->
       let rpid = Operands.id_of_nth operands 1 in
       let _eid = Operands.id_of_nth operands 2 in

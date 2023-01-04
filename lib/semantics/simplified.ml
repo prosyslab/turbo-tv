@@ -725,6 +725,18 @@ let checked_tagged_to_float64 hint pval mem state =
   in
   state |> State.update ~value ~deopt
 
+let checked_tagged_to_int64 _hint pval mem state =
+  let is_tagged_signed = pval |> Value.has_type Type.tagged_signed in
+  let is_heap_number = pval |> Objects.is_heap_number mem in
+
+  let deopt = Bool.not (Bool.ors [ is_tagged_signed; is_heap_number ]) in
+  let value =
+    Bool.ite is_tagged_signed
+      (TaggedSigned.to_int64 pval)
+      (HeapNumber.load pval mem |> HeapNumber.to_int64)
+  in
+  state |> State.update ~value ~deopt
+
 let checked_tagged_to_tagged_pointer pval _checkpoint control state =
   let deopt = pval |> Value.has_type Type.tagged_signed in
   state |> State.update ~value:pval ~control ~deopt
@@ -900,18 +912,34 @@ let check_if cond _eff control state =
 let check_bounds flag lval rval _eff control mem state =
   let check = Uint64.lt lval rval in
   let deopt =
-    if flag = 0 then
-      Bool.ors [ Bool.not check; lval |> Number.is_minus_zero mem ]
-    else if flag = 1 then Bool.not check (* ConvertStringAndMinusZero *)
-    else if flag = 2 then
-      lval |> Number.is_minus_zero mem (* AbortOnOutOfBounds *)
-    else Bool.fl
+    Bool.ors
+      [
+        Bool.not
+          (Bool.ors
+             [
+               lval |> Value.has_type Type.uint64;
+               lval |> Value.has_type Type.uint32;
+             ]);
+        (if flag = 0 then
+         Bool.ors [ Bool.not check; lval |> Number.is_minus_zero mem ]
+        else if flag = 1 then Bool.tr
+        else Bool.fl);
+      ]
   in
   let ub = if flag = 2 || flag = 3 then Bool.not check else Bool.fl in
   state |> State.update ~value:lval ~deopt ~ub ~control
 
 let checked_uint32_bounds flag lval rval _eff control state =
   let check = Uint32.lt lval rval in
+  if flag = 0 then
+    state |> State.update ~value:lval ~deopt:(Bool.not check) ~control
+  else if flag = 2 then
+    (* AbortOnOutOfBounds *)
+    state |> State.update ~value:lval ~ub:(Bool.not check) ~control
+  else failwith "not implemented"
+
+let checked_uint64_bounds flag lval rval _eff control state =
+  let check = Uint64.lt lval rval in
   if flag = 0 then
     state |> State.update ~value:lval ~deopt:(Bool.not check) ~control
   else if flag = 2 then

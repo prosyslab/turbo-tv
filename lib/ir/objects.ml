@@ -48,6 +48,8 @@ module HeapNumber = struct
 
   let to_float64 obj = obj.value |> Value.entype Type.float64
 
+  let to_int64 obj = obj.value |> Float64.to_int64
+
   let map_of obj = obj.map
 
   let number_of obj = obj.value
