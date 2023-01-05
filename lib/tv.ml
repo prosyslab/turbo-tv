@@ -804,6 +804,7 @@ let encode program
   | Int64Mod -> encode_v2c1 int64_mod
   | Uint32Div -> encode_v2c1 uint32_div
   | Uint32Mod -> encode_v2c1 uint32_mod
+  | Word32And -> encode_v2 word32_and
   | Word32Or -> encode_v2 word32_or
   | Word32Rol -> encode_v2 word32_rol
   | Word32Ror -> encode_v2 word32_ror
