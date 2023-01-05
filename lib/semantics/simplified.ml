@@ -63,6 +63,10 @@ let checked_int64_mul lval rval _eff control state =
   let deopt = Int64.mul_would_overflow lval rval in
   state |> Machine.int64_mul lval rval |> State.update ~deopt ~control
 
+let checked_int64_sub lval rval _eff control state =
+  let deopt = Int64.sub_would_overflow lval rval in
+  state |> Machine.int64_sub lval rval |> State.update ~deopt ~control
+
 let checked_uint32_div lval rval _eff control state =
   let deopt =
     let division_by_zero = Uint32.is_zero rval in

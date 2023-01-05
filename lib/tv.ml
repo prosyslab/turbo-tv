@@ -299,6 +299,7 @@ let encode program
   | CheckedInt32Sub -> encode_v2e1c1 checked_int32_sub
   | CheckedInt64Add -> encode_v2e1c1 checked_int64_add
   | CheckedInt64Mul -> encode_v2e1c1 checked_int64_mul
+  | CheckedInt64Sub -> encode_v2e1c1 checked_int64_sub
   | CheckedUint32Div -> encode_v2e1c1 checked_uint32_div
   | NumberAdd -> encode_v2m number_add
   | NumberAbs -> encode_v1m number_abs

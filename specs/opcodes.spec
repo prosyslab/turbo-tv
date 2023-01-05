@@ -90,6 +90,7 @@ CheckedInt64Add,v1,v2,e1,c1
 CheckedInt64Div,
 CheckedInt64Mod,
 CheckedInt64Mul,v1,v2,e1,c1
+CheckedInt64Sub,v1,v2,e1,c1
 CheckedInt64ToInt32,v1,e1,c1
 CheckedInt64ToTaggedSigned, 
 CheckedTaggedSignedToInt32,v1

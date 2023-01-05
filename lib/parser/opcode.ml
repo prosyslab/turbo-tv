@@ -914,6 +914,7 @@ type t =
   | CheckedInt32Sub
   | CheckedInt64Add
   | CheckedInt64Mul
+  | CheckedInt64Sub
   | CheckedUint32Div
   | DeoptimizeIf
   | DeoptimizeUnless
@@ -1218,8 +1219,8 @@ let get_kind opcode =
   | ChangeFloat64ToTagged | CheckedFloat64ToInt32 | Projection -> B1V1
   | CheckBounds | CheckedUint32Bounds | CheckedUint64Bounds -> B2V1V2E1C1
   | CheckedInt32Add | CheckedInt32Div | CheckedInt32Sub | CheckedInt64Add
-  | CheckedInt64Mul | CheckedUint32Div | DeoptimizeIf | DeoptimizeUnless
-  | EnsureWritableFastElements | SpeculativeNumberDivide
+  | CheckedInt64Mul | CheckedInt64Sub | CheckedUint32Div | DeoptimizeIf
+  | DeoptimizeUnless | EnsureWritableFastElements | SpeculativeNumberDivide
   | SpeculativeNumberLessThan | SpeculativeNumberLessThanOrEqual
   | SpeculativeNumberModulus | SpeculativeNumberMultiply
   | SpeculativeNumberShiftLeft | SpeculativeNumberShiftRight
@@ -2156,6 +2157,7 @@ let of_str str =
   | "CheckedInt32Sub" -> CheckedInt32Sub
   | "CheckedInt64Add" -> CheckedInt64Add
   | "CheckedInt64Mul" -> CheckedInt64Mul
+  | "CheckedInt64Sub" -> CheckedInt64Sub
   | "CheckedUint32Div" -> CheckedUint32Div
   | "DeoptimizeIf" -> DeoptimizeIf
   | "DeoptimizeUnless" -> DeoptimizeUnless
@@ -3068,6 +3070,7 @@ let to_str opcode =
   | CheckedInt32Sub -> "CheckedInt32Sub"
   | CheckedInt64Add -> "CheckedInt64Add"
   | CheckedInt64Mul -> "CheckedInt64Mul"
+  | CheckedInt64Sub -> "CheckedInt64Sub"
   | CheckedUint32Div -> "CheckedUint32Div"
   | DeoptimizeIf -> "DeoptimizeIf"
   | DeoptimizeUnless -> "DeoptimizeUnless"
