@@ -804,7 +804,6 @@ let encode program
   | Int64Mod -> encode_v2c1 int64_mod
   | Uint32Div -> encode_v2c1 uint32_div
   | Uint32Mod -> encode_v2c1 uint32_mod
-  | Word32And -> encode_v2 word32_and
   | Word32Or -> encode_v2 word32_or
   | Word32Rol -> encode_v2 word32_rol
   | Word32Ror -> encode_v2 word32_ror
@@ -1020,30 +1019,24 @@ let check_ub_semantic nparams check_type program =
   in
   let assertion = Bool.ands [ precond; ub ] in
 
-  let is_not_implemented = State.not_implemented state in
-  let status =
-    if is_not_implemented then S.UNKNOWN else Solver.check validator assertion
-  in
-
-  match status with
-  | SATISFIABLE ->
-      let model = Option.get (Solver.get_model validator) in
-      Printf.printf "Result: Possible\n";
-      Printf.printf "Example: \n";
-      Printer.print_params model
-        (State.register_file state)
-        (State.memory state) (State.params state);
-      Printer.print_counter_example program state model
-  | UNSATISFIABLE -> Printf.printf "Result: Not Possible\n"
-  | UNKNOWN ->
-      let reason =
-        if is_not_implemented then
-          Format.sprintf "[%s]"
-            (String.concat ", "
-               (state.not_implemented_opcodes |> OpcodeSet.to_list))
-        else Z3.Solver.get_reason_unknown validator
-      in
-      Printf.printf "Result: Unknown\nReason: %s" reason
+  if State.not_implemented state then (
+    Printf.printf "Result: Not Implemented\n";
+    Printf.printf "Opcodes: [%s]\n"
+      (String.concat ", " (state.not_implemented_opcodes |> OpcodeSet.to_list)))
+  else
+    match Solver.check validator assertion with
+    | SATISFIABLE ->
+        let model = Option.get (Solver.get_model validator) in
+        Printf.printf "Result: Possible\n";
+        Printf.printf "Example: \n";
+        Printer.print_params model
+          (State.register_file state)
+          (State.memory state) (State.params state);
+        Printer.print_counter_example program state model
+    | UNSATISFIABLE -> Printf.printf "Result: Not Possible\n"
+    | UNKNOWN ->
+        let reason = Z3.Solver.get_reason_unknown validator in
+        Printf.printf "Result: Unknown\nReason: %s" reason
 
 let run nparams src_program tgt_program =
   let src_state = execute "before" src_program nparams in
@@ -1140,28 +1133,26 @@ let run nparams src_program tgt_program =
   let is_not_implemented =
     State.not_implemented src_state || State.not_implemented tgt_state
   in
-  let status =
-    if is_not_implemented then S.UNKNOWN else Solver.check validator assertion
-  in
-  match status with
-  | SATISFIABLE ->
-      let model = Option.get (Solver.get_model validator) in
-      Printf.printf "Result: Not Verified \n";
-      Printf.printf "CounterExample: \n";
-      Printer.print_params model
-        (State.register_file src_state)
-        (State.memory src_state) (State.params src_state);
-      Printer.print_counter_example src_program src_state model;
-      Printer.print_counter_example tgt_program tgt_state model
-  | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
-  | UNKNOWN ->
-      let reason =
-        if is_not_implemented then
-          Format.sprintf "[%s]"
-            (String.concat ", "
-               (OpcodeSet.union src_state.not_implemented_opcodes
-                  tgt_state.not_implemented_opcodes
-               |> OpcodeSet.to_list))
-        else Z3.Solver.get_reason_unknown validator
-      in
-      Printf.printf "Result: Unknown\nReason: %s\n" reason
+
+  if is_not_implemented then (
+    Printf.printf "Result: Not Implemented\n";
+    Printf.printf "Opcodes: [%s]\n"
+      (String.concat ", "
+         (OpcodeSet.union src_state.not_implemented_opcodes
+            tgt_state.not_implemented_opcodes
+         |> OpcodeSet.to_list)))
+  else
+    match Solver.check validator assertion with
+    | SATISFIABLE ->
+        let model = Option.get (Solver.get_model validator) in
+        Printf.printf "Result: Not Verified \n";
+        Printf.printf "CounterExample: \n";
+        Printer.print_params model
+          (State.register_file src_state)
+          (State.memory src_state) (State.params src_state);
+        Printer.print_counter_example src_program src_state model;
+        Printer.print_counter_example tgt_program tgt_state model
+    | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
+    | UNKNOWN ->
+        let reason = Z3.Solver.get_reason_unknown validator in
+        Printf.printf "Result: Unknown\nReason: %s\n" reason
