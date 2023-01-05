@@ -2,6 +2,7 @@ module Params = State.Params
 module DeoptFile = State.DeoptFile
 module UBFile = State.UBFile
 module HeapNumber = Objects.HeapNumber
+module OpcodeSet = State.OpcodeSet
 open ValueOperator
 open Common
 open Simplified
@@ -34,7 +35,14 @@ let encode program
        _;
      } as state) =
   let nop state = state in
-  let not_implemented state = { state with State.not_target = true } in
+  let update_not_implemented opcode (state : State.t) =
+    {
+      state with
+      not_implemented = true;
+      not_implemented_opcodes =
+        OpcodeSet.add (opcode |> Opcode.to_str) state.not_implemented_opcodes;
+    }
+  in
 
   let _, opcode, operands = IR.instr_of pc program in
   let encode_v1 op =
@@ -167,6 +175,8 @@ let encode program
       | Dead -> nop
       | _ ->
           let incoming = RegisterFile.find id rf in
+          if idx >= Composed.size_of incoming then
+            failwith "Projection: idx >= Composed.size_of incoming";
           projection idx incoming)
   | Branch ->
       let cond_id = Operands.id_of_nth operands 0 in
@@ -198,6 +208,10 @@ let encode program
               (rev |> List.tl |> List.rev |> Operands.id_of_all)
               rf
           in
+          if List.length incoming_values <> List.length incoming_ctrl_tokens
+          then
+            failwith
+              "Phi: number of values doesn't match with the number of controls";
           phi incoming_values incoming_ctrl_tokens
       | Dead -> nop
       | _ ->
@@ -785,6 +799,7 @@ let encode program
   | Int64Mul -> encode_v2 int64_mul
   | Int64MulWithOverflow -> encode_v2c1 int64_mul_with_overflow
   | Int64Sub -> encode_v2 int64_sub
+  | Int64SubWithOverflow -> encode_v2c1 int64_sub_with_overflow
   | Int64Div -> encode_v2c1 int64_div
   | Int64Mod -> encode_v2c1 int64_mod
   | Uint32Div -> encode_v2c1 uint32_div
@@ -864,9 +879,7 @@ let encode program
   | StateValues | Checkpoint | EffectPhi | TypedStateValues | FrameState
   | LoadStackCheckOffset ->
       nop
-  | _ ->
-      Format.printf "not implemented: %s\n" (opcode |> Opcode.to_str);
-      not_implemented
+  | _ -> update_not_implemented opcode
 
 let propagate program state =
   let pc = State.pc state in
@@ -1006,7 +1019,11 @@ let check_ub_semantic nparams check_type program =
     Bool.ands [ params_are_smi_or_heapnumber; Bool.not state.deopt ]
   in
   let assertion = Bool.ands [ precond; ub ] in
-  let status = Solver.check validator assertion in
+
+  let is_not_implemented = State.not_implemented state in
+  let status =
+    if is_not_implemented then S.UNKNOWN else Solver.check validator assertion
+  in
 
   match status with
   | SATISFIABLE ->
@@ -1019,7 +1036,13 @@ let check_ub_semantic nparams check_type program =
       Printer.print_counter_example program state model
   | UNSATISFIABLE -> Printf.printf "Result: Not Possible\n"
   | UNKNOWN ->
-      let reason = Z3.Solver.get_reason_unknown validator in
+      let reason =
+        if is_not_implemented then
+          Format.sprintf "[%s]"
+            (String.concat ", "
+               (state.not_implemented_opcodes |> OpcodeSet.to_list))
+        else Z3.Solver.get_reason_unknown validator
+      in
       Printf.printf "Result: Unknown\nReason: %s" reason
 
 let run nparams src_program tgt_program =
@@ -1114,11 +1137,11 @@ let run nparams src_program tgt_program =
       ]
   in
 
-  let is_not_target =
-    State.not_target src_state || State.not_target tgt_state
+  let is_not_implemented =
+    State.not_implemented src_state || State.not_implemented tgt_state
   in
   let status =
-    if is_not_target then S.UNKNOWN else Solver.check validator assertion
+    if is_not_implemented then S.UNKNOWN else Solver.check validator assertion
   in
   match status with
   | SATISFIABLE ->
@@ -1132,5 +1155,13 @@ let run nparams src_program tgt_program =
       Printer.print_counter_example tgt_program tgt_state model
   | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
   | UNKNOWN ->
-      let reason = Z3.Solver.get_reason_unknown validator in
+      let reason =
+        if is_not_implemented then
+          Format.sprintf "[%s]"
+            (String.concat ", "
+               (OpcodeSet.union src_state.not_implemented_opcodes
+                  tgt_state.not_implemented_opcodes
+               |> OpcodeSet.to_list))
+        else Z3.Solver.get_reason_unknown validator
+      in
       Printf.printf "Result: Unknown\nReason: %s\n" reason

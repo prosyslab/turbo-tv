@@ -22,6 +22,12 @@ module Params = struct
     mk_param 0 []
 end
 
+module OpcodeSet = struct
+  include Set.Make (String)
+
+  let to_list t = t |> to_seq |> List.of_seq
+end
+
 type t = {
   stage : string;
   pc : IR.Node.id;
@@ -37,7 +43,8 @@ type t = {
   check_type : bool;
   assertion : BitVec.t;
   deopt : Bool.t;
-  not_target : bool;
+  not_implemented : bool;
+  not_implemented_opcodes : OpcodeSet.t;
 }
 
 let install_constants state =
@@ -84,7 +91,8 @@ let init nparams ?check_type stage : t =
     check_type = Option.value check_type ~default:false;
     assertion = Bool.tr;
     deopt = Bool.fl;
-    not_target = false;
+    not_implemented = false;
+    not_implemented_opcodes = OpcodeSet.empty;
   }
   |> install_constants
 
@@ -113,7 +121,7 @@ let assertion t = t.assertion
 
 let deopt t = t.deopt
 
-let not_target t = t.not_target
+let not_implemented t = t.not_implemented
 
 let value_of id t = RegisterFile.find id (register_file t)
 

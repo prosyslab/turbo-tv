@@ -58,12 +58,7 @@ let number_constant c state =
 let projection idx incoming state =
   (* currently, idx of projection is assumebed to be less than 2 *)
   let value = incoming |> Composed.select idx in
-  let ub =
-    if not (0 <= idx && idx < 2 && idx <= Composed.size_of incoming) then
-      Bool.tr
-    else Bool.fl
-  in
-  state |> State.update ~value ~ub
+  state |> State.update ~value
 
 (* well-defined condition:
  * - Bool(cond) ^ Bool(precond)
