@@ -821,8 +821,8 @@ let speculative_to_number pval () control mem (state : State.t) =
             Float64.zero
             (Bool.ite
                (Bool.ors
-                  [ pval |> Value.is_true; pval |> Constant.is_true_cst rf ])
-               (Float64.of_float 1.0) (Float64.of_float 0.0))))
+                  [ pval |> Value.is_false; pval |> Constant.is_false_cst rf ])
+               (Float64.of_float 0.0) (Float64.of_float 1.0))))
   in
   state |> State.update ~value ~deopt ~control
 
