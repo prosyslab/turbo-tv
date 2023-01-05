@@ -809,7 +809,7 @@ TruncateBigIntToWord64,v1
 TruncateFloat32ToInt32,
 TruncateFloat32ToUint32,
 TruncateFloat64ToFloat32,
-TruncateFloat64ToInt64,
+TruncateFloat64ToInt64,v1
 TruncateFloat64ToUint32,
 TruncateFloat64ToWord32,v1
 TruncateInt64ToInt32,v1

@@ -641,7 +641,6 @@ type t =
   | TruncateFloat32ToInt32
   | TruncateFloat32ToUint32
   | TruncateFloat64ToFloat32
-  | TruncateFloat64ToInt64
   | TruncateFloat64ToUint32
   | TruncateTaggedPointerToBit
   | TruncateTaggedToFloat64
@@ -782,6 +781,7 @@ type t =
   | StackPointerGreaterThan
   | ToBoolean
   | TruncateBigIntToWord64
+  | TruncateFloat64ToInt64
   | TruncateFloat64ToWord32
   | TruncateInt64ToInt32
   | TruncateTaggedToBit
@@ -1134,7 +1134,7 @@ let get_kind opcode =
   | TransitionAndStoreElement | TransitionAndStoreNonNumberElement
   | TransitionAndStoreNumberElement | TransitionElementsKind | TrapIf
   | TrapUnless | TruncateFloat32ToInt32 | TruncateFloat32ToUint32
-  | TruncateFloat64ToFloat32 | TruncateFloat64ToInt64 | TruncateFloat64ToUint32
+  | TruncateFloat64ToFloat32 | TruncateFloat64ToUint32
   | TruncateTaggedPointerToBit | TruncateTaggedToFloat64
   | TryTruncateFloat32ToInt64 | TryTruncateFloat32ToUint64
   | TryTruncateFloat64ToInt64 | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf
@@ -1178,8 +1178,9 @@ let get_kind opcode =
   | NumberToInt32 | NumberToUint32 | NumberTrunc | ObjectIsMinusZero
   | ObjectIsNaN | ObjectIsSmi | RoundFloat64ToInt32 | SpeculativeBigIntNegate
   | StackPointerGreaterThan | ToBoolean | TruncateBigIntToWord64
-  | TruncateFloat64ToWord32 | TruncateInt64ToInt32 | TruncateTaggedToBit
-  | TruncateTaggedToWord32 | Word32ReverseBytes | Word64ReverseBytes ->
+  | TruncateFloat64ToInt64 | TruncateFloat64ToWord32 | TruncateInt64ToInt32
+  | TruncateTaggedToBit | TruncateTaggedToWord32 | Word32ReverseBytes
+  | Word64ReverseBytes ->
       V1
   | IfFalse | IfSuccess | IfTrue -> C1
   | AllocateRaw -> V1C1
@@ -1893,7 +1894,6 @@ let of_str str =
   | "TruncateFloat32ToInt32" -> TruncateFloat32ToInt32
   | "TruncateFloat32ToUint32" -> TruncateFloat32ToUint32
   | "TruncateFloat64ToFloat32" -> TruncateFloat64ToFloat32
-  | "TruncateFloat64ToInt64" -> TruncateFloat64ToInt64
   | "TruncateFloat64ToUint32" -> TruncateFloat64ToUint32
   | "TruncateTaggedPointerToBit" -> TruncateTaggedPointerToBit
   | "TruncateTaggedToFloat64" -> TruncateTaggedToFloat64
@@ -2032,6 +2032,7 @@ let of_str str =
   | "StackPointerGreaterThan" -> StackPointerGreaterThan
   | "ToBoolean" -> ToBoolean
   | "TruncateBigIntToWord64" -> TruncateBigIntToWord64
+  | "TruncateFloat64ToInt64" -> TruncateFloat64ToInt64
   | "TruncateFloat64ToWord32" -> TruncateFloat64ToWord32
   | "TruncateInt64ToInt32" -> TruncateInt64ToInt32
   | "TruncateTaggedToBit" -> TruncateTaggedToBit
@@ -2805,7 +2806,6 @@ let to_str opcode =
   | TruncateFloat32ToInt32 -> "TruncateFloat32ToInt32"
   | TruncateFloat32ToUint32 -> "TruncateFloat32ToUint32"
   | TruncateFloat64ToFloat32 -> "TruncateFloat64ToFloat32"
-  | TruncateFloat64ToInt64 -> "TruncateFloat64ToInt64"
   | TruncateFloat64ToUint32 -> "TruncateFloat64ToUint32"
   | TruncateTaggedPointerToBit -> "TruncateTaggedPointerToBit"
   | TruncateTaggedToFloat64 -> "TruncateTaggedToFloat64"
@@ -2944,6 +2944,7 @@ let to_str opcode =
   | StackPointerGreaterThan -> "StackPointerGreaterThan"
   | ToBoolean -> "ToBoolean"
   | TruncateBigIntToWord64 -> "TruncateBigIntToWord64"
+  | TruncateFloat64ToInt64 -> "TruncateFloat64ToInt64"
   | TruncateFloat64ToWord32 -> "TruncateFloat64ToWord32"
   | TruncateInt64ToInt32 -> "TruncateInt64ToInt32"
   | TruncateTaggedToBit -> "TruncateTaggedToBit"

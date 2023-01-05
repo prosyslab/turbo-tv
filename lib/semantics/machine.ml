@@ -443,6 +443,10 @@ let change_uint32_to_uint64 pval state =
   let value = pval |> Uint32.to_int Type.uint64 64 in
   state |> State.update ~value
 
+let truncate_float64_to_int64 pval state =
+  let truncated = pval |> Float64.to_int64 in
+  state |> State.update ~value:truncated
+
 let truncate_float64_to_word32 pval state =
   let truncated = pval |> Float64.to_int32 in
   state |> State.update ~value:truncated

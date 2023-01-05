@@ -845,6 +845,7 @@ let encode program
   | BitcastTaggedToWord -> encode_v1 bitcast_tagged_to_word
   | BitcastWord32ToWord64 -> encode_v1 bitcast_word32_to_word64
   | BitcastWordToTagged -> encode_v1 bitcast_word_to_tagged
+  | TruncateFloat64ToInt64 -> encode_v1 truncate_float64_to_int64
   | TruncateFloat64ToWord32 -> encode_v1 truncate_float64_to_word32
   | TruncateInt64ToInt32 -> encode_v1 truncate_int64_to_int32
   (* machine: type-conversion *)
