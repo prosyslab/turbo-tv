@@ -320,6 +320,7 @@ let encode program
   | CheckedInt32Sub -> encode_v2e1c1 checked_int32_sub
   | CheckedInt64Add -> encode_v2e1c1 checked_int64_add
   | CheckedInt64Div -> encode_v2e1c1 checked_int64_div
+  | CheckedInt64Mod -> encode_v2e1c1 checked_int64_mod
   | CheckedInt64Mul -> encode_v2e1c1 checked_int64_mul
   | CheckedInt64Sub -> encode_v2e1c1 checked_int64_sub
   | CheckedUint32Div -> encode_v2e1c1 checked_uint32_div
@@ -640,6 +641,7 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       change_int64_to_tagged pval
+  | ChangeTaggedToBit -> encode_v1 change_tagged_to_bit
   | ChangeTaggedSignedToInt32 -> encode_v1 change_tagged_signed_to_int32
   | ChangeTaggedSignedToInt64 -> encode_v1 change_tagged_signed_to_int64
   | ChangeUint32ToTagged ->
@@ -698,10 +700,8 @@ let encode program
       let pid = Operands.id_of_nth operands 1 in
       let pval = RegisterFile.find pid rf in
       checked_truncate_tagged_to_word32 hint pval mem
-  | CheckedUint32ToInt32 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      checked_uint32_to_int32 pval
+  | CheckedUint32ToInt32 -> encode_v1 checked_uint32_to_int32
+  | CheckedUint64ToInt64 -> encode_v1 checked_uint64_to_int64
   | NumberToBoolean ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in

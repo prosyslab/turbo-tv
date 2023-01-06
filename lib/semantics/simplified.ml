@@ -62,17 +62,24 @@ let checked_int64_add lval rval _eff control state =
 let checked_int64_div lval rval _eff control state =
   let deopt =
     let division_by_zero = Int64.is_zero rval in
-    let minus_zero = Bool.ands [ Int64.is_zero lval; Int64.is_negative rval ] in
     let overflow =
       Bool.ands
         [ Int64.eq Int64.min_limit lval; Int64.eq rval (Value.from_int (-1)) ]
     in
-    let lost_precision =
-      Bool.not (Int64.eq (Int64.srem lval rval) Int64.zero)
-    in
-    Bool.ors [ division_by_zero; minus_zero; overflow; lost_precision ]
+    Bool.ors [ division_by_zero; overflow ]
   in
   state |> Machine.int64_div lval rval control |> State.update ~deopt ~control
+
+let checked_int64_mod lval rval _eff control state =
+  let deopt =
+    let division_by_zero = Int64.is_zero rval in
+    let overflow =
+      Bool.ands
+        [ Int64.eq Int64.min_limit lval; Int64.eq rval (Value.from_int (-1)) ]
+    in
+    Bool.ors [ division_by_zero; overflow ]
+  in
+  state |> Machine.int64_mod lval rval control |> State.update ~deopt ~control
 
 let checked_int64_mul lval rval _eff control state =
   let deopt = Int64.mul_would_overflow lval rval in
@@ -700,6 +707,16 @@ let change_int64_to_tagged pval state =
   let value = Bool.ite is_in_smi_range smi heap_number in
   state |> State.update ~value
 
+let change_tagged_to_bit pval state =
+  let ty_check = pval |> Value.has_type Type.any_tagged in
+  let value =
+    Bool.ite
+      (pval |> Constant.is_true_cst state.State.register_file)
+      Value.tr Value.fl
+  in
+  let ub = Bool.not ty_check in
+  state |> State.update ~value ~ub
+
 let change_tagged_signed_to_int32 pval state =
   let value = TaggedSigned.to_int32 pval in
   state |> State.update ~value
@@ -1048,6 +1065,11 @@ let checked_uint64_bounds flag lval rval _eff control state =
     (* AbortOnOutOfBounds *)
     state |> State.update ~value:lval ~ub:(Bool.not check) ~control
   else failwith "not implemented"
+
+let checked_uint64_to_int64 pval state =
+  let deopt = Int64.is_negative pval in
+  let value = pval |> Uint64.to_int Type.int64 64 in
+  state |> State.update ~value ~deopt
 
 let ensure_writable_fast_elements _lval rval _eff control state =
   let value = rval in
