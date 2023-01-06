@@ -55,6 +55,11 @@ let parse_command_line () =
 let unknown_ops =
   [
     Opcode.JSCall;
+    Opcode.JSLoadNamed;
+    Opcode.JSCreateCatchContext;
+    Opcode.JSLoadMessage;
+    Opcode.JSStoreMessage;
+    Opcode.JSToBigIntConvertNumber;
     Opcode.JSAdd;
     Opcode.JSModulus;
     Opcode.JSEqual;
