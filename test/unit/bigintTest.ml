@@ -398,6 +398,7 @@ let as_intN_tests =
       expected actual
   in
   [
+    as_intN_test 0 (Bigint.from_int 1) Bigint.zero;
     as_intN_test 1 Bigint.zero Bigint.zero;
     as_intN_test 1 (Bigint.from_int 1) (Bigint.from_int (-1));
     as_intN_test 1 (Bigint.from_int (-1)) (Bigint.from_int (-1));
@@ -408,6 +409,7 @@ let as_intN_tests =
       (Bigint.from_int (-2147483648));
     as_intN_test 32 (Bigint.from_int 0xcafebabe) (Bigint.from_int (-889275714));
     as_intN_test 32 (Bigint.from_int 0xdeadbeef) (Bigint.from_int (-559038737));
+    as_intN_test 64 (Bigint.from_int 0xdeadbeef) (Bigint.from_int 0xdeadbeef);
   ]
 
 let as_uintN_tests =
@@ -422,6 +424,7 @@ let as_uintN_tests =
       expected actual
   in
   [
+    as_uintN_test 0 (Bigint.from_int 1) Bigint.zero;
     as_uintN_test 1 Bigint.zero Bigint.zero;
     as_uintN_test 1 (Bigint.from_int 1) (Bigint.from_int 1);
     as_uintN_test 1 (Bigint.from_int (-1)) (Bigint.from_int 1);
@@ -432,6 +435,7 @@ let as_uintN_tests =
       (Bigint.from_int 2147483648);
     as_uintN_test 32 (Bigint.from_int 0xcafebabe) (Bigint.from_int 0xcafebabe);
     as_uintN_test 32 (Bigint.from_int 0xdeadbeef) (Bigint.from_int 0xdeadbeef);
+    as_uintN_test 64 (Bigint.from_int 0xdeadbeef) (Bigint.from_int 0xdeadbeef);
   ]
 
 let suite =

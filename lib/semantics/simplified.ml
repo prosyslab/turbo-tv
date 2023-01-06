@@ -520,7 +520,6 @@ let speculative_bigint_as ty nbits pval mem state =
   if nbits < 0 || nbits > 64 then
     (* 0 <= {nbits} <= 64 is assumed by TurboFan*)
     state |> State.update ~ub:(Bool.not deopt)
-  else if nbits = 64 then state |> State.update ~value:pval ~deopt
   else
     let bn = Bigint.load pval mem in
     let transformed =
