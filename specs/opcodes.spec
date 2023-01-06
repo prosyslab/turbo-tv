@@ -87,7 +87,7 @@ CheckedInt32Mul,b1,v1,v2,e1,c1
 CheckedInt32Sub,v1,v2,e1,c1
 CheckedInt32ToTaggedSigned,
 CheckedInt64Add,v1,v2,e1,c1
-CheckedInt64Div,
+CheckedInt64Div,v1,v2,e1,c1
 CheckedInt64Mod,
 CheckedInt64Mul,v1,v2,e1,c1
 CheckedInt64Sub,v1,v2,e1,c1
@@ -731,8 +731,8 @@ SignExtendWord8ToInt32,
 SignExtendWord8ToInt64,
 Simd128ReverseBytes,
 SpeculativeBigIntAdd,v1,v2
-SpeculativeBigIntAsIntN,
-SpeculativeBigIntAsUintN,
+SpeculativeBigIntAsIntN,b1,v1
+SpeculativeBigIntAsUintN,b1,v1
 SpeculativeBigIntBitwiseAnd,v1,v2
 SpeculativeBigIntBitwiseOr,v1,v2
 SpeculativeBigIntBitwiseXor,v1,v2
