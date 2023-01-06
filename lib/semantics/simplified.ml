@@ -59,6 +59,21 @@ let checked_int64_add lval rval _eff control state =
   let deopt = Int64.add_would_overflow lval rval in
   state |> Machine.int64_add lval rval |> State.update ~deopt ~control
 
+let checked_int64_div lval rval _eff control state =
+  let deopt =
+    let division_by_zero = Int64.is_zero rval in
+    let minus_zero = Bool.ands [ Int64.is_zero lval; Int64.is_negative rval ] in
+    let overflow =
+      Bool.ands
+        [ Int64.eq Int64.min_limit lval; Int64.eq rval (Value.from_int (-1)) ]
+    in
+    let lost_precision =
+      Bool.not (Int64.eq (Int64.srem lval rval) Int64.zero)
+    in
+    Bool.ors [ division_by_zero; minus_zero; overflow; lost_precision ]
+  in
+  state |> Machine.int64_div lval rval control |> State.update ~deopt ~control
+
 let checked_int64_mul lval rval _eff control state =
   let deopt = Int64.mul_would_overflow lval rval in
   state |> Machine.int64_mul lval rval |> State.update ~deopt ~control
@@ -498,6 +513,25 @@ let truncate_big_int_to_word64 value mem state =
   let value = Bigint.to_int64 loaded in
   state |> State.update ~value
 
+(* bigint converter *)
+let speculative_bigint_as ty nbits pval mem state =
+  let deopt = Bool.not (pval |> Objects.is_big_int mem) in
+  let nbits = nbits |> int_of_string in
+  if nbits < 0 || nbits > 64 then
+    (* 0 <= {nbits} <= 64 is assumed by TurboFan*)
+    state |> State.update ~ub:(Bool.not deopt)
+  else if nbits = 64 then state |> State.update ~value:pval ~deopt
+  else
+    let bn = Bigint.load pval mem in
+    let transformed =
+      match ty with
+      | "int" -> bn |> Bigint.as_intN nbits
+      | "uint" -> bn |> Bigint.as_uintN nbits
+      | _ -> failwith "unreachable"
+    in
+    let value, mem = Bigint.allocate transformed mem in
+    state |> State.update ~value ~deopt ~mem
+
 let speculative_bigint_binary op lval rval mem state =
   let deopt =
     Bool.not
@@ -506,6 +540,7 @@ let speculative_bigint_binary op lval rval mem state =
   in
   state |> op lval rval mem |> State.update ~deopt
 
+(* bigint arithmetic *)
 let speculative_bigint_add = speculative_bigint_binary bigint_add
 
 let speculative_bigint_subtract = speculative_bigint_binary bigint_subtract
@@ -525,6 +560,7 @@ let speculative_bigint_shift_left = speculative_bigint_binary bigint_shift_left
 let speculative_bigint_shift_right =
   speculative_bigint_binary bigint_shift_right
 
+(* bigint bitwise *)
 let speculative_bigint_bitwise_and =
   speculative_bigint_binary bigint_bitwise_and
 
@@ -541,6 +577,7 @@ let speculative_bigint_compare op lval rval mem state =
   in
   state |> op lval rval mem |> State.update ~deopt
 
+(* bigint comparison *)
 let speculative_bigint_equal = speculative_bigint_compare bigint_equal
 
 let speculative_bigint_less_than = speculative_bigint_compare bigint_less_than

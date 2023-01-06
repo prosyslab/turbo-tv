@@ -126,6 +126,19 @@ let to_int64 t =
   Bool.ite (is_negative t) (BitVec.subb (BitVecVal.zero ()) t.value) t.value
   |> Value.entype Type.int64
 
+let as_intN n t =
+  let bits = BitVec.extract (n - 1) 0 t.value in
+  let sign = BitVec.eqi (BitVec.extract (n - 1) (n - 1) bits) 1 in
+  let value =
+    Bool.ite sign (bits |> BitVec.neg) bits
+    |> BitVec.zero_extend (digit_length - n)
+  in
+  create sign value
+
+let as_uintN n t =
+  let value = BitVec.extract (n - 1) 0 t.value in
+  create Bool.fl value
+
 (* comparison *)
 let equal l r =
   let l, r = fit l r in

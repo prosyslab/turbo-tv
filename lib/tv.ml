@@ -57,6 +57,13 @@ let encode program
     op pval mem
   in
 
+  let encode_h1v1m op =
+    let hint = Operands.const_of_nth operands 0 in
+    let pid = Operands.id_of_nth operands 1 in
+    let pval = RegisterFile.find pid rf in
+    op hint pval mem
+  in
+
   let encode_v2 op =
     let lpid = Operands.id_of_nth operands 0 in
     let rpid = Operands.id_of_nth operands 1 in
@@ -312,6 +319,7 @@ let encode program
   | CheckedInt32Mul -> encode_h1v2e1c1 checked_int32_mul
   | CheckedInt32Sub -> encode_v2e1c1 checked_int32_sub
   | CheckedInt64Add -> encode_v2e1c1 checked_int64_add
+  | CheckedInt64Div -> encode_v2e1c1 checked_int64_div
   | CheckedInt64Mul -> encode_v2e1c1 checked_int64_mul
   | CheckedInt64Sub -> encode_v2e1c1 checked_int64_sub
   | CheckedUint32Div -> encode_v2e1c1 checked_uint32_div
@@ -477,15 +485,19 @@ let encode program
   | BigIntEqual -> encode_v2m bigint_equal
   | BigIntLessThan -> encode_v2m bigint_less_than
   | BigIntLessThanOrEqual -> encode_v2m bigint_less_than_or_equal
+  | SpeculativeBigIntAsIntN -> encode_h1v1m (speculative_bigint_as "int")
+  | SpeculativeBigIntAsUintN -> encode_h1v1m (speculative_bigint_as "uint")
   | SpeculativeBigIntAdd -> encode_v2m speculative_bigint_add
   | SpeculativeBigIntSubtract -> encode_v2m speculative_bigint_subtract
   | SpeculativeBigIntMultiply -> encode_v2m speculative_bigint_multiply
+  | SpeculativeBigIntDivide -> encode_v2m speculative_bigint_divide
+  | SpeculativeBigIntModulus -> encode_v2m speculative_bigint_modulus
   | SpeculativeBigIntNegate -> encode_v1m speculative_bigint_negate
+  | SpeculativeBigIntShiftLeft -> encode_v2m speculative_bigint_shift_left
+  | SpeculativeBigIntShiftRight -> encode_v2m speculative_bigint_shift_right
   | SpeculativeBigIntBitwiseAnd -> encode_v2m speculative_bigint_bitwise_and
   | SpeculativeBigIntBitwiseOr -> encode_v2m speculative_bigint_bitwise_or
   | SpeculativeBigIntBitwiseXor -> encode_v2m speculative_bigint_bitwise_xor
-  | SpeculativeBigIntShiftLeft -> encode_v2m speculative_bigint_shift_left
-  | SpeculativeBigIntShiftRight -> encode_v2m speculative_bigint_shift_right
   | SpeculativeBigIntEqual -> encode_v2m speculative_bigint_equal
   | SpeculativeBigIntLessThan -> encode_v2m speculative_bigint_less_than
   | SpeculativeBigIntLessThanOrEqual ->
