@@ -128,16 +128,18 @@ let to_int64 t =
 
 let as_intN n t =
   let bits = BitVec.extract (n - 1) 0 t.value in
-  let sign = BitVec.eqi (BitVec.extract (n - 1) (n - 1) bits) 1 in
+  let sign = BitVec.extract (n - 1) (n - 1) bits in
   let value =
-    Bool.ite sign (bits |> BitVec.neg) bits
+    Bool.ite (BitVec.eqb sign pos_sign) bits (bits |> BitVec.neg)
     |> BitVec.zero_extend (digit_length - n)
   in
   create sign value
 
 let as_uintN n t =
-  let value = BitVec.extract (n - 1) 0 t.value in
-  create Bool.fl value
+  let value =
+    BitVec.extract (n - 1) 0 t.value |> BitVec.zero_extend (digit_length - n)
+  in
+  create pos_sign value
 
 (* comparison *)
 let equal l r =

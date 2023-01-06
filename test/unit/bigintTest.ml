@@ -386,11 +386,59 @@ let less_than_tests =
       true;
   ]
 
+let as_intN_tests =
+  let name = "BigInt::as_intN" in
+  let as_intN_test n v expected =
+    let msg = Format.sprintf "\027[91m%s\027[0m" name in
+    let actual = Bigint.as_intN n v in
+    let eq = Bigint.equal in
+    let _ = value_eq eq actual expected in
+    name >:: fun _ ->
+    assert_equal ~msg ~cmp:(value_eq eq) ~printer:(bigint_printer ~indent:1)
+      expected actual
+  in
+  [
+    as_intN_test 1 Bigint.zero Bigint.zero;
+    as_intN_test 1 (Bigint.from_int 1) (Bigint.from_int (-1));
+    as_intN_test 1 (Bigint.from_int (-1)) (Bigint.from_int (-1));
+    as_intN_test 32 (Bigint.from_int 2147483647) (Bigint.from_int 2147483647);
+    as_intN_test 32 (Bigint.from_int 2147483648) (Bigint.from_int (-2147483648));
+    as_intN_test 32
+      (Bigint.from_int (-2147483648))
+      (Bigint.from_int (-2147483648));
+    as_intN_test 32 (Bigint.from_int 0xcafebabe) (Bigint.from_int (-889275714));
+    as_intN_test 32 (Bigint.from_int 0xdeadbeef) (Bigint.from_int (-559038737));
+  ]
+
+let as_uintN_tests =
+  let name = "BigInt::as_uintN" in
+  let as_uintN_test n v expected =
+    let msg = Format.sprintf "\027[91m%s\027[0m" name in
+    let actual = Bigint.as_uintN n v in
+    let eq = Bigint.equal in
+    let _ = value_eq eq actual expected in
+    name >:: fun _ ->
+    assert_equal ~msg ~cmp:(value_eq eq) ~printer:(bigint_printer ~indent:1)
+      expected actual
+  in
+  [
+    as_uintN_test 1 Bigint.zero Bigint.zero;
+    as_uintN_test 1 (Bigint.from_int 1) (Bigint.from_int 1);
+    as_uintN_test 1 (Bigint.from_int (-1)) (Bigint.from_int 1);
+    as_uintN_test 32 (Bigint.from_int 2147483647) (Bigint.from_int 2147483647);
+    as_uintN_test 32 (Bigint.from_int 2147483648) (Bigint.from_int 2147483648);
+    as_uintN_test 32
+      (Bigint.from_int (-2147483648))
+      (Bigint.from_int 2147483648);
+    as_uintN_test 32 (Bigint.from_int 0xcafebabe) (Bigint.from_int 0xcafebabe);
+    as_uintN_test 32 (Bigint.from_int 0xdeadbeef) (Bigint.from_int 0xdeadbeef);
+  ]
+
 let suite =
   "suite"
   >::: from_string_tests @ neg_tests @ add_tests @ sub_tests @ mul_tests
        @ div_tests @ rem_tests @ bitwise_and_tests @ bitwise_or_tests
        @ bitwise_xor_tests @ shift_left_tests @ shift_right_tests @ equal_tests
-       @ less_than_tests
+       @ less_than_tests @ as_intN_tests @ as_uintN_tests
 
 let _ = OUnit2.run_test_tt_main suite
