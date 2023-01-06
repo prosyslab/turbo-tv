@@ -471,22 +471,20 @@ let encode program
       let ctrl = ControlFile.find ctrl_id cf in
       speculative_number_less_than_or_equal lval rval () ctrl mem
   (* simplified: bigint *)
+  (* constructor *)
+  | Integral32OrMinusZeroToBigInt ->
+      encode_v1m integral32_or_minus_zero_to_bigint
+  | SpeculativeBigIntAsIntN -> encode_h1v1m (speculative_bigint_as "int")
+  | SpeculativeBigIntAsUintN -> encode_h1v1m (speculative_bigint_as "uint")
+  (* arithmetic *)
   | BigIntAdd -> encode_v2m bigint_add
   | BigIntDivide -> encode_v2m bigint_divide
   | BigIntModulus -> encode_v2m bigint_modulus
   | BigIntMultiply -> encode_v2m bigint_multiply
   | BigIntSubtract -> encode_v2m bigint_subtract
   | BigIntNegate -> encode_v1m bigint_negate
-  | BigIntBitwiseAnd -> encode_v2m bigint_bitwise_and
-  | BigIntBitwiseOr -> encode_v2m bigint_bitwise_or
-  | BigIntBitwiseXor -> encode_v2m bigint_bitwise_xor
   | BigIntShiftLeft -> encode_v2m bigint_shift_left
   | BigIntShiftRight -> encode_v2m bigint_shift_right
-  | BigIntEqual -> encode_v2m bigint_equal
-  | BigIntLessThan -> encode_v2m bigint_less_than
-  | BigIntLessThanOrEqual -> encode_v2m bigint_less_than_or_equal
-  | SpeculativeBigIntAsIntN -> encode_h1v1m (speculative_bigint_as "int")
-  | SpeculativeBigIntAsUintN -> encode_h1v1m (speculative_bigint_as "uint")
   | SpeculativeBigIntAdd -> encode_v2m speculative_bigint_add
   | SpeculativeBigIntSubtract -> encode_v2m speculative_bigint_subtract
   | SpeculativeBigIntMultiply -> encode_v2m speculative_bigint_multiply
@@ -495,9 +493,17 @@ let encode program
   | SpeculativeBigIntNegate -> encode_v1m speculative_bigint_negate
   | SpeculativeBigIntShiftLeft -> encode_v2m speculative_bigint_shift_left
   | SpeculativeBigIntShiftRight -> encode_v2m speculative_bigint_shift_right
+  (* bitwise *)
+  | BigIntBitwiseAnd -> encode_v2m bigint_bitwise_and
+  | BigIntBitwiseOr -> encode_v2m bigint_bitwise_or
+  | BigIntBitwiseXor -> encode_v2m bigint_bitwise_xor
   | SpeculativeBigIntBitwiseAnd -> encode_v2m speculative_bigint_bitwise_and
   | SpeculativeBigIntBitwiseOr -> encode_v2m speculative_bigint_bitwise_or
   | SpeculativeBigIntBitwiseXor -> encode_v2m speculative_bigint_bitwise_xor
+  (* comparison *)
+  | BigIntEqual -> encode_v2m bigint_equal
+  | BigIntLessThan -> encode_v2m bigint_less_than
+  | BigIntLessThanOrEqual -> encode_v2m bigint_less_than_or_equal
   | SpeculativeBigIntEqual -> encode_v2m speculative_bigint_equal
   | SpeculativeBigIntLessThan -> encode_v2m speculative_bigint_less_than
   | SpeculativeBigIntLessThanOrEqual ->
@@ -634,10 +640,8 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       change_int64_to_tagged pval
-  | ChangeTaggedSignedToInt64 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      change_tagged_signed_to_int64 pval
+  | ChangeTaggedSignedToInt32 -> encode_v1 change_tagged_signed_to_int32
+  | ChangeTaggedSignedToInt64 -> encode_v1 change_tagged_signed_to_int64
   | ChangeUint32ToTagged ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -729,6 +733,10 @@ let encode program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       truncate_tagged_to_bit pval mem
+  | TruncateTaggedPointerToBit ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      truncate_tagged_pointer_to_bit pval mem
   | TruncateTaggedToWord32 ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in

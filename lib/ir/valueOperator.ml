@@ -150,6 +150,8 @@ module Make_Integer_Operator (I : IntValue) = struct
 
   let modulo = if sign then srem else urem
 
+  let neg t = BitVec.neg (t |> from_value) |> to_value
+
   (* assume turbofan consider 'overflow' as overflow \/ underflow *)
   let add_would_overflow lval rval =
     let lval = lval |> from_value in

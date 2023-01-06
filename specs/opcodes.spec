@@ -462,7 +462,7 @@ Int64Mul,v1,v2
 Int64MulWithOverflow,v1,v2,c1
 Int64Sub,v1,v2
 Int64SubWithOverflow,v1,v2,c1
-Integral32OrMinusZeroToBigInt,
+Integral32OrMinusZeroToBigInt,v1
 JSAdd,
 JSAsyncFunctionEnter,
 JSAsyncFunctionReject,
@@ -814,7 +814,7 @@ TruncateFloat64ToInt64,v1
 TruncateFloat64ToUint32,
 TruncateFloat64ToWord32,v1
 TruncateInt64ToInt32,v1
-TruncateTaggedPointerToBit,
+TruncateTaggedPointerToBit,v1
 TruncateTaggedToBit,v1
 TruncateTaggedToFloat64,
 TruncateTaggedToWord32,v1

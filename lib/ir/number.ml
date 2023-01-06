@@ -78,7 +78,7 @@ let to_uint32 mem number =
           number
           (number_f64 |> Float64.to_uint32)))
 
-(* type check *)
+(* check *)
 let is_integer mem number =
   let heap_number = HeapNumber.load number mem in
   Bool.ite

@@ -381,7 +381,6 @@ type t =
   | Int32PairMul
   | Int32PairSub
   | Int64AbsWithOverflow
-  | Integral32OrMinusZeroToBigInt
   | JSAdd
   | JSAsyncFunctionEnter
   | JSAsyncFunctionReject
@@ -639,7 +638,6 @@ type t =
   | TruncateFloat32ToUint32
   | TruncateFloat64ToFloat32
   | TruncateFloat64ToUint32
-  | TruncateTaggedPointerToBit
   | TruncateTaggedToFloat64
   | TryTruncateFloat32ToInt64
   | TryTruncateFloat32ToUint64
@@ -755,6 +753,7 @@ type t =
   | Float64RoundTruncate
   | Float64RoundUp
   | Float64Sin
+  | Integral32OrMinusZeroToBigInt
   | NumberAbs
   | NumberCeil
   | NumberExpm1
@@ -781,6 +780,7 @@ type t =
   | TruncateFloat64ToInt64
   | TruncateFloat64ToWord32
   | TruncateInt64ToInt32
+  | TruncateTaggedPointerToBit
   | TruncateTaggedToBit
   | TruncateTaggedToWord32
   | Word32ReverseBytes
@@ -1065,13 +1065,12 @@ let get_kind opcode =
   | I8x16SubSatU | I8x16Swizzle | I8x16UConvertI16x8 | IfDefault | IfException
   | IfValue | InductionVariablePhi | InitializeImmutableInObject
   | Int32AbsWithOverflow | Int32MulHigh | Int32PairAdd | Int32PairMul
-  | Int32PairSub | Int64AbsWithOverflow | Integral32OrMinusZeroToBigInt | JSAdd
-  | JSAsyncFunctionEnter | JSAsyncFunctionReject | JSAsyncFunctionResolve
-  | JSBitwiseAnd | JSBitwiseNot | JSBitwiseOr | JSBitwiseXor | JSCall
-  | JSCallForwardVarargs | JSCallRuntime | JSCallWithArrayLike
-  | JSCallWithSpread | JSCloneObject | JSConstruct | JSConstructForwardVarargs
-  | JSConstructWithArrayLike | JSConstructWithSpread | JSCreate
-  | JSCreateArguments | JSCreateArray | JSCreateArrayFromIterable
+  | Int32PairSub | Int64AbsWithOverflow | JSAdd | JSAsyncFunctionEnter
+  | JSAsyncFunctionReject | JSAsyncFunctionResolve | JSBitwiseAnd | JSBitwiseNot
+  | JSBitwiseOr | JSBitwiseXor | JSCall | JSCallForwardVarargs | JSCallRuntime
+  | JSCallWithArrayLike | JSCallWithSpread | JSCloneObject | JSConstruct
+  | JSConstructForwardVarargs | JSConstructWithArrayLike | JSConstructWithSpread
+  | JSCreate | JSCreateArguments | JSCreateArray | JSCreateArrayFromIterable
   | JSCreateArrayIterator | JSCreateAsyncFunctionObject | JSCreateBlockContext
   | JSCreateBoundFunction | JSCreateCatchContext | JSCreateClosure
   | JSCreateCollectionIterator | JSCreateEmptyLiteralArray
@@ -1133,8 +1132,7 @@ let get_kind opcode =
   | TransitionAndStoreElement | TransitionAndStoreNonNumberElement
   | TransitionAndStoreNumberElement | TransitionElementsKind | TrapIf
   | TrapUnless | TruncateFloat32ToInt32 | TruncateFloat32ToUint32
-  | TruncateFloat64ToFloat32 | TruncateFloat64ToUint32
-  | TruncateTaggedPointerToBit | TruncateTaggedToFloat64
+  | TruncateFloat64ToFloat32 | TruncateFloat64ToUint32 | TruncateTaggedToFloat64
   | TryTruncateFloat32ToInt64 | TryTruncateFloat32ToUint64
   | TryTruncateFloat64ToInt64 | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf
   | TypedObjectState | TypedStateValues | Uint32MulHigh | Uint64Div | Uint64Mod
@@ -1171,15 +1169,15 @@ let get_kind opcode =
   | CheckedTaggedSignedToInt32 | Float64Abs | Float64Asin | Float64Asinh
   | Float64ExtractHighWord32 | Float64Neg | Float64RoundDown
   | Float64RoundTiesAway | Float64RoundTiesEven | Float64RoundTruncate
-  | Float64RoundUp | Float64Sin | NumberAbs | NumberCeil | NumberExpm1
-  | NumberFloor | NumberIsInteger | NumberIsMinusZero | NumberIsNaN
-  | NumberIsSafeInteger | NumberRound | NumberSign | NumberSin | NumberToBoolean
-  | NumberToInt32 | NumberToUint32 | NumberTrunc | ObjectIsMinusZero
-  | ObjectIsNaN | ObjectIsSmi | RoundFloat64ToInt32 | SpeculativeBigIntNegate
-  | StackPointerGreaterThan | ToBoolean | TruncateBigIntToWord64
-  | TruncateFloat64ToInt64 | TruncateFloat64ToWord32 | TruncateInt64ToInt32
-  | TruncateTaggedToBit | TruncateTaggedToWord32 | Word32ReverseBytes
-  | Word64ReverseBytes ->
+  | Float64RoundUp | Float64Sin | Integral32OrMinusZeroToBigInt | NumberAbs
+  | NumberCeil | NumberExpm1 | NumberFloor | NumberIsInteger | NumberIsMinusZero
+  | NumberIsNaN | NumberIsSafeInteger | NumberRound | NumberSign | NumberSin
+  | NumberToBoolean | NumberToInt32 | NumberToUint32 | NumberTrunc
+  | ObjectIsMinusZero | ObjectIsNaN | ObjectIsSmi | RoundFloat64ToInt32
+  | SpeculativeBigIntNegate | StackPointerGreaterThan | ToBoolean
+  | TruncateBigIntToWord64 | TruncateFloat64ToInt64 | TruncateFloat64ToWord32
+  | TruncateInt64ToInt32 | TruncateTaggedPointerToBit | TruncateTaggedToBit
+  | TruncateTaggedToWord32 | Word32ReverseBytes | Word64ReverseBytes ->
       V1
   | IfFalse | IfSuccess | IfTrue -> C1
   | AllocateRaw -> V1C1
@@ -1635,7 +1633,6 @@ let of_str str =
   | "Int32PairMul" -> Int32PairMul
   | "Int32PairSub" -> Int32PairSub
   | "Int64AbsWithOverflow" -> Int64AbsWithOverflow
-  | "Integral32OrMinusZeroToBigInt" -> Integral32OrMinusZeroToBigInt
   | "JSAdd" -> JSAdd
   | "JSAsyncFunctionEnter" -> JSAsyncFunctionEnter
   | "JSAsyncFunctionReject" -> JSAsyncFunctionReject
@@ -1894,7 +1891,6 @@ let of_str str =
   | "TruncateFloat32ToUint32" -> TruncateFloat32ToUint32
   | "TruncateFloat64ToFloat32" -> TruncateFloat64ToFloat32
   | "TruncateFloat64ToUint32" -> TruncateFloat64ToUint32
-  | "TruncateTaggedPointerToBit" -> TruncateTaggedPointerToBit
   | "TruncateTaggedToFloat64" -> TruncateTaggedToFloat64
   | "TryTruncateFloat32ToInt64" -> TryTruncateFloat32ToInt64
   | "TryTruncateFloat32ToUint64" -> TryTruncateFloat32ToUint64
@@ -2008,6 +2004,7 @@ let of_str str =
   | "Float64RoundTruncate" -> Float64RoundTruncate
   | "Float64RoundUp" -> Float64RoundUp
   | "Float64Sin" -> Float64Sin
+  | "Integral32OrMinusZeroToBigInt" -> Integral32OrMinusZeroToBigInt
   | "NumberAbs" -> NumberAbs
   | "NumberCeil" -> NumberCeil
   | "NumberExpm1" -> NumberExpm1
@@ -2034,6 +2031,7 @@ let of_str str =
   | "TruncateFloat64ToInt64" -> TruncateFloat64ToInt64
   | "TruncateFloat64ToWord32" -> TruncateFloat64ToWord32
   | "TruncateInt64ToInt32" -> TruncateInt64ToInt32
+  | "TruncateTaggedPointerToBit" -> TruncateTaggedPointerToBit
   | "TruncateTaggedToBit" -> TruncateTaggedToBit
   | "TruncateTaggedToWord32" -> TruncateTaggedToWord32
   | "Word32ReverseBytes" -> Word32ReverseBytes
@@ -2548,7 +2546,6 @@ let to_str opcode =
   | Int32PairMul -> "Int32PairMul"
   | Int32PairSub -> "Int32PairSub"
   | Int64AbsWithOverflow -> "Int64AbsWithOverflow"
-  | Integral32OrMinusZeroToBigInt -> "Integral32OrMinusZeroToBigInt"
   | JSAdd -> "JSAdd"
   | JSAsyncFunctionEnter -> "JSAsyncFunctionEnter"
   | JSAsyncFunctionReject -> "JSAsyncFunctionReject"
@@ -2807,7 +2804,6 @@ let to_str opcode =
   | TruncateFloat32ToUint32 -> "TruncateFloat32ToUint32"
   | TruncateFloat64ToFloat32 -> "TruncateFloat64ToFloat32"
   | TruncateFloat64ToUint32 -> "TruncateFloat64ToUint32"
-  | TruncateTaggedPointerToBit -> "TruncateTaggedPointerToBit"
   | TruncateTaggedToFloat64 -> "TruncateTaggedToFloat64"
   | TryTruncateFloat32ToInt64 -> "TryTruncateFloat32ToInt64"
   | TryTruncateFloat32ToUint64 -> "TryTruncateFloat32ToUint64"
@@ -2921,6 +2917,7 @@ let to_str opcode =
   | Float64RoundTruncate -> "Float64RoundTruncate"
   | Float64RoundUp -> "Float64RoundUp"
   | Float64Sin -> "Float64Sin"
+  | Integral32OrMinusZeroToBigInt -> "Integral32OrMinusZeroToBigInt"
   | NumberAbs -> "NumberAbs"
   | NumberCeil -> "NumberCeil"
   | NumberExpm1 -> "NumberExpm1"
@@ -2947,6 +2944,7 @@ let to_str opcode =
   | TruncateFloat64ToInt64 -> "TruncateFloat64ToInt64"
   | TruncateFloat64ToWord32 -> "TruncateFloat64ToWord32"
   | TruncateInt64ToInt32 -> "TruncateInt64ToInt32"
+  | TruncateTaggedPointerToBit -> "TruncateTaggedPointerToBit"
   | TruncateTaggedToBit -> "TruncateTaggedToBit"
   | TruncateTaggedToWord32 -> "TruncateTaggedToWord32"
   | Word32ReverseBytes -> "Word32ReverseBytes"
