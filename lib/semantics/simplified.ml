@@ -451,7 +451,6 @@ let number_is_nan pval mem state =
 
 (* simplified: bigint *)
 let integral32_or_minus_zero_to_bigint pval mem state =
-  let check = Typer.verify pval Types.Integral32 mem in
   let val_i32 = pval |> Number.to_int32 mem in
   let bn =
     let sign = val_i32 |> Int32.is_negative in
@@ -459,7 +458,7 @@ let integral32_or_minus_zero_to_bigint pval mem state =
     Bigint.create (Bool.ite sign Bigint.neg_sign Bigint.pos_sign) value
   in
   let value, mem = Bigint.allocate bn mem in
-  state |> State.update ~value ~mem ~ub:(Bool.not check)
+  state |> State.update ~value ~mem
 
 let bigint_binary op lval rval mem state =
   let l_bn = Bigint.load lval mem in
@@ -708,14 +707,12 @@ let change_int64_to_tagged pval state =
   state |> State.update ~value
 
 let change_tagged_to_bit pval state =
-  let ty_check = pval |> Value.has_type Type.any_tagged in
   let value =
     Bool.ite
       (pval |> Constant.is_true_cst state.State.register_file)
       Value.tr Value.fl
   in
-  let ub = Bool.not ty_check in
-  state |> State.update ~value ~ub
+  state |> State.update ~value
 
 let change_tagged_signed_to_int32 pval state =
   let value = TaggedSigned.to_int32 pval in
@@ -986,7 +983,6 @@ let truncate_tagged_to_bit pval mem (state : State.t) =
   state |> State.update ~value
 
 let truncate_tagged_pointer_to_bit pval mem state =
-  let ty_check = pval |> Value.has_type Type.tagged_pointer in
   let rf = state.State.register_file in
   let value =
     Bool.ite
@@ -1019,8 +1015,7 @@ let truncate_tagged_pointer_to_bit pval mem state =
                      Value.fl (* otherwise return true: can be improved *)
                      Value.tr)))))
   in
-  let ub = Bool.not ty_check in
-  state |> State.update ~value ~ub
+  state |> State.update ~value
 
 (* check *)
 let check_if cond _eff control state =

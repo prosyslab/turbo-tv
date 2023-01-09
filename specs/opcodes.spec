@@ -49,7 +49,7 @@ ChangeInt64ToFloat64,v1
 ChangeInt64ToTagged,v1
 ChangeTaggedSignedToInt32,v1
 ChangeTaggedSignedToInt64,v1
-ChangeTaggedToBit,
+ChangeTaggedToBit,v1
 ChangeTaggedToFloat64,
 ChangeTaggedToInt32,
 ChangeTaggedToInt64,
@@ -88,7 +88,7 @@ CheckedInt32Sub,v1,v2,e1,c1
 CheckedInt32ToTaggedSigned,
 CheckedInt64Add,v1,v2,e1,c1
 CheckedInt64Div,v1,v2,e1,c1
-CheckedInt64Mod,
+CheckedInt64Mod,v1,v2,e1,c1
 CheckedInt64Mul,v1,v2,e1,c1
 CheckedInt64Sub,v1,v2,e1,c1
 CheckedInt64ToInt32,v1,e1,c1
@@ -108,7 +108,7 @@ CheckedUint32ToInt32,v1,e1,c1
 CheckedUint32ToTaggedSigned,
 CheckedUint64Bounds,b2,v1,v2,e1,c1
 CheckedUint64ToInt32,
-CheckedUint64ToInt64,
+CheckedUint64ToInt64,v1,e1,c1
 CheckedUint64ToTaggedSigned,
 Checkpoint,
 Comment,
