@@ -184,9 +184,9 @@ let finish_region pval state = state |> State.update ~value:pval
 let js_stack_check _eff control state = state |> State.update ~control
 
 let call fname args state =
-  let bv_sort = BV.mk_sort ctx Value.len in
-  let args_sort = List.map (fun _ -> bv_sort) args in
-  let f_decl = Z3.FuncDecl.mk_func_decl_s ctx fname args_sort bv_sort in
+  let value_sort = BV.mk_sort ctx Value.len in
+  let args_sort = List.map (fun _ -> value_sort) args in
+  let f_decl = Z3.FuncDecl.mk_func_decl_s ctx fname args_sort value_sort in
 
   let normalized_args =
     args
@@ -201,7 +201,10 @@ let call fname args state =
                 (Int64.div arg (Int64.of_int 2) |> Int64.to_float64)
                 arg))
   in
-  let return = Z3.FuncDecl.apply f_decl normalized_args in
+  let return =
+    Z3.FuncDecl.apply f_decl normalized_args
+    |> Value.cast Type.any_tagged |> ValueOperator.AnyTagged.settle
+  in
   state |> State.update ~value:return ~control:Bool.tr
 
 let stack_pointer_greater_than state =
