@@ -327,6 +327,7 @@ let number_same_value lnum rnum mem state =
   state |> State.update ~value
 
 let reference_equal lval rval mem state =
+  let rf = state.State.register_file in
   let is_heap_number_or_f64 value =
     Bool.ors
       [
@@ -341,7 +342,10 @@ let reference_equal lval rval mem state =
       (Bool.ite
          (Bool.ors [ is_heap_number_or_f64 lval; is_heap_number_or_f64 rval ])
          Value.fl
-         (Bool.ite (Word32.eq lval rval) Value.tr Value.fl))
+         (Bool.ite
+            (TaggedSigned.eq_with_heap_constant lval rval rf)
+            Value.tr
+            (Bool.ite (Word32.eq lval rval) Value.tr Value.fl)))
   in
   state |> State.update ~value
 

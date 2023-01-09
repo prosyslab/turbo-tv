@@ -33,6 +33,37 @@ module TaggedSigned = struct
 
   let eq lval rval = BitVec.eqb (lval |> from_value) (rval |> from_value)
 
+  let eq_with_heap_constant lval rval rf =
+    let lval_is_zero = is_zero lval in
+    let rval_is_zero = is_zero rval in
+    Bool.ors
+      [
+        Bool.ands
+          [
+            Value.has_type Type.tagged_signed lval;
+            lval_is_zero;
+            Constant.is_false_cst rf rval;
+          ];
+        Bool.ands
+          [
+            Value.has_type Type.tagged_signed lval;
+            Bool.not lval_is_zero;
+            Constant.is_true_cst rf rval;
+          ];
+        Bool.ands
+          [
+            Constant.is_false_cst rf lval;
+            Value.has_type Type.tagged_signed rval;
+            rval_is_zero;
+          ];
+        Bool.ands
+          [
+            Constant.is_true_cst rf lval;
+            Value.has_type Type.tagged_signed rval;
+            Bool.not rval_is_zero;
+          ];
+      ]
+
   let to_string model value =
     let v_str =
       value |> from_value |> BitVec.sign_extend 1 |> Model.eval model

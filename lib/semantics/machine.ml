@@ -320,15 +320,40 @@ let word32_equal lval rval state =
   let check_for_tf_constants =
     Bool.ors
       [
-        Bool.ands [ Constant.is_false_cst rf lval; rval_is_zero ];
-        Bool.ands [ lval_is_zero; Constant.is_false_cst rf rval ];
-        Bool.ands [ Constant.is_true_cst rf lval; Bool.not rval_is_zero ];
-        Bool.ands [ Bool.not lval_is_zero; Constant.is_true_cst rf rval ];
+        Bool.ands
+          [
+            Constant.is_false_cst rf lval;
+            Value.has_type Type.int32 rval;
+            rval_is_zero;
+          ];
+        Bool.ands
+          [
+            Value.has_type Type.int32 lval;
+            lval_is_zero;
+            Constant.is_false_cst rf rval;
+          ];
+        Bool.ands
+          [
+            Constant.is_true_cst rf lval;
+            Value.has_type Type.int32 rval;
+            Bool.not rval_is_zero;
+          ];
+        Bool.ands
+          [
+            Value.has_type Type.int32 lval;
+            Bool.not lval_is_zero;
+            Constant.is_true_cst rf rval;
+          ];
       ]
   in
   let value =
     Bool.ite
-      (Bool.ors [ check_for_tf_constants; Word32.eq lval rval ])
+      (Bool.ors
+         [
+           check_for_tf_constants;
+           TaggedSigned.eq_with_heap_constant lval rval rf;
+           Word32.eq lval rval;
+         ])
       Value.tr Value.fl
   in
   state |> State.update ~value
