@@ -302,7 +302,6 @@ let encode program
       let retctrls = ControlFile.find_all (operands |> Operands.id_of_all) cf in
       end_ retvals () retctrls
   (* common: region *)
-  | BeginRegion -> nop
   | FinishRegion ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
@@ -896,8 +895,8 @@ let encode program
   | ChangeUint32ToUint64 -> encode_v1 change_uint32_to_uint64
   | RoundFloat64ToInt32 -> encode_v1 round_float64_to_int32
   | Empty -> nop
-  | StateValues | Checkpoint | EffectPhi | TypedStateValues | FrameState
-  | LoadStackCheckOffset ->
+  | BeginRegion | StateValues | Checkpoint | EffectPhi | TypedStateValues
+  | ObjectId | FrameState | TypedObjectState | LoadStackCheckOffset ->
       nop
   | _ -> update_not_implemented opcode
 
