@@ -22,41 +22,91 @@ let change_int31_to_tagged_signed_pos_val =
 let change_int31_to_tagged_signed_neg_val =
   change_int31_to_tagged_signed "neg_val" (-1) (-1)
 
-let number_to ty_s desc input expected =
-  let name = String.concat "_" [ "number_to"; ty_s; desc ] in
-  let ty, eq, convert =
-    match ty_s with
-    | "int32" -> (Type.int32, Int32.eq, number_to_int32)
-    | "uint32" -> (Type.uint32, Uint32.eq, number_to_uint32)
-    | _ -> failwith "not implemented"
-  in
+let number_to_uint32_tests =
+  let name = "Simplified::NumberToUint32" in
   let msg = "\027[91m" ^ name ^ "\027[0m" in
-  let expected = Value.from_int expected |> Value.cast ty in
-  let result =
-    state
-    |> convert (Float64.of_float input) state.memory
-    |> State.register_file |> RegisterFile.find "0"
+  let number_to_uint32_eq_test actual expected =
+    let eq = Value.eq in
+    let expected = expected |> Uint32.of_int in
+    let _ = value_eq eq actual expected in
+    name >:: fun _ ->
+    assert_equal ~msg ~cmp:(value_eq eq) ~printer:value_printer actual expected
   in
-  let _ = value_eq eq result expected in
-  name >:: fun _ ->
-  assert_equal ~msg ~cmp:(value_eq eq) ~printer:value_printer expected result
+  let apply n = n |> apply_sem_v1m number_to_uint32 in
 
-let number_to_uint32_neg_val = number_to "uint32" "neg_val" (-1.0) 4294967295
+  [
+    number_to_uint32_eq_test (apply (i32_to_i32_value 0)) 0;
+    number_to_uint32_eq_test (apply (i32_to_tagged_signed 1)) 1;
+    number_to_uint32_eq_test (apply ("-1.0" |> f_to_f64_value)) 4294967295;
+    number_to_uint32_eq_test (apply ("-0.0" |> f_to_f64_value)) 0;
+    number_to_uint32_eq_test (apply ("0.0" |> f_to_f64_value)) 0;
+    number_to_uint32_eq_test (apply ("1.0" |> f_to_f64_value)) 1;
+    number_to_uint32_eq_test
+      (apply ("4294967295.0" |> f_to_f64_value))
+      4294967295;
+    number_to_uint32_eq_test (apply ("4294967297.0" |> f_to_f64_value)) 1;
+    number_to_uint32_eq_test
+      (apply ("-1.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      4294967295;
+    number_to_uint32_eq_test
+      (apply ("0.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      0;
+    number_to_uint32_eq_test
+      (apply ("-0.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      0;
+    number_to_uint32_eq_test
+      (apply ("1.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      1;
+    number_to_uint32_eq_test
+      (apply ("4294967295.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      4294967295;
+    number_to_uint32_eq_test (apply (u32_to_u32_value 0)) 0;
+    number_to_uint32_eq_test (apply (u32_to_u32_value 1)) 1;
+    number_to_uint32_eq_test (apply (u32_to_u32_value 4294967295)) 4294967295;
+  ]
 
-let number_to_uint32_pos_val = number_to "uint32" "pos_val" 1.0 1
+let number_to_int32_tests =
+  let name = "Simplified::NumberToInt32" in
+  let msg = "\027[91m" ^ name ^ "\027[0m" in
+  let number_to_int32_eq_test actual expected =
+    let eq = Value.eq in
+    let expected = Int32.of_int expected in
+    let _ = value_eq eq actual expected in
+    name >:: fun _ ->
+    assert_equal ~msg ~cmp:(value_eq eq) ~printer:value_printer actual expected
+  in
+  let apply n = n |> apply_sem_v1m number_to_int32 in
 
-let number_to_uint32_neg_ovf =
-  number_to "uint32" "neg_ovf" (-4294967297.0) 4294967295
-
-let number_to_uint32_pos_ovf = number_to "uint32" "pos_ovf" 4294967297.0 1
-
-let number_to_int32_neg_val = number_to "int32" "neg_val" (-1.0) (-1)
-
-let number_to_int32_pos_val = number_to "int32" "pos_val" 1.0 1
-
-let number_to_int32_neg_ovf = number_to "int32" "neg_ovf" (-4294967297.0) (-1)
-
-let number_to_int32_pos_ovf = number_to "int32" "pos_ovf" 4294967297.0 1
+  [
+    number_to_int32_eq_test (apply (i32_to_i32_value 0)) 0;
+    number_to_int32_eq_test (apply (i32_to_tagged_signed 1)) 1;
+    number_to_int32_eq_test (apply ("-1.0" |> f_to_f64_value)) (-1);
+    number_to_int32_eq_test (apply ("-0.0" |> f_to_f64_value)) 0;
+    number_to_int32_eq_test (apply ("0.0" |> f_to_f64_value)) 0;
+    number_to_int32_eq_test (apply ("1.0" |> f_to_f64_value)) 1;
+    number_to_int32_eq_test
+      (apply ("4294967295.0" |> f_to_f64_value))
+      4294967295;
+    number_to_int32_eq_test (apply ("4294967297.0" |> f_to_f64_value)) 1;
+    number_to_int32_eq_test
+      (apply ("-1.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      (-1);
+    number_to_int32_eq_test
+      (apply ("-0.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      0;
+    number_to_int32_eq_test
+      (apply ("0.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      0;
+    number_to_int32_eq_test
+      (apply ("1.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      1;
+    number_to_int32_eq_test
+      (apply ("4294967295.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      4294967295;
+    number_to_int32_eq_test (apply (u32_to_u32_value 0)) 0;
+    number_to_int32_eq_test (apply (u32_to_u32_value 1)) 1;
+    number_to_int32_eq_test (apply (u32_to_u32_value 4294967295)) 4294967295;
+  ]
 
 let number_comparison op f1 f2 expected =
   let name =
@@ -94,15 +144,8 @@ let suite =
   >::: [
          change_int31_to_tagged_signed_pos_val;
          change_int31_to_tagged_signed_neg_val;
-         number_to_uint32_neg_val;
-         number_to_uint32_pos_val;
-         number_to_uint32_neg_ovf;
-         number_to_uint32_pos_ovf;
-         number_to_int32_neg_val;
-         number_to_int32_pos_val;
-         number_to_int32_neg_ovf;
-         number_to_int32_pos_ovf;
          number_nan_lt_nan;
        ]
+       @ number_to_uint32_tests @ number_to_int32_tests
 
 let _ = OUnit2.run_test_tt_main suite
