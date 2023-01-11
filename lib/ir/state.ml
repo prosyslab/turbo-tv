@@ -53,7 +53,7 @@ let install_constants state =
       (fun (mem, rf) name ->
         let ptr, mem =
           Memory.allocate ~angelic:Bool.tr
-            (BitVecVal.from_int ~len:Value.len 5)
+            (BitVecVal.from_int ~len:Value.len 4)
             mem
         in
         let updated_mem =

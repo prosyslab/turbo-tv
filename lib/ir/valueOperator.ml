@@ -88,19 +88,23 @@ module TaggedPointer = struct
      32-64: bid
      64-69: ty
   *)
-  (* High |-ty-|---bid---|---offset-t| Low *)
+  (* High |-ty-|-dummy-|-bid-|-offset-|t| Low *)
 
-  let bid_len = 32
+  let dummy_len = 32
 
-  let off_len = 32
+  let bid_len = 8
 
-  let len = Value.ty_len + bid_len + off_len
+  let off_len = 24
+
+  let ptr_len = bid_len + off_len
+
+  let len = Value.ty_len + dummy_len + ptr_len
 
   (* getter *)
 
   let bid_of t = BitVec.extract (bid_len + off_len - 1) off_len t
 
-  let to_raw_pointer t = BitVec.subi t 1 |> Value.data_of
+  let to_raw_pointer t = BitVec.subi t 1 |> BitVec.extract 31 0
 
   let off_of t = t |> to_raw_pointer |> BitVec.extract (off_len - 1) 0
 

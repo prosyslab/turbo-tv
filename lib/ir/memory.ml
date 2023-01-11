@@ -8,8 +8,20 @@ type t = {
   next_bid : int;
 }
 
+let byte_size = 1
+
+let byte_len = byte_size * 8
+
+let max_size_per_block = byte_size * 3
+
+let max_len_per_block = byte_len * 3
+
 let init nparams =
-  let bytes = Array.init "mem" (BitVec.mk_sort 64) (BitVec.mk_sort 8) in
+  let bytes =
+    Array.init "mem"
+      (BitVec.mk_sort TaggedPointer.ptr_len)
+      (BitVec.mk_sort byte_len)
+  in
   let bsizes =
     Array.init "size_map"
       (BitVec.mk_sort TaggedPointer.bid_len)
@@ -21,18 +33,18 @@ let init nparams =
   { bytes; bsizes; is_angelic; next_bid = nparams + 1 }
 
 let allocate ?(angelic = Bool.fl) size t =
-  let size_u32 =
+  let size =
     Bool.ite
       (size |> Value.has_type Type.float64)
       (size |> Float64.to_uint32)
       size
-    |> BitVec.extract 31 0
+    |> BitVec.extract (max_len_per_block - 1) 0
   in
   let bid = t.next_bid |> BitVecVal.from_int ~len:TaggedPointer.bid_len in
   let memory =
     {
       t with
-      bsizes = Array.store size_u32 bid t.bsizes;
+      bsizes = Array.store size bid t.bsizes;
       is_angelic = Array.store angelic bid t.is_angelic;
       next_bid = t.next_bid + 1;
     }

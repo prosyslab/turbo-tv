@@ -106,12 +106,10 @@ module Repr = struct
     match t with
     | Bit | Word8 -> 0
     | Word16 -> 1
-    | Word32 | Float32 -> 2
+    | TaggedSigned | TaggedPointer | Tagged | MapWord | Word32 | Float32 -> 2
     | Word64 | Float64 -> 3
     | Simd128 -> 4
-    | TaggedSigned | TaggedPointer | Tagged | MapWord | CompressedPointer
-    | Compressed ->
-        tagged_size_log2
+    | CompressedPointer | Compressed -> tagged_size_log2
     | SandboxedPointer -> system_pointer_size_log2
     | _ -> failwith (Printf.sprintf "Unreachable: %s" (to_string t))
 
