@@ -20,10 +20,6 @@ let heap_constant name addr mem state =
       ( Objmap.map_of name |> BitVec.zero_extend 32
         |> Value.entype Type.map_in_header,
         mem )
-    else if String.starts_with ~prefix:"String" name then
-      let re = Re.Pcre.regexp "String\\[[0-9]*\\]: #(.*)" in
-      let str = Stdlib.Array.get (Re.Pcre.extract ~rex:re name) 0 in
-      Strings.from_string str |> Strings.promote state.State.memory
     else (addr, mem)
   in
   state |> State.update ~value ~mem
