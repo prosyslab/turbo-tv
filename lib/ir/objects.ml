@@ -106,7 +106,10 @@ module HeapNumber = struct
           (evaluated |> Float.is_minus_zero |> Expr.to_simplified_string)
           't'
       then "-0.0"
-      else evaluated |> Real.to_decimal_string
+      else
+        Format.sprintf "%s (raw: %s)"
+          (evaluated |> Real.to_decimal_string)
+          (evaluated |> Expr.to_simplified_string)
     in
 
     Format.sprintf "HeapNumber(%s)" f_str

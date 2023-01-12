@@ -431,9 +431,13 @@ let store_element header_size repr bid ind value mem control state =
   in
   state |> Machine.store bid off repr value mem |> State.update ~control
 
-let store_field ptr off repr value _eff control mem state =
-  let off = off |> BitVecVal.from_int ~len:Value.len in
-  state |> Machine.store ptr off repr value mem |> State.update ~control
+let store_field ptr offset repr value _eff control mem state =
+  let off = offset |> BitVecVal.from_int ~len:Value.len in
+  let ptr = TaggedPointer.move ptr off in
+  let ub = Bool.not (Memory.can_access_as ptr repr mem) in
+  let raw_ptr = ptr |> TaggedPointer.to_raw_pointer in
+  let mem = Memory.store_as (Bool.not ub) raw_ptr repr value mem in
+  state |> State.update ~control ~mem ~ub
 
 (* simplified: type-check *)
 
