@@ -95,8 +95,8 @@ let int_arith width op lval rval ?control state =
     | 64, "+" -> Int64.add lval rval
     | 64, "-" -> Int64.sub lval rval
     | 64, "*" -> Int64.mul lval rval
-    | 64, "/" -> Int32.div lval rval
-    | 64, "%" -> Int32.modulo lval rval
+    | 64, "/" -> Int64.div lval rval
+    | 64, "%" -> Int64.modulo lval rval
     | _ -> failwith "int_arith: not implemented"
   in
   match control with
@@ -406,7 +406,17 @@ let load ptr pos repr mem state =
     |> BitVec.zero_extend (64 - Repr.width_of repr)
     |> Value.entype ty
   in
-  state |> State.update ~value ~ub
+  let assertion =
+    Bool.implies
+      (Bool.ands
+         [
+           ptr |> Memory.is_angelic mem;
+           value |> Value.has_type Type.tagged_pointer;
+         ])
+      (value |> Memory.is_angelic mem)
+  in
+  { state with assertion = Bool.ands [ state.State.assertion; assertion ] }
+  |> State.update ~value ~ub
 
 (* machine: type-conversion *)
 let bitcast_float32_to_int32 v state =

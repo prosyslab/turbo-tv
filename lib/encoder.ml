@@ -617,7 +617,7 @@ let encode_instr program
   | ChangeInt64ToBigInt ->
       let value_id = Operands.id_of_nth operands 0 in
       let value = RegisterFile.find value_id rf in
-      change_int64_to_big_int value mem
+      change_int64_to_bigint value mem
   | ChangeInt64ToTagged ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
