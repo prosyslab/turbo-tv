@@ -27,6 +27,7 @@
   exprMap
   bigint
   ;tv
+  encoder
   tv
   ;v8
   machineType
