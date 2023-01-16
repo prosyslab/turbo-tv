@@ -7,11 +7,9 @@ let value_to_string model rf mem value =
   | "bool" -> value |> Boolean.to_string model
   | "int8" -> value |> Int8.to_string model
   | "int32" -> value |> Int32.to_string model
-  (* | "uint32" -> value |> Uint32.to_string *)
   | "int64" -> value |> Int64.to_string model
   | "uint32" -> value |> Uint32.to_string model
   | "uint64" -> value |> Uint64.to_string model
-  (* | "uint64" -> value |> Uint64.to_string *)
   | "float64" -> value |> Float64.to_string model
   | "pointer" -> Format.sprintf "Pointer(%s)" (value |> Int64.to_string model)
   | "tagged_signed" -> value |> TaggedSigned.to_string model

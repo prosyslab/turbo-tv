@@ -696,7 +696,7 @@ let change_int32_to_tagged pval state =
   let value = Bool.ite is_in_smi_range smi heap_number in
   state |> State.update ~value
 
-let change_int64_to_big_int value mem state =
+let change_int64_to_bigint value mem state =
   let data = Value.data_of value in
   let sign = BitVec.lshri data 63 |> BitVec.extract 7 0 in
   let sign_mask = BitVec.ashri data 63 in
