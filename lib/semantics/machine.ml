@@ -176,6 +176,18 @@ let uint32_mod lval rval control state =
   state |> State.update ~value ~control
 
 let word_opsem width op lval rval state =
+  let lval =
+    Bool.ite
+      (Value.has_type Type.float64 lval)
+      (Float64.to_intx width lval)
+      lval
+  in
+  let rval =
+    Bool.ite
+      (Value.has_type Type.float64 rval)
+      (Float64.to_intx width rval)
+      rval
+  in
   let value =
     match (width, op) with
     | 32, "and" -> Word32.and_ lval rval
