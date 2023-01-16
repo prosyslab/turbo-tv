@@ -32,6 +32,10 @@ let init nparams =
   in
   { bytes; bsizes; is_angelic; next_bid = nparams + 1 }
 
+let is_angelic t v =
+  let bid = TaggedPointer.bid_of v in
+  Array.select bid t.is_angelic
+
 let allocate ?(angelic = Bool.fl) size t =
   let size =
     Bool.ite

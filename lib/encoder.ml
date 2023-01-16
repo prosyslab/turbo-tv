@@ -272,7 +272,7 @@ let encode_instr program
             let pid = Operands.id_of_nth operands (i + 1) in
             RegisterFile.find pid rf)
       in
-      call fname params mem
+      call fname params
   | Return ->
       let pid = Operands.id_of_nth operands 0 in
       let cid = Operands.id_of_nth operands 1 in
