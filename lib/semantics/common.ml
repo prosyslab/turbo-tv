@@ -20,6 +20,20 @@ let heap_constant name addr mem state =
       ( Objmap.map_of name |> BitVec.zero_extend 32
         |> Value.entype Type.map_in_header,
         mem )
+    else if String.starts_with ~prefix:"JSFunction" name then
+      let fname = List.nth (String.split_on_char ' ' name) 1 in
+      let fmap = Hashtbl.hash fname in
+      let raw_ptr = TaggedPointer.to_raw_pointer addr in
+      let mem =
+        Memory.store Bool.tr raw_ptr Objmap.size (Objmap.custom_map fmap) mem
+      in
+      (addr, mem)
+    else if String.starts_with ~prefix:"String" name then
+      let raw_ptr = TaggedPointer.to_raw_pointer addr in
+      let mem =
+        Memory.store Bool.tr raw_ptr Objmap.size Objmap.string_map mem
+      in
+      (addr, mem)
     else (addr, mem)
   in
   state |> State.update ~value ~mem

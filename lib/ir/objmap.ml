@@ -26,6 +26,8 @@ let oddball_map = BitVecVal.from_int ~len 8
 
 let string_map = BitVecVal.from_int ~len 9
 
+let custom_map n = BitVecVal.from_int ~len n
+
 let names = [ "Map[12](HEAP_NUMBER_TYPE)" ]
 
 let is_known_map name = List.mem name names
