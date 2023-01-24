@@ -50,7 +50,7 @@ ChangeInt64ToTagged,v1
 ChangeTaggedSignedToInt32,v1
 ChangeTaggedSignedToInt64,v1
 ChangeTaggedToBit,v1
-ChangeTaggedToFloat64,
+ChangeTaggedToFloat64,v1
 ChangeTaggedToInt32,
 ChangeTaggedToInt64,
 ChangeTaggedToTaggedSigned,

@@ -56,7 +56,6 @@ type t =
   | BitcastTaggedToWordForTagAndSmiBits
   | BitcastWordToTaggedSigned
   | ChangeFloat64ToTaggedPointer
-  | ChangeTaggedToFloat64
   | ChangeTaggedToInt32
   | ChangeTaggedToInt64
   | ChangeTaggedToTaggedSigned
@@ -737,6 +736,7 @@ type t =
   | ChangeTaggedSignedToInt32
   | ChangeTaggedSignedToInt64
   | ChangeTaggedToBit
+  | ChangeTaggedToFloat64
   | ChangeUint32ToFloat64
   | ChangeUint32ToTagged
   | ChangeUint32ToUint64
@@ -991,11 +991,11 @@ let get_kind opcode =
   | ArgumentsLengthState | AssertType | BeginRegion | BitcastInt32ToFloat32
   | BitcastInt64ToFloat64 | BitcastTaggedToWordForTagAndSmiBits
   | BitcastWordToTaggedSigned | ChangeFloat64ToTaggedPointer
-  | ChangeTaggedToFloat64 | ChangeTaggedToInt32 | ChangeTaggedToInt64
-  | ChangeTaggedToTaggedSigned | ChangeTaggedToUint32 | CheckClosure
-  | CheckEqualsInternalizedString | CheckEqualsSymbol | CheckFloat64Hole
-  | CheckHeapObject | CheckInternalizedString | CheckNotTaggedHole | CheckNumber
-  | CheckReceiver | CheckReceiverOrNullOrUndefined | CheckString | CheckSymbol
+  | ChangeTaggedToInt32 | ChangeTaggedToInt64 | ChangeTaggedToTaggedSigned
+  | ChangeTaggedToUint32 | CheckClosure | CheckEqualsInternalizedString
+  | CheckEqualsSymbol | CheckFloat64Hole | CheckHeapObject
+  | CheckInternalizedString | CheckNotTaggedHole | CheckNumber | CheckReceiver
+  | CheckReceiverOrNullOrUndefined | CheckString | CheckSymbol
   | CheckedFloat64ToInt64 | CheckedInt32Mod | CheckedInt32ToTaggedSigned
   | CheckedInt64ToTaggedSigned | CheckedTaggedToArrayIndex
   | CheckedTaggedToInt32 | CheckedUint32Mod | CheckedUint32ToTaggedSigned
@@ -1167,20 +1167,21 @@ let get_kind opcode =
   | ChangeFloat64ToUint64 | ChangeInt31ToTaggedSigned | ChangeInt32ToFloat64
   | ChangeInt32ToInt64 | ChangeInt32ToTagged | ChangeInt64ToBigInt
   | ChangeInt64ToFloat64 | ChangeInt64ToTagged | ChangeTaggedSignedToInt32
-  | ChangeTaggedSignedToInt64 | ChangeTaggedToBit | ChangeUint32ToFloat64
-  | ChangeUint32ToTagged | ChangeUint32ToUint64 | ChangeUint64ToBigInt
-  | ChangeUint64ToTagged | CheckedTaggedSignedToInt32 | Float64Abs | Float64Asin
-  | Float64Asinh | Float64ExtractHighWord32 | Float64Neg | Float64RoundDown
-  | Float64RoundTiesAway | Float64RoundTiesEven | Float64RoundTruncate
-  | Float64RoundUp | Float64Sin | Integral32OrMinusZeroToBigInt | NumberAbs
-  | NumberCeil | NumberExpm1 | NumberFloor | NumberIsInteger | NumberIsMinusZero
-  | NumberIsNaN | NumberIsSafeInteger | NumberRound | NumberSign | NumberSin
-  | NumberToBoolean | NumberToInt32 | NumberToUint32 | NumberTrunc
-  | ObjectIsMinusZero | ObjectIsNaN | ObjectIsSmi | RoundFloat64ToInt32
-  | SpeculativeBigIntNegate | StackPointerGreaterThan | ToBoolean
-  | TruncateBigIntToWord64 | TruncateFloat64ToInt64 | TruncateFloat64ToWord32
-  | TruncateInt64ToInt32 | TruncateTaggedPointerToBit | TruncateTaggedToBit
-  | TruncateTaggedToWord32 | Word32ReverseBytes | Word64ReverseBytes ->
+  | ChangeTaggedSignedToInt64 | ChangeTaggedToBit | ChangeTaggedToFloat64
+  | ChangeUint32ToFloat64 | ChangeUint32ToTagged | ChangeUint32ToUint64
+  | ChangeUint64ToBigInt | ChangeUint64ToTagged | CheckedTaggedSignedToInt32
+  | Float64Abs | Float64Asin | Float64Asinh | Float64ExtractHighWord32
+  | Float64Neg | Float64RoundDown | Float64RoundTiesAway | Float64RoundTiesEven
+  | Float64RoundTruncate | Float64RoundUp | Float64Sin
+  | Integral32OrMinusZeroToBigInt | NumberAbs | NumberCeil | NumberExpm1
+  | NumberFloor | NumberIsInteger | NumberIsMinusZero | NumberIsNaN
+  | NumberIsSafeInteger | NumberRound | NumberSign | NumberSin | NumberToBoolean
+  | NumberToInt32 | NumberToUint32 | NumberTrunc | ObjectIsMinusZero
+  | ObjectIsNaN | ObjectIsSmi | RoundFloat64ToInt32 | SpeculativeBigIntNegate
+  | StackPointerGreaterThan | ToBoolean | TruncateBigIntToWord64
+  | TruncateFloat64ToInt64 | TruncateFloat64ToWord32 | TruncateInt64ToInt32
+  | TruncateTaggedPointerToBit | TruncateTaggedToBit | TruncateTaggedToWord32
+  | Word32ReverseBytes | Word64ReverseBytes ->
       V1
   | IfFalse | IfSuccess | IfTrue -> C1
   | AllocateRaw -> V1C1
@@ -1311,7 +1312,6 @@ let of_str str =
   | "BitcastTaggedToWordForTagAndSmiBits" -> BitcastTaggedToWordForTagAndSmiBits
   | "BitcastWordToTaggedSigned" -> BitcastWordToTaggedSigned
   | "ChangeFloat64ToTaggedPointer" -> ChangeFloat64ToTaggedPointer
-  | "ChangeTaggedToFloat64" -> ChangeTaggedToFloat64
   | "ChangeTaggedToInt32" -> ChangeTaggedToInt32
   | "ChangeTaggedToInt64" -> ChangeTaggedToInt64
   | "ChangeTaggedToTaggedSigned" -> ChangeTaggedToTaggedSigned
@@ -1991,6 +1991,7 @@ let of_str str =
   | "ChangeTaggedSignedToInt32" -> ChangeTaggedSignedToInt32
   | "ChangeTaggedSignedToInt64" -> ChangeTaggedSignedToInt64
   | "ChangeTaggedToBit" -> ChangeTaggedToBit
+  | "ChangeTaggedToFloat64" -> ChangeTaggedToFloat64
   | "ChangeUint32ToFloat64" -> ChangeUint32ToFloat64
   | "ChangeUint32ToTagged" -> ChangeUint32ToTagged
   | "ChangeUint32ToUint64" -> ChangeUint32ToUint64
@@ -2225,7 +2226,6 @@ let to_str opcode =
   | BitcastTaggedToWordForTagAndSmiBits -> "BitcastTaggedToWordForTagAndSmiBits"
   | BitcastWordToTaggedSigned -> "BitcastWordToTaggedSigned"
   | ChangeFloat64ToTaggedPointer -> "ChangeFloat64ToTaggedPointer"
-  | ChangeTaggedToFloat64 -> "ChangeTaggedToFloat64"
   | ChangeTaggedToInt32 -> "ChangeTaggedToInt32"
   | ChangeTaggedToInt64 -> "ChangeTaggedToInt64"
   | ChangeTaggedToTaggedSigned -> "ChangeTaggedToTaggedSigned"
@@ -2905,6 +2905,7 @@ let to_str opcode =
   | ChangeTaggedSignedToInt32 -> "ChangeTaggedSignedToInt32"
   | ChangeTaggedSignedToInt64 -> "ChangeTaggedSignedToInt64"
   | ChangeTaggedToBit -> "ChangeTaggedToBit"
+  | ChangeTaggedToFloat64 -> "ChangeTaggedToFloat64"
   | ChangeUint32ToFloat64 -> "ChangeUint32ToFloat64"
   | ChangeUint32ToTagged -> "ChangeUint32ToTagged"
   | ChangeUint32ToUint64 -> "ChangeUint32ToUint64"

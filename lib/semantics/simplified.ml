@@ -722,6 +722,18 @@ let change_tagged_to_bit pval state =
   in
   state |> State.update ~value
 
+let change_tagged_to_float64 pval state =
+  let value =
+    Bool.ite
+      (Value.has_type Type.int64 pval)
+      (Int64.to_float64 pval)
+      (Bool.ite
+         (Value.has_type Type.tagged_signed pval)
+         (TaggedSigned.to_float64 pval)
+         pval)
+  in
+  state |> State.update ~value
+
 let change_tagged_signed_to_int32 pval state =
   let value = TaggedSigned.to_int32 pval in
   state |> State.update ~value

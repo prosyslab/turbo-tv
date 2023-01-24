@@ -627,6 +627,7 @@ let encode_instr program
       let pval = RegisterFile.find pid rf in
       change_int64_to_tagged pval
   | ChangeTaggedToBit -> encode_v1 change_tagged_to_bit
+  | ChangeTaggedToFloat64 -> encode_v1 change_tagged_to_float64
   | ChangeTaggedSignedToInt32 -> encode_v1 change_tagged_signed_to_int32
   | ChangeTaggedSignedToInt64 -> encode_v1 change_tagged_signed_to_int64
   | ChangeUint32ToTagged ->
