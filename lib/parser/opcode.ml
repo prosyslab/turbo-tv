@@ -26,9 +26,10 @@ type kind =
   | V1V2B1
   | B1B2B4V1V2
   | B4
-  | B2B3B5V1E1C1
+  | B2B3B5B6V1E1C1
   | B3
   | B5
+  | B6
   | B1V2V3V4
   | V3
   | V4
@@ -504,6 +505,7 @@ type t =
   | LoadParentFramePointer
   | LoadStackArgument
   | LoadStackCheckOffset
+  | LoadStackPointer
   | LoadTransform
   | Loop
   | LoopExit
@@ -959,7 +961,7 @@ type t =
   | Load
   (* b1b2b4v1v2 *)
   | LoadElement
-  (* b2b3b5v1e1c1 *)
+  (* b2b3b5b6v1e1c1 *)
   | LoadField
   (* b1v2v3v4 *)
   | LoadTypedElement
@@ -1100,14 +1102,15 @@ let get_kind opcode =
   | LoadDataViewElement | LoadFieldByIndex | LoadFramePointer | LoadFromObject
   | LoadImmutable | LoadImmutableFromObject | LoadLane | LoadMessage
   | LoadParentFramePointer | LoadStackArgument | LoadStackCheckOffset
-  | LoadTransform | Loop | LoopExit | LoopExitEffect | LoopExitValue | MapGuard
-  | MaybeGrowFastElements | MemoryBarrier | NewArgumentsElements | NewConsString
-  | NewDoubleElements | NewSmiOrObjectElements | NumberAcos | NumberAcosh
-  | NumberAsin | NumberAsinh | NumberAtan | NumberAtan2 | NumberAtanh
-  | NumberCbrt | NumberClz32 | NumberCos | NumberCosh | NumberExp | NumberFround
-  | NumberIsFinite | NumberIsFloat64Hole | NumberLog | NumberLog10 | NumberLog1p
-  | NumberLog2 | NumberPow | NumberSilenceNaN | NumberSinh | NumberSqrt
-  | NumberTan | NumberTanh | NumberToString | NumberToUint8Clamped | ObjectId
+  | LoadStackPointer | LoadTransform | Loop | LoopExit | LoopExitEffect
+  | LoopExitValue | MapGuard | MaybeGrowFastElements | MemoryBarrier
+  | NewArgumentsElements | NewConsString | NewDoubleElements
+  | NewSmiOrObjectElements | NumberAcos | NumberAcosh | NumberAsin | NumberAsinh
+  | NumberAtan | NumberAtan2 | NumberAtanh | NumberCbrt | NumberClz32
+  | NumberCos | NumberCosh | NumberExp | NumberFround | NumberIsFinite
+  | NumberIsFloat64Hole | NumberLog | NumberLog10 | NumberLog1p | NumberLog2
+  | NumberPow | NumberSilenceNaN | NumberSinh | NumberSqrt | NumberTan
+  | NumberTanh | NumberToString | NumberToUint8Clamped | ObjectId
   | ObjectIsArrayBufferView | ObjectIsBigInt | ObjectIsCallable
   | ObjectIsConstructor | ObjectIsDetectableCallable | ObjectIsFiniteNumber
   | ObjectIsInteger | ObjectIsNonCallable | ObjectIsNumber | ObjectIsReceiver
@@ -1238,7 +1241,7 @@ let get_kind opcode =
   | JSStackCheck | Unreachable -> E1C1
   | Load -> V1V2B1
   | LoadElement -> B1B2B4V1V2
-  | LoadField -> B2B3B5V1E1C1
+  | LoadField -> B2B3B5B6V1E1C1
   | LoadTypedElement -> B1V2V3V4
   | Phi -> VVC1
   | Return -> V2C1E1
@@ -1276,9 +1279,10 @@ let split_kind kind =
   | V1V2B1 -> [ V1; V2; B1 ]
   | B1B2B4V1V2 -> [ B1; B2; B4; V1; V2 ]
   | B4 -> [ B4 ]
-  | B2B3B5V1E1C1 -> [ B2; B3; B5; V1; E1; C1 ]
+  | B2B3B5B6V1E1C1 -> [ B2; B3; B5; B6; V1; E1; C1 ]
   | B3 -> [ B3 ]
   | B5 -> [ B5 ]
+  | B6 -> [ B6 ]
   | B1V2V3V4 -> [ B1; V2; V3; V4 ]
   | V3 -> [ V3 ]
   | V4 -> [ V4 ]
@@ -1757,6 +1761,7 @@ let of_str str =
   | "LoadParentFramePointer" -> LoadParentFramePointer
   | "LoadStackArgument" -> LoadStackArgument
   | "LoadStackCheckOffset" -> LoadStackCheckOffset
+  | "LoadStackPointer" -> LoadStackPointer
   | "LoadTransform" -> LoadTransform
   | "Loop" -> Loop
   | "LoopExit" -> LoopExit
@@ -2670,6 +2675,7 @@ let to_str opcode =
   | LoadParentFramePointer -> "LoadParentFramePointer"
   | LoadStackArgument -> "LoadStackArgument"
   | LoadStackCheckOffset -> "LoadStackCheckOffset"
+  | LoadStackPointer -> "LoadStackPointer"
   | LoadTransform -> "LoadTransform"
   | Loop -> "Loop"
   | LoopExit -> "LoopExit"

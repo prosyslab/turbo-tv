@@ -515,12 +515,16 @@ let encode_instr program
   | LoadField ->
       let offset = Operands.const_of_nth operands 1 |> int_of_string in
       let machine_type = Operands.const_of_nth operands 2 in
-      let repr = MachineType.Repr.of_rs_string machine_type in
-      let bid_id = Operands.id_of_nth operands 3 in
+      let repr =
+        try MachineType.Repr.of_rs_string machine_type
+        with Failure _ ->
+          MachineType.Repr.of_rs_string (Operands.const_of_nth operands 3)
+      in
+      let bid_id = Operands.id_of_nth operands 4 in
       let bid = RegisterFile.find bid_id rf in
-      (* let _eff_id = Operands.id_of_nth operands 4 in
+      (* let _eff_id = Operands.id_of_nth operands 5 in
          let _eff = () in *)
-      let ctrl_id = Operands.id_of_nth operands 5 in
+      let ctrl_id = Operands.id_of_nth operands 6 in
       let ctrl = ControlFile.find ctrl_id cf in
       load_field offset repr bid () ctrl mem
   | LoadTypedElement ->

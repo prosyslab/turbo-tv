@@ -91,6 +91,9 @@ let create_from instr =
             | B5 ->
                 let b5 = List.nth bracket_operands 4 in
                 parse_operand t instr (b5 :: operands)
+            | B6 ->
+                let b6 = List.nth bracket_operands 5 in
+                parse_operand t instr (b6 :: operands)
             | C1 ->
                 let c1 =
                   Re.Group.get (Re.exec c1_re instr) 1 |> Operand.of_id
