@@ -319,10 +319,15 @@ module Make_Integer_Operator (I : IntValue) = struct
       Bool.ite (BitVec.ugtb (lval |> from_value) (rval |> from_value)) lval rval
 
   let is_in_range value lb ub =
-    let lb_v = lb |> Value.from_int |> Value.cast ty in
-    let ub_v = ub |> Value.from_int |> Value.cast ty in
-    let lb = min lb_v ub_v in
-    let ub = max lb_v ub_v in
+    let lb_v = Int.min lb ub in
+    let ub_v = Int.max lb ub in
+    let int32_max = Int32.to_int Int32.max_int in
+    let ub_v =
+      if sign = true && width = 32 && ub_v > int32_max then int32_max else ub_v
+    in
+
+    let lb = lb_v |> Value.from_int |> Value.cast ty in
+    let ub = ub_v |> Value.from_int |> Value.cast ty in
     Z3utils.Bool.ands [ ge value lb; le value ub ]
 
   (* conversion *)
