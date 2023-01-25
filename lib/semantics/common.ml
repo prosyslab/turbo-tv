@@ -193,10 +193,11 @@ let finish_region pval state = state |> State.update ~value:pval
 (* temporary *)
 let js_stack_check _eff control state = state |> State.update ~control
 
-let call fname args state =
-  let value_sort = BV.mk_sort ctx Value.len in
-  let args_sort = List.map (fun _ -> value_sort) args in
-  let f_decl = Z3.FuncDecl.mk_func_decl_s ctx fname args_sort value_sort in
+let call fname n_return args state =
+  let return_sort = BV.mk_sort ctx (Value.len * n_return) in
+  let arg_sort = BV.mk_sort ctx Value.len in
+  let args_sort = List.map (fun _ -> arg_sort) args in
+  let f_decl = Z3.FuncDecl.mk_func_decl_s ctx fname args_sort return_sort in
 
   let normalized_args =
     args
@@ -211,11 +212,17 @@ let call fname args state =
                 (Int64.div arg (Int64.of_int 2) |> Int64.to_float64)
                 arg))
   in
-  let return =
-    Z3.FuncDecl.apply f_decl normalized_args
-    |> Value.cast Type.any_tagged |> ValueOperator.AnyTagged.settle
+  let return = Z3.FuncDecl.apply f_decl normalized_args in
+  let value =
+    if n_return = 1 then
+      return |> Value.cast Type.any_tagged |> ValueOperator.AnyTagged.settle
+    else
+      return |> Composed.to_list
+      |> List.map (fun v ->
+             v |> Value.cast Type.any_tagged |> ValueOperator.AnyTagged.settle)
+      |> Composed.from_values
   in
-  state |> State.update ~value:return ~control:Bool.tr
+  state |> State.update ~value ~control:Bool.tr
 
 let stack_pointer_greater_than state =
   state |> State.update ~value:Value.tr ~control:Bool.tr

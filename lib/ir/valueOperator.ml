@@ -494,7 +494,9 @@ module Composed = struct
   let to_list t =
     let size = size_of t in
     let rec aux res idx t =
-      match idx with 0 -> res | _ -> aux (select idx t :: res) (idx - 1) t
+      match idx with
+      | 0 -> select idx t :: res
+      | _ -> aux (select idx t :: res) (idx - 1) t
     in
     t |> aux [] (size - 1)
 end
