@@ -104,24 +104,27 @@ let main () =
   let { verify; check_ub; check_type; emit_graph } = parse_command_line () in
   let nparams = 2 in
 
-  if String.length verify <> 0 then (
+  if String.length verify <> 0 then
     let src_ir_p = Filename.concat verify "src.ir" in
     let tgt_ir_p = Filename.concat verify "tgt.ir" in
-    let src_grp = IR.create_from_ir_file src_ir_p in
-    let tgt_grp = IR.create_from_ir_file tgt_ir_p in
+    try
+      let src_grp = IR.create_from_ir_file src_ir_p in
+      let tgt_grp = IR.create_from_ir_file tgt_ir_p in
+      if emit_graph then (
+        IR.generate_graph_output "source.dot" src_grp;
+        IR.generate_graph_output "target.dot" tgt_grp);
 
-    if emit_graph then (
-      IR.generate_graph_output "source.dot" src_grp;
-      IR.generate_graph_output "target.dot" tgt_grp);
-
-    if unknown_op_exists src_grp || unknown_op_exists tgt_grp then
-      Printf.printf "Result: Not target\n"
-    else Tv.run nparams src_grp tgt_grp)
+      if unknown_op_exists src_grp || unknown_op_exists tgt_grp then
+        Printf.printf "Result: Not target\n"
+      else Tv.run nparams src_grp tgt_grp
+    with Err.NodeNotFound _ -> Printf.printf "Result: Not target\n"
   else if String.length check_ub <> 0 then
-    let input_ir_p = check_ub in
-    let input_grp = IR.create_from_ir_file input_ir_p in
-    if unknown_op_exists input_grp then Printf.printf "Result: Not target\n"
-    else Tv.check_ub_semantic nparams check_type input_grp
+    try
+      let input_ir_p = check_ub in
+      let input_grp = IR.create_from_ir_file input_ir_p in
+      if unknown_op_exists input_grp then Printf.printf "Result: Not target\n"
+      else Tv.check_ub_semantic nparams check_type input_grp
+    with Err.NodeNotFound _ -> Printf.printf "Result: Not target\n"
   else failwith "must give option 'verify' or '--check-ub'"
 
 let () = main ()
