@@ -728,12 +728,17 @@ module Float64 = struct
     in
 
     match width with
+    | 16 ->
+        value_w_bit |> BitVec.zero_extend 48
+        |> Value.entype (if sign then Type.int16 else Type.uint16)
     | 32 ->
         value_w_bit |> BitVec.zero_extend 32
         |> Value.entype (if sign then Type.int32 else Type.uint32)
     | 64 ->
         value_w_bit |> Value.entype (if sign then Type.int64 else Type.uint64)
     | _ -> failwith "not implemented"
+
+  let to_int16 value = value |> to_intx 16
 
   let to_int32 value = value |> to_intx 32
 

@@ -60,6 +60,8 @@ let unknown_ops =
     JSCreateEmptyLiteralArray;
     JSCreateFunctionContext;
     JSCreateLiteralArray;
+    JSCreateLiteralObject;
+    JSCreateTypedArray;
     JSDecrement;
     JSEqual;
     JSExponentiate;

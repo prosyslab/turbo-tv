@@ -112,56 +112,50 @@ let can_be_float64 s =
   String.contains s '.' || String.equal s "-0" || String.equal s "inf"
   || String.equal s "-inf"
 
+type env = { token : string; stack : char Stack.t; ty_elems : string list }
+
 let rec of_string str =
-  let paren_check s =
-    let rec paren_check_acc s n =
-      let len = String.length s in
-      if len = 0 then n = 0
-      else
-        let hd = String.sub s 0 1 in
-        let tl = String.sub s 1 (len - 1) in
-        if hd = "(" then paren_check_acc tl (n + 1)
-        else if hd = ")" then paren_check_acc tl (n - 1)
-        else paren_check_acc tl n
+  let parse_nested delim ty_str =
+    let env = { token = ""; stack = Stack.create (); ty_elems = [] } in
+    (* trim outermost parentheses *)
+    let ty_str = String.sub ty_str 1 (String.length ty_str - 2) in
+    let pair = function
+      | ')' -> '('
+      | '>' -> '<'
+      | _ -> failwith "unreachable"
     in
-    paren_check_acc s 0
+    let result =
+      (String.fold_left
+         (fun env ch ->
+           match ch with
+           | '(' | '<' ->
+               Stack.push ch env.stack;
+               { env with token = env.token ^ String.make 1 ch }
+           | ')' | '>' ->
+               if Stack.top env.stack != pair ch then
+                 err (InvalidFormat (ty_str, "Mismatched parenthesis"));
+               Stack.pop env.stack |> ignore;
+               { env with token = env.token ^ String.make 1 ch }
+           | ch when ch = delim ->
+               if Stack.length env.stack = 0 then
+                 { env with token = ""; ty_elems = env.token :: env.ty_elems }
+               else { env with token = env.token ^ String.make 1 ch }
+           | ' ' -> env
+           | _ -> { env with token = env.token ^ String.make 1 ch })
+         env ty_str)
+        .ty_elems
+    in
+    (* List.iter print_endline result; *)
+    result
   in
-  let rec split_check str_list =
-    match str_list with
-    | [] -> []
-    | [ s ] -> [ s ]
-    | f :: s :: tl ->
-        if paren_check f then f :: split_check (s :: tl)
-        else split_check ((f ^ "|" ^ s) :: tl)
-  in
+
   let parse_union union_ty_str =
-    let elems_reg = Re.Pcre.regexp "\\((.*)\\)" in
-    let elems_ty_str =
-      try
-        Re.Group.get (Re.exec elems_reg union_ty_str) 1
-        |> String.split_on_char '|' |> split_check |> List.map String.trim
-      with Not_found ->
-        let cause = union_ty_str in
-        let reason = "Cannot parse 'Union' from the " ^ union_ty_str in
-        err (InvalidFormat (cause, reason))
-    in
-    let elems_ty = List.map of_string elems_ty_str in
+    let elems_ty = parse_nested '|' union_ty_str |> List.map of_string in
     Union elems_ty
   in
 
   let parse_tuple tuple_ty_str =
-    let elems_reg = Re.Pcre.regexp "<([^\\)]*)>" in
-    let elems_ty_str =
-      (* could be error if one of element is Range since it also contains "," *)
-      try
-        Re.Group.get (Re.exec elems_reg tuple_ty_str) 1
-        |> String.split_on_char ',' |> List.map String.trim
-      with Not_found ->
-        let cause = tuple_ty_str in
-        let reason = "Cannot parse 'Tuple' from the " ^ tuple_ty_str in
-        err (InvalidFormat (cause, reason))
-    in
-    let elems_ty = List.map of_string elems_ty_str in
+    let elems_ty = parse_nested ',' tuple_ty_str |> List.map of_string in
     Tuple elems_ty
   in
 
