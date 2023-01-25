@@ -424,6 +424,7 @@ let store_element header_size repr bid ind value mem control state =
       (if ty = Type.tagged_signed then Float64.to_tagged_signed value
       else if ty = Type.any_tagged || ty = Type.float64 then value
       else if ty = Type.int64 then Float64.to_int64 value
+      else if ty = Type.float32 then value
       else
         Format.sprintf "not implemented: %s" (ty |> Expr.to_simplified_string)
         |> failwith)
