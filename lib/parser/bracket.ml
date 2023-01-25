@@ -49,6 +49,12 @@ let bracket_operands_parse instr =
                 { env with token }
           | _ ->
               if not env.started then env
+              else if ch = '#' then (
+                let len_re = Re.Pcre.regexp "<String\\[\\d+\\]: " in
+                if Re.matches len_re env.token <> [] then
+                  raise (Err.InvalidBracketArgs (instr, instr));
+                let token = env.token ^ String.make 1 ch in
+                { env with token })
               else
                 let token = env.token ^ String.make 1 ch in
                 { env with token })

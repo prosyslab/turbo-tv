@@ -60,7 +60,7 @@ let find_by_id id graph =
 
   if node = Node.empty then
     let reason = Printf.sprintf "Cannot found node#%d" id in
-    err (NodeNotFound (id |> string_of_int, reason))
+    raise (NodeNotFound (id |> string_of_int, reason))
   else node
 
 let find_in_succ cond id graph =

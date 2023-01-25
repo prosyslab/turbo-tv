@@ -117,14 +117,16 @@ let main () =
       if unknown_op_exists src_grp || unknown_op_exists tgt_grp then
         Printf.printf "Result: Not target\n"
       else Tv.run nparams src_grp tgt_grp
-    with Err.NodeNotFound _ -> Printf.printf "Result: Not target\n"
+    with Err.NodeNotFound _ | Err.InvalidBracketArgs _ ->
+      Printf.printf "Result: Not target\n"
   else if String.length check_ub <> 0 then
     try
       let input_ir_p = check_ub in
       let input_grp = IR.create_from_ir_file input_ir_p in
       if unknown_op_exists input_grp then Printf.printf "Result: Not target\n"
       else Tv.check_ub_semantic nparams check_type input_grp
-    with Err.NodeNotFound _ -> Printf.printf "Result: Not target\n"
+    with Err.NodeNotFound _ | Err.InvalidBracketArgs _ ->
+      Printf.printf "Result: Not target\n"
   else failwith "must give option 'verify' or '--check-ub'"
 
 let () = main ()

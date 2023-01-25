@@ -1,12 +1,20 @@
 type e = string * string
 
 exception TypeMismatch of e
+
 exception InvalidFormat of e
+
 exception NodeNotFound of e
+
 exception IdNotFound of e
+
 exception InvalidGraphLine of e
+
 exception InvalidIndex of e
+
 exception InvalidValue of e
+
+exception InvalidBracketArgs of e
 
 let err excpt =
   (match excpt with
@@ -20,5 +28,7 @@ let err excpt =
       Printf.fprintf stderr "Invalid graph line: %s\n%s\n\n" c r
   | InvalidIndex (c, r) -> Printf.fprintf stderr "Invalid index: %s\n%s\n\n" c r
   | InvalidValue (c, r) -> Printf.fprintf stderr "Invalid value: %s\n%s\n\n" c r
+  | InvalidBracketArgs (c, r) ->
+      Printf.fprintf stderr "Invalid bracket args: %s\n%s\n\n" c r
   | _ -> ());
   raise excpt
