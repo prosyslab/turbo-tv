@@ -38,7 +38,7 @@ type kind =
   | V1V2V3
   | V1V2B1V3
   | B1B2B4V1V2V3E1C1
-  | V1B3B5V2E1C1
+  | V1B3B5B6V2E1C1
   | C1E1
   | B1V1V2
   | Empty
@@ -975,7 +975,7 @@ type t =
   | Store
   (* b1b2b4v1v2v3e1c1 *)
   | StoreElement
-  (* v1b3b5v2e1c1 *)
+  (* v1b3b5b6v2e1c1 *)
   | StoreField
   (* c1e1 *)
   | Throw
@@ -1249,7 +1249,7 @@ let get_kind opcode =
   | Select -> V1V2V3
   | Store -> V1V2B1V3
   | StoreElement -> B1B2B4V1V2V3E1C1
-  | StoreField -> V1B3B5V2E1C1
+  | StoreField -> V1B3B5B6V2E1C1
   | Throw -> C1E1
   | Word32Sar | Word64Sar -> B1V1V2
   | Empty -> Empty
@@ -1292,7 +1292,7 @@ let split_kind kind =
   | V1V2V3 -> [ V1; V2; V3 ]
   | V1V2B1V3 -> [ V1; V2; B1; V3 ]
   | B1B2B4V1V2V3E1C1 -> [ B1; B2; B4; V1; V2; V3; E1; C1 ]
-  | V1B3B5V2E1C1 -> [ V1; B3; B5; V2; E1; C1 ]
+  | V1B3B5B6V2E1C1 -> [ V1; B3; B5; B6; V2; E1; C1 ]
   | C1E1 -> [ C1; E1 ]
   | B1V1V2 -> [ B1; V1; V2 ]
   | Empty -> [ Empty ]
