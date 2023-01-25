@@ -582,7 +582,7 @@ JSWasmCall,
 Load,v1,v2,b1
 LoadDataViewElement,
 LoadElement,b1,b2,b4,v1,v2
-LoadField,b2,b3,b5,b6,v1,e1,c1
+LoadField,b2,b3,d3,v1,e1,c1
 LoadFieldByIndex,
 LoadFramePointer,
 LoadFromObject,
@@ -774,7 +774,7 @@ StaticAssert,
 Store,v1,v2,b1,v3
 StoreDataViewElement,
 StoreElement,b1,b2,b4,v1,v2,v3,e1,c1
-StoreField,v1,b3,b5,b6,v2,e1,c1
+StoreField,v1,b3,d3,v2,e1,c1
 StoreLane,
 StoreMessage,
 StoreSignedSmallElement,

@@ -112,7 +112,7 @@ def split_kind(kind):
 
 
 def gen_re_from_kind(kind):
-    if kind == "UNIMPL" or kind.startswith("B"):
+    if kind == "UNIMPL" or kind.startswith("B") or kind.startswith("D"):
         return ""
 
     p_operand_re = "#(\\\\d*):"
@@ -168,9 +168,13 @@ def gen_match_from_kind(kind):
                 f"  in \n"
                 f"  parse_operand t instr ({kind.lower()}::operands)")
         else:
+            if kind.startswith("B"):
+                n = f"{int(kind[1]) - 1}"
+            elif kind.startswith("D"):
+                n = f"((List.length bracket_operands) - {kind[1]})"
             return (f"| {kind} ->\n"
                     f"  let {kind.lower()}= \n"
-                    f"    List.nth bracket_operands {int(kind[1]) - 1} \n"
+                    f"    List.nth bracket_operands {n} \n"
                     f"  in \n"
                     f"  parse_operand t instr ({kind.lower()}::operands)")
 
