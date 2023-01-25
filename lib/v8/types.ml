@@ -143,7 +143,7 @@ let rec of_string str =
       with Not_found ->
         let cause = union_ty_str in
         let reason = "Cannot parse 'Union' from the " ^ union_ty_str in
-        raise (InvalidFormat (cause, reason))
+        err (InvalidFormat (cause, reason))
     in
     let elems_ty = List.map of_string elems_ty_str in
     Union elems_ty
@@ -159,7 +159,7 @@ let rec of_string str =
       with Not_found ->
         let cause = tuple_ty_str in
         let reason = "Cannot parse 'Tuple' from the " ^ tuple_ty_str in
-        raise (InvalidFormat (cause, reason))
+        err (InvalidFormat (cause, reason))
     in
     let elems_ty = List.map of_string elems_ty_str in
     Tuple elems_ty
@@ -172,7 +172,7 @@ let rec of_string str =
       with Not_found ->
         let cause = c_ty_str in
         let reason = "Cannot parse 'HeapConstant' from the " ^ c_ty_str in
-        raise (InvalidFormat (cause, reason))
+        err (InvalidFormat (cause, reason))
     in
     let value = value_str |> int_of_string in
     HeapConstant value
@@ -189,7 +189,7 @@ let rec of_string str =
         let reason =
           "Cannot parse 'OtherNumberConstant' from the " ^ c_ty_str
         in
-        raise (InvalidFormat (cause, reason))
+        err (InvalidFormat (cause, reason))
     in
     let value = value_str |> float_of_string in
     OtherNumberConstant value
@@ -211,7 +211,7 @@ let rec of_string str =
       with Not_found ->
         let cause = range_ty_str in
         let reason = "Cannot parse 'Range' from the " ^ range_ty_str in
-        raise (InvalidFormat (cause, reason))
+        err (InvalidFormat (cause, reason))
     in
     Range limits
   in
