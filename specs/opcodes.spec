@@ -23,7 +23,7 @@ BigIntSubtract,v1,v2
 BitcastFloat32ToInt32,v1
 BitcastFloat64ToInt64,v1
 BitcastInt32ToFloat32,
-BitcastInt64ToFloat64,
+BitcastInt64ToFloat64,v1
 BitcastTaggedToWord,v1
 BitcastTaggedToWordForTagAndSmiBits,
 BitcastWord32ToWord64,v1
