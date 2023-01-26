@@ -21,7 +21,6 @@ let bracket_operands_parse instr =
       started = false;
     }
   in
-  Format.printf "instr: %s\n" instr;
   let result =
     String.fold_left
       (fun env ch ->
@@ -93,13 +92,13 @@ let bracket_operands_parse instr =
                 let token = env.token ^ String.make 1 ch in
                 { env with token }
         else
-          let token = env.token ^ String.make 1 ch in
-          if env.string_len = 1 then { env with token; string_match = 0 }
-          else { env with token; string_len = env.string_len - 1 })
+          match ch with
+          | '<' | '>' | '(' | ')' | '[' | ']' ->
+              raise (Err.InvalidBracketArgs (instr, instr))
+          | _ ->
+              let token = env.token ^ String.make 1 ch in
+              if env.string_len = 1 then { env with token; string_match = 0 }
+              else { env with token; string_len = env.string_len - 1 })
       init_env instr
   in
-  let result = List.rev result.operands in
-  Format.printf "operands: \n";
-  Format.print_flush ();
-  List.iter (fun op -> op |> Operand.to_str |> print_endline) result;
-  result
+  List.rev result.operands
