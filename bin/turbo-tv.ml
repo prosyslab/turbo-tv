@@ -46,7 +46,7 @@ let parse_command_line () =
   | Ok `Version | Ok `Help -> exit 0
   | Ok (`Ok conf) -> conf
 
-let unknown_ops =
+let not_targeted =
   [
     Opcode.JSAdd;
     JSBitwiseAnd;
@@ -55,9 +55,13 @@ let unknown_ops =
     JSBitwiseXor;
     JSCall;
     JSCallRuntime;
+    JSConstruct;
+    JSCreateArray;
+    JSCreateArrayIterator;
     JSCreateCatchContext;
     JSCreateClosure;
     JSCreateEmptyLiteralArray;
+    JSCreateIterResultObject;
     JSCreateFunctionContext;
     JSCreateLiteralArray;
     JSCreateLiteralObject;
@@ -97,7 +101,7 @@ let unknown_op_exists graph =
         IR.find_by_opcode op graph |> ignore;
         true
       with Err.NodeNotFound _ -> false)
-    unknown_ops
+    not_targeted
 
 let main () =
   Printexc.record_backtrace true;
