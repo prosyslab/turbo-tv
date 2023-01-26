@@ -92,6 +92,7 @@ type t =
   | DetectableReceiverOrNull
   | Object
   | Receiver
+  | ReceiverOrNull
   | ReceiverOrUndefined
   | ReceiverOrNullOrUndefined
   | SymbolOrReceiver
@@ -406,6 +407,7 @@ let rec to_string t =
   | Object -> "Object"
   | Receiver -> "Receiver"
   | ReceiverOrUndefined -> "ReceiverOrUndefined"
+  | ReceiverOrNull -> "ReceiverOrNull"
   | ReceiverOrNullOrUndefined -> "ReceiverOrNullOrUndefined"
   | SymbolOrReceiver -> "SymbolOrReceiver"
   | StringOrReceiver -> "StringOrReceiver"
@@ -786,6 +788,20 @@ let decompose t =
   | Receiver ->
       [
         BoundFunction;
+        OtherProxy;
+        ClassConstructor;
+        OtherObject;
+        Array;
+        OtherCallable;
+        CallableProxy;
+        WasmObject;
+        OtherUndetectable;
+        CallableFunction;
+      ]
+  | ReceiverOrNull ->
+      [
+        BoundFunction;
+        Null;
         OtherProxy;
         ClassConstructor;
         OtherObject;
