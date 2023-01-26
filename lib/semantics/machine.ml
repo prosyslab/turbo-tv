@@ -218,15 +218,8 @@ let word32_rol lval rval state = word_opsem 32 "rol" lval rval state
 
 let word32_ror lval rval state = word_opsem 32 "ror" lval rval state
 
-let word32_sar hint lval rval state =
-  let cnt = Uint32.modulo rval (32 |> Value.from_int) in
-  let shift_out = Word32.mask lval cnt in
-  let hint_is_shift_out_zero = String.equal hint "ShiftOutZeros" in
-  let wd_cond =
-    if hint_is_shift_out_zero then Word32.eq shift_out Uint32.zero else Bool.tr
-  in
-  let ub = Bool.not wd_cond in
-  state |> word_opsem 32 "ashr" lval rval |> State.update ~ub
+let word32_sar _hint lval rval state =
+  state |> word_opsem 32 "ashr" lval rval |> State.update
 
 let word32_shl lval rval state = word_opsem 32 "shl" lval rval state
 
@@ -242,15 +235,8 @@ let word64_rol lval rval state = word_opsem 64 "rol" lval rval state
 
 let word64_ror lval rval state = word_opsem 64 "ror" lval rval state
 
-let word64_sar hint lval rval state =
-  let cnt = Uint64.modulo rval (64 |> Value.from_int) in
-  let shift_out = Word64.mask lval cnt in
-  let hint_is_shift_out_zero = String.equal hint "ShiftOutZeros" in
-  let wd_cond =
-    if hint_is_shift_out_zero then Word64.eq shift_out Uint64.zero else Bool.tr
-  in
-  let ub = Bool.not wd_cond in
-  state |> word_opsem 64 "ashr" lval rval |> State.update ~ub
+let word64_sar _hint lval rval state =
+  state |> word_opsem 64 "ashr" lval rval |> State.update
 
 let word64_shl lval rval state = word_opsem 64 "shl" lval rval state
 
@@ -437,6 +423,10 @@ let bitcast_float32_to_int32 v state =
 
 let bitcast_float64_to_int64 v state =
   let value = v |> Value.cast Type.int64 in
+  state |> State.update ~value
+
+let bitcast_int64_to_float64 v state =
+  let value = v |> Value.cast Type.float64 in
   state |> State.update ~value
 
 let bitcast_tagged_to_word v state =
