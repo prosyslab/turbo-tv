@@ -299,6 +299,7 @@ let rec of_string str =
   | "DetectableReceiverOrNull" -> DetectableReceiverOrNull
   | "Object" -> Object
   | "Receiver" -> Receiver
+  | "ReceiverOrNull" -> ReceiverOrNull
   | "ReceiverOrUndefined" -> ReceiverOrUndefined
   | "ReceiverOrNullOrUndefined" -> ReceiverOrNullOrUndefined
   | "SymbolOrReceiver" -> SymbolOrReceiver
