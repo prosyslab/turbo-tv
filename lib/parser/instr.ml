@@ -164,7 +164,7 @@ let create_from instr =
   in
 
   let ty_str_of instr =
-    let type_reg = Re.Pcre.regexp "\\[Type: ([^\\]]*)\\]" in
+    let type_reg = Re.Pcre.regexp "\\[Type: ([^\\]]*)\\]$" in
     try Some (Re.Group.get (Re.exec type_reg instr) 1) with Not_found -> None
   in
 

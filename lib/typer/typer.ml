@@ -95,7 +95,9 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
       let decomposed = value |> Composed.to_list in
       if size_of_composed = List.length fields then
         Bool.ands (List.rev_map2 (fun v f -> verify v f mem) decomposed fields)
-      else failwith "is: wrong number of fields"
+      else
+        failwith
+          (Format.sprintf "is: wrong number of fields %s" (ty |> Types.to_string))
   | Range (lb, ub) ->
       let lb_i = lb |> int_of_float in
       let ub_i = ub |> int_of_float in

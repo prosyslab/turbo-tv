@@ -119,7 +119,6 @@ let rec of_string str =
   let parse_nested delim ty_str =
     let env = { token = ""; stack = Stack.create (); ty_elems = [] } in
     (* trim outermost parentheses *)
-    let ty_str = String.sub ty_str 1 (String.length ty_str - 2) in
     let pair = function
       | ')' -> '('
       | '>' -> '<'
@@ -131,14 +130,17 @@ let rec of_string str =
            match ch with
            | '(' | '<' ->
                Stack.push ch env.stack;
-               { env with token = env.token ^ String.make 1 ch }
+               if Stack.length env.stack = 1 then env
+               else { env with token = env.token ^ String.make 1 ch }
            | ')' | '>' ->
                if Stack.top env.stack != pair ch then
                  err (InvalidFormat (ty_str, "Mismatched parenthesis"));
                Stack.pop env.stack |> ignore;
-               { env with token = env.token ^ String.make 1 ch }
-           | ch when ch = delim ->
                if Stack.length env.stack = 0 then
+                 { env with token = ""; ty_elems = env.token :: env.ty_elems }
+               else { env with token = env.token ^ String.make 1 ch }
+           | ch when ch = delim ->
+               if Stack.length env.stack = 1 then
                  { env with token = ""; ty_elems = env.token :: env.ty_elems }
                else { env with token = env.token ^ String.make 1 ch }
            | ' ' -> env
