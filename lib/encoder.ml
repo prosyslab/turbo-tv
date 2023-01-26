@@ -862,6 +862,7 @@ let encode_instr program
   (* machine: bitcast *)
   | BitcastFloat32ToInt32 -> encode_v1 bitcast_float32_to_int32
   | BitcastFloat64ToInt64 -> encode_v1 bitcast_float64_to_int64
+  | BitcastInt64ToFloat64 -> encode_v1 bitcast_int64_to_float64
   | BitcastTaggedToWord -> encode_v1 bitcast_tagged_to_word
   | BitcastWord32ToWord64 -> encode_v1 bitcast_word32_to_word64
   | BitcastWordToTagged -> encode_v1 bitcast_word_to_tagged
@@ -889,6 +890,7 @@ let propagate program state =
   let pc = State.pc state in
   let cf = State.control_file state in
   let uf = State.ub_file state in
+  let rf = State.register_file state in
   let df = State.deopt_file state in
   let mem = State.memory state in
   let ty, opcode, operands = IR.instr_of pc program in
@@ -896,8 +898,23 @@ let propagate program state =
   let deopt = DeoptFile.find (pc |> string_of_int) df in
 
   let type_is_verified =
-    let value = RegisterFile.find (pc |> string_of_int) state.register_file in
-    match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
+    let is_loaded_from_angelic =
+      match opcode with
+      | LoadField | LoadElement ->
+          let ptr_id = Operands.id_of_nth operands 3 in
+          let ptr = RegisterFile.find ptr_id rf in
+          Memory.is_angelic mem ptr
+      | Load ->
+          let ptr_id = Operands.id_of_nth operands 0 in
+          let ptr = RegisterFile.find ptr_id rf in
+          Memory.is_angelic mem ptr
+      | _ -> Bool.fl
+    in
+    let ty_check =
+      let value = RegisterFile.find (pc |> string_of_int) rf in
+      match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
+    in
+    Bool.ors [ is_loaded_from_angelic; ty_check ]
   in
   let ub_from_input, deopt_from_input =
     match opcode with
