@@ -131,6 +131,21 @@ let encode_instr program
     state |> op hint lval rval () ctrl |> State.update ~is_angelic_value
   in
 
+  let encode_h1v2e1c1m op state =
+    let hint = Operands.const_of_nth operands 0 in
+    let lpid = Operands.id_of_nth operands 1 in
+    let rpid = Operands.id_of_nth operands 2 in
+    let _eid = Operands.id_of_nth operands 3 in
+    let cid = Operands.id_of_nth operands 4 in
+    let lval = RegisterFile.find lpid rf in
+    let rval = RegisterFile.find rpid rf in
+    let ctrl = ControlFile.find cid cf in
+    let is_angelic_value =
+      AngelicFile.find_all [ lpid; rpid ] is_angelic_value |> Bool.ors
+    in
+    state |> op hint lval rval () ctrl mem |> State.update ~is_angelic_value
+  in
+
   let encode_v2e1c1 op state =
     let lpid = Operands.id_of_nth operands 0 in
     let rpid = Operands.id_of_nth operands 1 in
@@ -774,36 +789,9 @@ let encode_instr program
       let ctrl = ControlFile.find cid cf in
       check_if pval () ctrl
   | CheckMaps -> nop
-  | CheckBounds ->
-      let flag = Operands.const_of_nth operands 0 |> int_of_string in
-      let lpid = Operands.id_of_nth operands 1 in
-      let rpid = Operands.id_of_nth operands 2 in
-      let _eid = Operands.id_of_nth operands 3 in
-      let cid = Operands.id_of_nth operands 4 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find cid cf in
-      check_bounds flag lval rval () ctrl mem
-  | CheckedUint32Bounds ->
-      let flag = Operands.const_of_nth operands 0 |> int_of_string in
-      let lpid = Operands.id_of_nth operands 1 in
-      let rpid = Operands.id_of_nth operands 2 in
-      let _eid = Operands.id_of_nth operands 3 in
-      let cid = Operands.id_of_nth operands 4 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find cid cf in
-      checked_uint32_bounds flag lval rval () ctrl
-  | CheckedUint64Bounds ->
-      let flag = Operands.const_of_nth operands 0 |> int_of_string in
-      let lpid = Operands.id_of_nth operands 1 in
-      let rpid = Operands.id_of_nth operands 2 in
-      let _eid = Operands.id_of_nth operands 3 in
-      let cid = Operands.id_of_nth operands 4 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find cid cf in
-      checked_uint64_bounds flag lval rval () ctrl
+  | CheckBounds -> encode_h1v2e1c1m check_bounds
+  | CheckedUint32Bounds -> encode_h1v2e1c1 checked_uint32_bounds
+  | CheckedUint64Bounds -> encode_h1v2e1c1 checked_uint64_bounds
   | EnsureWritableFastElements ->
       let rpid = Operands.id_of_nth operands 1 in
       let _eid = Operands.id_of_nth operands 2 in

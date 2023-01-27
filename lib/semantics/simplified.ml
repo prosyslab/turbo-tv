@@ -1049,6 +1049,7 @@ let check_if cond _eff control state =
 
 (* bound-check *)
 let check_bounds flag lval rval _eff control mem state =
+  let flag = flag |> int_of_string in
   let check = Uint64.lt lval rval in
   let deopt =
     Bool.ors
@@ -1069,6 +1070,7 @@ let check_bounds flag lval rval _eff control mem state =
   state |> State.update ~value:lval ~deopt ~ub ~control
 
 let checked_uint32_bounds flag lval rval _eff control state =
+  let flag = flag |> int_of_string in
   let check = Uint32.lt lval rval in
   if flag = 0 then
     state |> State.update ~value:lval ~deopt:(Bool.not check) ~control
@@ -1078,6 +1080,7 @@ let checked_uint32_bounds flag lval rval _eff control state =
   else failwith "not implemented"
 
 let checked_uint64_bounds flag lval rval _eff control state =
+  let flag = flag |> int_of_string in
   let check = Uint64.lt lval rval in
   if flag = 0 then
     state |> State.update ~value:lval ~deopt:(Bool.not check) ~control
