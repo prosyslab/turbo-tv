@@ -49,7 +49,7 @@ let check_ub_semantic nparams check_type program =
     in
     Bool.ands [ params_are_smi_or_heapnumber; Bool.not state.deopt ]
   in
-  let assertion = Bool.ands [ precond; ub ] in
+  let assertion = Bool.ands [ state.assertion; precond; ub ] in
 
   if State.not_implemented state then (
     Printf.printf "Result: Not Implemented\n";
