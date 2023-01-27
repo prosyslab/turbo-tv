@@ -310,7 +310,7 @@ let encode_instr program
             RegisterFile.find pid rf)
       in
       let control =
-        if List.length operands = n_input + n_frame then Bool.tr
+        if List.length operands = 1 + n_input + n_frame then Bool.tr
         else
           let cid = Operands.id_of_nth operands (n_input + n_frame + 1) in
           ControlFile.find cid cf

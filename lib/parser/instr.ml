@@ -142,15 +142,18 @@ let create_from instr =
                   Re.Group.get (Re.exec cv_re instr) 1
                   |> String.split_on_char ','
                 in
-                let parsed =
-                  List.fold_left
-                    (fun res arg ->
-                      let re = Re.Pcre.regexp "#(\\d*)" in
-                      (Re.Group.get (Re.exec re arg) 1 |> Operand.of_id) :: res)
-                    [] vargs
-                  |> List.rev
-                in
-                parse_operand t instr (parsed @ operands)
+                if List.nth vargs 0 = "" then parse_operand t instr operands
+                else
+                  let parsed =
+                    List.fold_left
+                      (fun res arg ->
+                        let re = Re.Pcre.regexp "#(\\d*)" in
+                        (Re.Group.get (Re.exec re arg) 1 |> Operand.of_id)
+                        :: res)
+                      [] vargs
+                    |> List.rev
+                  in
+                  parse_operand t instr (parsed @ operands)
             | UNIMPL -> []
             | _ -> failwith "Unreachable"
           with Not_found ->
