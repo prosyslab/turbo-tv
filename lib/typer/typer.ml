@@ -99,41 +99,41 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
         failwith
           (Format.sprintf "is: wrong number of fields %s" (ty |> Types.to_string))
   | Range (lb, ub) ->
-      let lb_i = lb |> int_of_float in
-      let ub_i = ub |> int_of_float in
-      Bool.ite
-        (value |> Value.has_type Type.int32)
-        (Int32.is_in_range value lb_i ub_i)
-        (Bool.ite
-           (value |> Value.has_type Type.int64)
-           (Int64.is_in_range value lb_i ub_i)
-           (Bool.ite
-              (value |> Value.has_type Type.uint32)
-              (Uint32.is_in_range value lb_i ub_i)
-              (Bool.ite
-                 (value |> Value.has_type Type.uint64)
-                 (Uint64.is_in_range value lb_i ub_i)
-                 (Bool.ite
-                    (value |> Value.has_type Type.tagged_signed)
-                    (TaggedSigned.is_in_range value lb_i ub_i)
-                    (Bool.ite
-                       (value |> Value.has_type Type.int8)
-                       (Int8.is_in_range value lb_i ub_i)
-                       (Bool.ite
-                          (value |> Value.has_type Type.uint8)
-                          (Int8.is_in_range value lb_i ub_i)
-                          (Bool.ite
-                             (value |> Value.has_type Type.float64)
-                             (Float64.is_in_range value lb ub)
-                             (Bool.ite
-                                (Bool.ands
-                                   [
-                                     value |> Value.has_type Type.tagged_pointer;
-                                     value |> Objects.is_heap_number mem;
-                                   ])
-                                (Float64.is_in_range
-                                   (value |> Number.to_float64 mem)
-                                   lb ub)
-                                Bool.tr))))))))
+      let v =
+        Bool.ite
+          (value |> Value.has_type Type.int32)
+          (value |> Int32.to_float64)
+          (Bool.ite
+             (value |> Value.has_type Type.int64)
+             (value |> Int64.to_float64)
+             (Bool.ite
+                (value |> Value.has_type Type.uint32)
+                (value |> Uint32.to_float64)
+                (Bool.ite
+                   (value |> Value.has_type Type.uint64)
+                   (value |> Uint64.to_float64)
+                   (Bool.ite
+                      (value |> Value.has_type Type.tagged_signed)
+                      (value |> TaggedSigned.to_float64)
+                      (Bool.ite
+                         (value |> Value.has_type Type.int8)
+                         (value |> Int8.to_float64)
+                         (Bool.ite
+                            (value |> Value.has_type Type.uint8)
+                            (value |> Uint8.to_float64)
+                            (Bool.ite
+                               (value |> Value.has_type Type.float64)
+                               value
+                               (Bool.ite
+                                  (Bool.ands
+                                     [
+                                       value
+                                       |> Value.has_type Type.tagged_pointer;
+                                       value |> Objects.is_heap_number mem;
+                                     ])
+                                  (value |> Number.to_float64 mem)
+                                  value))))))))
+      in
+      Float64.is_in_range v lb ub
   (* for now, handle only numeric types *)
   | _ -> Bool.tr
