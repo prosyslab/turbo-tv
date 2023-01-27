@@ -532,8 +532,16 @@ module Make_Word_Operator (W : WordValue) = struct
         (Bool.ite
            (Bool.ors
               [
-                lval |> Value.has_type Type.tagged_pointer;
-                rval |> Value.has_type Type.tagged_pointer;
+                Bool.ands
+                  [
+                    lval |> Value.has_type Type.tagged_pointer;
+                    Bool.not (rval |> Value.has_type Type.pointer);
+                  ];
+                Bool.ands
+                  [
+                    Bool.not (lval |> Value.has_type Type.pointer);
+                    rval |> Value.has_type Type.tagged_pointer;
+                  ];
               ])
            Bool.fl
            (Z3utils.Bool.eq (lval |> from_value) (rval |> from_value)))
