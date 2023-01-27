@@ -92,13 +92,17 @@ let bracket_operands_parse instr =
                 let token = env.token ^ String.make 1 ch in
                 { env with token }
         else
-          match ch with
-          | '<' | '>' | '(' | ')' | '[' | ']' ->
-              raise (Err.InvalidBracketArgs (instr, instr))
-          | _ ->
-              let token = env.token ^ String.make 1 ch in
-              if env.string_len = 1 then { env with token; string_match = 0 }
-              else { env with token; string_len = env.string_len - 1 })
+          let token = env.token ^ String.make 1 ch in
+          (* <String[0]: #> *)
+          if env.string_len = 0 then (
+            Stack.pop env.bracket_stack |> ignore;
+            { env with token; string_match = 0 })
+          else if env.string_len = 1 then { env with token; string_match = 0 }
+          else
+            match ch with
+            | '<' | '>' | '(' | ')' | '[' | ']' ->
+                raise (Err.InvalidBracketArgs (instr, instr))
+            | _ -> { env with token; string_len = env.string_len - 1 })
       init_env instr
   in
   List.rev result.operands
