@@ -415,8 +415,9 @@ let load ptr pos repr mem state =
          ])
       (value |> Memory.is_angelic mem)
   in
+  let is_angelic_value = ptr |> Memory.is_angelic mem in
   { state with assertion = Bool.ands [ state.State.assertion; assertion ] }
-  |> State.update ~value ~ub
+  |> State.update ~value ~ub ~is_angelic_value
 
 (* machine: type-conversion *)
 let bitcast_float32_to_int32 v state =

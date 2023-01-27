@@ -36,13 +36,14 @@ type t = {
   control_file : ControlFile.t;
   ub_file : UBFile.t;
   deopt_file : DeoptFile.t;
+  is_angelic_value : AngelicFile.t;
   memory : Memory.t;
   params : BitVec.t list;
   retval : BitVec.t;
   ub : Bool.t;
-  check_type : bool;
-  assertion : BitVec.t;
   deopt : Bool.t;
+  check_type : bool;
+  assertion : Bool.t;
   not_implemented : bool;
   not_implemented_opcodes : OpcodeSet.t;
 }
@@ -81,6 +82,7 @@ let init nparams ?check_type stage : t =
     pc = 0;
     final = false;
     register_file = RegisterFile.init stage RegisterFile.symbol;
+    is_angelic_value = AngelicFile.init stage AngelicFile.symbol;
     control_file = ControlFile.init stage ControlFile.symbol;
     ub_file = UBFile.init stage Ub.symbol;
     deopt_file = DeoptFile.init stage Deopt.symbol;
@@ -133,16 +135,21 @@ let deopt_of id t = DeoptFile.find id (deopt_file t)
 
 let output_of id t = (value_of id t, control_of id t, ub_of id t, deopt_of id t)
 
-let update ?value ?mem ?control ?ub ?deopt ?(final = false) t =
+let update ?value ?mem ?control ?ub ?deopt ?is_angelic_value ?(final = false) t
+    =
   let pc = t.pc |> string_of_int in
-  let register_file = RegisterFile.add pc value (register_file t) in
-  let control_file = ControlFile.add pc control (control_file t) in
-  let ub_file = UBFile.add pc ub (ub_file t) in
-  let deopt_file = DeoptFile.add pc deopt (deopt_file t) in
+  let register_file = RegisterFile.add pc value t.register_file in
+  let control_file = ControlFile.add pc control t.control_file in
+  let ub_file = UBFile.add pc ub t.ub_file in
+  let deopt_file = DeoptFile.add pc deopt t.deopt_file in
+  let is_angelic_value =
+    AngelicFile.add pc is_angelic_value t.is_angelic_value
+  in
   {
     t with
     register_file;
     memory = (match mem with Some mem -> mem | None -> t.memory);
+    is_angelic_value;
     control_file;
     ub_file;
     deopt_file;

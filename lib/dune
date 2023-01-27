@@ -14,6 +14,7 @@
   number
   constant
   control
+  angelicFile
   controlFile
   registerFile
   ub

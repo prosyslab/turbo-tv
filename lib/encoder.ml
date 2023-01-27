@@ -12,6 +12,7 @@ let encode_instr program
        State.pc;
        control_file = cf;
        register_file = rf;
+       is_angelic_value;
        memory = mem;
        params;
        _;
@@ -27,71 +28,95 @@ let encode_instr program
   in
 
   let _, opcode, operands = IR.instr_of pc program in
-  let encode_v1 op =
+  let encode_v1 op state =
     let pid = Operands.id_of_nth operands 0 in
     let pval = RegisterFile.find pid rf in
-    op pval
+    let is_angelic_value =
+      [ AngelicFile.find pid is_angelic_value ] |> Bool.ors
+    in
+    state |> op pval |> State.update ~is_angelic_value
   in
 
-  let encode_v1m op =
+  let encode_v1m op state =
     let pid = Operands.id_of_nth operands 0 in
     let pval = RegisterFile.find pid rf in
-    op pval mem
+    let is_angelic_value =
+      [ AngelicFile.find pid is_angelic_value ] |> Bool.ors
+    in
+    state |> op pval mem |> State.update ~is_angelic_value
   in
 
-  let encode_h1v1m op =
+  let encode_h1v1m op state =
     let hint = Operands.const_of_nth operands 0 in
     let pid = Operands.id_of_nth operands 1 in
     let pval = RegisterFile.find pid rf in
-    op hint pval mem
+    let is_angelic_value =
+      [ AngelicFile.find pid is_angelic_value ] |> Bool.ors
+    in
+    state |> op hint pval mem |> State.update ~is_angelic_value
   in
 
-  let encode_v2 op =
+  let encode_v2 op state =
     let lpid = Operands.id_of_nth operands 0 in
     let rpid = Operands.id_of_nth operands 1 in
     let lval = RegisterFile.find lpid rf in
     let rval = RegisterFile.find rpid rf in
-    op lval rval
+    let is_angelic_value =
+      AngelicFile.find_all [ lpid; rpid ] is_angelic_value |> Bool.ors
+    in
+    state |> op lval rval |> State.update ~is_angelic_value
   in
 
-  let encode_v2m op =
+  let encode_v2m op state =
     let lpid = Operands.id_of_nth operands 0 in
     let rpid = Operands.id_of_nth operands 1 in
     let lval = RegisterFile.find lpid rf in
     let rval = RegisterFile.find rpid rf in
-    op lval rval mem
+    let is_angelic_value =
+      AngelicFile.find_all [ lpid; rpid ] is_angelic_value |> Bool.ors
+    in
+    state |> op lval rval mem |> State.update ~is_angelic_value
   in
 
-  let encode_v2c1 op =
+  let encode_v2c1 op state =
     let lpid = Operands.id_of_nth operands 0 in
     let rpid = Operands.id_of_nth operands 1 in
     let cid = Operands.id_of_nth operands 2 in
     let lval = RegisterFile.find lpid rf in
     let rval = RegisterFile.find rpid rf in
     let ctrl = ControlFile.find cid cf in
-    op lval rval ctrl
+    let is_angelic_value =
+      AngelicFile.find_all [ lpid; rpid ] is_angelic_value |> Bool.ors
+    in
+    state |> op lval rval ctrl |> State.update ~is_angelic_value
   in
 
-  let encode_v2c1m op =
+  let encode_v2c1m op state =
     let lpid = Operands.id_of_nth operands 0 in
     let rpid = Operands.id_of_nth operands 1 in
     let cid = Operands.id_of_nth operands 2 in
     let lval = RegisterFile.find lpid rf in
     let rval = RegisterFile.find rpid rf in
     let ctrl = ControlFile.find cid cf in
-    op lval rval ctrl mem
+    let is_angelic_value =
+      AngelicFile.find_all [ lpid; rpid ] is_angelic_value |> Bool.ors
+    in
+    state |> op lval rval ctrl mem |> State.update ~is_angelic_value
   in
 
-  let encode_h1v2 op =
+  let encode_h1v2 op state =
     let hint = Operands.const_of_nth operands 0 in
     let lpid = Operands.id_of_nth operands 1 in
     let rpid = Operands.id_of_nth operands 2 in
     let lval = RegisterFile.find lpid rf in
     let rval = RegisterFile.find rpid rf in
-    op hint lval rval
+    let is_angelic_value =
+      AngelicFile.find_all [ lpid; rpid ] is_angelic_value |> Bool.ors
+    in
+    state |> op hint lval rval |> State.update ~is_angelic_value
   in
 
-  let encode_h1v2e1c1 op =
+  let encode_h1v2e1c1 op state =
     let hint = Operands.const_of_nth operands 0 in
     let lpid = Operands.id_of_nth operands 1 in
     let rpid = Operands.id_of_nth operands 2 in
@@ -100,10 +125,13 @@ let encode_instr program
     let lval = RegisterFile.find lpid rf in
     let rval = RegisterFile.find rpid rf in
     let ctrl = ControlFile.find cid cf in
-    op hint lval rval () ctrl
+    let is_angelic_value =
+      AngelicFile.find_all [ lpid; rpid ] is_angelic_value |> Bool.ors
+    in
+    state |> op hint lval rval () ctrl |> State.update ~is_angelic_value
   in
 
-  let encode_v2e1c1 op =
+  let encode_v2e1c1 op state =
     let lpid = Operands.id_of_nth operands 0 in
     let rpid = Operands.id_of_nth operands 1 in
     let _eid = Operands.id_of_nth operands 2 in
@@ -111,7 +139,10 @@ let encode_instr program
     let lval = RegisterFile.find lpid rf in
     let rval = RegisterFile.find rpid rf in
     let ctrl = ControlFile.find cid cf in
-    op lval rval () ctrl
+    let is_angelic_value =
+      AngelicFile.find_all [ lpid; rpid ] is_angelic_value |> Bool.ors
+    in
+    state |> op lval rval () ctrl |> State.update ~is_angelic_value
   in
 
   state
@@ -887,35 +918,31 @@ let encode_instr program
       nop
   | _ -> update_not_implemented opcode
 
-let propagate program state =
+let propagate program (state : State.t) =
   let pc = State.pc state in
-  let cf = State.control_file state in
-  let uf = State.ub_file state in
-  let rf = State.register_file state in
-  let df = State.deopt_file state in
-  let mem = State.memory state in
+  let ({
+         control_file = cf;
+         ub_file = uf;
+         register_file = rf;
+         deopt_file = df;
+         is_angelic_value = af;
+         memory = mem;
+         _;
+       }
+        : State.t) =
+    state
+  in
   let ty, opcode, operands = IR.instr_of pc program in
   let ub = UBFile.find (pc |> string_of_int) uf in
   let deopt = DeoptFile.find (pc |> string_of_int) df in
 
   let type_is_verified =
-    let is_loaded_from_angelic =
-      match opcode with
-      | LoadField | LoadElement ->
-          let ptr_id = Operands.id_of_nth operands 3 in
-          let ptr = RegisterFile.find ptr_id rf in
-          Memory.is_angelic mem ptr
-      | Load ->
-          let ptr_id = Operands.id_of_nth operands 0 in
-          let ptr = RegisterFile.find ptr_id rf in
-          Memory.is_angelic mem ptr
-      | _ -> Bool.fl
-    in
+    let is_angelic_value = AngelicFile.find (pc |> string_of_int) af in
     let ty_check =
       let value = RegisterFile.find (pc |> string_of_int) rf in
       match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
     in
-    Bool.ors [ is_loaded_from_angelic; ty_check ]
+    Bool.ors [ is_angelic_value; ty_check ]
   in
   let ub_from_input, deopt_from_input =
     match opcode with

@@ -400,7 +400,8 @@ let load_field offset repr ptr _eff control mem state =
     |> BitVec.zero_extend (64 - Repr.width_of repr)
     |> Value.entype ty
   in
-  state |> State.update ~value ~control ~ub
+  let is_angelic_value = ptr |> Memory.is_angelic mem in
+  state |> State.update ~value ~control ~ub ~is_angelic_value
 
 let load_typed_element array_type base extern ind mem state =
   let bid = BitVec.addb base extern in
