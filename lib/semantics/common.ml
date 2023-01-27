@@ -193,7 +193,7 @@ let finish_region pval state = state |> State.update ~value:pval
 (* temporary *)
 let js_stack_check _eff control state = state |> State.update ~control
 
-let call fname n_return args state =
+let call fname n_return args control state =
   let return_sort = BV.mk_sort ctx (Value.len * n_return) in
   let arg_sort = BV.mk_sort ctx Value.len in
   let args_sort = List.map (fun _ -> arg_sort) args in
@@ -222,7 +222,7 @@ let call fname n_return args state =
              v |> Value.cast Type.any_tagged |> ValueOperator.AnyTagged.settle)
       |> Composed.from_values
   in
-  state |> State.update ~value ~control:Bool.tr
+  state |> State.update ~value ~control
 
 let stack_pointer_greater_than state =
   state |> State.update ~value:Value.tr ~control:Bool.tr

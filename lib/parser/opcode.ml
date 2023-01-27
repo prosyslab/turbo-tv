@@ -11,16 +11,16 @@ type kind =
   | V1V2
   | V2
   | V1E1
-  | B1VV
+  | B1VVCV
   | B1
   | VV
+  | CV
   | B1V1
   | B2V1V2E1C1
   | B2
   | V1V2E1C1
   | B1V1V2E1C1
   | B1V1E1C1
-  | CV
   | V1V2C1
   | E1C1
   | V1V2B1
@@ -887,7 +887,7 @@ type t =
   (* v1e1 *)
   | Branch
   | FinishRegion
-  (* b1vv *)
+  (* b1vvcv *)
   | Call
   (* b1 *)
   | ExternalConstant
@@ -897,6 +897,9 @@ type t =
   | Int64Constant
   | NumberConstant
   | Parameter
+  (* cv *)
+  | End
+  | Merge
   (* b1v1 *)
   | ChangeFloat64ToTagged
   | CheckedFloat64ToInt32
@@ -937,9 +940,6 @@ type t =
   | CheckedTaggedToFloat64
   | CheckedTaggedToInt64
   | CheckedTruncateTaggedToWord32
-  (* cv *)
-  | End
-  | Merge
   (* v1v2c1 *)
   | Int32AddWithOverflow
   | Int32Div
@@ -1210,10 +1210,11 @@ let get_kind opcode =
   | Word64Xor ->
       V1V2
   | Branch | FinishRegion -> V1E1
-  | Call -> B1VV
+  | Call -> B1VVCV
   | ExternalConstant | Float64Constant | HeapConstant | Int32Constant
   | Int64Constant | NumberConstant | Parameter ->
       B1
+  | End | Merge -> CV
   | ChangeFloat64ToTagged | CheckedFloat64ToInt32 | Projection
   | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN ->
       B1V1
@@ -1232,7 +1233,6 @@ let get_kind opcode =
   | CheckedTaggedToFloat64 | CheckedTaggedToInt64
   | CheckedTruncateTaggedToWord32 ->
       B1V1E1C1
-  | End | Merge -> CV
   | Int32AddWithOverflow | Int32Div | Int32Mod | Int32MulWithOverflow
   | Int32SubWithOverflow | Int64AddWithOverflow | Int64Div | Int64Mod
   | Int64MulWithOverflow | Int64SubWithOverflow | Uint32Div | Uint32Mod ->
@@ -1263,16 +1263,16 @@ let split_kind kind =
   | V1V2 -> [ V1; V2 ]
   | V2 -> [ V2 ]
   | V1E1 -> [ V1; E1 ]
-  | B1VV -> [ B1; VV ]
+  | B1VVCV -> [ B1; VV; CV ]
   | B1 -> [ B1 ]
   | VV -> [ VV ]
+  | CV -> [ CV ]
   | B1V1 -> [ B1; V1 ]
   | B2V1V2E1C1 -> [ B2; V1; V2; E1; C1 ]
   | B2 -> [ B2 ]
   | V1V2E1C1 -> [ V1; V2; E1; C1 ]
   | B1V1V2E1C1 -> [ B1; V1; V2; E1; C1 ]
   | B1V1E1C1 -> [ B1; V1; E1; C1 ]
-  | CV -> [ CV ]
   | V1V2C1 -> [ V1; V2; C1 ]
   | E1C1 -> [ E1; C1 ]
   | V1V2B1 -> [ V1; V2; B1 ]
@@ -2144,6 +2144,8 @@ let of_str str =
   | "Int64Constant" -> Int64Constant
   | "NumberConstant" -> NumberConstant
   | "Parameter" -> Parameter
+  | "End" -> End
+  | "Merge" -> Merge
   | "ChangeFloat64ToTagged" -> ChangeFloat64ToTagged
   | "CheckedFloat64ToInt32" -> CheckedFloat64ToInt32
   | "Projection" -> Projection
@@ -2179,8 +2181,6 @@ let of_str str =
   | "CheckedTaggedToFloat64" -> CheckedTaggedToFloat64
   | "CheckedTaggedToInt64" -> CheckedTaggedToInt64
   | "CheckedTruncateTaggedToWord32" -> CheckedTruncateTaggedToWord32
-  | "End" -> End
-  | "Merge" -> Merge
   | "Int32AddWithOverflow" -> Int32AddWithOverflow
   | "Int32Div" -> Int32Div
   | "Int32Mod" -> Int32Mod
@@ -3058,6 +3058,8 @@ let to_str opcode =
   | Int64Constant -> "Int64Constant"
   | NumberConstant -> "NumberConstant"
   | Parameter -> "Parameter"
+  | End -> "End"
+  | Merge -> "Merge"
   | ChangeFloat64ToTagged -> "ChangeFloat64ToTagged"
   | CheckedFloat64ToInt32 -> "CheckedFloat64ToInt32"
   | Projection -> "Projection"
@@ -3093,8 +3095,6 @@ let to_str opcode =
   | CheckedTaggedToFloat64 -> "CheckedTaggedToFloat64"
   | CheckedTaggedToInt64 -> "CheckedTaggedToInt64"
   | CheckedTruncateTaggedToWord32 -> "CheckedTruncateTaggedToWord32"
-  | End -> "End"
-  | Merge -> "Merge"
   | Int32AddWithOverflow -> "Int32AddWithOverflow"
   | Int32Div -> "Int32Div"
   | Int32Mod -> "Int32Mod"

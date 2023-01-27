@@ -31,7 +31,7 @@ BitcastWordToTagged,v1
 BitcastWordToTaggedSigned,
 BooleanNot,v1
 Branch,v1,e1
-Call,b1,vv
+Call,b1,vv,cv
 ChangeBitToTagged,v1
 ChangeFloat32ToFloat64,v1
 ChangeFloat64ToInt32,v1

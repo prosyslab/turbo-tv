@@ -291,22 +291,31 @@ let encode_instr program
   | Call ->
       let fname = Operands.const_of_nth operands 0 in
       let args_regexp =
-        Re.Pcre.regexp "[a-zA-Z0-9:_- ]*r([0-9]+)s[0-9]+i([0-9]+)f[0-9]+"
+        Re.Pcre.regexp "[a-zA-Z0-9:_- ]*r([0-9]+)s[0-9]+i([0-9]+)f([0-9]+)"
       in
       let n_return =
         Re.Group.get (Re.exec args_regexp fname) 1 |> int_of_string
       in
+      let n_input =
+        try Re.Group.get (Re.exec args_regexp fname) 2 |> int_of_string
+        with Not_found ->
+          failwith (Printf.sprintf "Unexpected callee: %s" fname)
+      in
+      let n_frame =
+        Re.Group.get (Re.exec args_regexp fname) 3 |> int_of_string
+      in
       let params =
-        let n_input =
-          try Re.Group.get (Re.exec args_regexp fname) 2 |> int_of_string
-          with Not_found ->
-            failwith (Printf.sprintf "Unexpected callee: %s" fname)
-        in
         List.init n_input (fun i ->
             let pid = Operands.id_of_nth operands (i + 1) in
             RegisterFile.find pid rf)
       in
-      call fname n_return params
+      let control =
+        if List.length operands = n_input + n_frame then Bool.tr
+        else
+          let cid = Operands.id_of_nth operands (n_input + n_frame + 1) in
+          ControlFile.find cid cf
+      in
+      call fname n_return params control
   | Return ->
       let pid = Operands.id_of_nth operands 0 in
       let cid = Operands.id_of_nth operands 1 in
