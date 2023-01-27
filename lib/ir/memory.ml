@@ -93,12 +93,12 @@ let can_access ptr sz t =
   let bid = TaggedPointer.bid_of ptr in
   let off = TaggedPointer.off_of ptr in
   let bsize = size_of bid t in
-  let out_of_lb = BitVec.slti off 0 in
-  let out_of_ub = BitVec.ugtb (BitVec.addi off sz) bsize in
+  let lb_access_check = BitVec.sgei off 0 in
+  let ub_access_check = BitVec.sleb (BitVec.addi off sz) bsize in
   Bool.ite
     (Array.select bid t.is_angelic)
     Bool.tr
-    (Bool.not (Bool.ors [ out_of_lb; out_of_ub ]))
+    (Bool.ands [ lb_access_check; ub_access_check ])
 
 (* can read as [repr] *)
 let can_access_as ptr repr t =
