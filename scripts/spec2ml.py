@@ -125,7 +125,7 @@ def gen_re_from_kind(kind):
     if kind == "VV":
         return f"let {kind.lower()}_re = Re.Pcre.regexp \"{b_re_prefix}{b_re_suffix}{{0,1}}{p_re_prefix}(.*){p_re_suffix}{p_re_prefix}{p_re_suffix}{p_re_prefix}{p_re_suffix}\" in\n"
     elif kind == "CV":
-        return f"let {kind.lower()}_re = Re.Pcre.regexp \"{b_re_prefix}{b_re_suffix}{{0,1}}{p_re_prefix}{p_re_suffix}{p_re_prefix}{p_re_suffix}{p_re_prefix}(.*){p_re_suffix}\" in\n"
+        return f"let {kind.lower()}_re = Re.Pcre.regexp \"{b_re_prefix}{b_re_suffix}{{0,1}}{p_re_prefix}{p_re_suffix}{p_re_prefix}{p_re_suffix}{p_re_prefix}([^\\\\)]*)\\\\)\" in\n"
 
     operand_kind = kind[0].upper()
     operand_pos = int(kind[1])
@@ -151,6 +151,8 @@ def gen_match_from_kind(kind):
             f"  let vargs= \n"
             f"    Re.Group.get(Re.exec {kind.lower()}_re instr) 1 |> String.split_on_char ','"
             f"  in \n"
+            "if List.nth vargs 0 = \"\" then parse_operand t instr operands\n"
+            "else"
             "  let parsed = "
             "   List.fold_left\n"
             "     (fun res arg ->"
