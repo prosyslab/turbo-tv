@@ -783,6 +783,7 @@ let encode_instr program
   | Float64Mod -> encode_v2 float64_mod
   | Float64Mul -> encode_v2 float64_mul
   | Float64Neg -> encode_v1 float64_neg
+  | Float64SilenceNaN -> encode_v1 float64_silence_nan
   | Float64Sub -> encode_v2 float64_sub
   | Float64RoundDown -> encode_v1 float64_round_down
   | Float64RoundUp -> encode_v1 float64_round_up

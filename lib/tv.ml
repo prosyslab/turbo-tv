@@ -35,7 +35,6 @@ let check_ub_semantic nparams check_type program =
               param |> Value.has_type Type.tagged_signed;
               Bool.ands
                 [
-                  param |> Value.has_type Type.tagged_pointer;
                   param |> Objects.is_heap_number mem;
                   BitVec.eqi (param |> TaggedPointer.off_of) 0;
                   (* bid 0 is reserved for referenced angelic ptr *)
@@ -87,7 +86,6 @@ let run nparams src_program tgt_program =
               param |> Value.has_type Type.tagged_signed;
               Bool.ands
                 [
-                  param |> Value.has_type Type.tagged_pointer;
                   param |> Objects.is_heap_number mem;
                   BitVec.eqi (param |> TaggedPointer.off_of) 0;
                   (* bid 0 is reserved for referenced angelic ptr *)

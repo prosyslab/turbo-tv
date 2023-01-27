@@ -256,7 +256,7 @@ Float64RoundTiesEven,v1
 Float64RoundTruncate,v1
 Float64RoundUp,v1
 Float64Select,
-Float64SilenceNaN,
+Float64SilenceNaN,v1
 Float64Sin,v1
 Float64Sinh,
 Float64Sqrt,

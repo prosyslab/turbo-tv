@@ -80,6 +80,8 @@ let float64_round_truncate pval state =
   let value = pval |> Float64.trunc in
   state |> State.update ~value
 
+let float64_silence_nan pval state = state |> State.update ~value:pval
+
 let float64_sin pval state =
   let value = pval |> Float64.sin in
   state |> State.update ~value
