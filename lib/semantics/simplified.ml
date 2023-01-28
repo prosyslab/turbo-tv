@@ -391,17 +391,28 @@ let load_element header_size repr bid ind mem state =
 
 let load_field offset repr ptr _eff control mem state =
   let off = offset |> BitVecVal.from_int ~len:Value.len in
-  let ptr = TaggedPointer.move ptr off in
-  let ub = Bool.not (Memory.can_access_as ptr repr mem) in
-  let raw_ptr = ptr |> TaggedPointer.to_raw_pointer in
+  let moved = TaggedPointer.move ptr off in
+  let ub = Bool.not (Memory.can_access_as moved repr mem) in
+  let raw_ptr = moved |> TaggedPointer.to_raw_pointer in
   let ty = Type.from_repr repr |> List.hd in
   let value =
     Memory.load_as raw_ptr repr mem
     |> BitVec.zero_extend (64 - Repr.width_of repr)
     |> Value.entype ty
   in
-  let is_angelic_value = ptr |> Memory.is_angelic mem in
-  state |> State.update ~value ~control ~ub ~is_angelic_value
+  let is_angelic = moved |> Memory.is_angelic mem in
+  let assertion =
+    Bool.ands
+      [
+        Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of);
+        Bool.implies
+          (Bool.ands
+             [ is_angelic; BitVec.eqb (Value.ty_of value) Type.tagged_pointer ])
+          (value |> Memory.is_angelic mem);
+      ]
+  in
+  { state with assertion = Bool.ands [ state.State.assertion; assertion ] }
+  |> State.update ~value ~control ~ub ~is_angelic_value:is_angelic
 
 let load_typed_element array_type base extern ind mem state =
   let bid = BitVec.addb base extern in

@@ -397,9 +397,9 @@ let store ptr pos repr value mem state =
  * assertion:
  *   value = (Mem[pos+size]) *)
 let load ptr pos repr mem state =
-  let ptr = TaggedPointer.move ptr pos in
-  let ub = Bool.not (Memory.can_access_as ptr repr mem) in
-  let raw_ptr = ptr |> BitVec.extract 31 0 in
+  let moved = TaggedPointer.move ptr pos in
+  let ub = Bool.not (Memory.can_access_as moved repr mem) in
+  let raw_ptr = moved |> BitVec.extract 31 0 in
   let ty = Type.from_repr repr |> List.hd in
   let value =
     Memory.load_as raw_ptr repr mem
@@ -407,15 +407,19 @@ let load ptr pos repr mem state =
     |> Value.entype ty
   in
   let assertion =
-    Bool.implies
-      (Bool.ands
-         [
-           ptr |> Memory.is_angelic mem;
-           value |> Value.has_type Type.tagged_pointer;
-         ])
-      (value |> Memory.is_angelic mem)
+    Bool.ands
+      [
+        Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of);
+        Bool.implies
+          (Bool.ands
+             [
+               moved |> Memory.is_angelic mem;
+               value |> Value.has_type Type.tagged_pointer;
+             ])
+          (value |> Memory.is_angelic mem);
+      ]
   in
-  let is_angelic_value = ptr |> Memory.is_angelic mem in
+  let is_angelic_value = moved |> Memory.is_angelic mem in
   { state with assertion = Bool.ands [ state.State.assertion; assertion ] }
   |> State.update ~value ~ub ~is_angelic_value
 
