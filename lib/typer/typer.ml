@@ -134,41 +134,41 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                                   (value |> Number.to_float64 mem)
                                   value))))))))
       in
-      let u_v =
-        Bool.ite
-          (value |> Value.has_type Type.int32)
-          (value |> Uint32.to_float64)
-          (Bool.ite
-             (value |> Value.has_type Type.int64)
-             (value |> Uint64.to_float64)
+      (* let u_v =
+           Bool.ite
+             (value |> Value.has_type Type.int32)
+             (value |> Uint32.to_float64)
              (Bool.ite
-                (value |> Value.has_type Type.uint32)
-                (value |> Int32.to_float64)
+                (value |> Value.has_type Type.int64)
+                (value |> Uint64.to_float64)
                 (Bool.ite
-                   (value |> Value.has_type Type.uint64)
-                   (value |> Int64.to_float64)
+                   (value |> Value.has_type Type.uint32)
+                   (value |> Int32.to_float64)
                    (Bool.ite
-                      (value |> Value.has_type Type.tagged_signed)
-                      (value |> TaggedSigned.to_float64)
+                      (value |> Value.has_type Type.uint64)
+                      (value |> Int64.to_float64)
                       (Bool.ite
-                         (value |> Value.has_type Type.int8)
-                         (value |> Uint8.to_float64)
+                         (value |> Value.has_type Type.tagged_signed)
+                         (value |> TaggedSigned.to_float64)
                          (Bool.ite
-                            (value |> Value.has_type Type.uint8)
-                            (value |> Int8.to_float64)
+                            (value |> Value.has_type Type.int8)
+                            (value |> Uint8.to_float64)
                             (Bool.ite
-                               (value |> Value.has_type Type.float64)
-                               value
+                               (value |> Value.has_type Type.uint8)
+                               (value |> Int8.to_float64)
                                (Bool.ite
-                                  (Bool.ands
-                                     [
-                                       value
-                                       |> Value.has_type Type.tagged_pointer;
-                                       value |> Objects.is_heap_number mem;
-                                     ])
-                                  (value |> Number.to_float64 mem)
-                                  value))))))))
-      in
-      Bool.ors [ Float64.is_in_range s_v lb ub; Float64.is_in_range u_v lb ub ]
+                                  (value |> Value.has_type Type.float64)
+                                  value
+                                  (Bool.ite
+                                     (Bool.ands
+                                        [
+                                          value
+                                          |> Value.has_type Type.tagged_pointer;
+                                          value |> Objects.is_heap_number mem;
+                                        ])
+                                     (value |> Number.to_float64 mem)
+                                     value))))))))
+         in *)
+      Bool.ors [ Float64.is_in_range s_v lb ub ]
   (* for now, handle only numeric types *)
   | _ -> Bool.tr
