@@ -292,8 +292,12 @@ let encode_instr program
   | Merge ->
       let conds = ControlFile.find_all (operands |> Operands.id_of_all) cf in
       let is_angelic_ctrl =
-        AngelicFile.find_all (operands |> Operands.id_of_all) is_angelic_control
-        |> Bool.ors
+        List.map2 Bool.and_
+          (AngelicFile.find_all
+             (operands |> Operands.id_of_all)
+             is_angelic_control)
+          conds
+        |> Bool.ands
       in
       merge conds is_angelic_ctrl
   | Unreachable ->
