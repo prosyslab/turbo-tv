@@ -97,3 +97,24 @@ let is_true value = Bool.not (is_false value)
 let undefined = empty |> cast Type.undefined
 
 let is_undefined value = eq undefined value
+
+let flip_type value =
+  Bool.ite
+    (value |> has_type Type.int32)
+    (value |> cast Type.uint32)
+    (Bool.ite
+       (value |> has_type Type.int64)
+       (value |> cast Type.uint64)
+       (Bool.ite
+          (value |> has_type Type.uint32)
+          (value |> cast Type.int32)
+          (Bool.ite
+             (value |> has_type Type.uint64)
+             (value |> cast Type.int64)
+             (Bool.ite
+                (value |> has_type Type.int8)
+                (value |> cast Type.uint8)
+                (Bool.ite
+                   (value |> has_type Type.uint8)
+                   (value |> cast Type.int8)
+                   value)))))

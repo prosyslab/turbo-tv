@@ -960,7 +960,15 @@ let propagate program (state : State.t) =
     let is_angelic_value = AngelicFile.find (pc |> string_of_int) af in
     let ty_check =
       let value = RegisterFile.find (pc |> string_of_int) rf in
-      match ty with Some ty -> Typer.verify value ty mem | None -> Bool.tr
+      match ty with
+      | Some ty ->
+          if String.starts_with ~prefix:"Word" (Opcode.to_str opcode) then
+            let flipped = Value.flip_type value in
+            [ value; flipped ]
+            |> List.map (fun v -> Typer.verify v ty mem)
+            |> Bool.ors
+          else Typer.verify value ty mem
+      | None -> Bool.tr
     in
     Bool.ors [ is_angelic_value; ty_check ]
   in
