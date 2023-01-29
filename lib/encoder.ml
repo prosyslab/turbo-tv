@@ -28,6 +28,7 @@ let encode_instr program
   in
 
   let _, opcode, operands = IR.instr_of pc program in
+
   let encode_v1 op state =
     let pid = Operands.id_of_nth operands 0 in
     let pval = RegisterFile.find pid rf in
@@ -44,6 +45,16 @@ let encode_instr program
       [ AngelicFile.find pid is_angelic_value ] |> Bool.ors
     in
     state |> op pval mem |> State.update ~is_angelic_value
+  in
+
+  let encode_h1v1 op state =
+    let hint = Operands.const_of_nth operands 0 in
+    let pid = Operands.id_of_nth operands 1 in
+    let pval = RegisterFile.find pid rf in
+    let is_angelic_value =
+      [ AngelicFile.find pid is_angelic_value ] |> Bool.ors
+    in
+    state |> op hint pval |> State.update ~is_angelic_value
   in
 
   let encode_h1v1m op state =
@@ -160,6 +171,19 @@ let encode_instr program
     state |> op lval rval () ctrl |> State.update ~is_angelic_value
   in
 
+  let encode_v3 op state =
+    let fst = Operands.id_of_nth operands 0 in
+    let snd = Operands.id_of_nth operands 1 in
+    let lst = Operands.id_of_nth operands 2 in
+    let fst_value = RegisterFile.find fst rf in
+    let snd_value = RegisterFile.find snd rf in
+    let lst_value = RegisterFile.find lst rf in
+    let is_angelic_value =
+      AngelicFile.find_all [ fst; snd; lst ] is_angelic_value |> Bool.ors
+    in
+    state |> op fst_value snd_value lst_value |> State.update ~is_angelic_value
+  in
+
   state
   |>
   match opcode with
@@ -258,14 +282,7 @@ let encode_instr program
           failwith
             (Format.sprintf "Phi is not implemented for incoming opcode: %s"
                (ctrl_opcode |> Opcode.to_str)))
-  | Select ->
-      let cond_id = Operands.id_of_nth operands 0 in
-      let true_id = Operands.id_of_nth operands 1 in
-      let false_id = Operands.id_of_nth operands 2 in
-      let cond_value = RegisterFile.find cond_id rf in
-      let true_value = RegisterFile.find true_id rf in
-      let false_value = RegisterFile.find false_id rf in
-      select cond_value true_value false_value
+  | Select -> encode_v3 select
   | Start -> start
   | Throw ->
       let nid = Operands.id_of_nth operands 0 in
@@ -717,25 +734,10 @@ let encode_instr program
       let ctrl_id = Operands.id_of_nth operands 2 in
       let ctrl = ControlFile.find ctrl_id cf in
       checked_bigint_to_bigint64 value ctrl mem
-  | CheckedFloat64ToInt32 ->
-      let hint = Operands.const_of_nth operands 0 in
-      let pid = Operands.id_of_nth operands 1 in
-      let pval = RegisterFile.find pid rf in
-      checked_float64_to_int32 hint pval
-  | CheckedTaggedSignedToInt32 ->
-      let pid = Operands.id_of_nth operands 0 in
-      let pval = RegisterFile.find pid rf in
-      checked_tagged_signed_to_int32 pval
-  | CheckedTaggedToFloat64 ->
-      let hint = Operands.const_of_nth operands 0 in
-      let pid = Operands.id_of_nth operands 1 in
-      let pval = RegisterFile.find pid rf in
-      checked_tagged_to_float64 hint pval mem
-  | CheckedTaggedToInt64 ->
-      let hint = Operands.const_of_nth operands 0 in
-      let pid = Operands.id_of_nth operands 1 in
-      let pval = RegisterFile.find pid rf in
-      checked_tagged_to_int64 hint pval mem
+  | CheckedFloat64ToInt32 -> encode_h1v1 checked_float64_to_int32
+  | CheckedTaggedSignedToInt32 -> encode_v1 checked_tagged_signed_to_int32
+  | CheckedTaggedToFloat64 -> encode_h1v1m checked_tagged_to_float64
+  | CheckedTaggedToInt64 -> encode_h1v1m checked_tagged_to_int64
   | CheckedTaggedToTaggedPointer ->
       let pid = Operands.id_of_nth operands 0 in
       let _eid = Operands.id_of_nth operands 1 in
