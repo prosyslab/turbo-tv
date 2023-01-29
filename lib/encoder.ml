@@ -218,15 +218,20 @@ let encode_instr program
       let prev_id = Operands.id_of_nth operands 1 in
       let cond_value = RegisterFile.find cond_id rf in
       let precond_token = ControlFile.find prev_id cf in
-      branch cond_value precond_token
+      let is_angelic_value =
+        AngelicFile.find_all [ cond_id; prev_id ] is_angelic_value |> Bool.ors
+      in
+      branch cond_value precond_token is_angelic_value
   | IfFalse ->
       let nid = Operands.id_of_nth operands 0 in
       let ctrl_token = ControlFile.find nid cf in
-      if_false ctrl_token
+      let is_angelic_value = AngelicFile.find nid is_angelic_value in
+      if_false ctrl_token is_angelic_value
   | IfTrue ->
       let nid = Operands.id_of_nth operands 0 in
       let ctrl_token = ControlFile.find nid cf in
-      if_true ctrl_token
+      let is_angelic_value = AngelicFile.find nid is_angelic_value in
+      if_true ctrl_token is_angelic_value
   | Phi -> (
       let rev = operands |> List.rev in
       let ctrl_id = Operands.id_of_nth rev 0 in
@@ -268,11 +273,16 @@ let encode_instr program
       throw ctrl_token
   | Merge ->
       let conds = ControlFile.find_all (operands |> Operands.id_of_all) cf in
-      merge conds
+      let is_angelic_value =
+        AngelicFile.find_all (operands |> Operands.id_of_all) is_angelic_value
+        |> Bool.ors
+      in
+      merge conds is_angelic_value
   | Unreachable ->
       let cid = Operands.id_of_nth operands 1 in
       let control = ControlFile.find cid cf in
-      unreachable control
+      let control_is_angelic = AngelicFile.find cid is_angelic_value in
+      unreachable control control_is_angelic
   (* common: deoptimization *)
   | Deoptimize ->
       let _frame_id = Operands.id_of_nth operands 0 in
@@ -287,13 +297,19 @@ let encode_instr program
       let ctrl_id = Operands.id_of_nth operands 3 in
       let deopt_cond = RegisterFile.find cond_id rf in
       let ctrl = ControlFile.find ctrl_id cf in
-      deoptimize_if deopt_cond () () ctrl
+      let ctrl_is_angelic =
+        AngelicFile.find_all [ cond_id; ctrl_id ] is_angelic_value |> Bool.ors
+      in
+      deoptimize_if deopt_cond () () ctrl ctrl_is_angelic
   | DeoptimizeUnless ->
       let cond_id = Operands.id_of_nth operands 0 in
-      let ct_id = Operands.id_of_nth operands 3 in
+      let ctrl_id = Operands.id_of_nth operands 3 in
       let cond = RegisterFile.find cond_id rf in
-      let ct = ControlFile.find ct_id cf in
-      deoptimize_unless cond () () ct
+      let ct = ControlFile.find ctrl_id cf in
+      let ctrl_is_angelic =
+        AngelicFile.find_all [ cond_id; ctrl_id ] is_angelic_value |> Bool.ors
+      in
+      deoptimize_unless cond () () ct ctrl_is_angelic
   (* common: dead *)
   | Dead -> nop
   (* common: procedure *)

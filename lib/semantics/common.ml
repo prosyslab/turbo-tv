@@ -75,7 +75,7 @@ let projection idx incoming state =
  * - WellDefined(cond) ^ WellDefined(precond)
  * assertion:
  *  ct = ite well-defined (precond ^ cond, precond ^ not cond) (UB, UB) *)
-let branch cond precond state =
+let branch cond precond is_angelic_control state =
   let rf = state.State.register_file in
   let for_false =
     Bool.ors [ Value.is_false cond; Constant.is_false_cst rf cond ]
@@ -86,31 +86,31 @@ let branch cond precond state =
       (Bool.and_ precond for_true)
       (Bool.and_ precond for_false)
   in
-  state |> State.update ~control
+  state |> State.update ~control ~is_angelic_value:is_angelic_control
 
 (* well-defined condition:
  * - Bool(FalseCond(cond))
  * - WellDefined(FalseCond(cond))
  * assertion:
  *  ct = ite well-defined FalseCond(Cond) UB *)
-let if_false cond state =
+let if_false cond is_angelic_control state =
   let control = cond |> ControlTuple.false_cond in
-  state |> State.update ~control
+  state |> State.update ~control ~is_angelic_value:is_angelic_control
 
 (* well-defined condition:
  *  - Bool(TrueCond(cond))
  *  - WellDefined(TrueCond(cond))
  * assertion:
  *  value = ite well-defined TrueCond(Cond) UB *)
-let if_true cond state =
+let if_true cond is_angelic_control state =
   let control = cond |> ControlTuple.true_cond in
-  state |> State.update ~control
+  state |> State.update ~control ~is_angelic_value:is_angelic_control
 
 (* merge every incoming execution condition *)
-let merge conds state =
+let merge conds is_angelic_control state =
   (* cond could be composed value *)
   let control = Bool.ors conds in
-  state |> State.update ~control
+  state |> State.update ~control ~is_angelic_value:is_angelic_control
 
 let phi incomings ctrls state =
   let rec mk_value values conds =
@@ -126,25 +126,25 @@ let phi incomings ctrls state =
   state |> State.update ~value
 
 let select cond tr fl state =
-  let ub = Bool.not (cond |> Value.has_type Type.bool) in
   let value = Bool.ite (Value.is_true cond) tr fl in
-  state |> State.update ~value ~ub
+  state |> State.update ~value
 
 let throw control state = state |> State.update ~control
 
-let unreachable control state = state |> State.update ~ub:control
+let unreachable control control_is_angelic state =
+  state |> State.update ~ub:(Bool.ands [ control; Bool.not control_is_angelic ])
 
 (* common: deoptimization *)
 let deoptimize _frame _mem control state =
   state |> State.update ~control ~deopt:Bool.tr
 
-let deoptimize_if cond _frame _mem control state =
+let deoptimize_if cond _frame _mem control ctrl_is_angelic state =
   let deopt = Bool.ite (Value.is_true cond) Bool.tr Bool.fl in
-  state |> State.update ~control ~deopt
+  state |> State.update ~control ~deopt ~is_angelic_value:ctrl_is_angelic
 
-let deoptimize_unless cond _frame _mem control state =
+let deoptimize_unless cond _frame _mem control ctrl_is_angelic state =
   let deopt = Bool.ite (Value.is_false cond) Bool.tr Bool.fl in
-  state |> State.update ~control ~deopt
+  state |> State.update ~control ~deopt ~is_angelic_value:ctrl_is_angelic
 
 (* common: procedure *)
 let end_ retvals _retmems retctrls state =
@@ -222,7 +222,8 @@ let call fname n_return args control state =
              v |> Value.cast Type.any_tagged |> ValueOperator.AnyTagged.settle)
       |> Composed.from_values
   in
-  state |> State.update ~value ~control
+  let is_angelic_value = Bool.tr in
+  state |> State.update ~value ~control ~is_angelic_value
 
 let stack_pointer_greater_than state =
   state |> State.update ~value:Value.tr ~control:Bool.tr
