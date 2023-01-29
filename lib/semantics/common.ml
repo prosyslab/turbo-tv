@@ -86,7 +86,7 @@ let branch cond precond is_angelic_control state =
       (Bool.and_ precond for_true)
       (Bool.and_ precond for_false)
   in
-  state |> State.update ~control ~is_angelic_value:is_angelic_control
+  state |> State.update ~control ~is_angelic_control
 
 (* well-defined condition:
  * - Bool(FalseCond(cond))
@@ -95,7 +95,7 @@ let branch cond precond is_angelic_control state =
  *  ct = ite well-defined FalseCond(Cond) UB *)
 let if_false cond is_angelic_control state =
   let control = cond |> ControlTuple.false_cond in
-  state |> State.update ~control ~is_angelic_value:is_angelic_control
+  state |> State.update ~control ~is_angelic_control
 
 (* well-defined condition:
  *  - Bool(TrueCond(cond))
@@ -104,13 +104,13 @@ let if_false cond is_angelic_control state =
  *  value = ite well-defined TrueCond(Cond) UB *)
 let if_true cond is_angelic_control state =
   let control = cond |> ControlTuple.true_cond in
-  state |> State.update ~control ~is_angelic_value:is_angelic_control
+  state |> State.update ~control ~is_angelic_control
 
 (* merge every incoming execution condition *)
 let merge conds is_angelic_control state =
   (* cond could be composed value *)
   let control = Bool.ors conds in
-  state |> State.update ~control ~is_angelic_value:is_angelic_control
+  state |> State.update ~control ~is_angelic_control
 
 let phi incomings ctrls state =
   let rec mk_value values conds =

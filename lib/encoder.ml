@@ -13,6 +13,7 @@ let encode_instr program
        control_file = cf;
        register_file = rf;
        is_angelic_value;
+       is_angelic_control;
        memory = mem;
        params;
        _;
@@ -242,20 +243,20 @@ let encode_instr program
       let prev_id = Operands.id_of_nth operands 1 in
       let cond_value = RegisterFile.find cond_id rf in
       let precond_token = ControlFile.find prev_id cf in
-      let is_angelic_value =
+      let is_angelic_ctrl =
         AngelicFile.find_all [ cond_id; prev_id ] is_angelic_value |> Bool.ors
       in
-      branch cond_value precond_token is_angelic_value
+      branch cond_value precond_token is_angelic_ctrl
   | IfFalse ->
       let nid = Operands.id_of_nth operands 0 in
       let ctrl_token = ControlFile.find nid cf in
-      let is_angelic_value = AngelicFile.find nid is_angelic_value in
-      if_false ctrl_token is_angelic_value
+      let is_angelic_ctrl = AngelicFile.find nid is_angelic_control in
+      if_false ctrl_token is_angelic_ctrl
   | IfTrue ->
       let nid = Operands.id_of_nth operands 0 in
       let ctrl_token = ControlFile.find nid cf in
-      let is_angelic_value = AngelicFile.find nid is_angelic_value in
-      if_true ctrl_token is_angelic_value
+      let is_angelic_ctrl = AngelicFile.find nid is_angelic_control in
+      if_true ctrl_token is_angelic_ctrl
   | Phi -> (
       let rev = operands |> List.rev in
       let ctrl_id = Operands.id_of_nth rev 0 in
@@ -290,15 +291,15 @@ let encode_instr program
       throw ctrl_token
   | Merge ->
       let conds = ControlFile.find_all (operands |> Operands.id_of_all) cf in
-      let is_angelic_value =
-        AngelicFile.find_all (operands |> Operands.id_of_all) is_angelic_value
+      let is_angelic_ctrl =
+        AngelicFile.find_all (operands |> Operands.id_of_all) is_angelic_control
         |> Bool.ors
       in
-      merge conds is_angelic_value
+      merge conds is_angelic_ctrl
   | Unreachable ->
       let cid = Operands.id_of_nth operands 1 in
       let control = ControlFile.find cid cf in
-      let control_is_angelic = AngelicFile.find cid is_angelic_value in
+      let control_is_angelic = AngelicFile.find cid is_angelic_control in
       unreachable control control_is_angelic
   (* common: deoptimization *)
   | Deoptimize ->
