@@ -27,7 +27,7 @@ let check_ub_semantic nparams check_type program =
   (* params are tagged /\ not deopt *)
   let precond =
     let params = State.params state in
-    let params_are_smi_or_heapnumber =
+    let params_are_smi_or_heapnumber_or_bigint =
       List.mapi
         (fun bid param ->
           Bool.ors
@@ -40,6 +40,12 @@ let check_ub_semantic nparams check_type program =
                   (* bid 0 is reserved for referenced angelic ptr *)
                   BitVec.eqi (param |> TaggedPointer.bid_of) (bid + 1);
                 ];
+              Bool.ands
+                [
+                  param |> Objects.is_big_int mem;
+                  BitVec.eqi (param |> TaggedPointer.off_of) 0;
+                  BitVec.eqi (param |> TaggedPointer.bid_of) (bid + 1);
+                ];
               Bool.ors
                 (List.map (Value.eq param)
                    (RegisterFile.find_all Constant.names state.register_file));
@@ -47,7 +53,7 @@ let check_ub_semantic nparams check_type program =
         params
       |> Bool.ands
     in
-    Bool.ands [ params_are_smi_or_heapnumber; Bool.not state.deopt ]
+    Bool.ands [ params_are_smi_or_heapnumber_or_bigint; Bool.not state.deopt ]
   in
   let assertion = Bool.ands [ state.assertion; precond; ub ] in
 
@@ -78,7 +84,7 @@ let run nparams src_program tgt_program =
   let precond =
     let params = State.params src_state in
     let mem = Memory.init nparams in
-    let params_are_smi_or_heapnumber =
+    let params_are_smi_or_heapnumber_or_bigint =
       List.mapi
         (fun bid param ->
           Bool.ors
@@ -89,6 +95,12 @@ let run nparams src_program tgt_program =
                   param |> Objects.is_heap_number mem;
                   BitVec.eqi (param |> TaggedPointer.off_of) 0;
                   (* bid 0 is reserved for referenced angelic ptr *)
+                  BitVec.eqi (param |> TaggedPointer.bid_of) (bid + 1);
+                ];
+              Bool.ands
+                [
+                  param |> Objects.is_big_int mem;
+                  BitVec.eqi (param |> TaggedPointer.off_of) 0;
                   BitVec.eqi (param |> TaggedPointer.bid_of) (bid + 1);
                 ];
               Bool.ors
@@ -103,7 +115,7 @@ let run nparams src_program tgt_program =
       let tgt_deopt = State.deopt tgt_state in
       Bool.not (Bool.ors [ src_deopt; tgt_deopt ])
     in
-    Bool.ands [ params_are_smi_or_heapnumber; no_deopt ]
+    Bool.ands [ params_are_smi_or_heapnumber_or_bigint; no_deopt ]
   in
 
   let retval_is_same =
