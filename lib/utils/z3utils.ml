@@ -11,6 +11,7 @@ module BV = Z3.BitVector
 module Fl = Z3.FloatingPoint
 module T = Z3.Tactic
 module P = Z3.Probe
+module SQ = Z3.Seq
 
 (* global context *)
 let ctx = Z3.mk_context [ ("model", "true") ]
@@ -272,6 +273,19 @@ module BitVecVal = struct
 
   let from_f64string str =
     Float.from_string ~sort:Float.double_sort str |> Float.to_ieee_bv
+
+  let from_string str =
+    if String.length str = 0 then from_int ~len:8 0
+      (* else if String.length str = 1 then
+         str.[0] |> Char.code |> from_int ~len:8 *)
+    else
+      let hd = str.[0] in
+      let tl = String.sub str 1 (String.length str - 1) in
+      tl
+      |> String.fold_left
+           (fun res c ->
+             c |> Char.code |> from_int ~len:8 |> BV.mk_concat ctx res)
+           (from_int ~len:8 (Char.code hd))
 
   (* boolean const *)
   let tr ?(len = !bvlen) () = BV.mk_repeat ctx len (BV.mk_numeral ctx "1" 1)
@@ -549,3 +563,13 @@ module Real = struct
 end
 
 let sort_equal e1 e2 = Z3.Sort.equal (Z3.Expr.get_sort e1) (Z3.Expr.get_sort e2)
+
+module Seq = struct
+  type t = E.expr
+
+  let init name domain range = A.mk_const_s ctx name domain range
+
+  let store value key arr = A.mk_store ctx arr key value
+
+  let select key arr = A.mk_select ctx arr key
+end

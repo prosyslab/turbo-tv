@@ -530,13 +530,7 @@ let bigint_less_than = bigint_compare Bigint.less_than
 let bigint_less_than_or_equal = bigint_compare Bigint.less_than_or_equal
 
 let check_big_int value control mem state =
-  let deopt =
-    Bool.ors
-      [
-        Value.has_type Type.tagged_signed value;
-        Bool.not (Objects.is_big_int mem value);
-      ]
-  in
+  let deopt = Bool.not (Objects.is_big_int mem value) in
   state |> State.update ~value ~deopt ~control
 
 let checked_bigint_to_bigint64 value control mem state =
@@ -662,6 +656,30 @@ let object_is_nan pval mem state =
 let object_is_smi pval state =
   let value = Bool.ite (Word32.eqi (Word32.andi pval 1) 0) Value.tr Value.fl in
   state |> State.update ~value
+
+(* simplified: string *)
+let check_string value control mem state =
+  let deopt = Bool.not (Objects.is_string mem value) in
+  state |> State.update ~value ~control ~deopt
+
+let string_binary op lval rval mem state =
+  let l_bn = Strings.load lval mem in
+  let r_bn = Strings.load rval mem in
+  let v_bn = op l_bn r_bn in
+  let value, mem = Strings.allocate v_bn mem in
+  state |> State.update ~value ~mem
+
+let string_length pval mem state =
+  let p_bn = Strings.load pval mem in
+  let value = Strings.get_length p_bn in
+  state |> State.update ~value ~mem
+
+let string_concat fst snd lst mem state =
+  let snd_bn = Strings.load snd mem in
+  let lst_bn = Strings.load lst mem in
+  let v_bn = Strings.concat fst snd_bn lst_bn in
+  let value, mem = Strings.allocate v_bn mem in
+  state |> State.update ~value ~mem
 
 (* simplified: type-conversion *)
 let change_bit_to_tagged pval state =

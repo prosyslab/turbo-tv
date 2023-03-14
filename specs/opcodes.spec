@@ -75,7 +75,7 @@ CheckNumber,
 CheckReceiver,
 CheckReceiverOrNullOrUndefined,
 CheckSmi,v1,e1,c1
-CheckString,
+CheckString,v1,e1,c1
 CheckSymbol,
 CheckedBigIntToBigInt64,v1,e1,c1
 CheckedFloat64ToInt32,b1,v1
@@ -782,13 +782,13 @@ StoreToObject,
 StoreTypedElement,
 StringCharCodeAt,
 StringCodePointAt,
-StringConcat,
+StringConcat,v1,v2,v3
 StringEqual,
 StringFromCodePointAt,
 StringFromSingleCharCode,
 StringFromSingleCodePoint,
 StringIndexOf,
-StringLength,
+StringLength,v1
 StringLessThan,
 StringLessThanOrEqual,
 StringSubstring,

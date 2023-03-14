@@ -185,6 +185,21 @@ let encode_instr program
     state |> op fst_value snd_value lst_value |> State.update ~is_angelic_value
   in
 
+  let encode_v3m op state =
+    let fst = Operands.id_of_nth operands 0 in
+    let snd = Operands.id_of_nth operands 1 in
+    let lst = Operands.id_of_nth operands 2 in
+    let fst_value = RegisterFile.find fst rf in
+    let snd_value = RegisterFile.find snd rf in
+    let lst_value = RegisterFile.find lst rf in
+    let is_angelic_value =
+      AngelicFile.find_all [ fst; snd; lst ] is_angelic_value |> Bool.ors
+    in
+    state
+    |> op fst_value snd_value lst_value mem
+    |> State.update ~is_angelic_value
+  in
+
   state
   |>
   match opcode with
@@ -656,6 +671,10 @@ let encode_instr program
       let ctrl_id = Operands.id_of_nth operands 5 in
       let ctrl = ControlFile.find ctrl_id cf in
       store_field ptr offset repr value () ctrl mem
+  (* simplified: string*)
+  (* arithmetic *)
+  | StringLength -> encode_v1m string_length
+  | StringConcat -> encode_v3m string_concat
   (* simplified: type-check *)
   | CheckBigInt ->
       let value_id = Operands.id_of_nth operands 0 in
@@ -663,6 +682,12 @@ let encode_instr program
       let ctrl_id = Operands.id_of_nth operands 2 in
       let ctrl = ControlFile.find ctrl_id cf in
       check_big_int value ctrl mem
+  | CheckString ->
+      let value_id = Operands.id_of_nth operands 0 in
+      let value = RegisterFile.find value_id rf in
+      let ctrl_id = Operands.id_of_nth operands 2 in
+      let ctrl = ControlFile.find ctrl_id cf in
+      check_string value ctrl mem
   | NumberIsInteger ->
       let pid = Operands.id_of_nth operands 0 in
       let value = RegisterFile.find pid rf in

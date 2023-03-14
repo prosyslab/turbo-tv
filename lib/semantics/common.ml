@@ -29,11 +29,7 @@ let heap_constant name addr mem state =
       in
       (addr, mem)
     else if String.starts_with ~prefix:"String" name then
-      let raw_ptr = TaggedPointer.to_raw_pointer addr in
-      let mem =
-        Memory.store Bool.tr raw_ptr Objmap.size Objmap.string_map mem
-      in
-      (addr, mem)
+      Strings.allocate (Strings.from_string name) mem
     else (addr, mem)
   in
   state |> State.update ~value ~mem

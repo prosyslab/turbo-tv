@@ -28,6 +28,7 @@
   deopt
   exprMap
   bigint
+  strings
   ;tv
   encoder
   tv

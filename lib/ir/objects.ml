@@ -174,4 +174,7 @@ let to_string model mem ptr =
   | "big_int" ->
       let obj = Bigint.load ptr mem in
       Bigint.to_string model obj
+  | "string" ->
+      let obj = Strings.load ptr mem in
+      Strings.to_string model obj
   | s -> s ^ " object: not implemented yet"
