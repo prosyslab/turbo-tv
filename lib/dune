@@ -18,6 +18,7 @@
   controlFile
   registerFile
   ub
+  schedule
   state
   objmap
   memory

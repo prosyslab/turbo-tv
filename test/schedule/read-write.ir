@@ -1,0 +1,9 @@
+#0:Start()()()  [Type: Internal]
+#1:Int32Constant[16]()()()
+#2:Allocate(#1:)()(#0:)
+#3:Int32Constant[8]()()()
+#4:Int32Constant[7]()()()
+#5:Load[kRepWord64](#2:, #3:)(#0:Start)(#0:Start)
+#6:Store[kRepWord64](#2:, #4:, #4:)(#0:Start)(#0:Start)
+#7:Return(#3:, #3:)(#6:Load)(#0:Start)
+#8:End()()(#7:Return)

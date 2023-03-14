@@ -156,7 +156,9 @@ let main () =
       let input_ir_p = check_ub in
       let input_grp = IR.create_from_ir_file input_ir_p in
       if unknown_op_exists input_grp then Printf.printf "Result: Not target\n"
-      else Tv.check_ub_semantic nparams check_type input_grp
+      else
+        let candids = input_grp |> Schedule.find_candids in
+        Tv.check_ub_semantic nparams candids check_type input_grp
     with
     | Err.NodeNotFound _ ->
         Printf.printf

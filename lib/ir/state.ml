@@ -28,6 +28,25 @@ module OpcodeSet = struct
   let to_list t = t |> to_seq |> List.of_seq
 end
 
+module AccessInfo = struct
+  module M = Map.Make (Int)
+
+  type access = {
+    bid : BitVec.t;
+    is_read : bool;
+    lower : BitVec.t;
+    upper : BitVec.t;
+  }
+
+  type t = access M.t
+
+  let add k (v : access) = M.add k v
+
+  let find k t : access = M.find k t
+
+  let empty = M.empty
+end
+
 type t = {
   stage : string;
   pc : IR.Node.id;
@@ -38,6 +57,8 @@ type t = {
   deopt_file : DeoptFile.t;
   is_angelic_value : AngelicFile.t;
   is_angelic_control : AngelicFile.t;
+  scheck_candids : (int * int) list;
+  access_info : AccessInfo.t;
   memory : Memory.t;
   params : BitVec.t list;
   retval : BitVec.t;
@@ -77,7 +98,7 @@ let install_constants state =
   in
   { state with memory = mem; register_file = rf }
 
-let init nparams ?check_type stage : t =
+let init nparams ?scheck_candids ?check_type stage : t =
   {
     stage;
     pc = 0;
@@ -85,6 +106,8 @@ let init nparams ?check_type stage : t =
     register_file = RegisterFile.init stage RegisterFile.symbol;
     is_angelic_value = AngelicFile.init stage AngelicFile.symbol;
     is_angelic_control = AngelicFile.init stage AngelicFile.symbol;
+    scheck_candids = Option.value scheck_candids ~default:[];
+    access_info = AccessInfo.empty;
     control_file = ControlFile.init stage ControlFile.symbol;
     ub_file = UBFile.init stage Ub.symbol;
     deopt_file = DeoptFile.init stage Deopt.symbol;

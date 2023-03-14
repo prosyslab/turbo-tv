@@ -18,6 +18,7 @@ type kind =
   | B1V1
   | B2V1V2E1C1
   | B2
+  | B2V1
   | V1V2E1C1
   | B1V1V2E1C1
   | B1V1E1C1
@@ -49,7 +50,6 @@ type t =
   | ArgumentsLength
   | ArgumentsLengthState
   | AssertType
-  | BeginRegion
   | BitcastInt32ToFloat32
   | BitcastTaggedToWordForTagAndSmiBits
   | BitcastWordToTaggedSigned
@@ -699,7 +699,6 @@ type t =
   | Allocate
   | CheckBigInt
   | CheckIf
-  | CheckMaps
   | CheckSmi
   | CheckedBigIntToBigInt64
   | CheckedInt64ToInt32
@@ -785,6 +784,8 @@ type t =
   | TruncateTaggedToWord32
   | Word32ReverseBytes
   | Word64ReverseBytes
+  (* e1 *)
+  | BeginRegion
   (* c1 *)
   | IfFalse
   | IfSuccess
@@ -910,6 +911,8 @@ type t =
   | CheckBounds
   | CheckedUint32Bounds
   | CheckedUint64Bounds
+  (* b2v1 *)
+  | CheckMaps
   (* v1v2e1c1 *)
   | CheckedInt32Add
   | CheckedInt32Div
@@ -987,7 +990,7 @@ type t =
 let get_kind opcode =
   match opcode with
   | AbortCSADcheck | ArgumentsElementsState | ArgumentsLength
-  | ArgumentsLengthState | AssertType | BeginRegion | BitcastInt32ToFloat32
+  | ArgumentsLengthState | AssertType | BitcastInt32ToFloat32
   | BitcastTaggedToWordForTagAndSmiBits | BitcastWordToTaggedSigned
   | ChangeFloat64ToTaggedPointer | ChangeTaggedToInt32 | ChangeTaggedToInt64
   | ChangeTaggedToTaggedSigned | ChangeTaggedToUint32 | CheckClosure
@@ -1152,8 +1155,8 @@ let get_kind opcode =
   | Word64Popcnt | Word64ReverseBits | Word64RolLowerable | Word64RorLowerable
   | Word64Select ->
       UNIMPL
-  | Allocate | CheckBigInt | CheckIf | CheckMaps | CheckSmi
-  | CheckedBigIntToBigInt64 | CheckedInt64ToInt32 | CheckedTaggedToTaggedPointer
+  | Allocate | CheckBigInt | CheckIf | CheckSmi | CheckedBigIntToBigInt64
+  | CheckedInt64ToInt32 | CheckedTaggedToTaggedPointer
   | CheckedTaggedToTaggedSigned | CheckedUint32ToInt32 | CheckedUint64ToInt64
   | Deoptimize | SpeculativeToNumber ->
       V1E1C1
@@ -1181,6 +1184,7 @@ let get_kind opcode =
   | TruncateTaggedPointerToBit | TruncateTaggedToBit | TruncateTaggedToWord32
   | Word32ReverseBytes | Word64ReverseBytes ->
       V1
+  | BeginRegion -> E1
   | IfFalse | IfSuccess | IfTrue -> C1
   | AllocateRaw -> V1C1
   | BigIntAdd | BigIntBitwiseAnd | BigIntBitwiseOr | BigIntBitwiseXor
@@ -1219,6 +1223,7 @@ let get_kind opcode =
   | SpeculativeBigIntAsIntN | SpeculativeBigIntAsUintN ->
       B1V1
   | CheckBounds | CheckedUint32Bounds | CheckedUint64Bounds -> B2V1V2E1C1
+  | CheckMaps -> B2V1
   | CheckedInt32Add | CheckedInt32Div | CheckedInt32Sub | CheckedInt64Add
   | CheckedInt64Div | CheckedInt64Mod | CheckedInt64Mul | CheckedInt64Sub
   | CheckedUint32Div | DeoptimizeIf | DeoptimizeUnless
@@ -1270,6 +1275,7 @@ let split_kind kind =
   | B1V1 -> [ B1; V1 ]
   | B2V1V2E1C1 -> [ B2; V1; V2; E1; C1 ]
   | B2 -> [ B2 ]
+  | B2V1 -> [ B2; V1 ]
   | V1V2E1C1 -> [ V1; V2; E1; C1 ]
   | B1V1V2E1C1 -> [ B1; V1; V2; E1; C1 ]
   | B1V1E1C1 -> [ B1; V1; E1; C1 ]
@@ -1303,7 +1309,6 @@ let of_str str =
   | "ArgumentsLength" -> ArgumentsLength
   | "ArgumentsLengthState" -> ArgumentsLengthState
   | "AssertType" -> AssertType
-  | "BeginRegion" -> BeginRegion
   | "BitcastInt32ToFloat32" -> BitcastInt32ToFloat32
   | "BitcastTaggedToWordForTagAndSmiBits" -> BitcastTaggedToWordForTagAndSmiBits
   | "BitcastWordToTaggedSigned" -> BitcastWordToTaggedSigned
@@ -1953,7 +1958,6 @@ let of_str str =
   | "Allocate" -> Allocate
   | "CheckBigInt" -> CheckBigInt
   | "CheckIf" -> CheckIf
-  | "CheckMaps" -> CheckMaps
   | "CheckSmi" -> CheckSmi
   | "CheckedBigIntToBigInt64" -> CheckedBigIntToBigInt64
   | "CheckedInt64ToInt32" -> CheckedInt64ToInt32
@@ -2038,6 +2042,7 @@ let of_str str =
   | "TruncateTaggedToWord32" -> TruncateTaggedToWord32
   | "Word32ReverseBytes" -> Word32ReverseBytes
   | "Word64ReverseBytes" -> Word64ReverseBytes
+  | "BeginRegion" -> BeginRegion
   | "IfFalse" -> IfFalse
   | "IfSuccess" -> IfSuccess
   | "IfTrue" -> IfTrue
@@ -2154,6 +2159,7 @@ let of_str str =
   | "CheckBounds" -> CheckBounds
   | "CheckedUint32Bounds" -> CheckedUint32Bounds
   | "CheckedUint64Bounds" -> CheckedUint64Bounds
+  | "CheckMaps" -> CheckMaps
   | "CheckedInt32Add" -> CheckedInt32Add
   | "CheckedInt32Div" -> CheckedInt32Div
   | "CheckedInt32Sub" -> CheckedInt32Sub
@@ -2217,7 +2223,6 @@ let to_str opcode =
   | ArgumentsLength -> "ArgumentsLength"
   | ArgumentsLengthState -> "ArgumentsLengthState"
   | AssertType -> "AssertType"
-  | BeginRegion -> "BeginRegion"
   | BitcastInt32ToFloat32 -> "BitcastInt32ToFloat32"
   | BitcastTaggedToWordForTagAndSmiBits -> "BitcastTaggedToWordForTagAndSmiBits"
   | BitcastWordToTaggedSigned -> "BitcastWordToTaggedSigned"
@@ -2867,7 +2872,6 @@ let to_str opcode =
   | Allocate -> "Allocate"
   | CheckBigInt -> "CheckBigInt"
   | CheckIf -> "CheckIf"
-  | CheckMaps -> "CheckMaps"
   | CheckSmi -> "CheckSmi"
   | CheckedBigIntToBigInt64 -> "CheckedBigIntToBigInt64"
   | CheckedInt64ToInt32 -> "CheckedInt64ToInt32"
@@ -2952,6 +2956,7 @@ let to_str opcode =
   | TruncateTaggedToWord32 -> "TruncateTaggedToWord32"
   | Word32ReverseBytes -> "Word32ReverseBytes"
   | Word64ReverseBytes -> "Word64ReverseBytes"
+  | BeginRegion -> "BeginRegion"
   | IfFalse -> "IfFalse"
   | IfSuccess -> "IfSuccess"
   | IfTrue -> "IfTrue"
@@ -3068,6 +3073,7 @@ let to_str opcode =
   | CheckBounds -> "CheckBounds"
   | CheckedUint32Bounds -> "CheckedUint32Bounds"
   | CheckedUint64Bounds -> "CheckedUint64Bounds"
+  | CheckMaps -> "CheckMaps"
   | CheckedInt32Add -> "CheckedInt32Add"
   | CheckedInt32Div -> "CheckedInt32Div"
   | CheckedInt32Sub -> "CheckedInt32Sub"

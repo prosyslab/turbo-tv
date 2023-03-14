@@ -389,7 +389,22 @@ let store ptr pos repr value mem state =
   let ub = Bool.not (Memory.can_access_as ptr repr mem) in
   let raw_ptr = ptr |> BitVec.extract 31 0 in
   let mem = mem |> Memory.store_as (Bool.not ub) raw_ptr repr value in
-  state |> State.update ~mem ~ub
+
+  let access =
+    State.AccessInfo.
+      {
+        bid = ptr |> TaggedPointer.bid_of;
+        is_read = true;
+        lower = pos |> TaggedPointer.off_of;
+        upper = BitVec.addi (pos |> TaggedPointer.off_of) (repr |> Repr.size_of);
+      }
+  in
+
+  {
+    state with
+    access_info = State.AccessInfo.add state.State.pc access state.access_info;
+  }
+  |> State.update ~mem ~ub
 
 (* well-defined condition:
  *   IsPointer(ptr) \/
@@ -419,8 +434,21 @@ let load ptr pos repr mem state =
           (value |> Memory.is_angelic mem);
       ]
   in
+  let access =
+    State.AccessInfo.
+      {
+        bid = ptr |> TaggedPointer.bid_of;
+        is_read = true;
+        lower = pos |> TaggedPointer.off_of;
+        upper = BitVec.addi (pos |> TaggedPointer.off_of) (repr |> Repr.size_of);
+      }
+  in
   let is_angelic_value = moved |> Memory.is_angelic mem in
-  { state with assertion = Bool.ands [ state.State.assertion; assertion ] }
+  {
+    state with
+    assertion = Bool.ands [ state.State.assertion; assertion ];
+    access_info = State.AccessInfo.add state.State.pc access state.access_info;
+  }
   |> State.update ~value ~ub ~is_angelic_value
 
 (* machine: type-conversion *)

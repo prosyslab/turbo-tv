@@ -5,7 +5,7 @@ ArgumentsElementsState,
 ArgumentsLength,
 ArgumentsLengthState,
 AssertType,
-BeginRegion,
+BeginRegion,e1
 BigIntAdd,v1,v2
 BigIntBitwiseAnd,v1,v2
 BigIntBitwiseOr,v1,v2
@@ -69,7 +69,7 @@ CheckFloat64Hole,
 CheckHeapObject,
 CheckIf,v1,e1,c1
 CheckInternalizedString,
-CheckMaps,v1,e1,c1
+CheckMaps,b2,v1
 CheckNotTaggedHole,
 CheckNumber,
 CheckReceiver,

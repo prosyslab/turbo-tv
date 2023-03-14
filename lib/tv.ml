@@ -20,9 +20,19 @@ let validator =
   in
   Solver.init_with_tactic tactic
 
-let check_ub_semantic nparams check_type program =
-  let state = Encoder.encode_pgr "test" program ~check_type nparams in
-  let ub = State.ub state in
+let check_ub_semantic nparams scheck_candids check_type program =
+  let state =
+    Encoder.encode_pgr "test" program ~check_type ~scheck_candids nparams
+  in
+  let shedule_check =
+    state.scheck_candids
+    |> List.fold_left
+         (fun res candid ->
+           (candid |> Schedule.can_be_overlapped state.access_info) :: res)
+         []
+    |> Bool.ors
+  in
+  let ub = Bool.ors [ shedule_check; State.ub state ] in
   let mem = State.memory state in
   (* params are tagged /\ not deopt *)
   let precond =

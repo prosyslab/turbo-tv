@@ -87,6 +87,10 @@ let find_by_opcode opcode graph =
     raise (NodeNotFound (Opcode.to_str opcode, reason))
   else node
 
+let find_all_nodes cond graph =
+  G.fold_vertex (fun n found -> if cond n then n :: found else found) graph []
+  |> List.rev
+
 let is_connected start_id end_id graph =
   let rec is_connected_helper present end_id visited graph =
     let next_nodes = G.succ graph present in
@@ -224,6 +228,21 @@ let create_from graph_lines =
 
 let create_from_ir_file ir_file =
   ir_file |> Core.In_channel.read_lines |> create_from
+
+let get_control_flow_graph t =
+  G.fold_vertex
+    (fun node cfg ->
+      G.fold_succ_e
+        (fun edge cfg ->
+          let _, e, _ = edge in
+          if Edge.is_control e then G.add_edge_e cfg edge else cfg)
+        t node cfg)
+    t G.empty
+
+let dominators t =
+  let start_node = find_by_opcode Opcode.Start t in
+  let idom = Dom.compute_idom t start_node in
+  Dom.idom_to_dominators idom
 
 (** Graph Visualization *)
 module Dot = Graph.Graphviz.Dot (struct
