@@ -20,56 +20,58 @@ let validator =
   in
   Solver.init_with_tactic tactic
 
-let check_ub nparams check_type program =
-  let state = Encoder.encode_pgr "test" program ~check_type nparams in
-  let shedule_check =
-    program |> Schedule.find_candids
-    |> List.fold_left
-         (fun res candid ->
-           (candid |> Schedule.can_be_overlapped state.access_info) :: res)
-         []
-    |> Bool.ors
-  in
-  let ub = Bool.ors [ shedule_check; State.ub state ] in
-  let mem = State.memory state in
-  (* params are tagged /\ not deopt *)
-  let precond =
-    let params = State.params state in
-    let params_are_smi_or_heapnumber_or_bigint =
-      List.mapi
-        (fun bid param ->
-          Bool.ors
+(* forall param.
+   (TaggedSigned(param) \/ HeapNumber(param) \/
+    BigInt(param) \/ KnownConstant(param)) *)
+let precondition_for_params nparams state =
+  let mem = Memory.init nparams in
+  let params = Params.init nparams in
+  List.mapi
+    (fun bid param ->
+      Bool.ors
+        [
+          param |> Value.has_type Type.tagged_signed;
+          Bool.ands
             [
-              param |> Value.has_type Type.tagged_signed;
-              Bool.ands
-                [
-                  param |> Objects.is_heap_number mem;
-                  BitVec.eqi (param |> TaggedPointer.off_of) 0;
-                  (* bid 0 is reserved for referenced angelic ptr *)
-                  BitVec.eqi (param |> TaggedPointer.bid_of) (bid + 1);
-                ];
-              Bool.ands
-                [
-                  param |> Objects.is_big_int mem;
-                  BitVec.eqi (param |> TaggedPointer.off_of) 0;
-                  BitVec.eqi (param |> TaggedPointer.bid_of) (bid + 1);
-                ];
-              Bool.ors
-                (List.map (Value.eq param)
-                   (RegisterFile.find_all Constant.names state.register_file));
-            ])
-        params
-      |> Bool.ands
-    in
-    Bool.ands [ params_are_smi_or_heapnumber_or_bigint; Bool.not state.deopt ]
-  in
-  let assertion = Bool.ands [ state.assertion; precond; ub ] in
+              param |> Objects.is_heap_number mem;
+              BitVec.eqi (param |> TaggedPointer.off_of) 0;
+              BitVec.eqi (param |> TaggedPointer.bid_of) (bid + 1);
+            ];
+          Bool.ands
+            [
+              param |> Objects.is_big_int mem;
+              BitVec.eqi (param |> TaggedPointer.off_of) 0;
+              BitVec.eqi (param |> TaggedPointer.bid_of) (bid + 1);
+            ];
+          Bool.ors
+            (List.map (Value.eq param)
+               (RegisterFile.find_all Constant.names state.State.register_file));
+        ])
+    params
+  |> Bool.ands
 
+let check_ub nparams check_type program =
+  let state = Encoder.encode_pgr "pgm" program ~check_type nparams in
+  let precond =
+    (* precondition_for_params /\ not deopt(pgm) *)
+    Bool.ands [ state |> precondition_for_params nparams; Bool.not state.deopt ]
+  in
   if State.not_implemented state then (
     Printf.printf "Result: Not Implemented\n";
     Printf.printf "Opcodes: [%s]\n"
       (String.concat ", " (state.not_implemented_opcodes |> OpcodeSet.to_list)))
   else
+    (* Check: exists params. precond /\ ub) *)
+    let semantic_is_not_uniq =
+      program |> Schedule.find_candids
+      |> List.fold_left
+           (fun res candid ->
+             (candid |> Schedule.can_be_overlapped state.access_info) :: res)
+           []
+      |> Bool.ors
+    in
+    let ub = Bool.ors [ semantic_is_not_uniq; State.ub state ] in
+    let assertion = Bool.ands [ state.assertion; precond; ub ] in
     match Solver.check validator assertion with
     | SATISFIABLE ->
         let model = Option.get (Solver.get_model validator) in
@@ -85,54 +87,24 @@ let check_ub nparams check_type program =
         Printf.printf "Result: Unknown\nReason: %s" reason
 
 let check_eq nparams src_program tgt_program =
-  let src_state = Encoder.encode_pgr "before" src_program nparams in
-  let tgt_state = Encoder.encode_pgr "after" tgt_program nparams in
-
-  (* params are tagged /\ not deopt *)
+  let src_state = Encoder.encode_pgr "src" src_program nparams in
+  let tgt_state = Encoder.encode_pgr "tgt" tgt_program nparams in
   let precond =
-    let params = State.params src_state in
-    let mem = Memory.init nparams in
-    let params_are_smi_or_heapnumber_or_bigint =
-      List.mapi
-        (fun bid param ->
-          Bool.ors
-            [
-              param |> Value.has_type Type.tagged_signed;
-              Bool.ands
-                [
-                  param |> Objects.is_heap_number mem;
-                  BitVec.eqi (param |> TaggedPointer.off_of) 0;
-                  (* bid 0 is reserved for referenced angelic ptr *)
-                  BitVec.eqi (param |> TaggedPointer.bid_of) (bid + 1);
-                ];
-              Bool.ands
-                [
-                  param |> Objects.is_big_int mem;
-                  BitVec.eqi (param |> TaggedPointer.off_of) 0;
-                  BitVec.eqi (param |> TaggedPointer.bid_of) (bid + 1);
-                ];
-              Bool.ors
-                (List.map (Value.eq param)
-                   (RegisterFile.find_all Constant.names src_state.register_file));
-            ])
-        params
-      |> Bool.ands
-    in
+    (* precondition_for_params /\ not (deopt(src) \/ deopt(pgm)) *)
     let no_deopt =
       let src_deopt = State.deopt src_state in
       let tgt_deopt = State.deopt tgt_state in
       Bool.not (Bool.ors [ src_deopt; tgt_deopt ])
     in
-    Bool.ands [ params_are_smi_or_heapnumber_or_bigint; no_deopt ]
+    Bool.ands [ src_state |> precondition_for_params nparams; no_deopt ]
   in
 
   let retval_is_same =
     let src_retval = State.retval src_state in
-    let src_mem = State.memory src_state in
     let tgt_retval = State.retval tgt_state in
+    let src_mem = State.memory src_state in
     let tgt_mem = State.memory tgt_state in
-
-    let is_tagged_signed_or_heap_number_or_float64 mem value =
+    let is_number mem value =
       Bool.ors
         [
           Value.has_type Type.tagged_signed value;
@@ -144,7 +116,6 @@ let check_eq nparams src_program tgt_program =
           Value.has_type Type.float64 value;
         ]
     in
-
     let is_big_int mem value =
       Bool.ands
         [
@@ -152,40 +123,23 @@ let check_eq nparams src_program tgt_program =
           value |> Objects.is_big_int mem;
         ]
     in
-
     Bool.ite
       (Bool.ands
-         [
-           src_retval |> is_tagged_signed_or_heap_number_or_float64 src_mem;
-           tgt_retval |> is_tagged_signed_or_heap_number_or_float64 tgt_mem;
-         ])
+         [ src_retval |> is_number src_mem; tgt_retval |> is_number tgt_mem ])
       (Bool.eq
          (src_retval |> Number.to_float64 src_mem)
          (tgt_retval |> Number.to_float64 tgt_mem))
       (Bool.ite
          (Bool.ands
-            [ is_big_int src_mem src_retval; is_big_int tgt_mem tgt_retval ])
+            [
+              src_retval |> is_big_int src_mem; tgt_retval |> is_big_int tgt_mem;
+            ])
          (let src_big_int = Bigint.load src_retval src_mem in
           let tgt_big_int = Bigint.load tgt_retval tgt_mem in
           Bigint.equal src_big_int tgt_big_int)
          (Bool.eq src_retval tgt_retval))
   in
-
-  let assertion =
-    Bool.ands
-      [
-        State.assertion src_state;
-        State.assertion tgt_state;
-        precond;
-        Bool.not retval_is_same;
-      ]
-  in
-
-  let is_not_implemented =
-    State.not_implemented src_state || State.not_implemented tgt_state
-  in
-
-  if is_not_implemented then (
+  if State.not_implemented src_state || State.not_implemented tgt_state then (
     Printf.printf "Result: Not Implemented\n";
     Printf.printf "Opcodes: [%s]\n"
       (String.concat ", "
@@ -193,6 +147,16 @@ let check_eq nparams src_program tgt_program =
             tgt_state.not_implemented_opcodes
          |> OpcodeSet.to_list)))
   else
+    (* Check: exists params. precond /\ not (retval_is_same) *)
+    let assertion =
+      Bool.ands
+        [
+          State.assertion src_state;
+          State.assertion tgt_state;
+          precond;
+          Bool.not retval_is_same;
+        ]
+    in
     match Solver.check validator assertion with
     | SATISFIABLE ->
         let model = Option.get (Solver.get_model validator) in
