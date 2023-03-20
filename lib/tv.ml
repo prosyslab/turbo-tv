@@ -20,12 +20,10 @@ let validator =
   in
   Solver.init_with_tactic tactic
 
-let check_ub_semantic nparams scheck_candids check_type program =
-  let state =
-    Encoder.encode_pgr "test" program ~check_type ~scheck_candids nparams
-  in
+let check_ub nparams check_type program =
+  let state = Encoder.encode_pgr "test" program ~check_type nparams in
   let shedule_check =
-    state.scheck_candids
+    program |> Schedule.find_candids
     |> List.fold_left
          (fun res candid ->
            (candid |> Schedule.can_be_overlapped state.access_info) :: res)
@@ -86,7 +84,7 @@ let check_ub_semantic nparams scheck_candids check_type program =
         let reason = Z3.Solver.get_reason_unknown validator in
         Printf.printf "Result: Unknown\nReason: %s" reason
 
-let run nparams src_program tgt_program =
+let check_eq nparams src_program tgt_program =
   let src_state = Encoder.encode_pgr "before" src_program nparams in
   let tgt_state = Encoder.encode_pgr "after" tgt_program nparams in
 

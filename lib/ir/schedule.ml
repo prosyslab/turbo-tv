@@ -6,6 +6,11 @@ let read_opcodes = [ Opcode.Load; Opcode.LoadElement; Opcode.LoadField ]
 let write_opcodes = [ Opcode.Store; Opcode.StoreElement; Opcode.StoreField ]
 
 let find_candids (pgr : G.t) =
+  let is_read n =
+    let opcode = Instr.opcode (IR.Node.instr n) in
+    List.fold_left (fun acc op -> acc || opcode = op) false read_opcodes
+  in
+
   let read_nodes =
     pgr
     |> IR.find_all_nodes (fun n ->
@@ -39,7 +44,8 @@ let find_candids (pgr : G.t) =
         let res =
           List.fold_left
             (fun res n2 ->
-              if
+              if is_read n1 && is_read n2 then res
+              else if
                 not
                   (least_ctrl_dom_of_n1_n2 n1 n2
                    |> IR.Node.instr |> Instr.opcode = Opcode.Branch

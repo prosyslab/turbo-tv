@@ -57,7 +57,6 @@ type t = {
   deopt_file : DeoptFile.t;
   is_angelic_value : AngelicFile.t;
   is_angelic_control : AngelicFile.t;
-  scheck_candids : (int * int) list;
   access_info : AccessInfo.t;
   memory : Memory.t;
   params : BitVec.t list;
@@ -98,7 +97,7 @@ let install_constants state =
   in
   { state with memory = mem; register_file = rf }
 
-let init nparams ?scheck_candids ?check_type stage : t =
+let init nparams ?check_type stage : t =
   {
     stage;
     pc = 0;
@@ -106,7 +105,6 @@ let init nparams ?scheck_candids ?check_type stage : t =
     register_file = RegisterFile.init stage RegisterFile.symbol;
     is_angelic_value = AngelicFile.init stage AngelicFile.symbol;
     is_angelic_control = AngelicFile.init stage AngelicFile.symbol;
-    scheck_candids = Option.value scheck_candids ~default:[];
     access_info = AccessInfo.empty;
     control_file = ControlFile.init stage ControlFile.symbol;
     ub_file = UBFile.init stage Ub.symbol;

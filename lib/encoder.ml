@@ -1079,9 +1079,8 @@ let propagate program (state : State.t) =
   state |> State.update ~ub ~deopt
 
 (* encode the program and retrieve a final state *)
-let encode_pgr stage program ?(check_type = false) ?(scheck_candids = [])
-    nparams =
-  let init_state = State.init nparams ~scheck_candids ~check_type stage in
+let encode_pgr stage program ?(check_type = false) nparams =
+  let init_state = State.init nparams ~check_type stage in
   let rec next program state =
     let pc = State.pc state in
     let next_state = state |> encode_instr program |> propagate program in
