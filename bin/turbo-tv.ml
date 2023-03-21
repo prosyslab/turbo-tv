@@ -44,9 +44,11 @@ let not_target_op_exists pgm =
   (* ignore every program containing 'Loop' or JS operator except the 'JSStackCheck' *)
   IR.G.fold_vertex
     (fun n res ->
+      let opcode_str = n |> IR.Node.instr |> Instr.opcode |> Opcode.to_str in
       res
-      || snd n |> Instr.opcode |> Opcode.to_str
-         |> String.starts_with ~prefix:"JS")
+      || opcode_str |> String.starts_with ~prefix:"JS"
+         && opcode_str <> "JSStackCheck"
+      || Utils.contains opcode_str "Loop")
     pgm false
 
 let main () =
