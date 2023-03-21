@@ -33,7 +33,7 @@ let i32_to_tagged_signed i =
 
 let f_to_f64_value f = f |> Value.from_f64string |> Value.cast Type.float64
 
-let f_to_heap_number ns = ns |> HeapNumber.from_number_string
+let f_to_heap_number ns = ns |> Heapnumber.from_number_string
 
 let u32_to_u32_value u = u |> Value.from_int |> Value.cast Type.uint32
 

@@ -1,6 +1,6 @@
 open Z3utils
 open ValueOperator
-module HeapNumber = Objects.HeapNumber
+module Objects = Memory.Objects
 
 (* Number ::= TaggedSigned | HeapNumber | Int32 | Uint32 | Float64 *)
 let is_number value mem =
@@ -23,7 +23,7 @@ let are_numbers values mem =
   Bool.ands (values |> List.rev_map (fun value -> is_number value mem))
 
 let to_float64 mem number =
-  let heap_number = HeapNumber.load number mem in
+  let heap_number = Heapnumber.load number mem in
   Bool.ite
     (number |> Value.has_type Type.int32)
     (number |> Int32.to_float64)
@@ -36,7 +36,7 @@ let to_float64 mem number =
           (Bool.ite
              (number |> Value.has_type Type.tagged_signed)
              (number |> TaggedSigned.to_float64)
-             (heap_number |> HeapNumber.to_float64))))
+             (heap_number |> Heapnumber.to_float64))))
 
 let to_boolean mem number =
   let number_f64 = number |> to_float64 mem in
@@ -80,7 +80,7 @@ let to_uint32 mem number =
 
 (* check *)
 let is_integer mem number =
-  let heap_number = HeapNumber.load number mem in
+  let heap_number = Heapnumber.load number mem in
   Bool.ite
     (Bool.ors
        [
@@ -92,7 +92,7 @@ let is_integer mem number =
     (Bool.ite
        (number |> Value.has_type Type.float64)
        (number |> Float64.is_integer)
-       (heap_number |> HeapNumber.is_integer))
+       (heap_number |> Heapnumber.is_integer))
 
 let is_safe_integer mem number =
   number |> to_float64 mem |> Float64.is_safe_integer
@@ -110,6 +110,7 @@ let is_nan mem number =
 
 (* comparison *)
 let equal lnum rnum mem =
+  print_endline "In Number.equal";
   let lnum_f64 = lnum |> to_float64 mem in
   let rnum_f64 = rnum |> to_float64 mem in
   (* https://tc39.es/ecma262/#sec-numeric-types-number-equal *)

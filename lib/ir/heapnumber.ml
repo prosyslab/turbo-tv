@@ -1,7 +1,6 @@
 open Z3utils
 open ValueOperator
 
-module HeapNumber = struct
   type t = { map : BitVec.t; value : BitVec.t }
 
   let number_len = 64
@@ -113,68 +112,4 @@ module HeapNumber = struct
     in
 
     Format.sprintf "HeapNumber(%s)" f_str
-end
 
-let map_of ptr mem = Memory.load (ptr |> TaggedPointer.to_raw_pointer) 4 mem
-
-let has_map_of map mem ptr = Bool.eq (map_of ptr mem) map
-
-let is_big_int mem ptr =
-  Bool.ands
-    [
-      ptr |> Value.has_type Type.tagged_pointer;
-      ptr |> has_map_of Objmap.big_int_map mem;
-    ]
-
-let is_boolean mem ptr =
-  Bool.ands
-    [
-      ptr |> Value.has_type Type.tagged_pointer;
-      ptr |> has_map_of Objmap.boolean_map mem;
-    ]
-
-let is_heap_number mem ptr =
-  Bool.ands
-    [
-      ptr |> Value.has_type Type.tagged_pointer;
-      ptr |> has_map_of Objmap.heap_number_map mem;
-    ]
-
-let is_null mem ptr =
-  Bool.ands
-    [
-      ptr |> Value.has_type Type.tagged_pointer;
-      ptr |> has_map_of Objmap.null_map mem;
-    ]
-
-let is_undefined mem ptr =
-  Bool.ands
-    [
-      ptr |> Value.has_type Type.tagged_pointer;
-      ptr |> has_map_of Objmap.undefined_map mem;
-    ]
-
-let is_string mem ptr =
-  Bool.ands
-    [
-      ptr |> Value.has_type Type.tagged_pointer;
-      ptr |> has_map_of Objmap.string_map mem;
-    ]
-
-let are_heap_nubmer mem ptrs =
-  Bool.ands (List.map (has_map_of Objmap.heap_number_map mem) ptrs)
-
-let to_string model mem ptr =
-  let map = map_of ptr mem in
-  let map_str = map |> Objmap.to_string model in
-  match map_str with
-  | "heap_number" ->
-      let obj = HeapNumber.load ptr mem in
-      HeapNumber.to_string model obj
-  | "big_int" ->
-      let obj = Bigint.load ptr mem in
-      Bigint.to_string model obj
-  | "string" ->
-      let obj = Strings.load ptr mem in
-      Strings.to_string model obj
-  | s -> s ^ " object: not implemented yet"

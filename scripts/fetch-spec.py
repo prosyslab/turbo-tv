@@ -8,7 +8,7 @@ OPCODE_WKSHT_NAMES = [
 SPECS_P = Path().cwd() / "specs"
 
 
-def fetch_spec(gc: gspread.Client) -> dict[str:str]:
+def fetch_spec(gc: gspread.Client):
     opcodes_sht = gc.open("Turbofan Opcodes")
     wkshts = [opcodes_sht.worksheet(name) for name in OPCODE_WKSHT_NAMES]
     spec = {}
@@ -31,7 +31,7 @@ def fetch_spec(gc: gspread.Client) -> dict[str:str]:
     return spec
 
 
-def emit_spec(spec: dict[str:str], name: str) -> None:
+def emit_spec(spec, name):
     spec = sorted(spec.items())
     output = "\n".join([f"{opcode},{args}" for opcode, args in spec])
 

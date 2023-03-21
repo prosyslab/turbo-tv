@@ -1,6 +1,6 @@
 open Z3utils
 open ValueOperator
-module HeapNumber = Objects.HeapNumber
+module Objects = Memory.Objects
 module Repr = MachineType.Repr
 
 (* helper functions *)
@@ -327,7 +327,11 @@ let number_same_value lnum rnum mem state =
   state |> State.update ~value
 
 let reference_equal lval rval mem state =
+  (* print_endline " In reference_equal";
+     print_endline (lval |> Expr.to_simplified_string);
+     print_endline (rval |> Expr.to_simplified_string); *)
   let rf = state.State.register_file in
+
   let is_heap_number_or_f64 value =
     Bool.ors
       [
@@ -335,17 +339,28 @@ let reference_equal lval rval mem state =
         value |> Objects.is_heap_number mem;
       ]
   in
+  (* print_endline "equal result"; *)
+  (* print_endline (is_heap_number_or_f64 lval |> Expr.to_simplified_string);
+     print_endline (is_heap_number_or_f64 rval |> Expr.to_simplified_string); *)
+  (* print_endline
+     (Bool.ands [ is_heap_number_or_f64 lval; is_heap_number_or_f64 rval ]
+     |> Expr.to_simplified_string); *)
   let value =
-    Bool.ite
-      (Bool.ands [ is_heap_number_or_f64 lval; is_heap_number_or_f64 rval ])
-      (Number.equal lval rval mem)
-      (Bool.ite
-         (Bool.ors [ is_heap_number_or_f64 lval; is_heap_number_or_f64 rval ])
-         Value.fl
-         (Bool.ite
-            (TaggedSigned.eq_with_heap_constant lval rval rf)
-            Value.tr
-            (Bool.ite (Word32.eq lval rval) Value.tr Value.fl)))
+    if Strings.is_string lval mem && Strings.is_string rval mem then
+      Strings.equal lval rval mem
+    else if Strings.is_string lval mem || Strings.is_string rval mem then
+      Value.fl
+    else
+      Bool.ite
+        (Bool.ands [ is_heap_number_or_f64 lval; is_heap_number_or_f64 rval ])
+        (Number.equal lval rval mem)
+        (Bool.ite
+           (Bool.ors [ is_heap_number_or_f64 lval; is_heap_number_or_f64 rval ])
+           Value.fl
+           (Bool.ite
+              (TaggedSigned.eq_with_heap_constant lval rval rf)
+              Value.tr
+              (Bool.ite (Word32.eq lval rval) Value.tr Value.fl)))
   in
   state |> State.update ~value
 
@@ -670,9 +685,13 @@ let string_binary op lval rval mem state =
   state |> State.update ~value ~mem
 
 let string_length pval mem state =
-  let p_bn = Strings.load pval mem in
-  let value = Strings.get_length p_bn in
-  state |> State.update ~value ~mem
+  print_endline "In string_length";
+  print_endline (pval |> Expr.to_string);
+  if pval |> Value.has_type Type.tagged_pointer |> B.is_true = true then
+    let p_bn = Strings.load pval mem in
+    let value = Strings.get_length p_bn in
+    state |> State.update ~value ~mem
+  else state |> State.update ~mem
 
 let string_concat fst snd lst mem state =
   let snd_bn = Strings.load snd mem in
@@ -854,7 +873,7 @@ let checked_tagged_to_float64 hint pval mem state =
   let value =
     Bool.ite is_tagged_signed
       (TaggedSigned.to_float64 pval)
-      (HeapNumber.load pval mem |> HeapNumber.to_float64)
+      (Heapnumber.load pval mem |> Heapnumber.to_float64)
   in
   state |> State.update ~value ~deopt
 
@@ -866,7 +885,7 @@ let checked_tagged_to_int64 _hint pval mem state =
   let value =
     Bool.ite is_tagged_signed
       (TaggedSigned.to_int64 pval)
-      (HeapNumber.load pval mem |> HeapNumber.to_int64)
+      (Heapnumber.load pval mem |> Heapnumber.to_int64)
   in
   state |> State.update ~value ~deopt
 

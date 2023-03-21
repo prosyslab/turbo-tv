@@ -1,5 +1,21 @@
 open Z3utils
 open ValueOperator
+module Objects = Memory.Objects 
+let to_string model mem ptr =
+  let map = Objects.map_of ptr mem in
+  let map_str = map |> Objmap.to_string model in
+  match map_str with
+  | "heap_number" ->
+      let obj = Heapnumber.load ptr mem in
+      Heapnumber.to_string model obj
+  | "big_int" ->
+      let obj = Bigint.load ptr mem in
+      Bigint.to_string model obj
+  | "string" ->
+      let obj = Strings.load ptr mem in
+      Strings.to_string model obj
+  | s -> s ^ " object: not implemented yet"
+
 
 let value_to_string model rf mem value =
   let ty_str = value |> Value.ty_of |> Type.to_string model in
@@ -18,7 +34,7 @@ let value_to_string model rf mem value =
         (value |> TaggedPointer.to_string model)
         (if value |> Constant.is_constant_ptr model rf then
          value |> Constant.to_string model rf
-        else Objects.to_string model mem value)
+        else to_string model mem value)
   | "any_tagged" -> (
       try
         let is_tagged_signed =
@@ -29,7 +45,7 @@ let value_to_string model rf mem value =
         else
           Format.sprintf "%s => %s"
             (value |> TaggedPointer.to_string model)
-            (Objects.to_string model mem value)
+            (to_string model mem value)
       with _ -> value |> Model.eval model |> Expr.to_simplified_string)
   | "map_in_header" -> value |> MapInHeader.to_string model
   | "undefined" -> "undefined"

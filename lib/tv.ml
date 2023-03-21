@@ -1,6 +1,6 @@
 module Params = State.Params
-module HeapNumber = Objects.HeapNumber
 module OpcodeSet = State.OpcodeSet
+module Objects = Memory.Objects
 open ValueOperator
 open Z3utils
 
@@ -40,6 +40,12 @@ let precondition_for_params nparams state =
           Bool.ands
             [
               param |> Objects.is_big_int mem;
+              BitVec.eqi (param |> TaggedPointer.off_of) 0;
+              BitVec.eqi (param |> TaggedPointer.bid_of) (bid + 1);
+            ];
+          Bool.ands
+            [
+              param |> Objects.is_string mem;
               BitVec.eqi (param |> TaggedPointer.off_of) 0;
               BitVec.eqi (param |> TaggedPointer.bid_of) (bid + 1);
             ];

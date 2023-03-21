@@ -10,7 +10,7 @@
   instr
   ;ir
   IR
-  objects
+  heapnumber
   number
   constant
   control
@@ -29,6 +29,7 @@
   exprMap
   bigint
   strings
+  newmem
   ;tv
   encoder
   tv

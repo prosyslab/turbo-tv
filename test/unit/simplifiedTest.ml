@@ -46,19 +46,19 @@ let number_to_uint32_tests =
       4294967295;
     number_to_uint32_eq_test (apply ("4294967297.0" |> f_to_f64_value)) 1;
     number_to_uint32_eq_test
-      (apply ("-1.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      (apply ("-1.0" |> f_to_heap_number |> Heapnumber.to_float64))
       4294967295;
     number_to_uint32_eq_test
-      (apply ("0.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      (apply ("0.0" |> f_to_heap_number |> Heapnumber.to_float64))
       0;
     number_to_uint32_eq_test
-      (apply ("-0.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      (apply ("-0.0" |> f_to_heap_number |> Heapnumber.to_float64))
       0;
     number_to_uint32_eq_test
-      (apply ("1.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      (apply ("1.0" |> f_to_heap_number |> Heapnumber.to_float64))
       1;
     number_to_uint32_eq_test
-      (apply ("4294967295.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      (apply ("4294967295.0" |> f_to_heap_number |> Heapnumber.to_float64))
       4294967295;
     number_to_uint32_eq_test (apply (u32_to_u32_value 0)) 0;
     number_to_uint32_eq_test (apply (u32_to_u32_value 1)) 1;
@@ -89,19 +89,19 @@ let number_to_int32_tests =
       4294967295;
     number_to_int32_eq_test (apply ("4294967297.0" |> f_to_f64_value)) 1;
     number_to_int32_eq_test
-      (apply ("-1.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      (apply ("-1.0" |> f_to_heap_number |> Heapnumber.to_float64))
       (-1);
     number_to_int32_eq_test
-      (apply ("-0.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      (apply ("-0.0" |> f_to_heap_number |> Heapnumber.to_float64))
       0;
     number_to_int32_eq_test
-      (apply ("0.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      (apply ("0.0" |> f_to_heap_number |> Heapnumber.to_float64))
       0;
     number_to_int32_eq_test
-      (apply ("1.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      (apply ("1.0" |> f_to_heap_number |> Heapnumber.to_float64))
       1;
     number_to_int32_eq_test
-      (apply ("4294967295.0" |> f_to_heap_number |> HeapNumber.to_float64))
+      (apply ("4294967295.0" |> f_to_heap_number |> Heapnumber.to_float64))
       4294967295;
     number_to_int32_eq_test (apply (u32_to_u32_value 0)) 0;
     number_to_int32_eq_test (apply (u32_to_u32_value 1)) 1;

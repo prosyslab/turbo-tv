@@ -36,6 +36,8 @@ module Expr = struct
   let print exp = exp |> to_string |> print_endline
 
   let print_simplified exp = exp |> simplify None |> to_string |> print_endline
+
+  let get_sort exp = E.get_sort exp
 end
 
 module Tactic = struct
@@ -99,6 +101,8 @@ module Bool = struct
   let tr = B.mk_true ctx
 
   let fl = B.mk_false ctx
+
+  let mk_val bl = B.mk_val ctx bl
 
   (* logical operation *)
   let and_ lexp rexp = B.mk_and ctx [ lexp; rexp ]
@@ -298,7 +302,7 @@ module BitVec = struct
 
   let init ?(len = !bvlen) name = BV.mk_const_s ctx name len
 
-  let length_of bv = bv |> E.get_sort |> BV.get_size
+  let length_of bv = bv |> Expr.get_sort |> BV.get_size
 
   let mk_sort sz = BV.mk_sort ctx sz
 
@@ -562,14 +566,38 @@ module Real = struct
   let to_integer t = R.mk_real2int ctx t
 end
 
-let sort_equal e1 e2 = Z3.Sort.equal (Z3.Expr.get_sort e1) (Z3.Expr.get_sort e2)
+let sort_equal e1 e2 = Z3.Sort.equal (Expr.get_sort e1) (Expr.get_sort e2)
+
+module SeqVal = struct
+  type t = E.expr
+end
 
 module Seq = struct
   type t = E.expr
 
-  let init name domain range = A.mk_const_s ctx name domain range
+  let mk_sort = SQ.mk_string_sort ctx
 
-  let store value key arr = A.mk_store ctx arr key value
+  let init name = E.mk_const_s ctx name mk_sort
 
-  let select key arr = A.mk_select ctx arr key
+  let is_seq_sort sort = SQ.is_seq_sort ctx sort
+
+  let is_string sq = SQ.is_string ctx sq
+
+  let from_string s = SQ.mk_string ctx s
+
+  let concat s_l = SQ.mk_seq_concat ctx s_l
+
+  let extract sq i len = SQ.mk_seq_extract ctx i sq len
+
+  let replace i lsq rsq = SQ.mk_seq_replace ctx i lsq rsq
+
+  let length_of sq = SQ.mk_seq_length ctx sq
+
+  let get_string sq = SQ.get_string ctx sq
+
+  let string_to_int sq = SQ.mk_str_to_int ctx sq
+
+  let le lsq rsq = SQ.mk_str_le ctx lsq rsq
+
+  let lt lsq rsq = SQ.mk_str_lt ctx lsq rsq
 end

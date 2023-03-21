@@ -1,6 +1,5 @@
 open Z3utils
 open ValueOperator
-module HeapNumber = Objects.HeapNumber
 module Repr = MachineType.Repr
 
 (* machine: arithmetic *)

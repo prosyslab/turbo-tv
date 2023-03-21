@@ -1,7 +1,7 @@
 open Z3utils
 open ValueOperator
 module Boundary = Types.Boundary
-module HeapNumber = Objects.HeapNumber
+module Objects = Memory.Objects
 
 let rec verify (value : Value.t) (ty : Types.t) mem =
   match ty with
@@ -125,7 +125,11 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                                (value |> Value.has_type Type.float64)
                                value
                                (Bool.ite
-                                  (Bool.ands
+                                  (print_endline
+                                     "!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`";
+                                   print_endline
+                                     (value |> Expr.to_simplified_string);
+                                   Bool.ands
                                      [
                                        value
                                        |> Value.has_type Type.tagged_pointer;

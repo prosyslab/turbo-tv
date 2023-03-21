@@ -1,7 +1,6 @@
 open Z3utils
 open ValueOperator
 module ControlTuple = Control.ControlTuple
-module HeapNumber = Objects.HeapNumber
 
 (* common: constants *)
 (* assertion: value = c *)
@@ -158,6 +157,8 @@ let end_ retvals _retmems retctrls state =
 
 let parameter param state =
   let value = param in
+  print_endline "In Parameter";
+  print_endline (value |> Expr.to_simplified_string);
   state |> State.update ~value
 
 let return return_value return_control state =
@@ -198,15 +199,20 @@ let call fname n_return args control state =
   let normalized_args =
     args
     |> List.map (fun arg ->
-           Bool.ite
-             (* TaggedSigned | HeapNumber | Int32 | Uint32 | Float64 *)
-             (Number.is_number arg state.State.memory)
-             (arg |> Number.to_float64 state.State.memory)
-             (* Int64 *)
-             (Bool.ite
-                (arg |> Value.has_type Type.int64)
-                (Int64.div arg (Int64.of_int 2) |> Int64.to_float64)
-                arg))
+           print_endline "check_arg";
+           print_endline
+             (Strings.is_string arg state.State.memory |> string_of_bool);
+           if Strings.is_string arg state.State.memory = true then arg
+           else
+             Bool.ite
+               (* TaggedSigned | HeapNumber | Int32 | Uint32 | Float64 *)
+               (Number.is_number arg state.State.memory)
+               (arg |> Number.to_float64 state.State.memory)
+               (* Int64 *)
+               (Bool.ite
+                  (arg |> Value.has_type Type.int64)
+                  (Int64.div arg (Int64.of_int 2) |> Int64.to_float64)
+                  arg))
   in
   let return = Z3.FuncDecl.apply f_decl normalized_args in
   let value =

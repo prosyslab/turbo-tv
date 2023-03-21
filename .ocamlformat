@@ -44,4 +44,3 @@ break-infix=wrap
 break-fun-sig=wrap
 break-fun-decl=wrap
 break-cases=fit
-assignment-operator=end-line
