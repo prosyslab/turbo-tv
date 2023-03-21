@@ -22,7 +22,6 @@ let size_of bid t = Array.select bid t.bsizes
 module Bytes = struct
   (* Load [value] at block of [ptr] with the size [sz]*)
   let load ptr sz t =
-    print_endline "In Memory.Bytes.load";
     let rec aux res loaded_sz ptr =
       if loaded_sz = sz then res
       else
@@ -54,50 +53,17 @@ module Bytes = struct
 end
 
 module Strings = struct
-  (* let load ptr sz t =
-     print_endline "In Memory.Strings.load";
-     let str =
-       Array.select
-         (BitVec.ori
-            (BitVec.shli (TaggedPointer.bid_of ptr |> BitVec.zero_extend 24) 24)
-            4)
-         t.strings
-     in
-     Seq.extract str
-       (ptr |> TaggedPointer.off_of |> Expr.to_simplified_string
-      |> Seq.from_string |> Seq.string_to_int)
-       (sz |> string_of_int |> Seq.from_string |> Seq.string_to_int) *)
-
-  (* let load_as ptr repr mem =
-     let load_size = MachineType.Repr.size_of repr in
-     load ptr load_size mem *)
-
-  let load ptr t =
-    print_endline "In Memory.Strings.load";
-    print_endline
-      (Array.select ptr t.strings |> Expr.get_sort |> Z3.Sort.to_string);
-    (* print_endline (Array.select ptr t.strings |> Seq.is_string |> string_of_bool); *)
-    (* print_endline (Array.select ptr t.strings |> Seq.get_string); *)
-    Array.select ptr t.strings
-
-  let load_as ptr mem = load ptr mem
+  let load ptr t = Array.select ptr t.strings
 
   let store cond ptr value t =
-    print_endline "In Memory.Strings.store";
     let updated_mem =
       Bool.ite cond (Array.store value ptr t.strings) t.strings
     in
     { t with strings = updated_mem }
-
-  let store_as cond ptr _ value mem = store cond ptr value mem
 end
 
 module Objects = struct
-  let map_of ptr mem =
-    print_endline
-      (Bytes.load (ptr |> TaggedPointer.to_raw_pointer) 4 mem
-      |> Expr.to_simplified_string);
-    Bytes.load (ptr |> TaggedPointer.to_raw_pointer) 4 mem
+  let map_of ptr mem = Bytes.load (ptr |> TaggedPointer.to_raw_pointer) 4 mem
   (* let map_of ptr mem = Bytes.load ptr 4 mem *)
 
   let has_map_of map mem ptr = Bool.eq (map_of ptr mem) map
@@ -138,18 +104,6 @@ module Objects = struct
       ]
 
   let is_string mem ptr =
-    (* print_endline (ptr |> Expr.to_simplified_string);
-       print_endline (TaggedPointer.bid_of ptr |> Expr.to_simplified_string);
-       print_endline
-         (BitVec.shli (BitVec.zero_extend 24 (TaggedPointer.bid_of ptr)) 24
-         |> Expr.to_simplified_string);
-       Bool.ands
-         [
-           BitVec.shli (TaggedPointer.bid_of ptr |> BitVec.zero_extend 24) 24
-           |> Value.has_type Type.tagged_pointer;
-           BitVec.shli (TaggedPointer.bid_of ptr |> BitVec.zero_extend 24) 24
-           |> has_map_of Objmap.string_map mem;
-         ] *)
     Bool.ands
       [
         ptr |> Value.has_type Type.tagged_pointer;
@@ -175,7 +129,7 @@ let init nparams =
     Z3.Z3Array.mk_const_array ctx (BitVec.mk_sort TaggedPointer.bid_len) Bool.tr
   in
   let strings =
-    Array.init "string_mem" (BitVec.mk_sort TaggedPointer.ptr_len) Seq.mk_sort
+    Array.init "string_mem" (BitVec.mk_sort TaggedPointer.ptr_len) Str.sort
   in
   { bytes; bsizes; is_angelic; strings; next_bid = nparams + 1 }
 
@@ -201,84 +155,6 @@ let allocate ?(angelic = Bool.fl) size t =
     }
   in
   (TaggedPointer.init bid, memory)
-
-let load ptr sz mem =
-  print_endline "In Memory.load";
-  print_endline "check map";
-
-  print_endline (ptr |> Expr.to_simplified_string);
-  (* print_endline
-       (BitVec.addi
-          (BitVec.shli (TaggedPointer.bid_of ptr |> BitVec.zero_extend 24) 24)
-          1
-       |> Expr.to_simplified_string); *)
-  print_endline "check if";
-  print_endline
-    (BitVec.addi (TaggedPointer.off_of ptr) 1
-    |> BitVec.zero_extend 8 |> Int32.is_zero |> Expr.simplify None |> B.is_true
-    |> string_of_bool);
-  (* print_endline
-     (BitVec.addi
-        (BitVec.shli (TaggedPointer.bid_of ptr |> BitVec.zero_extend 24) 24)
-        1
-     |> Objects.has_map_of Objmap.string_map mem
-     |> Expr.to_simplified_string); *)
-  if
-    BitVec.addi (TaggedPointer.off_of ptr) 1
-    |> BitVec.zero_extend 8 |> Int32.is_zero |> Expr.simplify None |> B.is_true
-    = true
-  then Bytes.load ptr sz mem
-  else if
-    BitVec.addi
-      (BitVec.shli (TaggedPointer.bid_of ptr |> BitVec.zero_extend 24) 24)
-      1
-    |> Objects.has_map_of Objmap.string_map mem
-    |> Expr.simplify None |> B.is_true = true
-    (* then Strings.load ptr sz mem *)
-  then Strings.load ptr mem
-  else Bytes.load ptr sz mem
-
-let load_as ptr repr mem =
-  (* print_endline "check map";
-
-     print_endline (ptr |> Expr.to_simplified_string);
-     print_endline
-       (BitVec.addi
-          (BitVec.shli (TaggedPointer.bid_of ptr |> BitVec.zero_extend 24) 24)
-          1
-       |> Expr.to_simplified_string);
-     print_endline "check if";
-     print_endline
-       (BitVec.addi (TaggedPointer.off_of ptr) 1 |> Expr.to_simplified_string);
-     print_endline
-       (BitVec.addi
-          (BitVec.shli (TaggedPointer.bid_of ptr |> BitVec.zero_extend 24) 24)
-          1
-       |> Objects.has_map_of Objmap.string_map mem
-       |> Expr.to_simplified_string); *)
-  if BV.is_bv_zeroextension (BitVec.addi (TaggedPointer.off_of ptr) 1) = true
-  then Bytes.load_as ptr repr mem
-  else if
-    BitVec.addi
-      (BitVec.shli (TaggedPointer.bid_of ptr |> BitVec.zero_extend 24) 24)
-      1
-    |> Objects.has_map_of Objmap.string_map mem
-    |> Expr.simplify None |> B.is_true = true
-    (* then Strings.load_as ptr repr mem *)
-  then Strings.load_as ptr mem
-  else Bytes.load_as ptr repr mem
-
-let store cond ptr sz value t =
-  print_endline "In Memory.store";
-  print_endline (ptr |> Expr.to_simplified_string);
-  if value |> Seq.is_string = true then Strings.store cond ptr value t
-  else Bytes.store cond ptr sz value t
-
-let store_as cond ptr repr value mem =
-  if value |> Seq.is_string = true then Strings.store cond ptr value mem
-  else
-    let store_size = MachineType.Repr.size_of repr in
-    Bytes.store cond ptr store_size value mem
 
 let can_access ptr sz t =
   (* no out-of-bounds *)

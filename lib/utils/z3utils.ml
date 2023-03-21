@@ -566,29 +566,12 @@ module Real = struct
   let to_integer t = R.mk_real2int ctx t
 end
 
-let sort_equal e1 e2 = Z3.Sort.equal (Expr.get_sort e1) (Expr.get_sort e2)
-
-module SeqVal = struct
-  type t = E.expr
-end
-
 module Seq = struct
   type t = E.expr
 
-  let char_len = 8
+  let empty sort = SQ.mk_seq_empty ctx sort
 
-  let sort = SQ.mk_seq_sort ctx (BitVec.mk_sort char_len)
-
-  let empty = SQ.mk_seq_empty ctx sort
-
-  let init name = E.mk_const_s ctx name sort
-
-  let from_char c =
-    SQ.mk_seq_unit ctx (BitVecVal.from_int ~len:char_len (c |> Char.code))
-
-  let is_seq_sort sort = SQ.is_seq_sort ctx sort
-
-  let is_string sq = SQ.is_string ctx sq
+  let init name sort = E.mk_const_s ctx name sort
 
   let concat s_l = SQ.mk_seq_concat ctx s_l
 
@@ -601,6 +584,39 @@ module Seq = struct
   let replace i lsq rsq = SQ.mk_seq_replace ctx i lsq rsq
 
   let length sq = SQ.mk_seq_length ctx sq
+end
+
+module Str = struct
+  let char_len = 8
+
+  let char_sort = BitVec.mk_sort char_len
+
+  let sort = SQ.mk_seq_sort ctx char_sort
+
+  let empty = Seq.empty sort
+
+  let init name = E.mk_const_s ctx name sort
+
+  let from_char c =
+    SQ.mk_seq_unit ctx (BitVecVal.from_int ~len:char_len (c |> Char.code))
+
+  let concat = Seq.concat
+
+  let extract = Seq.extract
+
+  let nth = Seq.nth
+
+  let nthi = Seq.nthi
+
+  let replace = Seq.replace
+
+  let length = Seq.length
+
+  let to_int s = SQ.mk_str_to_int ctx s
+
+  let le ls rs = SQ.mk_str_le ctx ls rs
+
+  let lt ls rs = SQ.mk_str_lt ctx ls rs
 
   let from_string s =
     if s = "" then SQ.mk_seq_empty ctx sort
@@ -608,13 +624,19 @@ module Seq = struct
       let chars =
         s |> String.fold_left (fun acc c -> (c |> from_char) :: acc) []
       in
-      concat (chars |> List.rev)
+      Seq.concat (chars |> List.rev)
 
-  let get_string sq = SQ.get_string ctx sq
+  let to_bv l s =
+    let base = BitVecVal.zero ~len:(l * char_len) () in
+    let rec aux acc i =
+      if i = l then acc
+      else
+        let c = nthi s i in
+        aux (BitVec.orb acc (BitVec.shli c (i * char_len))) (i + 1)
+    in
+    aux base 0
 
-  let string_to_int sq = SQ.mk_str_to_int ctx sq
-
-  let le lsq rsq = SQ.mk_str_le ctx lsq rsq
-
-  let lt lsq rsq = SQ.mk_str_lt ctx lsq rsq
+  let get_string s = SQ.get_string ctx s
 end
+
+let sort_equal e1 e2 = Z3.Sort.equal (Expr.get_sort e1) (Expr.get_sort e2)

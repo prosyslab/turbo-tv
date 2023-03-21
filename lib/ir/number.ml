@@ -110,7 +110,6 @@ let is_nan mem number =
 
 (* comparison *)
 let equal lnum rnum mem =
-  print_endline "In Number.equal";
   let lnum_f64 = lnum |> to_float64 mem in
   let rnum_f64 = rnum |> to_float64 mem in
   (* https://tc39.es/ecma262/#sec-numeric-types-number-equal *)

@@ -125,11 +125,7 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                                (value |> Value.has_type Type.float64)
                                value
                                (Bool.ite
-                                  (print_endline
-                                     "!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~`";
-                                   print_endline
-                                     (value |> Expr.to_simplified_string);
-                                   Bool.ands
+                                  (Bool.ands
                                      [
                                        value
                                        |> Value.has_type Type.tagged_pointer;

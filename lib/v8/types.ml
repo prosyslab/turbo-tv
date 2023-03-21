@@ -148,7 +148,6 @@ let rec of_string str =
          env ty_str)
         .ty_elems
     in
-    (* List.iter print_endline result; *)
     result
   in
 

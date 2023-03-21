@@ -327,11 +327,7 @@ let number_same_value lnum rnum mem state =
   state |> State.update ~value
 
 let reference_equal lval rval mem state =
-  (* print_endline " In reference_equal";
-     print_endline (lval |> Expr.to_simplified_string);
-     print_endline (rval |> Expr.to_simplified_string); *)
   let rf = state.State.register_file in
-
   let is_heap_number_or_f64 value =
     Bool.ors
       [
@@ -339,12 +335,6 @@ let reference_equal lval rval mem state =
         value |> Objects.is_heap_number mem;
       ]
   in
-  (* print_endline "equal result"; *)
-  (* print_endline (is_heap_number_or_f64 lval |> Expr.to_simplified_string);
-     print_endline (is_heap_number_or_f64 rval |> Expr.to_simplified_string); *)
-  (* print_endline
-     (Bool.ands [ is_heap_number_or_f64 lval; is_heap_number_or_f64 rval ]
-     |> Expr.to_simplified_string); *)
   let value =
     if Strings.is_string lval mem && Strings.is_string rval mem then
       Strings.equal lval rval mem
@@ -411,7 +401,7 @@ let load_field offset repr ptr _eff control mem state =
   let raw_ptr = moved |> TaggedPointer.to_raw_pointer in
   let ty = Type.from_repr repr |> List.hd in
   let value =
-    Memory.load_as raw_ptr repr mem
+    Memory.Bytes.load_as raw_ptr repr mem
     |> BitVec.zero_extend (64 - Repr.width_of repr)
     |> Value.entype ty
   in
@@ -467,7 +457,7 @@ let store_field ptr offset repr value _eff control mem state =
   let ptr = TaggedPointer.move ptr off in
   let ub = Bool.not (Memory.can_access_as ptr repr mem) in
   let raw_ptr = ptr |> TaggedPointer.to_raw_pointer in
-  let mem = Memory.store_as (Bool.not ub) raw_ptr repr value mem in
+  let mem = Memory.Bytes.store_as (Bool.not ub) raw_ptr repr value mem in
   state |> State.update ~control ~mem ~ub
 
 (* simplified: type-check *)
@@ -685,8 +675,6 @@ let string_binary op lval rval mem state =
   state |> State.update ~value ~mem
 
 let string_length pval mem state =
-  print_endline "In string_length";
-  print_endline (pval |> Expr.to_string);
   if pval |> Value.has_type Type.tagged_pointer |> B.is_true = true then
     let p_bn = Strings.load pval mem in
     let value = Strings.get_length p_bn in

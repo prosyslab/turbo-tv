@@ -29,7 +29,6 @@
   exprMap
   bigint
   strings
-  newmem
   ;tv
   encoder
   tv

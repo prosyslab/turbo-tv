@@ -36,12 +36,12 @@ let allocate t mem =
   let raw_ptr = ptr |> TaggedPointer.to_raw_pointer in
   let mem =
     mem
-    |> Memory.store Bool.tr raw_ptr Objmap.size Objmap.big_int_map
-    |> Memory.store Bool.tr
+    |> Memory.Bytes.store Bool.tr raw_ptr Objmap.size Objmap.big_int_map
+    |> Memory.Bytes.store Bool.tr
          (TaggedPointer.movei raw_ptr Objmap.size)
          header_size
          (BitVec.concat (BitVecVal.from_int 1 ~len:length_length) sign)
-    |> Memory.store Bool.tr
+    |> Memory.Bytes.store Bool.tr
          (TaggedPointer.movei raw_ptr (Objmap.size + header_size))
          size big_int_value
   in
@@ -73,17 +73,19 @@ let from_string s =
   create sign value
 
 let load ptr mem =
-  let map = Memory.load (ptr |> TaggedPointer.to_raw_pointer) Objmap.size mem in
+  let map =
+    Memory.Bytes.load (ptr |> TaggedPointer.to_raw_pointer) Objmap.size mem
+  in
   let sign =
     BitVec.andi
-      (Memory.load
+      (Memory.Bytes.load
          (TaggedPointer.movei ptr Objmap.size |> TaggedPointer.to_raw_pointer)
          header_size mem)
       1
     |> BitVec.extract 0 0
   in
   let value =
-    Memory.load
+    Memory.Bytes.load
       (TaggedPointer.movei ptr (Objmap.size + header_size)
       |> TaggedPointer.to_raw_pointer)
       8 mem

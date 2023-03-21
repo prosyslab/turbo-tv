@@ -18,9 +18,7 @@ let data_of t = BitVec.extract (data_len - 1) 0 t
 
 (* cast value [t] to type [ty] *)
 let cast ty t =
-  if BitVec.length_of t <> len then (
-    BitVec.length_of t |> string_of_int |> print_endline;
-    failwith "invalid value length")
+  if BitVec.length_of t <> len then failwith "invalid value length"
   else BitVec.concat ty (data_of t)
 
 (* entype [data] to type [ty] *)

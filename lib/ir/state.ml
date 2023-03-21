@@ -87,7 +87,7 @@ let install_constants state =
             | "false" | "true" -> Objmap.boolean_map
             | _ -> failwith "unreachable"
           in
-          Memory.store Bool.tr
+          Memory.Bytes.store Bool.tr
             (ptr |> TaggedPointer.to_raw_pointer)
             Objmap.size map mem
         in

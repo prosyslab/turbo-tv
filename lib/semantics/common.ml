@@ -24,7 +24,8 @@ let heap_constant name addr mem state =
       let fmap = Hashtbl.hash fname in
       let raw_ptr = TaggedPointer.to_raw_pointer addr in
       let mem =
-        Memory.store Bool.tr raw_ptr Objmap.size (Objmap.custom_map fmap) mem
+        Memory.Bytes.store Bool.tr raw_ptr Objmap.size (Objmap.custom_map fmap)
+          mem
       in
       (addr, mem)
     else if String.starts_with ~prefix:"String" name then
@@ -157,8 +158,6 @@ let end_ retvals _retmems retctrls state =
 
 let parameter param state =
   let value = param in
-  print_endline "In Parameter";
-  print_endline (value |> Expr.to_simplified_string);
   state |> State.update ~value
 
 let return return_value return_control state =
@@ -199,9 +198,6 @@ let call fname n_return args control state =
   let normalized_args =
     args
     |> List.map (fun arg ->
-           print_endline "check_arg";
-           print_endline
-             (Strings.is_string arg state.State.memory |> string_of_bool);
            if Strings.is_string arg state.State.memory = true then arg
            else
              Bool.ite
