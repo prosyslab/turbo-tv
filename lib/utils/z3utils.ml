@@ -14,7 +14,7 @@ module P = Z3.Probe
 module SQ = Z3.Seq
 
 (* global context *)
-let ctx = Z3.mk_context [ ("model", "true") ]
+let ctx = Z3.mk_context [ ("model", "true"); ("encoding", "ascii") ]
 
 (* default bitvector length *)
 let bvlen = ref 64
@@ -575,23 +575,40 @@ end
 module Seq = struct
   type t = E.expr
 
-  let mk_sort = SQ.mk_string_sort ctx
+  let char_len = 8
 
-  let init name = E.mk_const_s ctx name mk_sort
+  let sort = SQ.mk_seq_sort ctx (BitVec.mk_sort char_len)
+
+  let empty = SQ.mk_seq_empty ctx sort
+
+  let init name = E.mk_const_s ctx name sort
+
+  let from_char c =
+    SQ.mk_seq_unit ctx (BitVecVal.from_int ~len:char_len (c |> Char.code))
 
   let is_seq_sort sort = SQ.is_seq_sort ctx sort
 
   let is_string sq = SQ.is_string ctx sq
 
-  let from_string s = SQ.mk_string ctx s
-
   let concat s_l = SQ.mk_seq_concat ctx s_l
 
   let extract sq i len = SQ.mk_seq_extract ctx i sq len
 
+  let nth sq i = SQ.mk_seq_nth ctx sq i
+
+  let nthi sq i = SQ.mk_seq_nth ctx sq (Integer.from_int i)
+
   let replace i lsq rsq = SQ.mk_seq_replace ctx i lsq rsq
 
-  let length_of sq = SQ.mk_seq_length ctx sq
+  let length sq = SQ.mk_seq_length ctx sq
+
+  let from_string s =
+    if s = "" then SQ.mk_seq_empty ctx sort
+    else
+      let chars =
+        s |> String.fold_left (fun acc c -> (c |> from_char) :: acc) []
+      in
+      concat (chars |> List.rev)
 
   let get_string sq = SQ.get_string ctx sq
 
