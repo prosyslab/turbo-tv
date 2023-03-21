@@ -674,6 +674,8 @@ let encode_instr program
   (* simplified: string*)
   (* arithmetic *)
   | StringLength -> encode_v1m string_length
+  | StringCharCodeAt -> encode_v2m string_char_code_at
+  | StringFromSingleCharCode -> encode_v1m string_from_single_char_code
   | StringConcat -> encode_v3m string_concat
   (* simplified: type-check *)
   | CheckBigInt ->

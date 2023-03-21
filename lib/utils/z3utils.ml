@@ -600,6 +600,8 @@ module Str = struct
   let from_char c =
     SQ.mk_seq_unit ctx (BitVecVal.from_int ~len:char_len (c |> Char.code))
 
+  let from_char_bv bv = SQ.mk_seq_unit ctx bv
+
   let concat = Seq.concat
 
   let extract = Seq.extract

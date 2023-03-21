@@ -4,8 +4,6 @@ module Objects = Memory.Objects
 
 type t = { map : BitVec.t; value : Seq.t }
 
-let length t = BitVec.length_of t.value
-
 (* initialize *)
 let create value = { map = Objmap.string_map; value }
 
@@ -33,6 +31,10 @@ let load ptr mem =
   in
   { map; value }
 
+let from_char_bv c =
+  let str = Str.from_char_bv c in
+  create str
+
 let from_string s =
   let str = s |> String.split_on_char ' ' |> List.tl |> List.hd in
   if String.equal "\"\"" str || String.equal "#" str then
@@ -50,15 +52,17 @@ let from_string s =
 let is_string ptr mem =
   ptr |> Objects.is_string mem |> Expr.simplify None |> B.is_true
 
-let get_length t = t.value |> Str.length |> Integer.to_bv |> Value.from_bv
+let length t = t.value |> Str.length |> Integer.to_bv |> Value.from_bv
 
 let equal lptr rptr mem =
   let lobj = load lptr mem in
   let robj = load rptr mem in
   Bool.ite (Bool.eq lobj.value robj.value) Value.tr Value.fl
 
-let concat _ l r =
+let concat l r =
   let res = Str.concat [ l.value; r.value ] in
   create res
+
+let nth t i = Str.nth t.value (i |> BitVec.to_uint)
 
 let to_string model t = t.value |> Model.eval model |> Str.get_string

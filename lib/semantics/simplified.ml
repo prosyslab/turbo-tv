@@ -675,17 +675,27 @@ let string_binary op lval rval mem state =
   state |> State.update ~value ~mem
 
 let string_length pval mem state =
-  if pval |> Value.has_type Type.tagged_pointer |> B.is_true = true then
-    let p_bn = Strings.load pval mem in
-    let value = Strings.get_length p_bn in
-    state |> State.update ~value ~mem
-  else state |> State.update ~mem
+  let value = Strings.load pval mem |> Strings.length in
+  state |> State.update ~value
 
-let string_concat fst snd lst mem state =
-  let snd_bn = Strings.load snd mem in
-  let lst_bn = Strings.load lst mem in
-  let v_bn = Strings.concat fst snd_bn lst_bn in
-  let value, mem = Strings.allocate v_bn mem in
+let string_char_code_at s i mem state =
+  let value =
+    Strings.nth (Strings.load s mem) i
+    |> BitVec.zero_extend (64 - Str.char_len)
+    |> Value.entype Type.uint8
+  in
+  state |> State.update ~value
+
+let string_from_single_char_code c mem state =
+  let c = c |> BitVec.extract 7 0 in
+  let value, mem = Strings.allocate (Strings.from_char_bv c) mem in
+  state |> State.update ~value ~mem
+
+let string_concat _ hd tl mem state =
+  let hd_s = Strings.load hd mem in
+  let tl_s = Strings.load tl mem in
+  let v_s = Strings.concat hd_s tl_s in
+  let value, mem = Strings.allocate v_s mem in
   state |> State.update ~value ~mem
 
 (* simplified: type-conversion *)

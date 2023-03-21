@@ -780,12 +780,12 @@ StoreMessage,
 StoreSignedSmallElement,
 StoreToObject,
 StoreTypedElement,
-StringCharCodeAt,
+StringCharCodeAt,v1,v2,e1,c1
 StringCodePointAt,
 StringConcat,v1,v2,v3
 StringEqual,
 StringFromCodePointAt,
-StringFromSingleCharCode,
+StringFromSingleCharCode,v1
 StringFromSingleCodePoint,
 StringIndexOf,
 StringLength,v1

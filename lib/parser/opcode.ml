@@ -603,11 +603,9 @@ type t =
   | StoreSignedSmallElement
   | StoreToObject
   | StoreTypedElement
-  | StringCharCodeAt
   | StringCodePointAt
   | StringEqual
   | StringFromCodePointAt
-  | StringFromSingleCharCode
   | StringFromSingleCodePoint
   | StringIndexOf
   | StringLessThan
@@ -772,6 +770,7 @@ type t =
   | RoundFloat64ToInt32
   | SpeculativeBigIntNegate
   | StackPointerGreaterThan
+  | StringFromSingleCharCode
   | StringLength
   | ToBoolean
   | TruncateBigIntToWord64
@@ -936,6 +935,7 @@ type t =
   | SpeculativeNumberSubtract
   | SpeculativeSafeIntegerAdd
   | SpeculativeSafeIntegerSubtract
+  | StringCharCodeAt
   (* b1v1v2e1c1 *)
   | CheckedInt32Mul
   (* b1v1e1c1 *)
@@ -1127,11 +1127,11 @@ let get_kind opcode =
   | Simd128ReverseBytes | SpeculativeNumberPow | SpeculativeToBigInt | StackSlot
   | Start | StateValues | StaticAssert | StoreDataViewElement | StoreLane
   | StoreMessage | StoreSignedSmallElement | StoreToObject | StoreTypedElement
-  | StringCharCodeAt | StringCodePointAt | StringEqual | StringFromCodePointAt
-  | StringFromSingleCharCode | StringFromSingleCodePoint | StringIndexOf
-  | StringLessThan | StringLessThanOrEqual | StringSubstring
-  | StringToLowerCaseIntl | StringToNumber | StringToUpperCaseIntl | Switch
-  | TaggedIndexConstant | TailCall | Terminate | TransitionAndStoreElement
+  | StringCodePointAt | StringEqual | StringFromCodePointAt
+  | StringFromSingleCodePoint | StringIndexOf | StringLessThan
+  | StringLessThanOrEqual | StringSubstring | StringToLowerCaseIntl
+  | StringToNumber | StringToUpperCaseIntl | Switch | TaggedIndexConstant
+  | TailCall | Terminate | TransitionAndStoreElement
   | TransitionAndStoreNonNumberElement | TransitionAndStoreNumberElement
   | TransitionElementsKind | TrapIf | TrapUnless | TruncateFloat32ToInt32
   | TruncateFloat32ToUint32 | TruncateFloat64ToFloat32 | TruncateFloat64ToUint32
@@ -1178,10 +1178,11 @@ let get_kind opcode =
   | NumberIsSafeInteger | NumberRound | NumberSign | NumberSin | NumberToBoolean
   | NumberToInt32 | NumberToUint32 | NumberTrunc | ObjectIsMinusZero
   | ObjectIsNaN | ObjectIsSmi | RoundFloat64ToInt32 | SpeculativeBigIntNegate
-  | StackPointerGreaterThan | StringLength | ToBoolean | TruncateBigIntToWord64
-  | TruncateFloat64ToInt64 | TruncateFloat64ToWord32 | TruncateInt64ToInt32
-  | TruncateTaggedPointerToBit | TruncateTaggedToBit | TruncateTaggedToWord32
-  | Word32ReverseBytes | Word64ReverseBytes ->
+  | StackPointerGreaterThan | StringFromSingleCharCode | StringLength
+  | ToBoolean | TruncateBigIntToWord64 | TruncateFloat64ToInt64
+  | TruncateFloat64ToWord32 | TruncateInt64ToInt32 | TruncateTaggedPointerToBit
+  | TruncateTaggedToBit | TruncateTaggedToWord32 | Word32ReverseBytes
+  | Word64ReverseBytes ->
       V1
   | BeginRegion -> E1
   | IfFalse | IfSuccess | IfTrue -> C1
@@ -1231,7 +1232,8 @@ let get_kind opcode =
   | SpeculativeNumberModulus | SpeculativeNumberMultiply
   | SpeculativeNumberShiftLeft | SpeculativeNumberShiftRight
   | SpeculativeNumberShiftRightLogical | SpeculativeNumberSubtract
-  | SpeculativeSafeIntegerAdd | SpeculativeSafeIntegerSubtract ->
+  | SpeculativeSafeIntegerAdd | SpeculativeSafeIntegerSubtract
+  | StringCharCodeAt ->
       V1V2E1C1
   | CheckedInt32Mul -> B1V1V2E1C1
   | CheckedTaggedToFloat64 | CheckedTaggedToInt64
@@ -1862,11 +1864,9 @@ let of_str str =
   | "StoreSignedSmallElement" -> StoreSignedSmallElement
   | "StoreToObject" -> StoreToObject
   | "StoreTypedElement" -> StoreTypedElement
-  | "StringCharCodeAt" -> StringCharCodeAt
   | "StringCodePointAt" -> StringCodePointAt
   | "StringEqual" -> StringEqual
   | "StringFromCodePointAt" -> StringFromCodePointAt
-  | "StringFromSingleCharCode" -> StringFromSingleCharCode
   | "StringFromSingleCodePoint" -> StringFromSingleCodePoint
   | "StringIndexOf" -> StringIndexOf
   | "StringLessThan" -> StringLessThan
@@ -2029,6 +2029,7 @@ let of_str str =
   | "RoundFloat64ToInt32" -> RoundFloat64ToInt32
   | "SpeculativeBigIntNegate" -> SpeculativeBigIntNegate
   | "StackPointerGreaterThan" -> StackPointerGreaterThan
+  | "StringFromSingleCharCode" -> StringFromSingleCharCode
   | "StringLength" -> StringLength
   | "ToBoolean" -> ToBoolean
   | "TruncateBigIntToWord64" -> TruncateBigIntToWord64
@@ -2181,6 +2182,7 @@ let of_str str =
   | "SpeculativeNumberSubtract" -> SpeculativeNumberSubtract
   | "SpeculativeSafeIntegerAdd" -> SpeculativeSafeIntegerAdd
   | "SpeculativeSafeIntegerSubtract" -> SpeculativeSafeIntegerSubtract
+  | "StringCharCodeAt" -> StringCharCodeAt
   | "CheckedInt32Mul" -> CheckedInt32Mul
   | "CheckedTaggedToFloat64" -> CheckedTaggedToFloat64
   | "CheckedTaggedToInt64" -> CheckedTaggedToInt64
@@ -2776,11 +2778,9 @@ let to_str opcode =
   | StoreSignedSmallElement -> "StoreSignedSmallElement"
   | StoreToObject -> "StoreToObject"
   | StoreTypedElement -> "StoreTypedElement"
-  | StringCharCodeAt -> "StringCharCodeAt"
   | StringCodePointAt -> "StringCodePointAt"
   | StringEqual -> "StringEqual"
   | StringFromCodePointAt -> "StringFromCodePointAt"
-  | StringFromSingleCharCode -> "StringFromSingleCharCode"
   | StringFromSingleCodePoint -> "StringFromSingleCodePoint"
   | StringIndexOf -> "StringIndexOf"
   | StringLessThan -> "StringLessThan"
@@ -2943,6 +2943,7 @@ let to_str opcode =
   | RoundFloat64ToInt32 -> "RoundFloat64ToInt32"
   | SpeculativeBigIntNegate -> "SpeculativeBigIntNegate"
   | StackPointerGreaterThan -> "StackPointerGreaterThan"
+  | StringFromSingleCharCode -> "StringFromSingleCharCode"
   | StringLength -> "StringLength"
   | ToBoolean -> "ToBoolean"
   | TruncateBigIntToWord64 -> "TruncateBigIntToWord64"
@@ -3095,6 +3096,7 @@ let to_str opcode =
   | SpeculativeNumberSubtract -> "SpeculativeNumberSubtract"
   | SpeculativeSafeIntegerAdd -> "SpeculativeSafeIntegerAdd"
   | SpeculativeSafeIntegerSubtract -> "SpeculativeSafeIntegerSubtract"
+  | StringCharCodeAt -> "StringCharCodeAt"
   | CheckedInt32Mul -> "CheckedInt32Mul"
   | CheckedTaggedToFloat64 -> "CheckedTaggedToFloat64"
   | CheckedTaggedToInt64 -> "CheckedTaggedToInt64"
