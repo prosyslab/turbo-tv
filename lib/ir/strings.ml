@@ -52,7 +52,9 @@ let from_string s =
 let is_string ptr mem =
   ptr |> Objects.is_string mem |> Expr.simplify None |> B.is_true
 
-let length t = t.value |> Str.length |> Integer.to_bv |> Value.from_bv
+let length t =
+  t.value |> Str.length |> Integer.to_bv |> Value.from_bv
+  |> Value.cast Type.uint32
 
 let equal lptr rptr mem =
   let lobj = load lptr mem in
@@ -63,6 +65,15 @@ let concat l r =
   let res = Str.concat [ l.value; r.value ] in
   create res
 
-let nth t i = Str.nth t.value (i |> BitVec.to_uint)
+let nth t i = Str.nth t.value (i |> BitVec.extract 63 0 |> BitVec.to_uint)
 
-let to_string model t = t.value |> Model.eval model |> Str.get_string
+let to_string model t =
+  let evaluated = t.value |> Model.eval model in
+  let length =
+    evaluated |> Str.length |> Expr.to_simplified_string |> int_of_string
+  in
+  let rec loop acc i =
+    if i = length then acc
+    else loop (acc ^ (Str.nthi evaluated i |> Expr.to_simplified_string)) (i + 1)
+  in
+  loop "" 0

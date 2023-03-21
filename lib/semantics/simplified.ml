@@ -680,7 +680,7 @@ let string_length pval mem state =
 
 let string_char_code_at s i mem state =
   let value =
-    Strings.nth (Strings.load s mem) i
+    Strings.nth (Strings.load s mem) (i |> Number.to_uint32 mem)
     |> BitVec.zero_extend (64 - Str.char_len)
     |> Value.entype Type.uint8
   in
