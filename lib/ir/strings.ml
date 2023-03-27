@@ -56,16 +56,34 @@ let length t =
   t.value |> Str.length |> Integer.to_bv |> Value.from_bv
   |> Value.cast Type.uint32
 
-let equal lptr rptr mem =
-  let lobj = load lptr mem in
-  let robj = load rptr mem in
-  Bool.ite (Bool.eq lobj.value robj.value) Value.tr Value.fl
+let equal l r = Bool.ite (Bool.eq l.value r.value) Value.tr Value.fl
 
 let concat l r =
   let res = Str.concat [ l.value; r.value ] in
   create res
 
 let nth t i = Str.nth t.value (i |> BitVec.extract 63 0 |> BitVec.to_uint)
+
+let index_of l r i =
+  Str.index_of l.value r.value (i |> BitVec.extract 63 0 |> BitVec.to_uint)
+  |> Integer.to_bv |> Value.from_bv |> Value.cast Type.uint32
+
+let le l r = Bool.ite (Str.le l.value r.value) Value.tr Value.fl
+
+let lt l r = Bool.ite (Str.lt l.value r.value) Value.tr Value.fl
+
+let sub_string s l_i r_i =
+  Str.extract s.value
+    (l_i |> BitVec.extract 63 0 |> BitVec.to_uint)
+    (r_i |> BitVec.extract 63 0 |> BitVec.to_uint)
+  |> create
+
+let num2str num =
+  Str.int2str (num |> BitVec.extract 63 0 |> BitVec.to_uint) |> create
+
+let str2num s =
+  Str.str2int s.value |> Integer.to_bv |> Value.from_bv
+  |> Value.cast Type.uint32
 
 let to_string model t =
   let evaluated = t.value |> Model.eval model in
@@ -74,6 +92,13 @@ let to_string model t =
   in
   let rec loop acc i =
     if i = length then acc
-    else loop (acc ^ (Str.nthi evaluated i |> Expr.to_simplified_string)) (i + 1)
+    else
+      loop
+        (acc
+        ^ (Str.nthi evaluated i |> BitVec.to_uint |> Expr.to_simplified_string
+         |> int_of_string |> Char.chr |> String.make 1))
+        (i + 1)
   in
   loop "" 0
+
+let equal_test l r = Bool.ands [ Bool.eq l.value r.value ]

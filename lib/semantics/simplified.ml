@@ -337,7 +337,9 @@ let reference_equal lval rval mem state =
   in
   let value =
     if Strings.is_string lval mem && Strings.is_string rval mem then
-      Strings.equal lval rval mem
+      let l_val = Strings.load lval mem in
+      let r_val = Strings.load rval mem in
+      Strings.equal l_val r_val
     else if Strings.is_string lval mem || Strings.is_string rval mem then
       Value.fl
     else
@@ -686,10 +688,29 @@ let string_char_code_at s i mem state =
   in
   state |> State.update ~value
 
+let string_code_point_at s i mem state =
+  let value =
+    Strings.nth (Strings.load s mem) (i |> Number.to_uint32 mem)
+    |> BitVec.zero_extend (64 - Str.char_len)
+    |> Value.entype Type.uint8
+  in
+  state |> State.update ~value
+
 let string_from_single_char_code c mem state =
   let c = c |> BitVec.extract 7 0 in
   let value, mem = Strings.allocate (Strings.from_char_bv c) mem in
   state |> State.update ~value ~mem
+
+let string_from_single_code_point c mem state =
+  let c = c |> BitVec.extract 7 0 in
+  let value, mem = Strings.allocate (Strings.from_char_bv c) mem in
+  state |> State.update ~value ~mem
+
+let string_index_of l r i mem state =
+  let l_val = Strings.load l mem in
+  let r_val = Strings.load r mem in
+  let value = Strings.index_of l_val r_val (i |> Number.to_uint32 mem) in
+  state |> State.update ~value
 
 let string_concat _ hd tl mem state =
   let hd_s = Strings.load hd mem in
@@ -697,6 +718,42 @@ let string_concat _ hd tl mem state =
   let v_s = Strings.concat hd_s tl_s in
   let value, mem = Strings.allocate v_s mem in
   state |> State.update ~value ~mem
+
+let string_equal l r mem state =
+  let rf = state.State.register_file in
+  let l_val = Strings.load l mem in
+  let r_val = Strings.load r mem in
+  let true_cst = RegisterFile.find "true" rf in
+  let false_cst = RegisterFile.find "false" rf in
+  let value = Bool.ite (Bool.eq l_val.value r_val.value) true_cst false_cst in
+  state |> State.update ~value
+
+let string_less_than l r mem state =
+  let l_val = Strings.load l mem in
+  let r_val = Strings.load r mem in
+  let value = Strings.lt l_val r_val in
+  state |> State.update ~value
+
+let string_less_than_or_equal l r mem state =
+  let l_val = Strings.load l mem in
+  let r_val = Strings.load r mem in
+  let value = Strings.le l_val r_val in
+  state |> State.update ~value
+
+let string_sub_string s l_i r_i mem state =
+  let s_val = Strings.load s mem in
+  let v_s =
+    Strings.sub_string s_val
+      (l_i |> Number.to_uint32 mem)
+      (r_i |> Number.to_uint32 mem)
+  in
+  let value, mem = Strings.allocate v_s mem in
+  state |> State.update ~value ~mem
+
+let string_to_number s mem state =
+  let s_val = Strings.load s mem in
+  let value = Strings.str2num s_val in
+  state |> State.update ~value
 
 (* simplified: type-conversion *)
 let change_bit_to_tagged pval state =
@@ -931,6 +988,11 @@ let number_to_int32 pval mem state =
   let value = pval |> Number.to_int32 mem in
   state |> State.update ~value
 
+let number_to_string pval mem state =
+  let v_s = pval |> Number.to_uint32 mem |> Strings.num2str in
+  let value, mem = Strings.allocate v_s mem in
+  state |> State.update ~value ~mem
+
 (* pure: 1V -> 1V *)
 let number_to_uint32 pval mem state =
   let value = pval |> Number.to_uint32 mem in
@@ -947,7 +1009,6 @@ let speculative_to_number pval () control mem (state : State.t) =
            pval |> Objects.is_null mem;
            pval |> Objects.is_undefined mem;
            pval |> Objects.is_boolean mem;
-           pval |> Constant.is_empty_string rf;
          ])
   in
   let value =
@@ -993,16 +1054,12 @@ let to_boolean pval mem (state : State.t) =
                (Bool.ite
                   (pval |> Constant.is_false_cst rf)
                   Value.fl
+                  (* null *)
                   (Bool.ite
-                     (* empty string *)
-                     (pval |> Constant.is_empty_string rf)
+                     (pval |> Constant.is_null rf)
                      Value.fl
-                     (* null *)
-                     (Bool.ite
-                        (pval |> Constant.is_null rf)
-                        Value.fl
-                        (* otherwise, return true: can be improved *)
-                        Value.tr))))))
+                     (* otherwise, return true: can be improved *)
+                     Value.tr)))))
   in
   state |> State.update ~value
 
@@ -1040,15 +1097,11 @@ let truncate_tagged_to_bit pval mem (state : State.t) =
                   (* if [pval] is false, return false *)
                   (pval |> Constant.is_false_cst rf)
                   Value.fl
-                  (* if [pval] is empty string, return false *)
+                  (* if [pval] is null, return false *)
                   (Bool.ite
-                     (pval |> Constant.is_empty_string rf)
-                     Value.fl
-                     (* if [pval] is null, return false *)
-                     (Bool.ite
-                        (pval |> Constant.is_null rf)
-                        Value.fl (* otherwise return true: can be improved *)
-                        Value.tr))))))
+                     (pval |> Constant.is_null rf)
+                     Value.fl (* otherwise return true: can be improved *)
+                     Value.tr)))))
   in
 
   state |> State.update ~value
@@ -1076,15 +1129,11 @@ let truncate_tagged_pointer_to_bit pval mem state =
                (* if [pval] is false, return false *)
                (pval |> Constant.is_false_cst rf)
                Value.fl
-               (* if [pval] is empty string, return false *)
+               (* if [pval] is null, return false *)
                (Bool.ite
-                  (pval |> Constant.is_empty_string rf)
-                  Value.fl
-                  (* if [pval] is null, return false *)
-                  (Bool.ite
-                     (pval |> Constant.is_null rf)
-                     Value.fl (* otherwise return true: can be improved *)
-                     Value.tr)))))
+                  (pval |> Constant.is_null rf)
+                  Value.fl (* otherwise return true: can be improved *)
+                  Value.tr))))
   in
   state |> State.update ~value
 

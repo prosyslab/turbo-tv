@@ -575,13 +575,19 @@ module Seq = struct
 
   let concat s_l = SQ.mk_seq_concat ctx s_l
 
-  let extract sq i len = SQ.mk_seq_extract ctx i sq len
+  let extract sq i len = SQ.mk_seq_extract ctx sq i len
 
   let nth sq i = SQ.mk_seq_nth ctx sq i
 
   let nthi sq i = SQ.mk_seq_nth ctx sq (Integer.from_int i)
 
+  let index_of lsq rsq i = SQ.mk_seq_index ctx lsq rsq i
+
   let replace i lsq rsq = SQ.mk_seq_replace ctx i lsq rsq
+
+  let int2str i = SQ.mk_int_to_str ctx i
+
+  let str2int s = SQ.mk_str_to_int ctx s
 
   let length sq = SQ.mk_seq_length ctx sq
 end
@@ -610,6 +616,8 @@ module Str = struct
 
   let nthi = Seq.nthi
 
+  let index_of = Seq.index_of
+
   let replace = Seq.replace
 
   let length = Seq.length
@@ -619,6 +627,10 @@ module Str = struct
   let le ls rs = SQ.mk_str_le ctx ls rs
 
   let lt ls rs = SQ.mk_str_lt ctx ls rs
+
+  let str2int = Seq.str2int
+
+  let int2str = Seq.int2str
 
   let from_string s =
     if s = "" then SQ.mk_seq_empty ctx sort

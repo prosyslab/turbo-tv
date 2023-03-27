@@ -675,8 +675,16 @@ let encode_instr program
   (* arithmetic *)
   | StringLength -> encode_v1m string_length
   | StringCharCodeAt -> encode_v2m string_char_code_at
+  | StringCodePointAt -> encode_v2m string_code_point_at
   | StringFromSingleCharCode -> encode_v1m string_from_single_char_code
+  | StringFromSingleCodePoint -> encode_v1m string_from_single_code_point
+  | StringIndexOf -> encode_v3m string_index_of
   | StringConcat -> encode_v3m string_concat
+  | StringEqual -> encode_v2m string_equal
+  | StringLessThan -> encode_v2m string_less_than
+  | StringLessThanOrEqual -> encode_v2m string_less_than_or_equal
+  | StringSubstring -> encode_v3m string_sub_string
+  | StringToNumber -> encode_v1m string_to_number
   (* simplified: type-check *)
   | CheckBigInt ->
       let value_id = Operands.id_of_nth operands 0 in
@@ -799,6 +807,10 @@ let encode_instr program
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
       number_to_int32 pval mem
+  | NumberToString ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      number_to_string pval mem
   | NumberToUint32 ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
