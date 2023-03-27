@@ -50,6 +50,15 @@ let bigint_printer ?(indent = 0) bn =
       Format.sprintf "%sRaw: %s" indent (bn |> Bigint.to_bytestring model);
     ]
 
+let string_printer ?(indent = 0) str =
+  let model = Z3utils.Solver.get_model solver |> Option.get in
+  let indent = repeat "  " indent in
+  String.concat "\n"
+    [
+      Format.sprintf "\n%sFormatted: %s" indent (str |> Strings.to_string model);
+      Format.sprintf "%sRaw: %s" indent (str.value |> Expr.to_simplified_string);
+    ]
+
 let value_printer ?(indent = 0) e =
   let model = Z3utils.Solver.get_model solver |> Option.get in
   let indent = repeat "  " indent in

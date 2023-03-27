@@ -22,3 +22,8 @@
  (name bigintTest)
  (modules bigintTest)
  (libraries helper))
+
+(test
+ (name stringTest)
+ (modules stringTest)
+ (libraries helper))
