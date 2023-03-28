@@ -14,7 +14,7 @@ module P = Z3.Probe
 module SQ = Z3.Seq
 
 (* global context *)
-let ctx = Z3.mk_context [ ("model", "true"); ("encoding", "ascii") ]
+let ctx = Z3.mk_context [ ("model", "true") ]
 
 (* default bitvector length *)
 let bvlen = ref 64
@@ -577,6 +577,10 @@ module Seq = struct
 
   let extract sq i len = SQ.mk_seq_extract ctx sq i len
 
+  let at sq i = SQ.mk_seq_at ctx sq i
+
+  let ati sq i = SQ.mk_seq_at ctx sq (Integer.from_int i)
+
   let nth sq i = SQ.mk_seq_nth ctx sq i
 
   let nthi sq i = SQ.mk_seq_nth ctx sq (Integer.from_int i)
@@ -593,24 +597,25 @@ module Seq = struct
 end
 
 module Str = struct
-  let char_len = 8
+  let char_len = 16
 
-  let char_sort = BitVec.mk_sort char_len
-
-  let sort = SQ.mk_seq_sort ctx char_sort
+  let sort = SQ.mk_string_sort ctx
 
   let empty = Seq.empty sort
 
   let init name = E.mk_const_s ctx name sort
 
-  let from_char c =
-    SQ.mk_seq_unit ctx (BitVecVal.from_int ~len:char_len (c |> Char.code))
+  let from_char c = c |> String.make 1 |> SQ.mk_string ctx
 
-  let from_char_bv bv = SQ.mk_seq_unit ctx bv
+  let from_char_bv bv = bv |> BitVec.to_uint |> SQ.mk_string_from_code ctx
 
   let concat = Seq.concat
 
   let extract = Seq.extract
+
+  let at = Seq.at
+
+  let ati = Seq.ati
 
   let nth = Seq.nth
 
@@ -632,25 +637,24 @@ module Str = struct
 
   let int2str = Seq.int2str
 
-  let from_string s =
-    if s = "" then SQ.mk_seq_empty ctx sort
-    else
-      let chars =
-        s |> String.fold_left (fun acc c -> (c |> from_char) :: acc) []
-      in
-      Seq.concat (chars |> List.rev)
+  let from_string = SQ.mk_string ctx
+
+  let str_to_code = SQ.mk_string_to_code ctx
 
   let to_bv l s =
     let base = BitVecVal.zero ~len:(l * char_len) () in
     let rec aux acc i =
       if i = l then acc
       else
-        let c = nthi s i in
-        aux (BitVec.orb acc (BitVec.shli c (i * char_len))) (i + 1)
+        let c = ati s i |> str_to_code in
+        aux
+          (BitVec.orb acc
+             (BitVec.shli (Integer.to_bv ~len:char_len c) (i * char_len)))
+          (i + 1)
     in
     aux base 0
 
-  let get_string s = SQ.get_string ctx s
+  let get_string = SQ.get_string ctx
 end
 
 let sort_equal e1 e2 = Z3.Sort.equal (Expr.get_sort e1) (Expr.get_sort e2)

@@ -87,18 +87,6 @@ let str2num s =
 
 let to_string model t =
   let evaluated = t.value |> Model.eval model in
-  let length =
-    evaluated |> Str.length |> Expr.to_simplified_string |> int_of_string
-  in
-  let rec loop acc i =
-    if i = length then acc
-    else
-      loop
-        (acc
-        ^ (Str.nthi evaluated i |> BitVec.to_uint |> Expr.to_simplified_string
-         |> int_of_string |> Char.chr |> String.make 1))
-        (i + 1)
-  in
-  loop "" 0
+  Str.get_string evaluated
 
 let equal_test l r = Bool.ands [ Bool.eq l.value r.value ]
