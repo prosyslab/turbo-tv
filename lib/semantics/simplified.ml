@@ -682,17 +682,15 @@ let string_length pval mem state =
 
 let string_char_code_at s i mem state =
   let value =
-    Strings.nth (Strings.load s mem) (i |> Number.to_uint32 mem)
-    |> BitVec.zero_extend (64 - Str.char_len)
-    |> Value.entype Type.uint8
+    Strings.at (Strings.load s mem) (i |> Number.to_uint32 mem)
+    |> Strings.str2num |> Value.cast Type.uint8
   in
   state |> State.update ~value
 
 let string_code_point_at s i mem state =
   let value =
-    Strings.nth (Strings.load s mem) (i |> Number.to_uint32 mem)
-    |> BitVec.zero_extend (64 - Str.char_len)
-    |> Value.entype Type.uint8
+    Strings.at (Strings.load s mem) (i |> Number.to_uint32 mem)
+    |> Strings.str2num |> Value.cast Type.uint16
   in
   state |> State.update ~value
 
@@ -702,7 +700,7 @@ let string_from_single_char_code c mem state =
   state |> State.update ~value ~mem
 
 let string_from_single_code_point c mem state =
-  let c = c |> BitVec.extract 7 0 in
+  let c = c |> BitVec.extract 15 0 in
   let value, mem = Strings.allocate (Strings.from_char_bv c) mem in
   state |> State.update ~value ~mem
 

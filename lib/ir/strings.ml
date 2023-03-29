@@ -64,6 +64,9 @@ let concat l r =
 
 let nth t i = Str.nth t.value (i |> BitVec.extract 63 0 |> BitVec.to_uint)
 
+let at t i =
+  Str.at t.value (i |> BitVec.extract 63 0 |> BitVec.to_uint) |> create
+
 let index_of l r i =
   Str.index_of l.value r.value (i |> BitVec.extract 63 0 |> BitVec.to_uint)
   |> Integer.to_bv |> Value.from_bv |> Value.cast Type.uint32
