@@ -28,7 +28,16 @@ let find_candids (pgr : G.t) =
   let least_ctrl_dom_of_n1_n2 n1 n2 =
     let n1_dom = IR.dominators cfg n1 in
     let n2_dom = IR.dominators cfg n2 in
-    List.filter (fun n -> List.mem n n2_dom) n1_dom |> List.rev |> List.hd
+
+    (* it's possible to not have a least-control-dominator, if one of the node's control is dead *)
+    let comms = List.filter (fun n -> List.mem n n2_dom) n1_dom in
+    if List.length comms = 0 then None else Some (comms |> List.rev |> List.hd)
+  in
+
+  let executable_both n1 n2 =
+    match least_ctrl_dom_of_n1_n2 n1 n2 with
+    | Some n -> n |> IR.Node.instr |> Instr.opcode != Opcode.Branch
+    | None -> false
   in
 
   let has_order n1 n2 =
@@ -45,12 +54,8 @@ let find_candids (pgr : G.t) =
           List.fold_left
             (fun res n2 ->
               if is_read n1 && is_read n2 then res
-              else if
-                not
-                  (least_ctrl_dom_of_n1_n2 n1 n2
-                   |> IR.Node.instr |> Instr.opcode = Opcode.Branch
-                  || has_order n1 n2)
-              then (n1 |> IR.Node.id, n2 |> IR.Node.id) :: res
+              else if executable_both n1 n2 && not (has_order n1 n2) then
+                (n1 |> IR.Node.id, n2 |> IR.Node.id) :: res
               else res)
             res rest
         in
