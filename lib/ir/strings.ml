@@ -90,6 +90,6 @@ let str2num s =
 
 let to_string model t =
   let evaluated = t.value |> Model.eval model in
-  Str.get_string evaluated
+  try Str.get_string evaluated with _ -> Expr.to_simplified_string evaluated
 
 let equal_test l r = Bool.ands [ Bool.eq l.value r.value ]
