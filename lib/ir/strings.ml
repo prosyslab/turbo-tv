@@ -86,7 +86,7 @@ let num2str num =
 
 let str2num s =
   Str.str2int s.value |> Integer.to_bv |> Value.from_bv
-  |> Value.cast Type.uint32
+  |> Value.cast Type.tagged_signed
 
 let to_string model t =
   let evaluated = t.value |> Model.eval model in

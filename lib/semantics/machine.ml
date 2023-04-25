@@ -384,8 +384,8 @@ let word64_equal lval rval state =
  * assertion:
  *   mem = ite well-defined Store(ptr, pos, repr, mem) mem *)
 let store ptr pos repr value mem state =
-  let ptr = TaggedPointer.move ptr pos in
-  let ub = Bool.not (Memory.can_access_as ptr repr mem) in
+  let moved = TaggedPointer.move ptr pos in
+  let ub = Bool.not (Memory.can_access_as moved repr mem) in
   let raw_ptr = ptr |> BitVec.extract 31 0 in
   let mem = mem |> Memory.Bytes.store_as (Bool.not ub) raw_ptr repr value in
 
@@ -399,9 +399,15 @@ let store ptr pos repr value mem state =
       }
   in
 
+  let assertion =
+    Bool.ands
+      [ Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of) ]
+  in
+
   {
     state with
     access_info = State.AccessInfo.add state.State.pc access state.access_info;
+    assertion = Bool.ands [ state.State.assertion; assertion ];
   }
   |> State.update ~mem ~ub
 

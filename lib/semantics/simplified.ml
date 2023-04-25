@@ -683,14 +683,14 @@ let string_length pval mem state =
 let string_char_code_at s i mem state =
   let value =
     Strings.at (Strings.load s mem) (i |> Number.to_uint32 mem)
-    |> Strings.str2num |> Value.cast Type.uint8
+    |> Strings.str2num |> Value.cast Type.uint32
   in
   state |> State.update ~value
 
 let string_code_point_at s i mem state =
   let value =
     Strings.at (Strings.load s mem) (i |> Number.to_uint32 mem)
-    |> Strings.str2num |> Value.cast Type.uint16
+    |> Strings.str2num |> Value.cast Type.uint32
   in
   state |> State.update ~value
 
