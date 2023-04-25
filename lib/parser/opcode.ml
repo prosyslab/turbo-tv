@@ -818,6 +818,7 @@ type t =
   | Int64LessThan
   | Int64LessThanOrEqual
   | Int64Mul
+  | Int64MulHigh
   | Int64Sub
   | NumberAdd
   | NumberBitwiseAnd
@@ -1192,12 +1193,12 @@ let get_kind opcode =
   | Float64LessThanOrEqual | Float64Max | Float64Min | Float64Mod | Float64Mul
   | Float64Pow | Float64Sub | Int32Add | Int32LessThan | Int32LessThanOrEqual
   | Int32Mul | Int32Sub | Int64Add | Int64LessThan | Int64LessThanOrEqual
-  | Int64Mul | Int64Sub | NumberAdd | NumberBitwiseAnd | NumberBitwiseOr
-  | NumberBitwiseXor | NumberDivide | NumberEqual | NumberImul | NumberLessThan
-  | NumberLessThanOrEqual | NumberMax | NumberMin | NumberModulus
-  | NumberMultiply | NumberSameValue | NumberShiftLeft | NumberShiftRight
-  | NumberShiftRightLogical | NumberSubtract | ReferenceEqual | SameValue
-  | SpeculativeBigIntAdd | SpeculativeBigIntBitwiseAnd
+  | Int64Mul | Int64MulHigh | Int64Sub | NumberAdd | NumberBitwiseAnd
+  | NumberBitwiseOr | NumberBitwiseXor | NumberDivide | NumberEqual | NumberImul
+  | NumberLessThan | NumberLessThanOrEqual | NumberMax | NumberMin
+  | NumberModulus | NumberMultiply | NumberSameValue | NumberShiftLeft
+  | NumberShiftRight | NumberShiftRightLogical | NumberSubtract | ReferenceEqual
+  | SameValue | SpeculativeBigIntAdd | SpeculativeBigIntBitwiseAnd
   | SpeculativeBigIntBitwiseOr | SpeculativeBigIntBitwiseXor
   | SpeculativeBigIntDivide | SpeculativeBigIntEqual | SpeculativeBigIntLessThan
   | SpeculativeBigIntLessThanOrEqual | SpeculativeBigIntModulus
@@ -2072,6 +2073,7 @@ let of_str str =
   | "Int64LessThan" -> Int64LessThan
   | "Int64LessThanOrEqual" -> Int64LessThanOrEqual
   | "Int64Mul" -> Int64Mul
+  | "Int64MulHigh" -> Int64MulHigh
   | "Int64Sub" -> Int64Sub
   | "NumberAdd" -> NumberAdd
   | "NumberBitwiseAnd" -> NumberBitwiseAnd
@@ -2986,6 +2988,7 @@ let to_str opcode =
   | Int64LessThan -> "Int64LessThan"
   | Int64LessThanOrEqual -> "Int64LessThanOrEqual"
   | Int64Mul -> "Int64Mul"
+  | Int64MulHigh -> "Int64MulHigh"
   | Int64Sub -> "Int64Sub"
   | NumberAdd -> "NumberAdd"
   | NumberBitwiseAnd -> "NumberBitwiseAnd"
