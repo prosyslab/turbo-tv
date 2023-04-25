@@ -646,14 +646,17 @@ module Str = struct
   let str_to_code = SQ.mk_string_to_code ctx
 
   let to_bv l s =
-    let base = BitVecVal.zero ~len:(l * char_len) () in
+    let base = BitVecVal.zero ~len:l () in
     let rec aux acc i =
       if i = l then acc
       else
-        let c = ati s i |> str_to_code in
+        let c = ati s (i / 2) |> str_to_code in
+        let char_bv =
+          BitVec.extract ((i mod 2 * 8) + 7) (i mod 2 * 8) (Integer.to_bv c)
+        in
         aux
           (BitVec.orb acc
-             (BitVec.shli (Integer.to_bv ~len:char_len c) (i * char_len)))
+             (BitVec.shli (BitVec.zero_extend (l - 8) char_bv) (i * 8)))
           (i + 1)
     in
     aux base 0
