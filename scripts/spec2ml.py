@@ -239,11 +239,12 @@ if __name__ == "__main__":
                         action="store_true",
                         help="Generate instr.ml")
     parser.add_argument("--replace", default=False, action="store_true")
+    parser.add_argument("--spec", type=Path, default=(
+        Path(__file__).parent.parent / "specs" / "opcodes.spec").resolve(), )
 
     args = parser.parse_args()
 
-    spec_p = (Path(__file__).parent.parent / "specs" /
-              "opcodes.spec").resolve()
+    spec_p = args.spec
     spec = read_spec(spec_p)
 
     if args.opcode:
