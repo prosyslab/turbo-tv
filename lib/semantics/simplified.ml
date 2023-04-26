@@ -396,7 +396,7 @@ let load_element header_size repr bid ind mem state =
   in
   state |> Machine.load bid off repr mem
 
-let load_field offset repr ptr _eff control mem state =
+let load_field offset repr ptr _eff control mem final_mem state =
   let off = offset |> BitVecVal.from_int ~len:Value.len in
   let moved = TaggedPointer.move ptr off in
   let ub = Bool.not (Memory.can_access_as moved repr mem) in
@@ -415,7 +415,7 @@ let load_field offset repr ptr _eff control mem state =
         Bool.implies
           (Bool.ands
              [ is_angelic; BitVec.eqb (Value.ty_of value) Type.tagged_pointer ])
-          (value |> Memory.is_angelic mem);
+          (value |> Memory.is_angelic final_mem);
       ]
   in
   { state with assertion = Bool.ands [ state.State.assertion; assertion ] }

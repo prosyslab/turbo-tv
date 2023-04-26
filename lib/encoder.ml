@@ -7,7 +7,7 @@ open Simplified
 open Machine
 open Z3utils
 
-let encode_instr program
+let encode_instr program final_mem
     ({
        State.pc;
        control_file = cf;
@@ -633,7 +633,7 @@ let encode_instr program
          let _eff = () in *)
       let ctrl_id = Operands.id_of_nth operands 5 in
       let ctrl = ControlFile.find ctrl_id cf in
-      load_field offset repr bid () ctrl mem
+      load_field offset repr bid () ctrl mem final_mem
   | LoadTypedElement ->
       let array_type = Operands.const_of_nth operands 0 |> int_of_string in
       let base_id = Operands.id_of_nth operands 1 in
@@ -995,7 +995,7 @@ let propagate program (state : State.t) =
   let ub = UBFile.find (pc |> string_of_int) uf in
   let deopt = DeoptFile.find (pc |> string_of_int) df in
 
-  let type_is_verified =
+  let type_assertion, type_is_verified =
     let is_angelic_value = AngelicFile.find (pc |> string_of_int) af in
     let ty_check =
       let value = RegisterFile.find (pc |> string_of_int) rf in
@@ -1009,7 +1009,7 @@ let propagate program (state : State.t) =
           else Typer.verify value ty mem
       | None -> Bool.tr
     in
-    Bool.ors [ is_angelic_value; ty_check ]
+    (Bool.implies is_angelic_value ty_check, ty_check)
   in
   let ub_from_input, deopt_from_input =
     match opcode with
@@ -1090,15 +1090,26 @@ let propagate program (state : State.t) =
     else Bool.ors [ ub; ub_from_input ]
   in
   let deopt = Bool.ors [ deopt; deopt_from_input ] in
+  let state =
+    if state.check_type then
+      {
+        state with
+        assertion = Bool.ands [ state.State.assertion; type_assertion ];
+      }
+    else state
+  in
   state |> State.update ~ub ~deopt
 
 (* encode the program and retrieve a final state *)
 let encode_pgr stage program ?(check_type = false) nparams =
   let init_state = State.init nparams ~check_type stage in
+  let final_mem = Memory.init 0 in
   let rec next program state =
     let pc = State.pc state in
-    let next_state = state |> encode_instr program |> propagate program in
-    if State.is_final next_state then State.finalize next_state
+    let next_state =
+      state |> encode_instr program final_mem |> propagate program
+    in
+    if State.is_final next_state then State.finalize final_mem next_state
     else next program { next_state with pc = pc + 1 }
   in
   next program init_state

@@ -172,3 +172,19 @@ let can_access ptr sz t =
 let can_access_as ptr repr t =
   let repr_sz = MachineType.Repr.size_of repr in
   can_access ptr repr_sz t
+
+let equal m1 m2 =
+  (* type t = {
+       bytes : Array.t;
+       bsizes : Array.t;
+       is_angelic : Array.t;
+       strings : Array.t;
+       next_bid : int;
+     } *)
+  Bool.ands
+    [
+      Bool.eq m1.bytes m2.bytes;
+      Bool.eq m1.bsizes m2.bsizes;
+      Bool.eq m1.is_angelic m2.is_angelic;
+      Bool.eq m1.strings m2.strings;
+    ]
