@@ -7,7 +7,7 @@ open Simplified
 open Machine
 open Z3utils
 
-let encode_instr program final_mem
+let encode_instr program
     ({
        State.pc;
        control_file = cf;
@@ -633,7 +633,7 @@ let encode_instr program final_mem
          let _eff = () in *)
       let ctrl_id = Operands.id_of_nth operands 5 in
       let ctrl = ControlFile.find ctrl_id cf in
-      load_field offset repr bid () ctrl mem final_mem
+      load_field offset repr bid () ctrl mem
   | LoadTypedElement ->
       let array_type = Operands.const_of_nth operands 0 |> int_of_string in
       let base_id = Operands.id_of_nth operands 1 in
@@ -1103,13 +1103,11 @@ let propagate program (state : State.t) =
 (* encode the program and retrieve a final state *)
 let encode_pgr stage program ?(check_type = false) nparams =
   let init_state = State.init nparams ~check_type stage in
-  let final_mem = Memory.init 0 in
   let rec next program state =
     let pc = State.pc state in
-    let next_state =
-      state |> encode_instr program final_mem |> propagate program
-    in
-    if State.is_final next_state then State.finalize final_mem next_state
+    let next_state = state |> encode_instr program |> propagate program in
+    if State.is_final next_state then
+      next_state |> Assertion.set_assertion program |> State.finalize
     else next program { next_state with pc = pc + 1 }
   in
   next program init_state

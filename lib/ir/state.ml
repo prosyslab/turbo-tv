@@ -184,10 +184,9 @@ let update ?value ?mem ?control ?ub ?deopt ?is_angelic_value ?is_angelic_control
 
 let is_final t = t.final
 
-let finalize final_mem t =
-  let assertion = Memory.equal final_mem t.memory in
+let finalize t =
   let pc = pc t |> string_of_int in
   let retval = value_of pc t in
   let ub = ub_of pc t in
   let deopt = deopt_of pc t in
-  { t with retval; ub; deopt; assertion = Bool.ands [ t.assertion; assertion ] }
+  { t with retval; ub; deopt }

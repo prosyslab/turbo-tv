@@ -29,6 +29,7 @@
   exprMap
   bigint
   strings
+  assertion
   ;tv
   encoder
   tv
