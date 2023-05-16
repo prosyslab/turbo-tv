@@ -27,7 +27,9 @@ type kind =
   | V1V2B1
   | B1B2B4V1V2
   | B4
-  | B1B2B4V1E1C1
+  | B2B3D3V1E1C1
+  | B3
+  | D3
   | B1V2V3V4
   | V3
   | V4
@@ -36,7 +38,7 @@ type kind =
   | V1V2V3
   | V1V2B1V3
   | B1B2B4V1V2V3E1C1
-  | V1B2B4V2E1C1
+  | V1B3D3V2E1C1
   | C1E1
   | B1V1V2
   | Empty
@@ -476,6 +478,7 @@ type t =
   | JSStoreMessage
   | JSStoreModule
   | JSStoreNamed
+  | JSStoreProperty
   | JSStrictEqual
   | JSSubtract
   | JSToBigIntConvertNumber
@@ -536,7 +539,6 @@ type t =
   | NumberSqrt
   | NumberTan
   | NumberTanh
-  | NumberToString
   | NumberToUint8Clamped
   | ObjectId
   | ObjectIsArrayBufferView
@@ -603,7 +605,6 @@ type t =
   | StoreTypedElement
   | StringFromCodePointAt
   | StringToLowerCaseIntl
-  | StringToNumber
   | StringToUpperCaseIntl
   | Switch
   | TaggedIndexConstant
@@ -615,6 +616,7 @@ type t =
   | TransitionElementsKind
   | TrapIf
   | TrapUnless
+  | TruncateBigIntToUint64
   | TruncateFloat32ToInt32
   | TruncateFloat32ToUint32
   | TruncateFloat64ToFloat32
@@ -753,6 +755,7 @@ type t =
   | NumberSin
   | NumberToBoolean
   | NumberToInt32
+  | NumberToString
   | NumberToUint32
   | NumberTrunc
   | ObjectIsMinusZero
@@ -764,6 +767,7 @@ type t =
   | StringFromSingleCharCode
   | StringFromSingleCodePoint
   | StringLength
+  | StringToNumber
   | ToBoolean
   | TruncateBigIntToWord64
   | TruncateFloat64ToInt64
@@ -959,7 +963,7 @@ type t =
   | Load
   (* b1b2b4v1v2 *)
   | LoadElement
-  (* b1b2b4v1e1c1 *)
+  (* b2b3d3v1e1c1 *)
   | LoadField
   (* b1v2v3v4 *)
   | LoadTypedElement
@@ -976,7 +980,7 @@ type t =
   | Store
   (* b1b2b4v1v2v3e1c1 *)
   | StoreElement
-  (* v1b2b4v2e1c1 *)
+  (* v1b3d3v2e1c1 *)
   | StoreField
   (* c1e1 *)
   | Throw
@@ -1095,24 +1099,24 @@ let get_kind opcode =
   | JSPromiseResolve | JSRegExpTest | JSRejectPromise | JSResolvePromise
   | JSSetKeyedProperty | JSSetNamedProperty | JSShiftLeft | JSShiftRight
   | JSShiftRightLogical | JSStoreContext | JSStoreGlobal | JSStoreInArrayLiteral
-  | JSStoreMessage | JSStoreModule | JSStoreNamed | JSStrictEqual | JSSubtract
-  | JSToBigIntConvertNumber | JSToLength | JSToName | JSToNumber
-  | JSToNumberConvertBigInt | JSToNumeric | JSToObject | JSToString | JSWasmCall
-  | LoadDataViewElement | LoadFieldByIndex | LoadFramePointer | LoadFromObject
-  | LoadImmutable | LoadImmutableFromObject | LoadLane | LoadMessage
-  | LoadParentFramePointer | LoadStackArgument | LoadStackCheckOffset
-  | LoadStackPointer | LoadTransform | Loop | LoopExit | LoopExitEffect
-  | LoopExitValue | MapGuard | MaybeGrowFastElements | MemoryBarrier
-  | NewArgumentsElements | NewConsString | NewDoubleElements
+  | JSStoreMessage | JSStoreModule | JSStoreNamed | JSStoreProperty
+  | JSStrictEqual | JSSubtract | JSToBigIntConvertNumber | JSToLength | JSToName
+  | JSToNumber | JSToNumberConvertBigInt | JSToNumeric | JSToObject | JSToString
+  | JSWasmCall | LoadDataViewElement | LoadFieldByIndex | LoadFramePointer
+  | LoadFromObject | LoadImmutable | LoadImmutableFromObject | LoadLane
+  | LoadMessage | LoadParentFramePointer | LoadStackArgument
+  | LoadStackCheckOffset | LoadStackPointer | LoadTransform | Loop | LoopExit
+  | LoopExitEffect | LoopExitValue | MapGuard | MaybeGrowFastElements
+  | MemoryBarrier | NewArgumentsElements | NewConsString | NewDoubleElements
   | NewSmiOrObjectElements | NumberAcos | NumberAcosh | NumberAsin | NumberAsinh
   | NumberAtan | NumberAtan2 | NumberAtanh | NumberCbrt | NumberClz32
   | NumberCos | NumberCosh | NumberExp | NumberFround | NumberIsFinite
   | NumberIsFloat64Hole | NumberLog | NumberLog10 | NumberLog1p | NumberLog2
   | NumberPow | NumberSilenceNaN | NumberSinh | NumberSqrt | NumberTan
-  | NumberTanh | NumberToString | NumberToUint8Clamped | ObjectId
-  | ObjectIsArrayBufferView | ObjectIsBigInt | ObjectIsCallable
-  | ObjectIsConstructor | ObjectIsDetectableCallable | ObjectIsFiniteNumber
-  | ObjectIsInteger | ObjectIsNonCallable | ObjectIsNumber | ObjectIsReceiver
+  | NumberTanh | NumberToUint8Clamped | ObjectId | ObjectIsArrayBufferView
+  | ObjectIsBigInt | ObjectIsCallable | ObjectIsConstructor
+  | ObjectIsDetectableCallable | ObjectIsFiniteNumber | ObjectIsInteger
+  | ObjectIsNonCallable | ObjectIsNumber | ObjectIsReceiver
   | ObjectIsSafeInteger | ObjectIsString | ObjectIsSymbol | ObjectIsUndetectable
   | ObjectState | OsrValue | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber
   | PlainPrimitiveToWord32 | Plug | PointerConstant | ProtectedLoad
@@ -1126,25 +1130,25 @@ let get_kind opcode =
   | Simd128ReverseBytes | SpeculativeNumberPow | SpeculativeToBigInt | StackSlot
   | Start | StateValues | StaticAssert | StoreDataViewElement | StoreLane
   | StoreMessage | StoreSignedSmallElement | StoreToObject | StoreTypedElement
-  | StringFromCodePointAt | StringToLowerCaseIntl | StringToNumber
-  | StringToUpperCaseIntl | Switch | TaggedIndexConstant | TailCall | Terminate
+  | StringFromCodePointAt | StringToLowerCaseIntl | StringToUpperCaseIntl
+  | Switch | TaggedIndexConstant | TailCall | Terminate
   | TransitionAndStoreElement | TransitionAndStoreNonNumberElement
   | TransitionAndStoreNumberElement | TransitionElementsKind | TrapIf
-  | TrapUnless | TruncateFloat32ToInt32 | TruncateFloat32ToUint32
-  | TruncateFloat64ToFloat32 | TruncateFloat64ToUint32 | TruncateTaggedToFloat64
-  | TryTruncateFloat32ToInt64 | TryTruncateFloat32ToUint64
-  | TryTruncateFloat64ToInt64 | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf
-  | TypedObjectState | TypedStateValues | Uint32MulHigh | Uint64Div | Uint64Mod
-  | UnalignedLoad | UnalignedStore | UnsafePointerAdd | Unsigned32Divide
-  | V128AnyTrue | VerifyType | Word32AtomicAdd | Word32AtomicAnd
-  | Word32AtomicCompareExchange | Word32AtomicExchange | Word32AtomicLoad
-  | Word32AtomicOr | Word32AtomicPairAdd | Word32AtomicPairAnd
-  | Word32AtomicPairCompareExchange | Word32AtomicPairExchange
-  | Word32AtomicPairLoad | Word32AtomicPairOr | Word32AtomicPairStore
-  | Word32AtomicPairSub | Word32AtomicPairXor | Word32AtomicStore
-  | Word32AtomicSub | Word32AtomicXor | Word32Clz | Word32Ctz | Word32PairSar
-  | Word32PairShl | Word32PairShr | Word32Popcnt | Word32ReverseBits
-  | Word32Select | Word64AtomicAdd | Word64AtomicAnd
+  | TrapUnless | TruncateBigIntToUint64 | TruncateFloat32ToInt32
+  | TruncateFloat32ToUint32 | TruncateFloat64ToFloat32 | TruncateFloat64ToUint32
+  | TruncateTaggedToFloat64 | TryTruncateFloat32ToInt64
+  | TryTruncateFloat32ToUint64 | TryTruncateFloat64ToInt64
+  | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf | TypedObjectState
+  | TypedStateValues | Uint32MulHigh | Uint64Div | Uint64Mod | UnalignedLoad
+  | UnalignedStore | UnsafePointerAdd | Unsigned32Divide | V128AnyTrue
+  | VerifyType | Word32AtomicAdd | Word32AtomicAnd | Word32AtomicCompareExchange
+  | Word32AtomicExchange | Word32AtomicLoad | Word32AtomicOr
+  | Word32AtomicPairAdd | Word32AtomicPairAnd | Word32AtomicPairCompareExchange
+  | Word32AtomicPairExchange | Word32AtomicPairLoad | Word32AtomicPairOr
+  | Word32AtomicPairStore | Word32AtomicPairSub | Word32AtomicPairXor
+  | Word32AtomicStore | Word32AtomicSub | Word32AtomicXor | Word32Clz
+  | Word32Ctz | Word32PairSar | Word32PairShl | Word32PairShr | Word32Popcnt
+  | Word32ReverseBits | Word32Select | Word64AtomicAdd | Word64AtomicAnd
   | Word64AtomicCompareExchange | Word64AtomicExchange | Word64AtomicLoad
   | Word64AtomicOr | Word64AtomicStore | Word64AtomicSub | Word64AtomicXor
   | Word64Clz | Word64ClzLowerable | Word64Ctz | Word64CtzLowerable
@@ -1173,10 +1177,10 @@ let get_kind opcode =
   | Integral32OrMinusZeroToBigInt | NumberAbs | NumberCeil | NumberExpm1
   | NumberFloor | NumberIsInteger | NumberIsMinusZero | NumberIsNaN
   | NumberIsSafeInteger | NumberRound | NumberSign | NumberSin | NumberToBoolean
-  | NumberToInt32 | NumberToUint32 | NumberTrunc | ObjectIsMinusZero
-  | ObjectIsNaN | ObjectIsSmi | RoundFloat64ToInt32 | SpeculativeBigIntNegate
-  | StackPointerGreaterThan | StringFromSingleCharCode
-  | StringFromSingleCodePoint | StringLength | ToBoolean
+  | NumberToInt32 | NumberToString | NumberToUint32 | NumberTrunc
+  | ObjectIsMinusZero | ObjectIsNaN | ObjectIsSmi | RoundFloat64ToInt32
+  | SpeculativeBigIntNegate | StackPointerGreaterThan | StringFromSingleCharCode
+  | StringFromSingleCodePoint | StringLength | StringToNumber | ToBoolean
   | TruncateBigIntToWord64 | TruncateFloat64ToInt64 | TruncateFloat64ToWord32
   | TruncateInt64ToInt32 | TruncateTaggedPointerToBit | TruncateTaggedToBit
   | TruncateTaggedToWord32 | Word32ReverseBytes | Word64ReverseBytes ->
@@ -1244,14 +1248,14 @@ let get_kind opcode =
   | JSStackCheck | Unreachable -> E1C1
   | Load -> V1V2B1
   | LoadElement -> B1B2B4V1V2
-  | LoadField -> B1B2B4V1E1C1
+  | LoadField -> B2B3D3V1E1C1
   | LoadTypedElement -> B1V2V3V4
   | Phi -> VVC1
   | Return -> V2C1E1
   | Select | StringConcat | StringIndexOf | StringSubstring -> V1V2V3
   | Store -> V1V2B1V3
   | StoreElement -> B1B2B4V1V2V3E1C1
-  | StoreField -> V1B2B4V2E1C1
+  | StoreField -> V1B3D3V2E1C1
   | Throw -> C1E1
   | Word32Sar | Word64Sar -> B1V1V2
   | Empty -> Empty
@@ -1283,7 +1287,9 @@ let split_kind kind =
   | V1V2B1 -> [ V1; V2; B1 ]
   | B1B2B4V1V2 -> [ B1; B2; B4; V1; V2 ]
   | B4 -> [ B4 ]
-  | B1B2B4V1E1C1 -> [ B1; B2; B4; V1; E1; C1 ]
+  | B2B3D3V1E1C1 -> [ B2; B3; D3; V1; E1; C1 ]
+  | B3 -> [ B3 ]
+  | D3 -> [ D3 ]
   | B1V2V3V4 -> [ B1; V2; V3; V4 ]
   | V3 -> [ V3 ]
   | V4 -> [ V4 ]
@@ -1292,7 +1298,7 @@ let split_kind kind =
   | V1V2V3 -> [ V1; V2; V3 ]
   | V1V2B1V3 -> [ V1; V2; B1; V3 ]
   | B1B2B4V1V2V3E1C1 -> [ B1; B2; B4; V1; V2; V3; E1; C1 ]
-  | V1B2B4V2E1C1 -> [ V1; B2; B4; V2; E1; C1 ]
+  | V1B3D3V2E1C1 -> [ V1; B3; D3; V2; E1; C1 ]
   | C1E1 -> [ C1; E1 ]
   | B1V1V2 -> [ B1; V1; V2 ]
   | Empty -> [ Empty ]
@@ -1735,6 +1741,7 @@ let of_str str =
   | "JSStoreMessage" -> JSStoreMessage
   | "JSStoreModule" -> JSStoreModule
   | "JSStoreNamed" -> JSStoreNamed
+  | "JSStoreProperty" -> JSStoreProperty
   | "JSStrictEqual" -> JSStrictEqual
   | "JSSubtract" -> JSSubtract
   | "JSToBigIntConvertNumber" -> JSToBigIntConvertNumber
@@ -1795,7 +1802,6 @@ let of_str str =
   | "NumberSqrt" -> NumberSqrt
   | "NumberTan" -> NumberTan
   | "NumberTanh" -> NumberTanh
-  | "NumberToString" -> NumberToString
   | "NumberToUint8Clamped" -> NumberToUint8Clamped
   | "ObjectId" -> ObjectId
   | "ObjectIsArrayBufferView" -> ObjectIsArrayBufferView
@@ -1862,7 +1868,6 @@ let of_str str =
   | "StoreTypedElement" -> StoreTypedElement
   | "StringFromCodePointAt" -> StringFromCodePointAt
   | "StringToLowerCaseIntl" -> StringToLowerCaseIntl
-  | "StringToNumber" -> StringToNumber
   | "StringToUpperCaseIntl" -> StringToUpperCaseIntl
   | "Switch" -> Switch
   | "TaggedIndexConstant" -> TaggedIndexConstant
@@ -1874,6 +1879,7 @@ let of_str str =
   | "TransitionElementsKind" -> TransitionElementsKind
   | "TrapIf" -> TrapIf
   | "TrapUnless" -> TrapUnless
+  | "TruncateBigIntToUint64" -> TruncateBigIntToUint64
   | "TruncateFloat32ToInt32" -> TruncateFloat32ToInt32
   | "TruncateFloat32ToUint32" -> TruncateFloat32ToUint32
   | "TruncateFloat64ToFloat32" -> TruncateFloat64ToFloat32
@@ -2010,6 +2016,7 @@ let of_str str =
   | "NumberSin" -> NumberSin
   | "NumberToBoolean" -> NumberToBoolean
   | "NumberToInt32" -> NumberToInt32
+  | "NumberToString" -> NumberToString
   | "NumberToUint32" -> NumberToUint32
   | "NumberTrunc" -> NumberTrunc
   | "ObjectIsMinusZero" -> ObjectIsMinusZero
@@ -2021,6 +2028,7 @@ let of_str str =
   | "StringFromSingleCharCode" -> StringFromSingleCharCode
   | "StringFromSingleCodePoint" -> StringFromSingleCodePoint
   | "StringLength" -> StringLength
+  | "StringToNumber" -> StringToNumber
   | "ToBoolean" -> ToBoolean
   | "TruncateBigIntToWord64" -> TruncateBigIntToWord64
   | "TruncateFloat64ToInt64" -> TruncateFloat64ToInt64
@@ -2650,6 +2658,7 @@ let to_str opcode =
   | JSStoreMessage -> "JSStoreMessage"
   | JSStoreModule -> "JSStoreModule"
   | JSStoreNamed -> "JSStoreNamed"
+  | JSStoreProperty -> "JSStoreProperty"
   | JSStrictEqual -> "JSStrictEqual"
   | JSSubtract -> "JSSubtract"
   | JSToBigIntConvertNumber -> "JSToBigIntConvertNumber"
@@ -2710,7 +2719,6 @@ let to_str opcode =
   | NumberSqrt -> "NumberSqrt"
   | NumberTan -> "NumberTan"
   | NumberTanh -> "NumberTanh"
-  | NumberToString -> "NumberToString"
   | NumberToUint8Clamped -> "NumberToUint8Clamped"
   | ObjectId -> "ObjectId"
   | ObjectIsArrayBufferView -> "ObjectIsArrayBufferView"
@@ -2777,7 +2785,6 @@ let to_str opcode =
   | StoreTypedElement -> "StoreTypedElement"
   | StringFromCodePointAt -> "StringFromCodePointAt"
   | StringToLowerCaseIntl -> "StringToLowerCaseIntl"
-  | StringToNumber -> "StringToNumber"
   | StringToUpperCaseIntl -> "StringToUpperCaseIntl"
   | Switch -> "Switch"
   | TaggedIndexConstant -> "TaggedIndexConstant"
@@ -2789,6 +2796,7 @@ let to_str opcode =
   | TransitionElementsKind -> "TransitionElementsKind"
   | TrapIf -> "TrapIf"
   | TrapUnless -> "TrapUnless"
+  | TruncateBigIntToUint64 -> "TruncateBigIntToUint64"
   | TruncateFloat32ToInt32 -> "TruncateFloat32ToInt32"
   | TruncateFloat32ToUint32 -> "TruncateFloat32ToUint32"
   | TruncateFloat64ToFloat32 -> "TruncateFloat64ToFloat32"
@@ -2925,6 +2933,7 @@ let to_str opcode =
   | NumberSin -> "NumberSin"
   | NumberToBoolean -> "NumberToBoolean"
   | NumberToInt32 -> "NumberToInt32"
+  | NumberToString -> "NumberToString"
   | NumberToUint32 -> "NumberToUint32"
   | NumberTrunc -> "NumberTrunc"
   | ObjectIsMinusZero -> "ObjectIsMinusZero"
@@ -2936,6 +2945,7 @@ let to_str opcode =
   | StringFromSingleCharCode -> "StringFromSingleCharCode"
   | StringFromSingleCodePoint -> "StringFromSingleCodePoint"
   | StringLength -> "StringLength"
+  | StringToNumber -> "StringToNumber"
   | ToBoolean -> "ToBoolean"
   | TruncateBigIntToWord64 -> "TruncateBigIntToWord64"
   | TruncateFloat64ToInt64 -> "TruncateFloat64ToInt64"
