@@ -189,4 +189,6 @@ let finalize t =
   let retval = value_of pc t in
   let ub = ub_of pc t in
   let deopt = deopt_of pc t in
+  print_endline "final retval = ";
+  retval |> Expr.to_simplified_string |> print_endline;
   { t with retval; ub; deopt }

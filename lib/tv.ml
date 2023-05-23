@@ -177,3 +177,67 @@ let check_eq nparams src_program tgt_program =
     | UNKNOWN ->
         let reason = Z3.Solver.get_reason_unknown validator in
         Printf.printf "Result: Unknown\nReason: %s\n" reason
+
+let check_wasm nparams program =
+  let final_state = Encoder.encode_pgr "pgm" program nparams in
+  let precond =
+    (* precondition_for_params /\ not (deopt(src) \/ deopt(pgm)) *)
+    let no_deopt =
+      let deopt = State.deopt final_state in
+      Bool.not deopt
+    in
+    Bool.ands [ final_state |> precondition_for_params nparams; no_deopt ]
+  in
+  let wasm_assertion =
+    let pgm_retval = State.retval final_state in
+    let ret = Z3.Expr.mk_const_s ctx "ret" (BV.mk_sort ctx Value.len) in
+    (* let x = BitVec.init ~len:32 "%x" in
+       let y = BitVec.init ~len:32 "%y" in *)
+    (* let a = BitVec.init ~len:32 "%a" in *)
+    Bool.ands
+      [
+        State.assertion final_state;
+        precond;
+        Value.has_type Type.tagged_signed pgm_retval;
+        Bool.eq ret pgm_retval;
+        (* Bool.eq (BitVec.extract 31 30 x) ; *)
+        (* Bool.eq x (BitVec.extract 31 0 (List.nth final_state.params 0));
+           Bool.eq y (BitVec.extract 31 0 (List.nth final_state.params 1)); *)
+        (* Bool.eq a (BitVec.extract 31 0 (List.nth final_state.params 0)); *)
+      ]
+  in
+
+  if State.not_implemented final_state then (
+    Printf.printf "Result: Not Implemented\n";
+    Printf.printf "Opcodes: [%s]\n"
+      (String.concat ", "
+         (final_state.not_implemented_opcodes |> OpcodeSet.to_list)))
+  else print_endline "final solver query = ";
+  (* validator |> Z3.Solver.to_string |> print_endline; *)
+  wasm_assertion |> Expr.simplify None
+  |> Z3.SMT.benchmark_to_smtstring ctx "turbo-tv - SMT query;" "" "" "" []
+  |> print_endline
+(* Check: exists params. precond /\ not (retval_is_same) *)
+(* let assertion =
+     Bool.ands
+       [
+         State.assertion final_state;
+         precond;
+         Bool.not retval_is_same;
+       ]
+   in
+
+   match Solver.check validator assertion with
+   | SATISFIABLE ->
+       let model = Option.get (Solver.get_model validator) in
+       Printf.printf "Result: Not Verified \n";
+       Printf.printf "CounterExample: \n";
+       Printer.print_params model
+         (State.register_file src_state)
+         (State.memory src_state) (State.params src_state);
+       Printer.print_counter_example src_program src_state model;
+       Printer.print_counter_example tgt_program tgt_state model
+   | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
+   | UNKNOWN ->
+       let reason = Z3.Solver.get_reason_unknown validator in
+       Printf.printf "Result: Unknown\nReason: %s\n" reason *)

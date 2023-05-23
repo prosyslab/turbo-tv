@@ -102,6 +102,7 @@ type t =
   | NonInternal
   | NonBigInt
   | NonNumber
+  | Wasmi32
   | Any
   | HeapConstant of int
   | OtherNumberConstant of float
@@ -310,6 +311,7 @@ let rec of_string str =
   | "NonInternal" -> NonInternal
   | "NonBigInt" -> NonBigInt
   | "NonNumber" -> NonNumber
+  | "Wasm:i32" -> Wasmi32
   | "Any" -> Any
   | s when String.starts_with ~prefix:"(" s -> parse_union s
   | s when String.starts_with ~prefix:"<" s -> parse_tuple s
@@ -418,6 +420,7 @@ let rec to_string t =
   | NonInternal -> "NonInternal"
   | NonBigInt -> "NonBigInt"
   | NonNumber -> "NonNumber"
+  | Wasmi32 -> "Wasm:i32"
   | Any -> "Any"
   | Union tys ->
       List.map to_string tys |> String.concat ", "

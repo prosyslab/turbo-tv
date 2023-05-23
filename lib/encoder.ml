@@ -634,6 +634,13 @@ let encode_instr program
       let ctrl_id = Operands.id_of_nth operands 5 in
       let ctrl = ControlFile.find ctrl_id cf in
       load_field offset repr bid () ctrl mem
+  | LoadFromObject ->
+      let ptr_id = Operands.id_of_nth operands 0 in
+      let ptr = RegisterFile.find ptr_id rf in
+      let pos_id = Operands.id_of_nth operands 1 in
+      let pos = RegisterFile.find pos_id rf in
+      let repr = Operands.const_of_nth operands 2 |> Repr.of_rs_string in
+      load ptr pos repr mem
   | LoadTypedElement ->
       let array_type = Operands.const_of_nth operands 0 |> int_of_string in
       let base_id = Operands.id_of_nth operands 1 in
@@ -934,6 +941,20 @@ let encode_instr program
   | Word32Equal -> encode_v2 word32_equal
   | Word64Equal -> encode_v2 word64_equal
   (* machine: memory *)
+  | Load ->
+      let ptr_id = Operands.id_of_nth operands 0 in
+      let ptr = RegisterFile.find ptr_id rf in
+      let pos_id = Operands.id_of_nth operands 1 in
+      let pos = RegisterFile.find pos_id rf in
+      let repr = Operands.const_of_nth operands 2 |> Repr.of_rs_string in
+      load ptr pos repr mem
+  | LoadImmutable ->
+      let ptr_id = Operands.id_of_nth operands 0 in
+      let ptr = RegisterFile.find ptr_id rf in
+      let pos_id = Operands.id_of_nth operands 1 in
+      let pos = RegisterFile.find pos_id rf in
+      let repr = Operands.const_of_nth operands 2 |> Repr.of_rs_string in
+      load ptr pos repr mem
   | Store ->
       let ptr_id = Operands.id_of_nth operands 0 in
       let ptr = RegisterFile.find ptr_id rf in
@@ -943,13 +964,22 @@ let encode_instr program
       let value_id = Operands.id_of_nth operands 3 in
       let value = RegisterFile.find value_id rf in
       store ptr pos repr value mem
-  | Load ->
+  | ProtectedLoad ->
       let ptr_id = Operands.id_of_nth operands 0 in
       let ptr = RegisterFile.find ptr_id rf in
       let pos_id = Operands.id_of_nth operands 1 in
       let pos = RegisterFile.find pos_id rf in
       let repr = Operands.const_of_nth operands 2 |> Repr.of_rs_string in
       load ptr pos repr mem
+  | ProtectedStore ->
+      let ptr_id = Operands.id_of_nth operands 0 in
+      let ptr = RegisterFile.find ptr_id rf in
+      let pos_id = Operands.id_of_nth operands 1 in
+      let pos = RegisterFile.find pos_id rf in
+      let repr = Operands.const_of_nth operands 2 |> Repr.of_string in
+      let value_id = Operands.id_of_nth operands 3 in
+      let value = RegisterFile.find value_id rf in
+      store ptr pos repr value mem
   (* machine: bitcast *)
   | BitcastFloat32ToInt32 -> encode_v1 bitcast_float32_to_int32
   | BitcastFloat64ToInt64 -> encode_v1 bitcast_float64_to_int64

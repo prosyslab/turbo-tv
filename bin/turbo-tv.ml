@@ -4,6 +4,7 @@ open Lib
 type conf = {
   verify : string;
   check_ub : string;
+  check_wasm : string;
   check_type : bool;
   emit_graph : bool;
 }
@@ -26,11 +27,16 @@ let jstv_args =
     let doc = "Emit graphs of each reduction step into OUT directory" in
     Arg.(value & flag & info [ "emit-graph" ] ~doc)
   in
-  let mk_conf verify check_ub check_type emit_graph =
-    { verify; check_ub; check_type; emit_graph }
+  let check_wasm_arg =
+    let doc = "Check and print SMT query for the [IR]" in
+    Arg.(value & opt file "" & info [ "check-wasm" ] ~doc)
+  in
+  let mk_conf verify check_ub check_type emit_graph check_wasm =
+    { verify; check_ub; check_type; emit_graph; check_wasm }
   in
   Term.(
-    const mk_conf $ verify_arg $ check_ub_arg $ type_check_arg $ emit_graph_arg)
+    const mk_conf $ verify_arg $ check_ub_arg $ type_check_arg $ emit_graph_arg
+    $ check_wasm_arg)
 
 let parse_command_line () =
   let doc = "Translation validation for TurboFan IR" in
@@ -55,7 +61,9 @@ let main () =
   Printexc.record_backtrace true;
   (* number of parameters (currenty fixed to 2) *)
   let nparams = 2 in
-  let { verify; check_ub; check_type; emit_graph } = parse_command_line () in
+  let { verify; check_ub; check_type; emit_graph; check_wasm } =
+    parse_command_line ()
+  in
 
   if String.length verify <> 0 then
     (* equality check *)
@@ -89,6 +97,19 @@ let main () =
           "Result: Not target\nReason: invalid graph(node not found)"
     | Err.InvalidBracketArgs _ ->
         Printf.printf "Result: Not target\nReason: invalid graph(bracket args)"
-  else failwith "must give option '--verify' or '--check-ub'"
+  else if String.length check_wasm <> 0 then
+    (* undefined behavior check *)
+    try
+      let pgm_p = check_wasm in
+      let pgm = IR.create_from_ir_file pgm_p in
+      if not_target_op_exists pgm then Printf.printf "Result: Not target\n"
+      else Tv.check_wasm nparams pgm
+    with
+    | Err.NodeNotFound _ ->
+        Printf.printf
+          "Result: Not target\nReason: invalid graph(node not found)"
+    | Err.InvalidBracketArgs _ ->
+        Printf.printf "Result: Not target\nReason: invalid graph(bracket args)"
+  else failwith "must give option '--verify' or '--check-ub' or --check-wasm"
 
 let () = main ()
