@@ -1,0 +1,23 @@
+name: CI
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up OCaml
+        uses: ocaml/setup-ocaml@v2
+        with:
+          ocaml-compiler: 4.13.1
+
+      - name: Build TurboTV
+        run: |
+          ./build.sh || eval $(opam env) && make -j
+
+      - name: Run test
+        run: eval $(opam env) && make test
