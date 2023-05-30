@@ -411,8 +411,21 @@ let load_field offset repr ptr _eff control mem state =
   let assertion =
     Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of)
   in
+  let access =
+    State.AccessInfo.
+      {
+        bid = ptr |> TaggedPointer.bid_of;
+        is_read = true;
+        lower = off |> TaggedPointer.off_of;
+        upper = BitVec.addi (off |> TaggedPointer.off_of) (repr |> Repr.size_of);
+      }
+  in
 
-  { state with assertion = Bool.ands [ state.State.assertion; assertion ] }
+  {
+    state with
+    assertion = Bool.ands [ state.State.assertion; assertion ];
+    access_info = State.AccessInfo.add state.State.pc access state.access_info;
+  }
   |> State.update ~value ~control ~ub ~is_angelic_value:is_angelic
 
 let load_typed_element array_type base extern ind mem state =
@@ -454,7 +467,20 @@ let store_field ptr offset repr value _eff control mem state =
   let ub = Bool.not (Memory.can_access_as ptr repr mem) in
   let raw_ptr = ptr |> TaggedPointer.to_raw_pointer in
   let mem = Memory.Bytes.store_as (Bool.not ub) raw_ptr repr value mem in
-  state |> State.update ~control ~mem ~ub
+  let access =
+    State.AccessInfo.
+      {
+        bid = ptr |> TaggedPointer.bid_of;
+        is_read = true;
+        lower = off |> TaggedPointer.off_of;
+        upper = BitVec.addi (off |> TaggedPointer.off_of) (repr |> Repr.size_of);
+      }
+  in
+  {
+    state with
+    access_info = State.AccessInfo.add state.State.pc access state.access_info;
+  }
+  |> State.update ~control ~mem ~ub
 
 (* simplified: type-check *)
 

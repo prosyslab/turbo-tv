@@ -421,7 +421,6 @@ let load ptr pos repr mem state =
   let ub = Bool.not (Memory.can_access_as moved repr mem) in
   let raw_ptr = moved |> BitVec.extract 31 0 in
   let ty = Type.from_repr repr |> List.hd in
-
   let value =
     (if ptr |> Memory.Objects.is_string mem |> Expr.simplify None |> B.is_true
     then Memory.Strings.load raw_ptr mem |> Str.to_bv (Repr.width_of repr)
@@ -429,7 +428,6 @@ let load ptr pos repr mem state =
     |> BitVec.zero_extend (64 - Repr.width_of repr)
     |> Value.entype ty
   in
-
   let assertion =
     Bool.ands
       [
