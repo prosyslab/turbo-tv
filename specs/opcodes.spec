@@ -587,8 +587,8 @@ LoadElement,b1,b2,b4,v1,v2
 LoadField,b2,b3,d3,v1,e1,c1
 LoadFieldByIndex,
 LoadFramePointer,
-LoadFromObject,
-LoadImmutable,
+LoadFromObject,v1,v2,b1
+LoadImmutable,v1,v2,b1
 LoadImmutableFromObject,
 LoadLane,
 LoadMessage,
@@ -699,8 +699,8 @@ PlainPrimitiveToWord32,
 Plug,
 PointerConstant,
 Projection,b1,v1
-ProtectedLoad,
-ProtectedStore,
+ProtectedLoad,v1,v2,b1
+ProtectedStore,v1,v2,b1,v3
 ReferenceEqual,v1,v2
 RelocatableInt32Constant,
 RelocatableInt64Constant,

@@ -34,9 +34,9 @@ type kind =
   | V3
   | V4
   | VVC1
+  | V1V2B1V3
   | V2C1E1
   | V1V2V3
-  | V1V2B1V3
   | B1B2B4V1V2V3E1C1
   | V1B3D3V2E1C1
   | C1E1
@@ -493,8 +493,6 @@ type t =
   | LoadDataViewElement
   | LoadFieldByIndex
   | LoadFramePointer
-  | LoadFromObject
-  | LoadImmutable
   | LoadImmutableFromObject
   | LoadLane
   | LoadMessage
@@ -562,8 +560,6 @@ type t =
   | PlainPrimitiveToWord32
   | Plug
   | PointerConstant
-  | ProtectedLoad
-  | ProtectedStore
   | RelocatableInt32Constant
   | RelocatableInt64Constant
   | RestLength
@@ -961,6 +957,9 @@ type t =
   | Unreachable
   (* v1v2b1 *)
   | Load
+  | LoadFromObject
+  | LoadImmutable
+  | ProtectedLoad
   (* b1b2b4v1v2 *)
   | LoadElement
   (* b2b3d3v1e1c1 *)
@@ -969,6 +968,9 @@ type t =
   | LoadTypedElement
   (* vvc1 *)
   | Phi
+  (* v1v2b1v3 *)
+  | ProtectedStore
+  | Store
   (* v2c1e1 *)
   | Return
   (* v1v2v3 *)
@@ -976,8 +978,6 @@ type t =
   | StringConcat
   | StringIndexOf
   | StringSubstring
-  (* v1v2b1v3 *)
-  | Store
   (* b1b2b4v1v2v3e1c1 *)
   | StoreElement
   (* v1b3d3v2e1c1 *)
@@ -1103,52 +1103,51 @@ let get_kind opcode =
   | JSStrictEqual | JSSubtract | JSToBigIntConvertNumber | JSToLength | JSToName
   | JSToNumber | JSToNumberConvertBigInt | JSToNumeric | JSToObject | JSToString
   | JSWasmCall | LoadDataViewElement | LoadFieldByIndex | LoadFramePointer
-  | LoadFromObject | LoadImmutable | LoadImmutableFromObject | LoadLane
-  | LoadMessage | LoadParentFramePointer | LoadStackArgument
-  | LoadStackCheckOffset | LoadStackPointer | LoadTransform | Loop | LoopExit
-  | LoopExitEffect | LoopExitValue | MapGuard | MaybeGrowFastElements
-  | MemoryBarrier | NewArgumentsElements | NewConsString | NewDoubleElements
-  | NewSmiOrObjectElements | NumberAcos | NumberAcosh | NumberAsin | NumberAsinh
-  | NumberAtan | NumberAtan2 | NumberAtanh | NumberCbrt | NumberClz32
-  | NumberCos | NumberCosh | NumberExp | NumberFround | NumberIsFinite
-  | NumberIsFloat64Hole | NumberLog | NumberLog10 | NumberLog1p | NumberLog2
-  | NumberPow | NumberSilenceNaN | NumberSinh | NumberSqrt | NumberTan
-  | NumberTanh | NumberToUint8Clamped | ObjectId | ObjectIsArrayBufferView
-  | ObjectIsBigInt | ObjectIsCallable | ObjectIsConstructor
-  | ObjectIsDetectableCallable | ObjectIsFiniteNumber | ObjectIsInteger
-  | ObjectIsNonCallable | ObjectIsNumber | ObjectIsReceiver
+  | LoadImmutableFromObject | LoadLane | LoadMessage | LoadParentFramePointer
+  | LoadStackArgument | LoadStackCheckOffset | LoadStackPointer | LoadTransform
+  | Loop | LoopExit | LoopExitEffect | LoopExitValue | MapGuard
+  | MaybeGrowFastElements | MemoryBarrier | NewArgumentsElements | NewConsString
+  | NewDoubleElements | NewSmiOrObjectElements | NumberAcos | NumberAcosh
+  | NumberAsin | NumberAsinh | NumberAtan | NumberAtan2 | NumberAtanh
+  | NumberCbrt | NumberClz32 | NumberCos | NumberCosh | NumberExp | NumberFround
+  | NumberIsFinite | NumberIsFloat64Hole | NumberLog | NumberLog10 | NumberLog1p
+  | NumberLog2 | NumberPow | NumberSilenceNaN | NumberSinh | NumberSqrt
+  | NumberTan | NumberTanh | NumberToUint8Clamped | ObjectId
+  | ObjectIsArrayBufferView | ObjectIsBigInt | ObjectIsCallable
+  | ObjectIsConstructor | ObjectIsDetectableCallable | ObjectIsFiniteNumber
+  | ObjectIsInteger | ObjectIsNonCallable | ObjectIsNumber | ObjectIsReceiver
   | ObjectIsSafeInteger | ObjectIsString | ObjectIsSymbol | ObjectIsUndetectable
   | ObjectState | OsrValue | PlainPrimitiveToFloat64 | PlainPrimitiveToNumber
-  | PlainPrimitiveToWord32 | Plug | PointerConstant | ProtectedLoad
-  | ProtectedStore | RelocatableInt32Constant | RelocatableInt64Constant
-  | RestLength | Retain | RoundInt32ToFloat32 | RoundInt64ToFloat32
-  | RoundInt64ToFloat64 | RoundUint32ToFloat32 | RoundUint64ToFloat32
-  | RoundUint64ToFloat64 | RuntimeAbort | S128And | S128AndNot | S128Const
-  | S128Not | S128Or | S128Select | S128Xor | S128Zero | SLVerifierHint
-  | SameValueNumbersOnly | SignExtendWord16ToInt32 | SignExtendWord16ToInt64
-  | SignExtendWord32ToInt64 | SignExtendWord8ToInt32 | SignExtendWord8ToInt64
-  | Simd128ReverseBytes | SpeculativeNumberPow | SpeculativeToBigInt | StackSlot
-  | Start | StateValues | StaticAssert | StoreDataViewElement | StoreLane
-  | StoreMessage | StoreSignedSmallElement | StoreToObject | StoreTypedElement
-  | StringFromCodePointAt | StringToLowerCaseIntl | StringToUpperCaseIntl
-  | Switch | TaggedIndexConstant | TailCall | Terminate
-  | TransitionAndStoreElement | TransitionAndStoreNonNumberElement
-  | TransitionAndStoreNumberElement | TransitionElementsKind | TrapIf
-  | TrapUnless | TruncateBigIntToUint64 | TruncateFloat32ToInt32
-  | TruncateFloat32ToUint32 | TruncateFloat64ToFloat32 | TruncateFloat64ToUint32
-  | TruncateTaggedToFloat64 | TryTruncateFloat32ToInt64
-  | TryTruncateFloat32ToUint64 | TryTruncateFloat64ToInt64
-  | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf | TypedObjectState
-  | TypedStateValues | Uint32MulHigh | Uint64Div | Uint64Mod | UnalignedLoad
-  | UnalignedStore | UnsafePointerAdd | Unsigned32Divide | V128AnyTrue
-  | VerifyType | Word32AtomicAdd | Word32AtomicAnd | Word32AtomicCompareExchange
-  | Word32AtomicExchange | Word32AtomicLoad | Word32AtomicOr
-  | Word32AtomicPairAdd | Word32AtomicPairAnd | Word32AtomicPairCompareExchange
-  | Word32AtomicPairExchange | Word32AtomicPairLoad | Word32AtomicPairOr
-  | Word32AtomicPairStore | Word32AtomicPairSub | Word32AtomicPairXor
-  | Word32AtomicStore | Word32AtomicSub | Word32AtomicXor | Word32Clz
-  | Word32Ctz | Word32PairSar | Word32PairShl | Word32PairShr | Word32Popcnt
-  | Word32ReverseBits | Word32Select | Word64AtomicAdd | Word64AtomicAnd
+  | PlainPrimitiveToWord32 | Plug | PointerConstant | RelocatableInt32Constant
+  | RelocatableInt64Constant | RestLength | Retain | RoundInt32ToFloat32
+  | RoundInt64ToFloat32 | RoundInt64ToFloat64 | RoundUint32ToFloat32
+  | RoundUint64ToFloat32 | RoundUint64ToFloat64 | RuntimeAbort | S128And
+  | S128AndNot | S128Const | S128Not | S128Or | S128Select | S128Xor | S128Zero
+  | SLVerifierHint | SameValueNumbersOnly | SignExtendWord16ToInt32
+  | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
+  | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeNumberPow
+  | SpeculativeToBigInt | StackSlot | Start | StateValues | StaticAssert
+  | StoreDataViewElement | StoreLane | StoreMessage | StoreSignedSmallElement
+  | StoreToObject | StoreTypedElement | StringFromCodePointAt
+  | StringToLowerCaseIntl | StringToUpperCaseIntl | Switch | TaggedIndexConstant
+  | TailCall | Terminate | TransitionAndStoreElement
+  | TransitionAndStoreNonNumberElement | TransitionAndStoreNumberElement
+  | TransitionElementsKind | TrapIf | TrapUnless | TruncateBigIntToUint64
+  | TruncateFloat32ToInt32 | TruncateFloat32ToUint32 | TruncateFloat64ToFloat32
+  | TruncateFloat64ToUint32 | TruncateTaggedToFloat64
+  | TryTruncateFloat32ToInt64 | TryTruncateFloat32ToUint64
+  | TryTruncateFloat64ToInt64 | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf
+  | TypedObjectState | TypedStateValues | Uint32MulHigh | Uint64Div | Uint64Mod
+  | UnalignedLoad | UnalignedStore | UnsafePointerAdd | Unsigned32Divide
+  | V128AnyTrue | VerifyType | Word32AtomicAdd | Word32AtomicAnd
+  | Word32AtomicCompareExchange | Word32AtomicExchange | Word32AtomicLoad
+  | Word32AtomicOr | Word32AtomicPairAdd | Word32AtomicPairAnd
+  | Word32AtomicPairCompareExchange | Word32AtomicPairExchange
+  | Word32AtomicPairLoad | Word32AtomicPairOr | Word32AtomicPairStore
+  | Word32AtomicPairSub | Word32AtomicPairXor | Word32AtomicStore
+  | Word32AtomicSub | Word32AtomicXor | Word32Clz | Word32Ctz | Word32PairSar
+  | Word32PairShl | Word32PairShr | Word32Popcnt | Word32ReverseBits
+  | Word32Select | Word64AtomicAdd | Word64AtomicAnd
   | Word64AtomicCompareExchange | Word64AtomicExchange | Word64AtomicLoad
   | Word64AtomicOr | Word64AtomicStore | Word64AtomicSub | Word64AtomicXor
   | Word64Clz | Word64ClzLowerable | Word64Ctz | Word64CtzLowerable
@@ -1246,14 +1245,14 @@ let get_kind opcode =
   | Int64MulWithOverflow | Int64SubWithOverflow | Uint32Div | Uint32Mod ->
       V1V2C1
   | JSStackCheck | Unreachable -> E1C1
-  | Load -> V1V2B1
+  | Load | LoadFromObject | LoadImmutable | ProtectedLoad -> V1V2B1
   | LoadElement -> B1B2B4V1V2
   | LoadField -> B2B3D3V1E1C1
   | LoadTypedElement -> B1V2V3V4
   | Phi -> VVC1
+  | ProtectedStore | Store -> V1V2B1V3
   | Return -> V2C1E1
   | Select | StringConcat | StringIndexOf | StringSubstring -> V1V2V3
-  | Store -> V1V2B1V3
   | StoreElement -> B1B2B4V1V2V3E1C1
   | StoreField -> V1B3D3V2E1C1
   | Throw -> C1E1
@@ -1294,9 +1293,9 @@ let split_kind kind =
   | V3 -> [ V3 ]
   | V4 -> [ V4 ]
   | VVC1 -> [ VV; C1 ]
+  | V1V2B1V3 -> [ V1; V2; B1; V3 ]
   | V2C1E1 -> [ V2; C1; E1 ]
   | V1V2V3 -> [ V1; V2; V3 ]
-  | V1V2B1V3 -> [ V1; V2; B1; V3 ]
   | B1B2B4V1V2V3E1C1 -> [ B1; B2; B4; V1; V2; V3; E1; C1 ]
   | V1B3D3V2E1C1 -> [ V1; B3; D3; V2; E1; C1 ]
   | C1E1 -> [ C1; E1 ]
@@ -1756,8 +1755,6 @@ let of_str str =
   | "LoadDataViewElement" -> LoadDataViewElement
   | "LoadFieldByIndex" -> LoadFieldByIndex
   | "LoadFramePointer" -> LoadFramePointer
-  | "LoadFromObject" -> LoadFromObject
-  | "LoadImmutable" -> LoadImmutable
   | "LoadImmutableFromObject" -> LoadImmutableFromObject
   | "LoadLane" -> LoadLane
   | "LoadMessage" -> LoadMessage
@@ -1825,8 +1822,6 @@ let of_str str =
   | "PlainPrimitiveToWord32" -> PlainPrimitiveToWord32
   | "Plug" -> Plug
   | "PointerConstant" -> PointerConstant
-  | "ProtectedLoad" -> ProtectedLoad
-  | "ProtectedStore" -> ProtectedStore
   | "RelocatableInt32Constant" -> RelocatableInt32Constant
   | "RelocatableInt64Constant" -> RelocatableInt64Constant
   | "RestLength" -> RestLength
@@ -2205,16 +2200,20 @@ let of_str str =
   | "JSStackCheck" -> JSStackCheck
   | "Unreachable" -> Unreachable
   | "Load" -> Load
+  | "LoadFromObject" -> LoadFromObject
+  | "LoadImmutable" -> LoadImmutable
+  | "ProtectedLoad" -> ProtectedLoad
   | "LoadElement" -> LoadElement
   | "LoadField" -> LoadField
   | "LoadTypedElement" -> LoadTypedElement
   | "Phi" -> Phi
+  | "ProtectedStore" -> ProtectedStore
+  | "Store" -> Store
   | "Return" -> Return
   | "Select" -> Select
   | "StringConcat" -> StringConcat
   | "StringIndexOf" -> StringIndexOf
   | "StringSubstring" -> StringSubstring
-  | "Store" -> Store
   | "StoreElement" -> StoreElement
   | "StoreField" -> StoreField
   | "Throw" -> Throw
@@ -2673,8 +2672,6 @@ let to_str opcode =
   | LoadDataViewElement -> "LoadDataViewElement"
   | LoadFieldByIndex -> "LoadFieldByIndex"
   | LoadFramePointer -> "LoadFramePointer"
-  | LoadFromObject -> "LoadFromObject"
-  | LoadImmutable -> "LoadImmutable"
   | LoadImmutableFromObject -> "LoadImmutableFromObject"
   | LoadLane -> "LoadLane"
   | LoadMessage -> "LoadMessage"
@@ -2742,8 +2739,6 @@ let to_str opcode =
   | PlainPrimitiveToWord32 -> "PlainPrimitiveToWord32"
   | Plug -> "Plug"
   | PointerConstant -> "PointerConstant"
-  | ProtectedLoad -> "ProtectedLoad"
-  | ProtectedStore -> "ProtectedStore"
   | RelocatableInt32Constant -> "RelocatableInt32Constant"
   | RelocatableInt64Constant -> "RelocatableInt64Constant"
   | RestLength -> "RestLength"
@@ -3122,16 +3117,20 @@ let to_str opcode =
   | JSStackCheck -> "JSStackCheck"
   | Unreachable -> "Unreachable"
   | Load -> "Load"
+  | LoadFromObject -> "LoadFromObject"
+  | LoadImmutable -> "LoadImmutable"
+  | ProtectedLoad -> "ProtectedLoad"
   | LoadElement -> "LoadElement"
   | LoadField -> "LoadField"
   | LoadTypedElement -> "LoadTypedElement"
   | Phi -> "Phi"
+  | ProtectedStore -> "ProtectedStore"
+  | Store -> "Store"
   | Return -> "Return"
   | Select -> "Select"
   | StringConcat -> "StringConcat"
   | StringIndexOf -> "StringIndexOf"
   | StringSubstring -> "StringSubstring"
-  | Store -> "Store"
   | StoreElement -> "StoreElement"
   | StoreField -> "StoreField"
   | Throw -> "Throw"
