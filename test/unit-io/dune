@@ -4,7 +4,7 @@
   (with-stdout-to
    %{targets}
    (pipe-stdout
-    (run ../../turbo-tv --verify select-success)
+    (run ../../bin/turbo-tv.exe --verify select-success)
     (run head -n 1)))))
 
 (rule
@@ -18,7 +18,7 @@
   (with-stdout-to
    %{targets}
    (pipe-stdout
-    (run ../../turbo-tv --verify select-fail)
+    (run ../../bin/turbo-tv.exe --verify select-fail)
     (run head -n 1)))))
 
 (rule

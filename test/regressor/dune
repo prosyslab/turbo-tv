@@ -4,7 +4,7 @@
   (with-stdout-to
    %{targets}
    (pipe-stdout
-    (run ../../turbo-tv --verify consecutive-addition-0-35)
+    (run ../../bin/turbo-tv.exe --verify consecutive-addition-0-35)
     (run head -n 1)))))
 
 (rule
@@ -18,7 +18,7 @@
   (with-stdout-to
    %{targets}
    (pipe-stdout
-    (run ../../turbo-tv --verify regress-boolean-not)
+    (run ../../bin/turbo-tv.exe --verify regress-boolean-not)
     (run head -n 1)))))
 
 (rule
@@ -32,7 +32,7 @@
   (with-stdout-to
    %{targets}
    (pipe-stdout
-    (run ../../turbo-tv --verify regress-branch)
+    (run ../../bin/turbo-tv.exe --verify regress-branch)
     (run head -n 1)))))
 
 (rule
@@ -46,7 +46,7 @@
   (with-stdout-to
    %{targets}
    (pipe-stdout
-    (run ../../turbo-tv --verify regress-change-bit-to-tagged)
+    (run ../../bin/turbo-tv.exe --verify regress-change-bit-to-tagged)
     (run head -n 1)))))
 
 (rule
@@ -62,7 +62,7 @@
   (with-stdout-to
    %{targets}
    (pipe-stdout
-    (run ../../turbo-tv --verify regress-int32-add-with-ovf)
+    (run ../../bin/turbo-tv.exe --verify regress-int32-add-with-ovf)
     (run head -n 1)))))
 
 (rule
@@ -78,7 +78,7 @@
   (with-stdout-to
    %{targets}
    (pipe-stdout
-    (run ../../turbo-tv --verify regress-int32-mod)
+    (run ../../bin/turbo-tv.exe --verify regress-int32-mod)
     (run head -n 1)))))
 
 (rule
@@ -92,7 +92,7 @@
   (with-stdout-to
    %{targets}
    (pipe-stdout
-    (run ../../turbo-tv --check-ub regress-schedule-dead/src.ir)
+    (run ../../bin/turbo-tv.exe --check-ub regress-schedule-dead/src.ir)
     (run head -n 1)))))
 
 (rule
@@ -106,7 +106,7 @@
   (with-stdout-to
    %{targets}
    (pipe-stdout
-    (run ../../turbo-tv --verify regress-truncate-tagged-to-word32)
+    (run ../../bin/turbo-tv.exe --verify regress-truncate-tagged-to-word32)
     (run head -n 1)))))
 
 (rule

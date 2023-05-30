@@ -5,7 +5,7 @@
   (with-stdout-to
    %{targets}
    (pipe-stdout
-    (run ../../turbo-tv --check-ub %{deps})
+    (run ../../bin/turbo-tv.exe --check-ub %{deps})
     (run head -n 1)))))
 
 (rule
@@ -20,7 +20,7 @@
   (with-stdout-to
    %{targets}
    (pipe-stdout
-    (run ../../turbo-tv --check-ub %{deps})
+    (run ../../bin/turbo-tv.exe --check-ub %{deps})
     (run head -n 1)))))
 
 (rule
@@ -35,7 +35,7 @@
   (with-stdout-to
    %{targets}
    (pipe-stdout
-    (run ../../turbo-tv --check-ub %{deps})
+    (run ../../bin/turbo-tv.exe --check-ub %{deps})
     (run head -n 1)))))
 
 (rule
