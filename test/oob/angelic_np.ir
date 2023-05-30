@@ -1,6 +1,0 @@
-#0:Start()()()
-#1:HeapConstant[0x4141414141414141 <Angelic>]()()()
-#2:LoadField[tagged base, 4, Any, kRepTaggedPointer|kTypeAny](#1:HeapConstant)(#0:Start)(#0:Start)
-#3:LoadField[tagged base, 5, Number, kRepFloat64|KTypeNumber](#2:LoadField)(#2:LoadField)(#0:Start)
-#4:Return(#3:LoadField, #3:LoadField)(#3:LoadField)(#0:Start)
-#5:End()()(#4:Return)

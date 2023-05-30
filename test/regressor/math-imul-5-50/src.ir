@@ -14,8 +14,8 @@
 #14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x0c37082127d1 <SharedFunctionInfo foo>](#10:StateValues, #11:StateValues, #12:HeapConstant, #5:Parameter, #34:HeapConstant)()()  [Type: Internal]
 #9:JSStackCheck[JSFunctionEntry]()(#0:Start)(#0:Start)
 #15:Checkpoint()(#9:JSStackCheck)(#9:JSStackCheck)
-#36:LoadField[tagged base, 4, Any, kRepTaggedPointer|kTypeAny, PointerWriteBarrier, mutable](#35:HeapConstant)(#15:Checkpoint)(#9:JSStackCheck)  [Type: Any]
-#37:LoadField[tagged base, 64, NonInternal, kRepTagged|kTypeAny, FullWriteBarrier, mutable](#36:LoadField)(#36:LoadField)(#9:JSStackCheck)  [Type: NonInternal]
+#36:LoadField[MapInstanceType, tagged base, 4, Any, kRepTaggedPointer|kTypeAny, PointerWriteBarrier, mutable](#35:HeapConstant)(#15:Checkpoint)(#9:JSStackCheck)  [Type: Any]
+#37:LoadField[MapInstanceType, tagged base, 64, NonInternal, kRepTagged|kTypeAny, FullWriteBarrier, mutable](#36:LoadField)(#36:LoadField)(#9:JSStackCheck)  [Type: NonInternal]
 #38:HeapConstant[0x0c37082062a9 <JSFunction imul (sfi = 0xc37081863c1)>]()()()  [Type: HeapConstant(0x5599b4f40b30)]
 #39:ReferenceEqual(#37:LoadField, #38:HeapConstant)()()  [Type: Boolean]
 #40:CheckIf[WrongCallTarget, FeedbackSource(INVALID)](#39:ReferenceEqual)(#37:LoadField)(#9:JSStackCheck)

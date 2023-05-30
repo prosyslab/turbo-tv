@@ -2,6 +2,6 @@
 #1:Int32Constant[12]()()()
 #2:Parameter[1]()()()
 #3:AllocateRaw[Any, Young](#1:Int32Constant)(#0:Start)(#0:Start)
-#4:StoreField[tagged base, 5, Number, kRepFloat64|KTypeNumber, NoWriteBarrier, mutable](#3:AllocateRaw, #2:Parameter)(#0:Start)(#0:Start)
+#4:StoreField[MapInstanceType, tagged base, 5, Number, kRepFloat64|KTypeNumber, NoWriteBarrier, mutable](#3:AllocateRaw, #2:Parameter)(#0:Start)(#0:Start)
 #5:Return(#4:StoreField, #4:StoreField)(#0:Start)(#0:Start)
 #6:End()()(#5:Return)

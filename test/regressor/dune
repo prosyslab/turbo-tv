@@ -1,0 +1,117 @@
+(rule
+ (targets consecutive-addition-0-35.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --verify consecutive-addition-0-35)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff consecutive-addition-0-35.expected consecutive-addition-0-35.output)))
+
+(rule
+ (targets regress-boolean-not.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --verify regress-boolean-not)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff regress-boolean-not.expected regress-boolean-not.output)))
+
+(rule
+ (targets regress-branch.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --verify regress-branch)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff regress-branch.expected regress-branch.output)))
+
+(rule
+ (targets regress-change-bit-to-tagged.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --verify regress-change-bit-to-tagged)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   regress-change-bit-to-tagged.expected
+   regress-change-bit-to-tagged.output)))
+
+(rule
+ (targets regress-int32-add-with-ovf.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --verify regress-int32-add-with-ovf)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   regress-int32-add-with-ovf.expected
+   regress-int32-add-with-ovf.output)))
+
+(rule
+ (targets regress-int32-mod.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --verify regress-int32-mod)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff regress-int32-mod.expected regress-int32-mod.output)))
+
+(rule
+ (targets regress-schedule-dead.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --check-ub regress-schedule-dead/src.ir)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff regress-schedule-dead.expected regress-schedule-dead.output)))
+
+(rule
+ (targets regress-truncate-tagged-to-word32.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --verify regress-truncate-tagged-to-word32)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   regress-truncate-tagged-to-word32.expected
+   regress-truncate-tagged-to-word32.output)))

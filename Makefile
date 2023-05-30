@@ -10,3 +10,6 @@ clean:
 	rm -rf ./out
 	rm -f ./turbo-tv
 	rm -f *.dot
+
+promote:
+	dune promote

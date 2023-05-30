@@ -1,0 +1,44 @@
+(rule
+ (deps read-read.ir)
+ (targets read-read.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --check-ub %{deps})
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff read-read.expected read-read.output)))
+
+(rule
+ (deps read-write-branch.ir)
+ (targets read-write-branch.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --check-ub %{deps})
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff read-write-branch.expected read-write-branch.output)))
+
+(rule
+ (deps read-write.ir)
+ (targets read-write.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --check-ub %{deps})
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff read-write.expected read-write.output)))

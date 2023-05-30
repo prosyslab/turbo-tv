@@ -1,5 +1,5 @@
 #0:Start()()()
 #1:Int32Constant[2]()()()
 #5:ChangeInt31ToTaggedSigned(#1:Int32Constant)()()
-#6:Return(#1:Int32Constant, #5:ChangeInt31ToTaggedSigned)()()
+#6:Return(#1:Int32Constant, #5:ChangeInt31ToTaggedSigned)(#5:ChangeInt31ToTaggedSigned)(#0:Start)
 #7:End()()(#6:Return)

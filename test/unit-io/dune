@@ -1,0 +1,27 @@
+(rule
+ (targets select-success.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --verify select-success)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff select-success.expected select-success.output)))
+
+(rule
+ (targets select-fail.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --verify select-fail)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff select-fail.expected select-fail.output)))

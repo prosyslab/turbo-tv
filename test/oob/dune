@@ -1,0 +1,44 @@
+(rule
+ (deps angelic.ir)
+ (targets angelic.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --check-ub %{deps})
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff angelic.expected angelic.output)))
+
+(rule
+ (deps demonic_angelic.ir)
+ (targets demonic_angelic.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --check-ub %{deps})
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff demonic_angelic.expected demonic_angelic.output)))
+
+(rule
+ (deps oob.ir)
+ (targets oob.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../turbo-tv --check-ub %{deps})
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff oob.expected oob.output)))
