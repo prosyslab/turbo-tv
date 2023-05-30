@@ -23,9 +23,11 @@ fi
 eval $(SHELL=bash opam env --switch=$JSTV_OPAM_SWITCH)
 opam install core_unix cmdliner dune ocamlgraph z3 ocamlformat=0.22.4 oUnit
 
-# generate source codes from `specs/opcodes.spec`
-scripts/fetch-spec.py
-scripts/spec2ml.py --instr --replace
-scripts/spec2ml.py --opcode --replace
+if [ "$1" = "gen" ]; then
+  # generate source codes from `specs/opcodes.spec`
+  scripts/fetch-spec.py
+  scripts/spec2ml.py --instr --replace
+  scripts/spec2ml.py --opcode --replace
+fi
 
 make
