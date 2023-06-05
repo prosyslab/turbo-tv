@@ -191,19 +191,12 @@ let check_wasm nparams program =
   let wasm_assertion =
     let pgm_retval = State.retval final_state in
     let ret = Z3.Expr.mk_const_s ctx "ret" (BV.mk_sort ctx Value.len) in
-    (* let x = BitVec.init ~len:32 "%x" in
-       let y = BitVec.init ~len:32 "%y" in *)
-    (* let a = BitVec.init ~len:32 "%a" in *)
     Bool.ands
       [
         State.assertion final_state;
         precond;
         Value.has_type Type.tagged_signed pgm_retval;
         Bool.eq ret pgm_retval;
-        (* Bool.eq (BitVec.extract 31 30 x) ; *)
-        (* Bool.eq x (BitVec.extract 31 0 (List.nth final_state.params 0));
-           Bool.eq y (BitVec.extract 31 0 (List.nth final_state.params 1)); *)
-        (* Bool.eq a (BitVec.extract 31 0 (List.nth final_state.params 0)); *)
       ]
   in
 

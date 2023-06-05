@@ -98,7 +98,6 @@ let main () =
     | Err.InvalidBracketArgs _ ->
         Printf.printf "Result: Not target\nReason: invalid graph(bracket args)"
   else if String.length check_wasm <> 0 then
-    (* undefined behavior check *)
     try
       let pgm_p = check_wasm in
       let pgm = IR.create_from_ir_file pgm_p in
