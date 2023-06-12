@@ -7,7 +7,7 @@ open Simplified
 open Machine
 open Z3utils
 
-let encode_instr program
+let encode_instr program ?(check_wasm = false)
     ({
        State.pc;
        control_file = cf;
@@ -389,7 +389,7 @@ let encode_instr program
       let cid = Operands.id_of_nth operands 1 in
       let retval = RegisterFile.find pid rf in
       let retctrl = ControlFile.find cid cf in
-      return retval retctrl
+      if check_wasm then return_wasm retval retctrl else return retval retctrl
   | End ->
       let retvals = RegisterFile.find_all (operands |> Operands.id_of_all) rf in
       let retctrls = ControlFile.find_all (operands |> Operands.id_of_all) cf in
@@ -1131,11 +1131,14 @@ let propagate program (state : State.t) =
   state |> State.update ~ub ~deopt
 
 (* encode the program and retrieve a final state *)
-let encode_pgr stage program ?(check_type = false) nparams =
+let encode_pgr stage program ?(check_type = false) ?(check_wasm = false) nparams
+    =
   let init_state = State.init nparams ~check_type stage in
   let rec next program state =
     let pc = State.pc state in
-    let next_state = state |> encode_instr program |> propagate program in
+    let next_state =
+      state |> encode_instr ~check_wasm program |> propagate program
+    in
     if State.is_final next_state then
       next_state |> Assertion.set_assertion program |> State.finalize
     else next program { next_state with pc = pc + 1 }

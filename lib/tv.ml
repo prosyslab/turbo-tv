@@ -179,7 +179,7 @@ let check_eq nparams src_program tgt_program =
         Printf.printf "Result: Unknown\nReason: %s\n" reason
 
 let check_wasm nparams program =
-  let final_state = Encoder.encode_pgr "pgm" program nparams in
+  let final_state = Encoder.encode_pgr "pgm" program ~check_wasm:true nparams in
   let precond =
     (* precondition_for_params /\ not (deopt(src) \/ deopt(pgm)) *)
     let no_deopt =
@@ -195,7 +195,7 @@ let check_wasm nparams program =
       [
         State.assertion final_state;
         precond;
-        Value.has_type Type.tagged_signed pgm_retval;
+        (* Value.has_type Type.tagged_signed pgm_retval; *)
         Bool.eq ret pgm_retval;
       ]
   in

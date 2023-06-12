@@ -181,6 +181,10 @@ let return return_value return_control state =
   in
   state |> State.update ~value ~control:return_control
 
+let return_wasm return_value return_control state =
+  let value = return_value in
+  state |> State.update ~value ~control:return_control
+
 let start state = state |> State.update ~control:Bool.tr
 
 (* common: region *)
