@@ -386,7 +386,7 @@ let word64_equal lval rval state =
 let store ptr pos repr value mem state =
   let moved = TaggedPointer.move ptr pos in
   let ub = Bool.not (Memory.can_access_as moved repr mem) in
-  let raw_ptr = ptr |> BitVec.extract 31 0 in
+  let raw_ptr = moved |> BitVec.extract 31 0 in
   let mem = mem |> Memory.Bytes.store_as (Bool.not ub) raw_ptr repr value in
 
   let access =
