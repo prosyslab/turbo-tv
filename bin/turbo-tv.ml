@@ -13,7 +13,7 @@ let jstv_args =
   (* Arguments *)
   let verify_arg =
     let doc = "Reduction" in
-    Arg.(value & opt dir "" & info [ "verify" ] ~docv:"RDC" ~doc)
+    Arg.(value & opt string "" & info [ "verify" ] ~docv:"RDC" ~doc)
   in
   let check_ub_arg =
     let doc = "Check whether our system emits UB for the [IR]" in
@@ -67,8 +67,15 @@ let main () =
 
   if String.length verify <> 0 then
     (* equality check *)
-    let src_p = Filename.concat verify "src.ir" in
-    let tgt_p = Filename.concat verify "tgt.ir" in
+    let src_p, tgt_p =
+      if String.contains verify ',' then
+        let src_tgt = String.split_on_char ',' verify in
+        (List.hd src_tgt, List.nth src_tgt 1)
+      else
+        let src_p = Filename.concat verify "src.ir" in
+        let tgt_p = Filename.concat verify "tgt.ir" in
+        (src_p, tgt_p)
+    in
     try
       let src = IR.create_from_ir_file src_p in
       let tgt = IR.create_from_ir_file tgt_p in
