@@ -369,8 +369,27 @@ let same_value lval rval mem state =
 
   state |> number_same_value lval rval mem |> State.update ~value
 
-let speculative_number_equal lval rval mem state =
-  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+let speculative_number_equal hint lval rval mem state =
+  let deopt =
+    if hint = "NumberOrBoolean" then
+      Bool.not
+        (Bool.ands
+           [
+             Bool.ors
+               [
+                 Number.is_number lval mem;
+                 lval |> Value.has_type Type.bool;
+                 lval |> Constant.is_boolean_cst state.State.register_file;
+               ];
+             Bool.ors
+               [
+                 Number.is_number rval mem;
+                 rval |> Value.has_type Type.bool;
+                 rval |> Constant.is_boolean_cst state.State.register_file;
+               ];
+           ])
+    else Bool.not (Number.are_numbers [ lval; rval ] mem)
+  in
   state |> number_equal lval rval mem |> State.update ~deopt
 
 let speculative_number_less_than lval rval _eff control mem state =

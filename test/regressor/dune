@@ -115,3 +115,19 @@
   (diff
    regress-truncate-tagged-to-word32.expected
    regress-truncate-tagged-to-word32.output)))
+
+(rule
+ (targets regress-speculative-number-equal.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../bin/turbo-tv.exe --verify regress-speculative-number-equal)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   regress-speculative-number-equal.expected
+   regress-speculative-number-equal.output)))

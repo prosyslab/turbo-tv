@@ -542,11 +542,12 @@ let encode_instr program ?(check_wasm = false)
       let rval = RegisterFile.find rpid rf in
       reference_equal lval rval mem
   | SpeculativeNumberEqual ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
+      let hint = Operands.const_of_nth operands 0 in
+      let lpid = Operands.id_of_nth operands 1 in
+      let rpid = Operands.id_of_nth operands 2 in
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
-      speculative_number_equal lval rval mem
+      speculative_number_equal hint lval rval mem
   | SpeculativeNumberLessThan ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in

@@ -37,10 +37,10 @@ type kind =
   | V1V2B1V3
   | V2C1E1
   | V1V2V3
+  | B1V1V2
   | B1B2B4V1V2V3E1C1
   | V1B3D3V2E1C1
   | C1E1
-  | B1V1V2
   | Empty
 
 type t =
@@ -163,7 +163,6 @@ type t =
   | FindOrderedHashSetEntry
   | Float32Abs
   | Float32Add
-  | Float32Constant
   | Float32Div
   | Float32Equal
   | Float32LessThan
@@ -855,7 +854,6 @@ type t =
   | SpeculativeNumberBitwiseAnd
   | SpeculativeNumberBitwiseOr
   | SpeculativeNumberBitwiseXor
-  | SpeculativeNumberEqual
   | StringEqual
   | StringLessThan
   | StringLessThanOrEqual
@@ -886,6 +884,7 @@ type t =
   | Call
   (* b1 *)
   | ExternalConstant
+  | Float32Constant
   | Float64Constant
   | HeapConstant
   | Int32Constant
@@ -978,15 +977,16 @@ type t =
   | StringConcat
   | StringIndexOf
   | StringSubstring
+  (* b1v1v2 *)
+  | SpeculativeNumberEqual
+  | Word32Sar
+  | Word64Sar
   (* b1b2b4v1v2v3e1c1 *)
   | StoreElement
   (* v1b3d3v2e1c1 *)
   | StoreField
   (* c1e1 *)
   | Throw
-  (* b1v1v2 *)
-  | Word32Sar
-  | Word64Sar
   | Empty
 [@@deriving equal]
 
@@ -1021,7 +1021,7 @@ let get_kind opcode =
   | F64x2RelaxedMin | F64x2ReplaceLane | F64x2Splat | F64x2Sqrt | F64x2Sub
   | F64x2Trunc | FastApiCall | FindOrderedHashMapEntry
   | FindOrderedHashMapEntryForInt32Key | FindOrderedHashSetEntry | Float32Abs
-  | Float32Add | Float32Constant | Float32Div | Float32Equal | Float32LessThan
+  | Float32Add | Float32Div | Float32Equal | Float32LessThan
   | Float32LessThanOrEqual | Float32Max | Float32Min | Float32Mul | Float32Neg
   | Float32RoundDown | Float32RoundTiesEven | Float32RoundTruncate
   | Float32RoundUp | Float32Select | Float32Sqrt | Float32Sub | Float64Acos
@@ -1206,18 +1206,17 @@ let get_kind opcode =
   | SpeculativeBigIntMultiply | SpeculativeBigIntShiftLeft
   | SpeculativeBigIntShiftRight | SpeculativeBigIntSubtract
   | SpeculativeNumberAdd | SpeculativeNumberBitwiseAnd
-  | SpeculativeNumberBitwiseOr | SpeculativeNumberBitwiseXor
-  | SpeculativeNumberEqual | StringEqual | StringLessThan
-  | StringLessThanOrEqual | Uint32LessThan | Uint32LessThanOrEqual
-  | Uint64LessThan | Uint64LessThanOrEqual | Word32And | Word32Equal | Word32Or
-  | Word32Rol | Word32Ror | Word32Shl | Word32Shr | Word32Xor | Word64And
-  | Word64Equal | Word64Or | Word64Rol | Word64Ror | Word64Shl | Word64Shr
-  | Word64Xor ->
+  | SpeculativeNumberBitwiseOr | SpeculativeNumberBitwiseXor | StringEqual
+  | StringLessThan | StringLessThanOrEqual | Uint32LessThan
+  | Uint32LessThanOrEqual | Uint64LessThan | Uint64LessThanOrEqual | Word32And
+  | Word32Equal | Word32Or | Word32Rol | Word32Ror | Word32Shl | Word32Shr
+  | Word32Xor | Word64And | Word64Equal | Word64Or | Word64Rol | Word64Ror
+  | Word64Shl | Word64Shr | Word64Xor ->
       V1V2
   | Branch | FinishRegion -> V1E1
   | Call -> B1VVCV
-  | ExternalConstant | Float64Constant | HeapConstant | Int32Constant
-  | Int64Constant | NumberConstant | Parameter ->
+  | ExternalConstant | Float32Constant | Float64Constant | HeapConstant
+  | Int32Constant | Int64Constant | NumberConstant | Parameter ->
       B1
   | End | Merge -> CV
   | ChangeFloat64ToTagged | CheckedFloat64ToInt32 | Projection
@@ -1253,10 +1252,10 @@ let get_kind opcode =
   | ProtectedStore | Store -> V1V2B1V3
   | Return -> V2C1E1
   | Select | StringConcat | StringIndexOf | StringSubstring -> V1V2V3
+  | SpeculativeNumberEqual | Word32Sar | Word64Sar -> B1V1V2
   | StoreElement -> B1B2B4V1V2V3E1C1
   | StoreField -> V1B3D3V2E1C1
   | Throw -> C1E1
-  | Word32Sar | Word64Sar -> B1V1V2
   | Empty -> Empty
 
 let split_kind kind =
@@ -1296,10 +1295,10 @@ let split_kind kind =
   | V1V2B1V3 -> [ V1; V2; B1; V3 ]
   | V2C1E1 -> [ V2; C1; E1 ]
   | V1V2V3 -> [ V1; V2; V3 ]
+  | B1V1V2 -> [ B1; V1; V2 ]
   | B1B2B4V1V2V3E1C1 -> [ B1; B2; B4; V1; V2; V3; E1; C1 ]
   | V1B3D3V2E1C1 -> [ V1; B3; D3; V2; E1; C1 ]
   | C1E1 -> [ C1; E1 ]
-  | B1V1V2 -> [ B1; V1; V2 ]
   | Empty -> [ Empty ]
 
 let empty = Empty
@@ -1424,7 +1423,6 @@ let of_str str =
   | "FindOrderedHashSetEntry" -> FindOrderedHashSetEntry
   | "Float32Abs" -> Float32Abs
   | "Float32Add" -> Float32Add
-  | "Float32Constant" -> Float32Constant
   | "Float32Div" -> Float32Div
   | "Float32Equal" -> Float32Equal
   | "Float32LessThan" -> Float32LessThan
@@ -2111,7 +2109,6 @@ let of_str str =
   | "SpeculativeNumberBitwiseAnd" -> SpeculativeNumberBitwiseAnd
   | "SpeculativeNumberBitwiseOr" -> SpeculativeNumberBitwiseOr
   | "SpeculativeNumberBitwiseXor" -> SpeculativeNumberBitwiseXor
-  | "SpeculativeNumberEqual" -> SpeculativeNumberEqual
   | "StringEqual" -> StringEqual
   | "StringLessThan" -> StringLessThan
   | "StringLessThanOrEqual" -> StringLessThanOrEqual
@@ -2139,6 +2136,7 @@ let of_str str =
   | "FinishRegion" -> FinishRegion
   | "Call" -> Call
   | "ExternalConstant" -> ExternalConstant
+  | "Float32Constant" -> Float32Constant
   | "Float64Constant" -> Float64Constant
   | "HeapConstant" -> HeapConstant
   | "Int32Constant" -> Int32Constant
@@ -2214,11 +2212,12 @@ let of_str str =
   | "StringConcat" -> StringConcat
   | "StringIndexOf" -> StringIndexOf
   | "StringSubstring" -> StringSubstring
+  | "SpeculativeNumberEqual" -> SpeculativeNumberEqual
+  | "Word32Sar" -> Word32Sar
+  | "Word64Sar" -> Word64Sar
   | "StoreElement" -> StoreElement
   | "StoreField" -> StoreField
   | "Throw" -> Throw
-  | "Word32Sar" -> Word32Sar
-  | "Word64Sar" -> Word64Sar
   | _ -> raise Invalid_opcode
 
 let to_str opcode =
@@ -2341,7 +2340,6 @@ let to_str opcode =
   | FindOrderedHashSetEntry -> "FindOrderedHashSetEntry"
   | Float32Abs -> "Float32Abs"
   | Float32Add -> "Float32Add"
-  | Float32Constant -> "Float32Constant"
   | Float32Div -> "Float32Div"
   | Float32Equal -> "Float32Equal"
   | Float32LessThan -> "Float32LessThan"
@@ -3028,7 +3026,6 @@ let to_str opcode =
   | SpeculativeNumberBitwiseAnd -> "SpeculativeNumberBitwiseAnd"
   | SpeculativeNumberBitwiseOr -> "SpeculativeNumberBitwiseOr"
   | SpeculativeNumberBitwiseXor -> "SpeculativeNumberBitwiseXor"
-  | SpeculativeNumberEqual -> "SpeculativeNumberEqual"
   | StringEqual -> "StringEqual"
   | StringLessThan -> "StringLessThan"
   | StringLessThanOrEqual -> "StringLessThanOrEqual"
@@ -3056,6 +3053,7 @@ let to_str opcode =
   | FinishRegion -> "FinishRegion"
   | Call -> "Call"
   | ExternalConstant -> "ExternalConstant"
+  | Float32Constant -> "Float32Constant"
   | Float64Constant -> "Float64Constant"
   | HeapConstant -> "HeapConstant"
   | Int32Constant -> "Int32Constant"
@@ -3131,9 +3129,10 @@ let to_str opcode =
   | StringConcat -> "StringConcat"
   | StringIndexOf -> "StringIndexOf"
   | StringSubstring -> "StringSubstring"
+  | SpeculativeNumberEqual -> "SpeculativeNumberEqual"
+  | Word32Sar -> "Word32Sar"
+  | Word64Sar -> "Word64Sar"
   | StoreElement -> "StoreElement"
   | StoreField -> "StoreField"
   | Throw -> "Throw"
-  | Word32Sar -> "Word32Sar"
-  | Word64Sar -> "Word64Sar"
   | Empty -> failwith "Unreachable"

@@ -201,7 +201,7 @@ FindOrderedHashSetEntry,
 FinishRegion,v1,e1
 Float32Abs,
 Float32Add,
-Float32Constant,
+Float32Constant,b1
 Float32Div,
 Float32Equal,
 Float32LessThan,
@@ -754,7 +754,7 @@ SpeculativeNumberBitwiseAnd,v1,v2
 SpeculativeNumberBitwiseOr,v1,v2
 SpeculativeNumberBitwiseXor,v1,v2
 SpeculativeNumberDivide,v1,v2,e1,c1
-SpeculativeNumberEqual,v1,v2
+SpeculativeNumberEqual,b1,v1,v2
 SpeculativeNumberLessThan,v1,v2,e1,c1
 SpeculativeNumberLessThanOrEqual,v1,v2,e1,c1
 SpeculativeNumberModulus,v1,v2,e1,c1

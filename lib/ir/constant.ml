@@ -13,6 +13,9 @@ let is_false_cst rf value = Value.eq (RegisterFile.find "false" rf) value
 
 let is_true_cst rf value = Value.eq (RegisterFile.find "true" rf) value
 
+let is_boolean_cst rf value =
+  Bool.ors [ is_false_cst rf value; is_true_cst rf value ]
+
 let is_constant_ptr model rf ptr =
   let evaluated = ptr |> Model.eval model in
   String.contains
