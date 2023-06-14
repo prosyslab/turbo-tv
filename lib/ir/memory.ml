@@ -79,7 +79,7 @@ module Objects = struct
     Bool.ands
       [
         ptr |> Value.has_type Type.tagged_pointer;
-        ptr |> has_map_of Objmap.boolean_map mem;
+        ptr |> has_map_of Objmap.oddball_map mem;
       ]
 
   let is_heap_number mem ptr =

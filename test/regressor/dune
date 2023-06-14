@@ -182,3 +182,17 @@
   (diff
    regress-speculative-number-shift-right-boolean-input.expected
    regress-speculative-number-shift-right-boolean-input.output)))
+
+(rule
+ (targets regress-oddball-map.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../bin/turbo-tv.exe --verify regress-oddball-map)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff regress-oddball-map.expected regress-oddball-map.output)))

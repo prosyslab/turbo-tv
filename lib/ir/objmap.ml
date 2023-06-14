@@ -28,13 +28,14 @@ let string_map = BitVecVal.from_int ~len 9
 
 let custom_map n = BitVecVal.from_int ~len n
 
-let names = [ "Map[12](HEAP_NUMBER_TYPE)" ]
+let names = [ "Map[12](HEAP_NUMBER_TYPE)"; "Map[28](ODDBALL_TYPE)" ]
 
 let is_known_map name = List.mem name names
 
 let map_of name =
   match name with
   | "Map[12](HEAP_NUMBER_TYPE)" -> heap_number_map
+  | "Map[28](ODDBALL_TYPE)" -> oddball_map
   | _ -> failwith (Format.sprintf "not implemented: %s" name)
 
 let to_string model t =

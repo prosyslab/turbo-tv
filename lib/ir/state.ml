@@ -83,7 +83,7 @@ let install_constants state =
             match name with
             | "undefined" -> Objmap.undefined_map
             | "null" -> Objmap.null_map
-            | "false" | "true" -> Objmap.boolean_map
+            | "false" | "true" -> Objmap.oddball_map
             | _ -> failwith "unreachable"
           in
           Memory.Bytes.store Bool.tr
