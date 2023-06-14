@@ -190,8 +190,27 @@ let speculative_number_modulus lval rval _eff control mem state =
 
 (* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
  * value: Float64(lval x rval) *)
-let speculative_number_multiply lval rval _eff control mem state =
-  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+let speculative_number_multiply hint lval rval _eff control mem state =
+  let deopt =
+    if hint = "NumberOrOddball" then
+      Bool.not
+        (Bool.ands
+           [
+             Bool.ors
+               [
+                 Number.is_number lval mem;
+                 lval |> Value.has_type Type.bool;
+                 lval |> Constant.is_boolean_cst state.State.register_file;
+               ];
+             Bool.ors
+               [
+                 Number.is_number rval mem;
+                 rval |> Value.has_type Type.bool;
+                 rval |> Constant.is_boolean_cst state.State.register_file;
+               ];
+           ])
+    else Bool.not (Number.are_numbers [ lval; rval ] mem)
+  in
   state |> number_multiply lval rval mem |> State.update ~deopt ~control
 
 (* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))

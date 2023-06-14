@@ -450,13 +450,14 @@ let encode_instr program ?(check_wasm = false)
       let ctrl = ControlFile.find ctrl_id cf in
       speculative_number_modulus lval rval () ctrl mem
   | SpeculativeNumberMultiply ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let ctrl_id = Operands.id_of_nth operands 3 in
+      let hint = Operands.const_of_nth operands 0 in
+      let lpid = Operands.id_of_nth operands 1 in
+      let rpid = Operands.id_of_nth operands 2 in
+      let ctrl_id = Operands.id_of_nth operands 4 in
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
       let ctrl = ControlFile.find ctrl_id cf in
-      speculative_number_multiply lval rval () ctrl mem
+      speculative_number_multiply hint lval rval () ctrl mem
   | SpeculativeNumberSubtract ->
       let lpid = Operands.id_of_nth operands 0 in
       let rpid = Operands.id_of_nth operands 1 in

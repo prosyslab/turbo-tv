@@ -923,7 +923,6 @@ type t =
   | SpeculativeNumberLessThan
   | SpeculativeNumberLessThanOrEqual
   | SpeculativeNumberModulus
-  | SpeculativeNumberMultiply
   | SpeculativeNumberShiftLeft
   | SpeculativeNumberShiftRight
   | SpeculativeNumberShiftRightLogical
@@ -934,6 +933,7 @@ type t =
   | StringCodePointAt
   (* b1v1v2e1c1 *)
   | CheckedInt32Mul
+  | SpeculativeNumberMultiply
   (* b1v1e1c1 *)
   | CheckedTaggedToFloat64
   | CheckedTaggedToInt64
@@ -1229,13 +1229,12 @@ let get_kind opcode =
   | CheckedUint32Div | DeoptimizeIf | DeoptimizeUnless
   | EnsureWritableFastElements | SpeculativeNumberDivide
   | SpeculativeNumberLessThan | SpeculativeNumberLessThanOrEqual
-  | SpeculativeNumberModulus | SpeculativeNumberMultiply
-  | SpeculativeNumberShiftLeft | SpeculativeNumberShiftRight
-  | SpeculativeNumberShiftRightLogical | SpeculativeNumberSubtract
-  | SpeculativeSafeIntegerAdd | SpeculativeSafeIntegerSubtract
-  | StringCharCodeAt | StringCodePointAt ->
+  | SpeculativeNumberModulus | SpeculativeNumberShiftLeft
+  | SpeculativeNumberShiftRight | SpeculativeNumberShiftRightLogical
+  | SpeculativeNumberSubtract | SpeculativeSafeIntegerAdd
+  | SpeculativeSafeIntegerSubtract | StringCharCodeAt | StringCodePointAt ->
       V1V2E1C1
-  | CheckedInt32Mul -> B1V1V2E1C1
+  | CheckedInt32Mul | SpeculativeNumberMultiply -> B1V1V2E1C1
   | CheckedTaggedToFloat64 | CheckedTaggedToInt64
   | CheckedTruncateTaggedToWord32 ->
       B1V1E1C1
@@ -2170,7 +2169,6 @@ let of_str str =
   | "SpeculativeNumberLessThan" -> SpeculativeNumberLessThan
   | "SpeculativeNumberLessThanOrEqual" -> SpeculativeNumberLessThanOrEqual
   | "SpeculativeNumberModulus" -> SpeculativeNumberModulus
-  | "SpeculativeNumberMultiply" -> SpeculativeNumberMultiply
   | "SpeculativeNumberShiftLeft" -> SpeculativeNumberShiftLeft
   | "SpeculativeNumberShiftRight" -> SpeculativeNumberShiftRight
   | "SpeculativeNumberShiftRightLogical" -> SpeculativeNumberShiftRightLogical
@@ -2180,6 +2178,7 @@ let of_str str =
   | "StringCharCodeAt" -> StringCharCodeAt
   | "StringCodePointAt" -> StringCodePointAt
   | "CheckedInt32Mul" -> CheckedInt32Mul
+  | "SpeculativeNumberMultiply" -> SpeculativeNumberMultiply
   | "CheckedTaggedToFloat64" -> CheckedTaggedToFloat64
   | "CheckedTaggedToInt64" -> CheckedTaggedToInt64
   | "CheckedTruncateTaggedToWord32" -> CheckedTruncateTaggedToWord32
@@ -3087,7 +3086,6 @@ let to_str opcode =
   | SpeculativeNumberLessThan -> "SpeculativeNumberLessThan"
   | SpeculativeNumberLessThanOrEqual -> "SpeculativeNumberLessThanOrEqual"
   | SpeculativeNumberModulus -> "SpeculativeNumberModulus"
-  | SpeculativeNumberMultiply -> "SpeculativeNumberMultiply"
   | SpeculativeNumberShiftLeft -> "SpeculativeNumberShiftLeft"
   | SpeculativeNumberShiftRight -> "SpeculativeNumberShiftRight"
   | SpeculativeNumberShiftRightLogical -> "SpeculativeNumberShiftRightLogical"
@@ -3097,6 +3095,7 @@ let to_str opcode =
   | StringCharCodeAt -> "StringCharCodeAt"
   | StringCodePointAt -> "StringCodePointAt"
   | CheckedInt32Mul -> "CheckedInt32Mul"
+  | SpeculativeNumberMultiply -> "SpeculativeNumberMultiply"
   | CheckedTaggedToFloat64 -> "CheckedTaggedToFloat64"
   | CheckedTaggedToInt64 -> "CheckedTaggedToInt64"
   | CheckedTruncateTaggedToWord32 -> "CheckedTruncateTaggedToWord32"

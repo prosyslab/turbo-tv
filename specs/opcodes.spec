@@ -758,7 +758,7 @@ SpeculativeNumberEqual,b1,v1,v2
 SpeculativeNumberLessThan,v1,v2,e1,c1
 SpeculativeNumberLessThanOrEqual,v1,v2,e1,c1
 SpeculativeNumberModulus,v1,v2,e1,c1
-SpeculativeNumberMultiply,v1,v2,e1,c1
+SpeculativeNumberMultiply,b1,v1,v2,e1,c1
 SpeculativeNumberPow,
 SpeculativeNumberShiftLeft,v1,v2,e1,c1
 SpeculativeNumberShiftRight,v1,v2,e1,c1
