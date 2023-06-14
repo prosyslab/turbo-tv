@@ -15,6 +15,19 @@ let check_map_for_heap_number_or_oddball_to_float64 hint pval mem =
   | _ ->
       failwith (Printf.sprintf "CheckedTaggedToFloat64: Undefined hint %s" hint)
 
+let type_guard hint values rf mem =
+  if hint = "NumberOrBoolean" || hint = "NumberOrOddball" then
+    Bool.ands
+      (values
+      |> List.map (fun v ->
+             Bool.ors
+               [
+                 Number.is_number v mem;
+                 v |> Value.has_type Type.bool;
+                 v |> Constant.is_boolean_cst rf;
+               ]))
+  else Number.are_numbers values mem
+
 (* simplified: numeric *)
 let checked_int32_add lval rval _eff control state =
   let deopt = Int32.add_would_overflow lval rval in
@@ -172,38 +185,25 @@ let number_trunc pval mem state =
 
 (* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
  * value: Float64(lval + rval) *)
-let speculative_number_add lval rval mem state =
-  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
-  state |> number_add lval rval mem |> State.update ~deopt
+let speculative_number_add hint lval rval _eff control mem state =
+  let deopt =
+    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
+  in
+  state |> number_add lval rval mem |> State.update ~deopt ~control
 
 (* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
  * value: Float64(lval / rval) *)
-let speculative_number_divide lval rval _eff control mem state =
-  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+let speculative_number_divide hint lval rval _eff control mem state =
+  let deopt =
+    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
+  in
   state |> number_divide lval rval mem |> State.update ~deopt ~control
 
 (* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
  * value: Float64(lval x rval) *)
 let speculative_number_modulus hint lval rval _eff control mem state =
   let deopt =
-    if hint = "NumberOrOddball" then
-      Bool.not
-        (Bool.ands
-           [
-             Bool.ors
-               [
-                 Number.is_number lval mem;
-                 lval |> Value.has_type Type.bool;
-                 lval |> Constant.is_boolean_cst state.State.register_file;
-               ];
-             Bool.ors
-               [
-                 Number.is_number rval mem;
-                 rval |> Value.has_type Type.bool;
-                 rval |> Constant.is_boolean_cst state.State.register_file;
-               ];
-           ])
-    else Bool.not (Number.are_numbers [ lval; rval ] mem)
+    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
   in
   state |> number_modulus lval rval mem |> State.update ~deopt ~control
 
@@ -211,31 +211,17 @@ let speculative_number_modulus hint lval rval _eff control mem state =
  * value: Float64(lval x rval) *)
 let speculative_number_multiply hint lval rval _eff control mem state =
   let deopt =
-    if hint = "NumberOrOddball" then
-      Bool.not
-        (Bool.ands
-           [
-             Bool.ors
-               [
-                 Number.is_number lval mem;
-                 lval |> Value.has_type Type.bool;
-                 lval |> Constant.is_boolean_cst state.State.register_file;
-               ];
-             Bool.ors
-               [
-                 Number.is_number rval mem;
-                 rval |> Value.has_type Type.bool;
-                 rval |> Constant.is_boolean_cst state.State.register_file;
-               ];
-           ])
-    else Bool.not (Number.are_numbers [ lval; rval ] mem)
+    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
   in
+  (* deopt |> Expr.print_simplified; *)
   state |> number_multiply lval rval mem |> State.update ~deopt ~control
 
 (* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
  * value: Float64(lval - rval) *)
-let speculative_number_subtract lval rval _effect control mem state =
-  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+let speculative_number_subtract hint lval rval _effect control mem state =
+  let deopt =
+    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
+  in
   state |> number_subtract lval rval mem |> State.update ~deopt ~control
 
 (* well-defined condition:
@@ -306,20 +292,29 @@ let number_bitwise op lval rval mem state =
   let value = Number.bitwise op lval rval mem in
   state |> State.update ~value
 
-let speculative_number_bitwise op lval rval mem state =
-  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
-  state |> number_bitwise op lval rval mem |> State.update ~deopt
+let speculative_number_bitwise op hint lval rval _eff control mem state =
+  let deopt =
+    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
+  in
+  state |> number_bitwise op lval rval mem |> State.update ~deopt ~control
 
-let speculative_number_shift_left lval rval _eff control mem state =
-  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+let speculative_number_shift_left hint lval rval _eff control mem state =
+  let deopt =
+    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
+  in
   state |> number_shift_left lval rval mem |> State.update ~control ~deopt
 
-let speculative_number_shift_right lval rval _eff control mem state =
-  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+let speculative_number_shift_right hint lval rval _eff control mem state =
+  let deopt =
+    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
+  in
   state |> number_shift_right lval rval mem |> State.update ~control ~deopt
 
-let speculative_number_shift_right_logical lval rval _eff control mem state =
-  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+let speculative_number_shift_right_logical hint lval rval _eff control mem state
+    =
+  let deopt =
+    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
+  in
   state
   |> number_shift_right_logical lval rval mem
   |> State.update ~control ~deopt
@@ -407,35 +402,23 @@ let same_value lval rval mem state =
 
   state |> number_same_value lval rval mem |> State.update ~value
 
-let speculative_number_equal hint lval rval mem state =
+let speculative_number_equal hint lval rval _eff control mem state =
   let deopt =
-    if hint = "NumberOrBoolean" then
-      Bool.not
-        (Bool.ands
-           [
-             Bool.ors
-               [
-                 Number.is_number lval mem;
-                 lval |> Value.has_type Type.bool;
-                 lval |> Constant.is_boolean_cst state.State.register_file;
-               ];
-             Bool.ors
-               [
-                 Number.is_number rval mem;
-                 rval |> Value.has_type Type.bool;
-                 rval |> Constant.is_boolean_cst state.State.register_file;
-               ];
-           ])
-    else Bool.not (Number.are_numbers [ lval; rval ] mem)
+    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
   in
-  state |> number_equal lval rval mem |> State.update ~deopt
+  state |> number_equal lval rval mem |> State.update ~deopt ~control
 
-let speculative_number_less_than lval rval _eff control mem state =
-  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+let speculative_number_less_than hint lval rval _eff control mem state =
+  let deopt =
+    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
+  in
   state |> number_less_than lval rval mem |> State.update ~deopt ~control
 
-let speculative_number_less_than_or_equal lval rval _eff control mem state =
-  let deopt = Bool.not (Number.are_numbers [ lval; rval ] mem) in
+let speculative_number_less_than_or_equal hint lval rval _eff control mem state
+    =
+  let deopt =
+    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
+  in
   state
   |> number_less_than_or_equal lval rval mem
   |> State.update ~deopt ~control

@@ -37,10 +37,10 @@ type kind =
   | V1V2B1V3
   | V2C1E1
   | V1V2V3
-  | B1V1V2
   | B1B2B4V1V2V3E1C1
   | V1B3D3V2E1C1
   | C1E1
+  | B1V1V2
   | Empty
 
 type t =
@@ -850,10 +850,6 @@ type t =
   | SpeculativeBigIntShiftLeft
   | SpeculativeBigIntShiftRight
   | SpeculativeBigIntSubtract
-  | SpeculativeNumberAdd
-  | SpeculativeNumberBitwiseAnd
-  | SpeculativeNumberBitwiseOr
-  | SpeculativeNumberBitwiseXor
   | StringEqual
   | StringLessThan
   | StringLessThanOrEqual
@@ -919,21 +915,26 @@ type t =
   | DeoptimizeIf
   | DeoptimizeUnless
   | EnsureWritableFastElements
-  | SpeculativeNumberDivide
-  | SpeculativeNumberLessThan
-  | SpeculativeNumberLessThanOrEqual
-  | SpeculativeNumberShiftLeft
-  | SpeculativeNumberShiftRight
-  | SpeculativeNumberShiftRightLogical
-  | SpeculativeNumberSubtract
   | SpeculativeSafeIntegerAdd
   | SpeculativeSafeIntegerSubtract
   | StringCharCodeAt
   | StringCodePointAt
   (* b1v1v2e1c1 *)
   | CheckedInt32Mul
+  | SpeculativeNumberAdd
+  | SpeculativeNumberBitwiseAnd
+  | SpeculativeNumberBitwiseOr
+  | SpeculativeNumberBitwiseXor
+  | SpeculativeNumberDivide
+  | SpeculativeNumberEqual
+  | SpeculativeNumberLessThan
+  | SpeculativeNumberLessThanOrEqual
   | SpeculativeNumberModulus
   | SpeculativeNumberMultiply
+  | SpeculativeNumberShiftLeft
+  | SpeculativeNumberShiftRight
+  | SpeculativeNumberShiftRightLogical
+  | SpeculativeNumberSubtract
   (* b1v1e1c1 *)
   | CheckedTaggedToFloat64
   | CheckedTaggedToInt64
@@ -977,16 +978,15 @@ type t =
   | StringConcat
   | StringIndexOf
   | StringSubstring
-  (* b1v1v2 *)
-  | SpeculativeNumberEqual
-  | Word32Sar
-  | Word64Sar
   (* b1b2b4v1v2v3e1c1 *)
   | StoreElement
   (* v1b3d3v2e1c1 *)
   | StoreField
   (* c1e1 *)
   | Throw
+  (* b1v1v2 *)
+  | Word32Sar
+  | Word64Sar
   | Empty
 [@@deriving equal]
 
@@ -1204,9 +1204,7 @@ let get_kind opcode =
   | SpeculativeBigIntDivide | SpeculativeBigIntEqual | SpeculativeBigIntLessThan
   | SpeculativeBigIntLessThanOrEqual | SpeculativeBigIntModulus
   | SpeculativeBigIntMultiply | SpeculativeBigIntShiftLeft
-  | SpeculativeBigIntShiftRight | SpeculativeBigIntSubtract
-  | SpeculativeNumberAdd | SpeculativeNumberBitwiseAnd
-  | SpeculativeNumberBitwiseOr | SpeculativeNumberBitwiseXor | StringEqual
+  | SpeculativeBigIntShiftRight | SpeculativeBigIntSubtract | StringEqual
   | StringLessThan | StringLessThanOrEqual | Uint32LessThan
   | Uint32LessThanOrEqual | Uint64LessThan | Uint64LessThanOrEqual | Word32And
   | Word32Equal | Word32Or | Word32Rol | Word32Ror | Word32Shl | Word32Shr
@@ -1227,14 +1225,16 @@ let get_kind opcode =
   | CheckedInt32Add | CheckedInt32Div | CheckedInt32Sub | CheckedInt64Add
   | CheckedInt64Div | CheckedInt64Mod | CheckedInt64Mul | CheckedInt64Sub
   | CheckedUint32Div | DeoptimizeIf | DeoptimizeUnless
-  | EnsureWritableFastElements | SpeculativeNumberDivide
-  | SpeculativeNumberLessThan | SpeculativeNumberLessThanOrEqual
-  | SpeculativeNumberShiftLeft | SpeculativeNumberShiftRight
-  | SpeculativeNumberShiftRightLogical | SpeculativeNumberSubtract
-  | SpeculativeSafeIntegerAdd | SpeculativeSafeIntegerSubtract
-  | StringCharCodeAt | StringCodePointAt ->
+  | EnsureWritableFastElements | SpeculativeSafeIntegerAdd
+  | SpeculativeSafeIntegerSubtract | StringCharCodeAt | StringCodePointAt ->
       V1V2E1C1
-  | CheckedInt32Mul | SpeculativeNumberModulus | SpeculativeNumberMultiply ->
+  | CheckedInt32Mul | SpeculativeNumberAdd | SpeculativeNumberBitwiseAnd
+  | SpeculativeNumberBitwiseOr | SpeculativeNumberBitwiseXor
+  | SpeculativeNumberDivide | SpeculativeNumberEqual | SpeculativeNumberLessThan
+  | SpeculativeNumberLessThanOrEqual | SpeculativeNumberModulus
+  | SpeculativeNumberMultiply | SpeculativeNumberShiftLeft
+  | SpeculativeNumberShiftRight | SpeculativeNumberShiftRightLogical
+  | SpeculativeNumberSubtract ->
       B1V1V2E1C1
   | CheckedTaggedToFloat64 | CheckedTaggedToInt64
   | CheckedTruncateTaggedToWord32 ->
@@ -1252,10 +1252,10 @@ let get_kind opcode =
   | ProtectedStore | Store -> V1V2B1V3
   | Return -> V2C1E1
   | Select | StringConcat | StringIndexOf | StringSubstring -> V1V2V3
-  | SpeculativeNumberEqual | Word32Sar | Word64Sar -> B1V1V2
   | StoreElement -> B1B2B4V1V2V3E1C1
   | StoreField -> V1B3D3V2E1C1
   | Throw -> C1E1
+  | Word32Sar | Word64Sar -> B1V1V2
   | Empty -> Empty
 
 let split_kind kind =
@@ -1295,10 +1295,10 @@ let split_kind kind =
   | V1V2B1V3 -> [ V1; V2; B1; V3 ]
   | V2C1E1 -> [ V2; C1; E1 ]
   | V1V2V3 -> [ V1; V2; V3 ]
-  | B1V1V2 -> [ B1; V1; V2 ]
   | B1B2B4V1V2V3E1C1 -> [ B1; B2; B4; V1; V2; V3; E1; C1 ]
   | V1B3D3V2E1C1 -> [ V1; B3; D3; V2; E1; C1 ]
   | C1E1 -> [ C1; E1 ]
+  | B1V1V2 -> [ B1; V1; V2 ]
   | Empty -> [ Empty ]
 
 let empty = Empty
@@ -2105,10 +2105,6 @@ let of_str str =
   | "SpeculativeBigIntShiftLeft" -> SpeculativeBigIntShiftLeft
   | "SpeculativeBigIntShiftRight" -> SpeculativeBigIntShiftRight
   | "SpeculativeBigIntSubtract" -> SpeculativeBigIntSubtract
-  | "SpeculativeNumberAdd" -> SpeculativeNumberAdd
-  | "SpeculativeNumberBitwiseAnd" -> SpeculativeNumberBitwiseAnd
-  | "SpeculativeNumberBitwiseOr" -> SpeculativeNumberBitwiseOr
-  | "SpeculativeNumberBitwiseXor" -> SpeculativeNumberBitwiseXor
   | "StringEqual" -> StringEqual
   | "StringLessThan" -> StringLessThan
   | "StringLessThanOrEqual" -> StringLessThanOrEqual
@@ -2166,20 +2162,25 @@ let of_str str =
   | "DeoptimizeIf" -> DeoptimizeIf
   | "DeoptimizeUnless" -> DeoptimizeUnless
   | "EnsureWritableFastElements" -> EnsureWritableFastElements
-  | "SpeculativeNumberDivide" -> SpeculativeNumberDivide
-  | "SpeculativeNumberLessThan" -> SpeculativeNumberLessThan
-  | "SpeculativeNumberLessThanOrEqual" -> SpeculativeNumberLessThanOrEqual
-  | "SpeculativeNumberShiftLeft" -> SpeculativeNumberShiftLeft
-  | "SpeculativeNumberShiftRight" -> SpeculativeNumberShiftRight
-  | "SpeculativeNumberShiftRightLogical" -> SpeculativeNumberShiftRightLogical
-  | "SpeculativeNumberSubtract" -> SpeculativeNumberSubtract
   | "SpeculativeSafeIntegerAdd" -> SpeculativeSafeIntegerAdd
   | "SpeculativeSafeIntegerSubtract" -> SpeculativeSafeIntegerSubtract
   | "StringCharCodeAt" -> StringCharCodeAt
   | "StringCodePointAt" -> StringCodePointAt
   | "CheckedInt32Mul" -> CheckedInt32Mul
+  | "SpeculativeNumberAdd" -> SpeculativeNumberAdd
+  | "SpeculativeNumberBitwiseAnd" -> SpeculativeNumberBitwiseAnd
+  | "SpeculativeNumberBitwiseOr" -> SpeculativeNumberBitwiseOr
+  | "SpeculativeNumberBitwiseXor" -> SpeculativeNumberBitwiseXor
+  | "SpeculativeNumberDivide" -> SpeculativeNumberDivide
+  | "SpeculativeNumberEqual" -> SpeculativeNumberEqual
+  | "SpeculativeNumberLessThan" -> SpeculativeNumberLessThan
+  | "SpeculativeNumberLessThanOrEqual" -> SpeculativeNumberLessThanOrEqual
   | "SpeculativeNumberModulus" -> SpeculativeNumberModulus
   | "SpeculativeNumberMultiply" -> SpeculativeNumberMultiply
+  | "SpeculativeNumberShiftLeft" -> SpeculativeNumberShiftLeft
+  | "SpeculativeNumberShiftRight" -> SpeculativeNumberShiftRight
+  | "SpeculativeNumberShiftRightLogical" -> SpeculativeNumberShiftRightLogical
+  | "SpeculativeNumberSubtract" -> SpeculativeNumberSubtract
   | "CheckedTaggedToFloat64" -> CheckedTaggedToFloat64
   | "CheckedTaggedToInt64" -> CheckedTaggedToInt64
   | "CheckedTruncateTaggedToWord32" -> CheckedTruncateTaggedToWord32
@@ -2212,12 +2213,11 @@ let of_str str =
   | "StringConcat" -> StringConcat
   | "StringIndexOf" -> StringIndexOf
   | "StringSubstring" -> StringSubstring
-  | "SpeculativeNumberEqual" -> SpeculativeNumberEqual
-  | "Word32Sar" -> Word32Sar
-  | "Word64Sar" -> Word64Sar
   | "StoreElement" -> StoreElement
   | "StoreField" -> StoreField
   | "Throw" -> Throw
+  | "Word32Sar" -> Word32Sar
+  | "Word64Sar" -> Word64Sar
   | _ -> raise Invalid_opcode
 
 let to_str opcode =
@@ -3022,10 +3022,6 @@ let to_str opcode =
   | SpeculativeBigIntShiftLeft -> "SpeculativeBigIntShiftLeft"
   | SpeculativeBigIntShiftRight -> "SpeculativeBigIntShiftRight"
   | SpeculativeBigIntSubtract -> "SpeculativeBigIntSubtract"
-  | SpeculativeNumberAdd -> "SpeculativeNumberAdd"
-  | SpeculativeNumberBitwiseAnd -> "SpeculativeNumberBitwiseAnd"
-  | SpeculativeNumberBitwiseOr -> "SpeculativeNumberBitwiseOr"
-  | SpeculativeNumberBitwiseXor -> "SpeculativeNumberBitwiseXor"
   | StringEqual -> "StringEqual"
   | StringLessThan -> "StringLessThan"
   | StringLessThanOrEqual -> "StringLessThanOrEqual"
@@ -3083,20 +3079,25 @@ let to_str opcode =
   | DeoptimizeIf -> "DeoptimizeIf"
   | DeoptimizeUnless -> "DeoptimizeUnless"
   | EnsureWritableFastElements -> "EnsureWritableFastElements"
-  | SpeculativeNumberDivide -> "SpeculativeNumberDivide"
-  | SpeculativeNumberLessThan -> "SpeculativeNumberLessThan"
-  | SpeculativeNumberLessThanOrEqual -> "SpeculativeNumberLessThanOrEqual"
-  | SpeculativeNumberShiftLeft -> "SpeculativeNumberShiftLeft"
-  | SpeculativeNumberShiftRight -> "SpeculativeNumberShiftRight"
-  | SpeculativeNumberShiftRightLogical -> "SpeculativeNumberShiftRightLogical"
-  | SpeculativeNumberSubtract -> "SpeculativeNumberSubtract"
   | SpeculativeSafeIntegerAdd -> "SpeculativeSafeIntegerAdd"
   | SpeculativeSafeIntegerSubtract -> "SpeculativeSafeIntegerSubtract"
   | StringCharCodeAt -> "StringCharCodeAt"
   | StringCodePointAt -> "StringCodePointAt"
   | CheckedInt32Mul -> "CheckedInt32Mul"
+  | SpeculativeNumberAdd -> "SpeculativeNumberAdd"
+  | SpeculativeNumberBitwiseAnd -> "SpeculativeNumberBitwiseAnd"
+  | SpeculativeNumberBitwiseOr -> "SpeculativeNumberBitwiseOr"
+  | SpeculativeNumberBitwiseXor -> "SpeculativeNumberBitwiseXor"
+  | SpeculativeNumberDivide -> "SpeculativeNumberDivide"
+  | SpeculativeNumberEqual -> "SpeculativeNumberEqual"
+  | SpeculativeNumberLessThan -> "SpeculativeNumberLessThan"
+  | SpeculativeNumberLessThanOrEqual -> "SpeculativeNumberLessThanOrEqual"
   | SpeculativeNumberModulus -> "SpeculativeNumberModulus"
   | SpeculativeNumberMultiply -> "SpeculativeNumberMultiply"
+  | SpeculativeNumberShiftLeft -> "SpeculativeNumberShiftLeft"
+  | SpeculativeNumberShiftRight -> "SpeculativeNumberShiftRight"
+  | SpeculativeNumberShiftRightLogical -> "SpeculativeNumberShiftRightLogical"
+  | SpeculativeNumberSubtract -> "SpeculativeNumberSubtract"
   | CheckedTaggedToFloat64 -> "CheckedTaggedToFloat64"
   | CheckedTaggedToInt64 -> "CheckedTaggedToInt64"
   | CheckedTruncateTaggedToWord32 -> "CheckedTruncateTaggedToWord32"
@@ -3129,10 +3130,9 @@ let to_str opcode =
   | StringConcat -> "StringConcat"
   | StringIndexOf -> "StringIndexOf"
   | StringSubstring -> "StringSubstring"
-  | SpeculativeNumberEqual -> "SpeculativeNumberEqual"
-  | Word32Sar -> "Word32Sar"
-  | Word64Sar -> "Word64Sar"
   | StoreElement -> "StoreElement"
   | StoreField -> "StoreField"
   | Throw -> "Throw"
+  | Word32Sar -> "Word32Sar"
+  | Word64Sar -> "Word64Sar"
   | Empty -> failwith "Unreachable"

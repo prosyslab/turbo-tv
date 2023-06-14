@@ -432,41 +432,11 @@ let encode_instr program ?(check_wasm = false)
   | NumberSin -> encode_v1m number_sin
   | NumberSubtract -> encode_v2m number_subtract
   | NumberTrunc -> encode_v1m number_trunc
-  | SpeculativeNumberAdd -> encode_v2m speculative_number_add
-  | SpeculativeNumberDivide ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let ctrl_id = Operands.id_of_nth operands 3 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find ctrl_id cf in
-      speculative_number_divide lval rval () ctrl mem
-  | SpeculativeNumberModulus ->
-      let hint = Operands.const_of_nth operands 0 in
-      let lpid = Operands.id_of_nth operands 1 in
-      let rpid = Operands.id_of_nth operands 2 in
-      let ctrl_id = Operands.id_of_nth operands 4 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find ctrl_id cf in
-      speculative_number_modulus hint lval rval () ctrl mem
-  | SpeculativeNumberMultiply ->
-      let hint = Operands.const_of_nth operands 0 in
-      let lpid = Operands.id_of_nth operands 1 in
-      let rpid = Operands.id_of_nth operands 2 in
-      let ctrl_id = Operands.id_of_nth operands 4 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find ctrl_id cf in
-      speculative_number_multiply hint lval rval () ctrl mem
-  | SpeculativeNumberSubtract ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let ctrl_id = Operands.id_of_nth operands 3 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find ctrl_id cf in
-      speculative_number_subtract lval rval () ctrl mem
+  | SpeculativeNumberAdd -> encode_h1v2e1c1m speculative_number_add
+  | SpeculativeNumberDivide -> encode_h1v2e1c1m speculative_number_divide
+  | SpeculativeNumberModulus -> encode_h1v2e1c1m speculative_number_modulus
+  | SpeculativeNumberMultiply -> encode_h1v2e1c1m speculative_number_multiply
+  | SpeculativeNumberSubtract -> encode_h1v2e1c1m speculative_number_subtract
   | SpeculativeSafeIntegerAdd -> encode_v2c1m speculative_safe_integer_add
   | SpeculativeSafeIntegerSubtract ->
       encode_v2c1m speculative_safe_integer_subtract
@@ -479,33 +449,17 @@ let encode_instr program ?(check_wasm = false)
   | NumberShiftRight -> encode_v2m number_shift_right
   (* simplified: comparison *)
   | NumberShiftRightLogical -> encode_v2m number_shift_right_logical
-  | SpeculativeNumberBitwiseAnd -> encode_v2m (speculative_number_bitwise "&")
-  | SpeculativeNumberBitwiseOr -> encode_v2m (speculative_number_bitwise "|")
-  | SpeculativeNumberBitwiseXor -> encode_v2m (speculative_number_bitwise "^")
-  | SpeculativeNumberShiftLeft ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let ctrl_id = Operands.id_of_nth operands 3 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find ctrl_id cf in
-      speculative_number_shift_left lval rval () ctrl mem
+  | SpeculativeNumberBitwiseAnd ->
+      encode_h1v2e1c1m (speculative_number_bitwise "&")
+  | SpeculativeNumberBitwiseOr ->
+      encode_h1v2e1c1m (speculative_number_bitwise "|")
+  | SpeculativeNumberBitwiseXor ->
+      encode_h1v2e1c1m (speculative_number_bitwise "^")
+  | SpeculativeNumberShiftLeft -> encode_h1v2e1c1m speculative_number_shift_left
   | SpeculativeNumberShiftRight ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let ctrl_id = Operands.id_of_nth operands 3 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find ctrl_id cf in
-      speculative_number_shift_right lval rval () ctrl mem
+      encode_h1v2e1c1m speculative_number_shift_right
   | SpeculativeNumberShiftRightLogical ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let ctrl_id = Operands.id_of_nth operands 3 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find ctrl_id cf in
-      speculative_number_shift_right_logical lval rval () ctrl mem
+      encode_h1v2e1c1m speculative_number_shift_right_logical
   (* simplified: comparison *)
   | NumberEqual ->
       let lpid = Operands.id_of_nth operands 0 in
@@ -543,29 +497,10 @@ let encode_instr program ?(check_wasm = false)
       let lval = RegisterFile.find lpid rf in
       let rval = RegisterFile.find rpid rf in
       reference_equal lval rval mem
-  | SpeculativeNumberEqual ->
-      let hint = Operands.const_of_nth operands 0 in
-      let lpid = Operands.id_of_nth operands 1 in
-      let rpid = Operands.id_of_nth operands 2 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      speculative_number_equal hint lval rval mem
-  | SpeculativeNumberLessThan ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let ctrl_id = Operands.id_of_nth operands 3 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find ctrl_id cf in
-      speculative_number_less_than lval rval () ctrl mem
+  | SpeculativeNumberEqual -> encode_h1v2e1c1m speculative_number_equal
+  | SpeculativeNumberLessThan -> encode_h1v2e1c1m speculative_number_less_than
   | SpeculativeNumberLessThanOrEqual ->
-      let lpid = Operands.id_of_nth operands 0 in
-      let rpid = Operands.id_of_nth operands 1 in
-      let ctrl_id = Operands.id_of_nth operands 3 in
-      let lval = RegisterFile.find lpid rf in
-      let rval = RegisterFile.find rpid rf in
-      let ctrl = ControlFile.find ctrl_id cf in
-      speculative_number_less_than_or_equal lval rval () ctrl mem
+      encode_h1v2e1c1m speculative_number_less_than_or_equal
   (* simplified: bigint *)
   (* constructor *)
   | Integral32OrMinusZeroToBigInt ->
