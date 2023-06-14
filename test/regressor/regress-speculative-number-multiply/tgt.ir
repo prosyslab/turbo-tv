@@ -10,18 +10,11 @@
 #78:ExternalConstant[0x55a46021cec0<StackGuardWithGap.entry>]()()()
 #79:Int32Constant[1]()()()
 #7:HeapConstant[0x2aad00183c2d <NativeContext[281]>]()()()  [Type: HeapConstant(0x55a462c67fd8 {0x2aad00183c2d <NativeContext[281]>})]
-#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
-#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
 #3:Parameter[2](#0:Start)()()  [Type: NonInternal]
-#10:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
-#11:TypedStateValues[, sparse:......]()()()  [Type: Internal]
-#62:TypedStateValues[, sparse:.]()()()
-#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
 #51:HeapConstant[0x2aad0019afbd <JSFunction opt (sfi = 0x2aad0019ad71)>]()()()  [Type: HeapConstant(0x55a462c67fe8 {0x2aad0019afbd <JSFunction opt (sfi = 0x2aad0019ad71)>})]
-#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x2aad0019ad71 <SharedFunctionInfo opt>](#10:TypedStateValues, #11:TypedStateValues, #62:TypedStateValues, #5:Parameter, #51:HeapConstant)()()  [Type: Internal]
 #72:Branch[Unspecified, True](#71:StackPointerGreaterThan)()(#0:Start)
 #74:IfFalse()()(#72:Branch)
-#9:Call[Code:StackGuardWithGap:r1s1i5f1](#80:HeapConstant, #77:LoadStackCheckOffset, #78:ExternalConstant, #79:Int32Constant, #7:HeapConstant, #14:FrameState)(#71:StackPointerGreaterThan)(#74:IfFalse)
+#9:Call[Code:StackGuardWithGap:r1s1i5f1](#80:HeapConstant, #77:LoadStackCheckOffset, #78:ExternalConstant, #79:Int32Constant, #7:HeapConstant, #0:Start)(#71:StackPointerGreaterThan)(#74:IfFalse)
 #73:IfTrue()()(#72:Branch)
 #75:Merge()()(#73:IfTrue, #9:Call)
 #76:EffectPhi()(#71:StackPointerGreaterThan, #9:Call)(#75:Merge)
@@ -31,8 +24,7 @@
 #91:LoadField[Map, tagged base, 0, OtherInternal, kRepMapWord|kTypeAny, MapWriteBarrier, mutable](#3:Parameter)(#76:EffectPhi)(#86:IfTrue)
 #92:HeapConstant[0x2aad00000345 <Map[12](HEAP_NUMBER_TYPE)>]()()()
 #93:Word32Equal(#91:LoadField, #92:HeapConstant)()()
-#17:FrameState[UNOPTIMIZED_FRAME, 2, Ignore, 0x2aad0019ad71 <SharedFunctionInfo opt>](#10:TypedStateValues, #11:TypedStateValues, #62:TypedStateValues, #5:Parameter, #51:HeapConstant)()()  [Type: Internal]
-#94:DeoptimizeUnless[NotAHeapNumber, FeedbackSource(INVALID)](#93:Word32Equal, #17:FrameState)(#91:LoadField)(#86:IfTrue)
+#94:DeoptimizeUnless[NotAHeapNumber, FeedbackSource(INVALID)](#93:Word32Equal, #0:Start)(#91:LoadField)(#86:IfTrue)
 #95:LoadField[HeapNumberValue, tagged base, 4, Number, kRepFloat64|kTypeNumber, NoWriteBarrier, mutable](#3:Parameter)(#94:DeoptimizeUnless)(#94:DeoptimizeUnless)
 #87:IfFalse()()(#85:Branch)
 #97:Merge()()(#87:IfFalse, #94:DeoptimizeUnless)

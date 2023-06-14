@@ -26,6 +26,10 @@ let repeat s n =
   let rec helper s1 n1 = if n1 = 0 then s1 else helper (s1 ^ s) (n1 - 1) in
   helper "" n
 
+let false_cst = RegisterFile.find "false" state.register_file
+
+let true_cst = RegisterFile.find "true" state.register_file
+
 let i32_to_i32_value i = i |> Value.from_int |> Value.cast Type.int32
 
 let i32_to_tagged_signed i =

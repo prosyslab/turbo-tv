@@ -35,6 +35,8 @@ let number_to_uint32_tests =
   let apply n = n |> apply_sem_v1m number_to_uint32 in
 
   [
+    number_to_uint32_eq_test (apply false_cst) 0;
+    number_to_uint32_eq_test (apply true_cst) 1;
     number_to_uint32_eq_test (apply (i32_to_i32_value 0)) 0;
     number_to_uint32_eq_test (apply (i32_to_tagged_signed 1)) 1;
     number_to_uint32_eq_test (apply ("-1.0" |> f_to_f64_value)) 4294967295;
@@ -78,6 +80,8 @@ let number_to_int32_tests =
   let apply n = n |> apply_sem_v1m number_to_int32 in
 
   [
+    number_to_int32_eq_test (apply false_cst) 0;
+    number_to_int32_eq_test (apply true_cst) 1;
     number_to_int32_eq_test (apply (i32_to_i32_value 0)) 0;
     number_to_int32_eq_test (apply (i32_to_tagged_signed 1)) 1;
     number_to_int32_eq_test (apply ("-1.0" |> f_to_f64_value)) (-1);

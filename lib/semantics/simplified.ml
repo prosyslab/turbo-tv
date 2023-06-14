@@ -28,6 +28,31 @@ let type_guard hint values rf mem =
                ]))
   else Number.are_numbers values mem
 
+let number_unary op pval mem state =
+  let rf = state.State.register_file in
+  let num = pval |> Number.to_number rf mem in
+  let value = op num mem in
+  state |> State.update ~value
+
+let number_binary op lval rval mem state =
+  let rf = state.State.register_file in
+  let lnum = lval |> Number.to_number rf mem in
+  let rnum = rval |> Number.to_number rf mem in
+  let value = op lnum rnum mem in
+  state |> State.update ~value
+
+let speculative_number_unary hint op pval _eff control mem state =
+  let deopt =
+    Bool.not (type_guard hint [ pval ] state.State.register_file mem)
+  in
+  number_unary op pval state.State.memory state |> State.update ~deopt ~control
+
+let speculative_number_binary hint op lval rval _eff control mem state =
+  let deopt =
+    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
+  in
+  number_binary op lval rval mem state |> State.update ~deopt ~control
+
 (* simplified: numeric *)
 let checked_int32_add lval rval _eff control state =
   let deopt = Int32.add_would_overflow lval rval in
@@ -112,30 +137,17 @@ let checked_uint32_div lval rval _eff control state =
   in
   state |> Machine.uint32_div lval rval control |> State.update ~deopt ~control
 
-let number_abs nptr mem state =
-  let value = nptr |> Number.abs mem in
-  state |> State.update ~value
+let number_abs = number_unary Number.abs
 
-let number_add lval rval mem state =
-  let value = Number.add lval rval mem in
-  state |> State.update ~value
+let number_add = number_binary Number.add
 
-let number_ceil pval mem state =
-  let value = pval |> Number.ceil mem in
-  state |> State.update ~value
+let number_ceil = number_unary Number.ceil
 
-let number_divide lval rval mem state =
-  let value = Number.divide lval rval mem in
-  state |> State.update ~value
+let number_divide = number_binary Number.divide
 
-let number_expm1 pval mem state =
-  (* https://tc39.es/ecma262/#sec-math.expm1 *)
-  let value = pval |> Number.expm1 mem in
-  state |> State.update ~value
+let number_expm1 = number_unary Number.expm1
 
-let number_floor pval mem state =
-  let value = pval |> Number.floor mem in
-  state |> State.update ~value
+let number_floor = number_unary Number.floor
 
 let number_imul lval rval mem state =
   let rf = state.State.register_file in
@@ -148,82 +160,37 @@ let number_imul lval rval mem state =
   in
   state |> State.update ~value
 
-let number_max lval rval mem state =
-  let value = Number.max lval rval mem in
-  state |> State.update ~value ~mem
+let number_max = number_binary Number.max
 
-let number_min lval rval mem state =
-  let value = Number.min lval rval mem in
-  state |> State.update ~value ~mem
+let number_min = number_binary Number.min
 
-let number_modulus lval rval mem state =
-  let value = Number.remainder lval rval mem in
-  state |> State.update ~value
+let number_modulus = number_binary Number.remainder
 
-let number_multiply lval rval mem state =
-  let value = Number.multiply lval rval mem in
-  state |> State.update ~value ~mem
+let number_multiply = number_binary Number.multiply
 
-let number_round pval mem state =
-  let value = pval |> Number.round mem in
-  state |> State.update ~value
+let number_round = number_unary Number.round
 
-let number_sign pval mem state =
-  let value = pval |> Number.sign mem in
-  state |> State.update ~value
+let number_sign = number_unary Number.sign
 
-let number_sin pval mem state =
-  let value = pval |> Number.sin mem in
-  state |> State.update ~value
+let number_sin = number_unary Number.sin
 
-let number_subtract lval rval mem state =
-  let value = Number.subtract lval rval mem in
-  state |> State.update ~value
+let number_trunc = number_unary Number.trunc
 
-let number_trunc pval mem state =
-  let value = Number.trunc pval mem in
-  state |> State.update ~value
+let number_subtract = number_binary Number.subtract
 
-(* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
- * value: Float64(lval + rval) *)
-let speculative_number_add hint lval rval _eff control mem state =
-  let deopt =
-    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
-  in
-  state |> number_add lval rval mem |> State.update ~deopt ~control
+let speculative_number_add hint = speculative_number_binary hint Number.add
 
-(* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
- * value: Float64(lval / rval) *)
-let speculative_number_divide hint lval rval _eff control mem state =
-  let deopt =
-    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
-  in
-  state |> number_divide lval rval mem |> State.update ~deopt ~control
+let speculative_number_divide hint =
+  speculative_number_binary hint Number.divide
 
-(* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
- * value: Float64(lval x rval) *)
-let speculative_number_modulus hint lval rval _eff control mem state =
-  let deopt =
-    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
-  in
-  state |> number_modulus lval rval mem |> State.update ~deopt ~control
+let speculative_number_modulus hint =
+  speculative_number_binary hint Number.remainder
 
-(* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
- * value: Float64(lval x rval) *)
-let speculative_number_multiply hint lval rval _eff control mem state =
-  let deopt =
-    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
-  in
-  (* deopt |> Expr.print_simplified; *)
-  state |> number_multiply lval rval mem |> State.update ~deopt ~control
+let speculative_number_multiply hint =
+  speculative_number_binary hint Number.multiply
 
-(* deopt condition: not(IsNumber(lval) /\ IsNumber(rval))
- * value: Float64(lval - rval) *)
-let speculative_number_subtract hint lval rval _effect control mem state =
-  let deopt =
-    Bool.not (type_guard hint [ lval; rval ] state.State.register_file mem)
-  in
-  state |> number_subtract lval rval mem |> State.update ~deopt ~control
+let speculative_number_subtract hint =
+  speculative_number_binary hint Number.subtract
 
 (* well-defined condition:
  * (IsTaggedSigned(lval) /\ IsTaggedSigned(rval))

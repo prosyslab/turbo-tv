@@ -40,6 +40,7 @@ let to_float64 mem number =
 
 let to_number rf mem value =
   (* https://tc39.es/ecma262/#sec-tonumber *)
+  (* format to float64 *)
   Bool.ite (is_number value mem)
     (value |> to_float64 mem)
     (Bool.ite
@@ -174,7 +175,7 @@ let same_value lnum rnum mem =
           (Float64.eq lnum_f64 rnum_f64)))
 
 (* unary arith *)
-let abs mem number =
+let abs number mem =
   (* https://tc39.es/ecma262/#sec-math.abs *)
   let num_f64 = number |> to_float64 mem in
   (* nan -> nan *)
@@ -190,7 +191,7 @@ let abs mem number =
           (* n < 0 -> -n *)
           (Bool.ite (Float64.is_negative num_f64) (Float64.neg num_f64) num_f64)))
 
-let unary_minus mem number =
+let unary_minus number mem =
   let num_f64 = number |> to_float64 mem in
   (* https://tc39.es/ecma262/#sec-numeric-types-number-unaryMinus *)
   Bool.ite (num_f64 |> Float64.is_nan) Float64.nan (num_f64 |> Float64.neg)
@@ -233,7 +234,7 @@ let add lnum rnum mem =
 
 let subtract lnum rnum mem =
   (* https://tc39.es/ecma262/#sec-numeric-types-number-subtract *)
-  add lnum (rnum |> unary_minus mem) mem
+  add lnum (unary_minus rnum mem) mem
 
 let divide lnum rnum mem =
   (* https://tc39.es/ecma262/#sec-numeric-types-number-divide *)
@@ -407,7 +408,7 @@ let min lnum rnum mem =
   let rnum_f64 = rnum |> to_float64 mem in
   Float64.min lnum_f64 rnum_f64
 
-let sign mem number =
+let sign number mem =
   let n_f64 = number |> to_float64 mem in
   (* https://tc39.es/ecma262/#sec-math.sign *)
   Bool.ite
@@ -424,7 +425,7 @@ let sign mem number =
        (Float64.lt n_f64 Float64.minus_zero)
        (Float64.neg Float64.one) Float64.one)
 
-let ceil mem number =
+let ceil number mem =
   let number_f64 = number |> to_float64 mem in
   (* https://tc39.es/ecma262/#sec-math.ceil *)
   Bool.ite
@@ -450,7 +451,7 @@ let ceil mem number =
        (* else round to positive inf *)
        (Float64.ceil number_f64))
 
-let floor mem number =
+let floor number mem =
   let number_f64 = number |> to_float64 mem in
   (* https://tc39.es/ecma262/#sec-math.floor *)
   Bool.ite
@@ -476,7 +477,7 @@ let floor mem number =
        (* else round to negative inf *)
        (Float64.floor number_f64))
 
-let round mem number =
+let round number mem =
   (* https://tc39.es/ecma262/#sec-math.round *)
   let n_f64 = number |> to_float64 mem in
   Bool.ite
@@ -540,10 +541,10 @@ let trunc num mem =
              ])
           Float64.minus_zero (num_f64 |> Float64.trunc)))
 
-let sin mem number =
+let sin number mem =
   let n_f64 = number |> to_float64 mem in
   n_f64 |> Float64.sin
 
-let expm1 mem number =
+let expm1 number mem =
   let n_f64 = number |> to_float64 mem in
   n_f64 |> Float64.expm1
