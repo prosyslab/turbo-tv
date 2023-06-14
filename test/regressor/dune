@@ -147,3 +147,19 @@
   (diff
    regress-speculative-number-multiply.expected
    regress-speculative-number-multiply.output)))
+
+(rule
+ (targets regress-speculative-number-modulus.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../bin/turbo-tv.exe --verify regress-speculative-number-modulus)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   regress-speculative-number-modulus.expected
+   regress-speculative-number-modulus.output)))
