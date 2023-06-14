@@ -163,3 +163,22 @@
   (diff
    regress-speculative-number-modulus.expected
    regress-speculative-number-modulus.output)))
+
+(rule
+ (targets regress-speculative-number-shift-right-boolean-input.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run
+     ../../bin/turbo-tv.exe
+     --verify
+     regress-speculative-number-shift-right-boolean-input)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   regress-speculative-number-shift-right-boolean-input.expected
+   regress-speculative-number-shift-right-boolean-input.output)))

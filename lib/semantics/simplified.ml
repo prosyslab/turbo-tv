@@ -138,8 +138,9 @@ let number_floor pval mem state =
   state |> State.update ~value
 
 let number_imul lval rval mem state =
+  let rf = state.State.register_file in
   let value =
-    let res = Number.imul lval rval mem in
+    let res = Number.imul lval rval rf mem in
     Bool.ite
       (res |> Int32.is_in_smi_range)
       (res |> Int32.to_tagged_signed)
@@ -277,15 +278,18 @@ let boolean_not pval state =
 
 (* 2V -> 1V *)
 let number_shift_left lval rval mem state =
-  let value = Number.left_shift lval rval mem in
+  let rf = state.State.register_file in
+  let value = Number.left_shift lval rval rf mem in
   state |> State.update ~value
 
 let number_shift_right lval rval mem state =
-  let value = Number.signed_right_shfit lval rval mem in
+  let rf = state.State.register_file in
+  let value = Number.signed_right_shfit lval rval rf mem in
   state |> State.update ~value
 
 let number_shift_right_logical lval rval mem state =
-  let value = Number.unsigned_right_shift lval rval mem in
+  let rf = state.State.register_file in
+  let value = Number.unsigned_right_shift lval rval rf mem in
   state |> State.update ~value
 
 let number_bitwise op lval rval mem state =
@@ -542,7 +546,8 @@ let number_is_nan pval mem state =
 
 (* simplified: bigint *)
 let integral32_or_minus_zero_to_bigint pval mem state =
-  let val_i32 = pval |> Number.to_int32 mem in
+  let rf = state.State.register_file in
+  let val_i32 = pval |> Number.to_int32 rf mem in
   let bn =
     let sign = val_i32 |> Int32.is_negative in
     let value = Bool.ite sign (Int32.neg val_i32) val_i32 in
@@ -741,15 +746,17 @@ let string_length pval mem state =
   state |> State.update ~value
 
 let string_char_code_at s i mem state =
+  let rf = state.State.register_file in
   let value =
-    Strings.at (Strings.load s mem) (i |> Number.to_uint32 mem)
+    Strings.at (Strings.load s mem) (i |> Number.to_uint32 rf mem)
     |> Strings.str2num |> Value.cast Type.uint32
   in
   state |> State.update ~value
 
 let string_code_point_at s i mem state =
+  let rf = state.State.register_file in
   let value =
-    Strings.at (Strings.load s mem) (i |> Number.to_uint32 mem)
+    Strings.at (Strings.load s mem) (i |> Number.to_uint32 rf mem)
     |> Strings.str2num |> Value.cast Type.uint32
   in
   state |> State.update ~value
@@ -765,9 +772,10 @@ let string_from_single_code_point c mem state =
   state |> State.update ~value ~mem
 
 let string_index_of l r i mem state =
+  let rf = state.State.register_file in
   let l_val = Strings.load l mem in
   let r_val = Strings.load r mem in
-  let value = Strings.index_of l_val r_val (i |> Number.to_uint32 mem) in
+  let value = Strings.index_of l_val r_val (i |> Number.to_uint32 rf mem) in
   state |> State.update ~value
 
 let string_concat _ hd tl mem state =
@@ -799,11 +807,12 @@ let string_less_than_or_equal l r mem state =
   state |> State.update ~value
 
 let string_sub_string s l_i r_i mem state =
+  let rf = state.State.register_file in
   let s_val = Strings.load s mem in
   let v_s =
     Strings.sub_string s_val
-      (l_i |> Number.to_uint32 mem)
-      (r_i |> Number.to_uint32 mem)
+      (l_i |> Number.to_uint32 rf mem)
+      (r_i |> Number.to_uint32 rf mem)
   in
   let value, mem = Strings.allocate v_s mem in
   state |> State.update ~value ~mem
@@ -1043,21 +1052,24 @@ let number_to_boolean pval mem state =
   state |> State.update ~value
 
 let number_to_int32 pval mem state =
-  let value = pval |> Number.to_int32 mem in
+  let rf = state.State.register_file in
+  let value = pval |> Number.to_int32 rf mem in
   state |> State.update ~value
 
 let number_to_string pval mem state =
-  let v_s = pval |> Number.to_uint32 mem |> Strings.num2str in
+  let rf = state.State.register_file in
+  let v_s = pval |> Number.to_uint32 rf mem |> Strings.num2str in
   let value, mem = Strings.allocate v_s mem in
   state |> State.update ~value ~mem
 
 (* pure: 1V -> 1V *)
 let number_to_uint32 pval mem state =
-  let value = pval |> Number.to_uint32 mem in
+  let rf = state.State.register_file in
+  let value = pval |> Number.to_uint32 rf mem in
   state |> State.update ~value
 
-let speculative_to_number pval () control mem (state : State.t) =
-  let rf = state.register_file in
+let speculative_to_number pval () control mem state =
+  let rf = state.State.register_file in
   let deopt =
     Bool.not
       (Bool.ors
@@ -1069,21 +1081,7 @@ let speculative_to_number pval () control mem (state : State.t) =
            pval |> Objects.is_boolean mem;
          ])
   in
-  let value =
-    Bool.ite
-      (Number.is_number pval mem)
-      (pval |> Number.to_float64 mem)
-      (Bool.ite
-         (pval |> Objects.is_undefined mem)
-         Float64.nan
-         (Bool.ite
-            (pval |> Objects.is_null mem)
-            Float64.zero
-            (Bool.ite
-               (Bool.ors
-                  [ pval |> Value.is_false; pval |> Constant.is_false_cst rf ])
-               (Float64.of_float 0.0) (Float64.of_float 1.0))))
-  in
+  let value = pval |> Number.to_number rf mem in
   state |> State.update ~value ~deopt ~control
 
 let to_boolean pval mem (state : State.t) =

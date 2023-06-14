@@ -38,6 +38,21 @@ let to_float64 mem number =
              (number |> TaggedSigned.to_float64)
              (heap_number |> Heapnumber.to_float64))))
 
+let to_number rf mem value =
+  (* https://tc39.es/ecma262/#sec-tonumber *)
+  Bool.ite (is_number value mem)
+    (value |> to_float64 mem)
+    (Bool.ite
+       (value |> Objects.is_undefined mem)
+       Float64.nan
+       (Bool.ite
+          (value |> Objects.is_null mem)
+          Float64.zero
+          (Bool.ite
+             (Bool.ors
+                [ value |> Value.is_false; value |> Constant.is_false_cst rf ])
+             (Float64.of_float 0.0) (Float64.of_float 1.0))))
+
 let to_boolean mem number =
   let number_f64 = number |> to_float64 mem in
   (* https://tc39.es/ecma262/#sec-toboolean *)
@@ -50,33 +65,31 @@ let to_boolean mem number =
        ])
     Value.fl Value.tr
 
-let to_int32 mem number =
-  let number_f64 = number |> to_float64 mem in
+let to_int32 rf mem value =
   (* https://tc39.es/ecma262/#sec-toint32 *)
   Bool.ite
-    (number |> Value.has_type Type.int32)
-    number
+    (value |> Value.has_type Type.int32)
+    value
     (Bool.ite
-       (number |> Value.has_type Type.tagged_signed)
-       (number |> TaggedSigned.to_int32)
+       (value |> Value.has_type Type.tagged_signed)
+       (value |> TaggedSigned.to_int32)
        (Bool.ite
-          (number |> Value.has_type Type.uint32)
-          (number |> Uint32.to_int Type.int32 32)
-          (number_f64 |> Float64.to_int32)))
+          (value |> Value.has_type Type.uint32)
+          (value |> Uint32.to_int Type.int32 32)
+          (value |> to_number rf mem |> Float64.to_int32)))
 
-let to_uint32 mem number =
-  let number_f64 = number |> to_float64 mem in
+let to_uint32 rf mem value =
   (* https://tc39.es/ecma262/#sec-touint32 *)
   Bool.ite
-    (number |> Value.has_type Type.int32)
-    (number |> Int32.to_int Type.uint32 32)
+    (value |> Value.has_type Type.int32)
+    (value |> Int32.to_int Type.uint32 32)
     (Bool.ite
-       (number |> Value.has_type Type.tagged_signed)
-       (number |> TaggedSigned.to_uint32)
+       (value |> Value.has_type Type.tagged_signed)
+       (value |> TaggedSigned.to_uint32)
        (Bool.ite
-          (number |> Value.has_type Type.uint32)
-          number
-          (number_f64 |> Float64.to_uint32)))
+          (value |> Value.has_type Type.uint32)
+          value
+          (value |> to_number rf mem |> Float64.to_uint32)))
 
 (* check *)
 let is_integer mem number =
@@ -314,9 +327,9 @@ let multiply lnum rnum mem =
                 (* else, return lnum * rnum *)
                 (Float64.mul lnum_f64 rnum_f64)))))
 
-let imul lnum rnum mem =
+let imul lnum rnum rf mem =
   (* https://tc39.es/ecma262/#sec-math.imul *)
-  Uint32.mul (lnum |> to_uint32 mem) (rnum |> to_uint32 mem)
+  Uint32.mul (lnum |> to_uint32 rf mem) (rnum |> to_uint32 rf mem)
   |> Uint32.to_int Type.int32 32
 
 let remainder n d mem =
@@ -342,10 +355,10 @@ let bitwise op x y mem =
     (res |> Int32.to_tagged_signed)
     (res |> Int32.to_float64)
 
-let left_shift x y mem =
+let left_shift x y rf mem =
   (* https://tc39.es/ecma262/#sec-numeric-types-number-leftShift *)
-  let lnum = x |> to_int32 mem in
-  let rnum = y |> to_uint32 mem in
+  let lnum = x |> to_int32 rf mem in
+  let rnum = y |> to_uint32 rf mem in
   let shift_count =
     Uint32.modulo rnum (32 |> Value.from_int |> Value.cast Type.uint32)
   in
@@ -355,10 +368,10 @@ let left_shift x y mem =
     (res |> Int32.to_tagged_signed)
     (res |> Int32.to_float64)
 
-let unsigned_right_shift x y mem =
+let unsigned_right_shift x y rf mem =
   (* https://tc39.es/ecma262/#sec-numeric-types-number-unsignedRightShift *)
-  let lnum = x |> to_uint32 mem in
-  let rnum = y |> to_uint32 mem in
+  let lnum = x |> to_uint32 rf mem in
+  let rnum = y |> to_uint32 rf mem in
   let shift_count =
     Uint32.modulo rnum (32 |> Value.from_int |> Value.cast Type.uint32)
   in
@@ -368,10 +381,10 @@ let unsigned_right_shift x y mem =
     (res |> Uint32.to_tagged_signed)
     (res |> Uint32.to_float64)
 
-let signed_right_shfit x y mem =
+let signed_right_shfit x y rf mem =
   (* https://tc39.es/ecma262/#sec-numeric-types-number-signedRightShift *)
-  let lnum = x |> to_int32 mem in
-  let rnum = y |> to_uint32 mem in
+  let lnum = x |> to_int32 rf mem in
+  let rnum = y |> to_uint32 rf mem in
   let shift_count =
     Uint32.modulo rnum (32 |> Value.from_int |> Value.cast Type.uint32)
   in
