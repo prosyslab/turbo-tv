@@ -420,7 +420,9 @@ let load_field offset repr ptr _eff control mem state =
   in
   let is_angelic = moved |> Memory.is_angelic mem in
   let assertion =
-    Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of)
+    Bool.implies
+      (moved |> Value.has_type Type.tagged_pointer)
+      (Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of))
   in
   let access =
     State.AccessInfo.

@@ -400,8 +400,9 @@ let store ptr pos repr value mem state =
   in
 
   let assertion =
-    Bool.ands
-      [ Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of) ]
+    Bool.implies
+      (moved |> Value.has_type Type.tagged_pointer)
+      (Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of))
   in
 
   {
@@ -431,7 +432,11 @@ let load ptr pos repr mem state =
   let assertion =
     Bool.ands
       [
-        Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of);
+        Bool.implies
+          (moved |> Value.has_type Type.tagged_pointer)
+          (Bool.eq
+             (ptr |> TaggedPointer.bid_of)
+             (moved |> TaggedPointer.bid_of));
         Bool.implies
           (Bool.ands
              [
