@@ -433,7 +433,7 @@ let load ptr pos repr mem state =
     Bool.ands
       [
         Bool.implies
-          (moved |> Value.has_type Type.tagged_pointer)
+          (ptr |> Value.has_type Type.tagged_pointer)
           (Bool.eq
              (ptr |> TaggedPointer.bid_of)
              (moved |> TaggedPointer.bid_of));

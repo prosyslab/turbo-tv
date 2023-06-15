@@ -30,7 +30,8 @@ let heap_constant name addr mem state =
       (addr, mem)
     else if String.starts_with ~prefix:"String" name then
       Strings.allocate (Strings.from_string name) mem
-    else (addr, mem)
+      (* Angelic TaggedPointer *)
+    else (addr |> Value.cast Type.tagged_pointer, mem)
   in
   state |> State.update ~value ~mem
 
