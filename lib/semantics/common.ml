@@ -45,9 +45,11 @@ let int64_constant c state =
   state |> State.update ~value
 
 (* behavior: value=c *)
-let external_constant c state =
-  let value = c |> Value.cast Type.pointer in
-  state |> State.update ~value
+let external_constant _c state =
+  let value, mem =
+    Memory.allocate ~angelic:Bool.tr (Value.from_int 0) state.State.memory
+  in
+  state |> State.update ~value ~mem
 
 (* behavior: value=c *)
 let number_constant c state =

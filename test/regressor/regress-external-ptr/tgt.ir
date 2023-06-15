@@ -1,0 +1,20 @@
+#57:Int32Constant[0]()()()
+#46:HeapConstant[0x144000000de1 <false>]()()()  [Type: HeapConstant(0x5572728fd5d0 {0x144000000de1 <false>})]
+#59:ExternalConstant[0x557272878b50]()()()
+#52:Int64Constant[0]()()()
+#0:Start()()()  [Type: Internal]
+#60:Load[kRepWord64](#59:ExternalConstant, #52:Int64Constant)(#0:Start)(#0:Start)
+#61:StackPointerGreaterThan[JSFunctionEntry](#60:Load)(#60:Load)()
+#70:HeapConstant[0x14400002ca55 <Code BUILTIN CEntry_Return1_ArgvOnStack_NoBuiltinExit>]()()()
+#67:LoadStackCheckOffset()()()
+#68:ExternalConstant[0x55726ff18ec0<StackGuardWithGap.entry>]()()()
+#69:Int32Constant[1]()()()
+#7:HeapConstant[0x144000183c2d <NativeContext[281]>]()()()  [Type: HeapConstant(0x5572728fcfd8 {0x144000183c2d <NativeContext[281]>})]
+#62:Branch[Unspecified, True](#61:StackPointerGreaterThan)()(#0:Start)
+#64:IfFalse()()(#62:Branch)
+#9:Call[Code:StackGuardWithGap:r1s1i5f1](#70:HeapConstant, #67:LoadStackCheckOffset, #68:ExternalConstant, #69:Int32Constant, #7:HeapConstant, #0:Start)(#61:StackPointerGreaterThan)(#64:IfFalse)
+#63:IfTrue()()(#62:Branch)
+#65:Merge()()(#63:IfTrue, #9:Call)
+#66:EffectPhi()(#61:StackPointerGreaterThan, #9:Call)(#65:Merge)
+#39:Return(#57:Int32Constant, #46:HeapConstant)(#66:EffectPhi)(#65:Merge)
+#40:End()()(#39:Return)

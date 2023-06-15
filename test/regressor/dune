@@ -196,3 +196,17 @@
  (alias runtest)
  (action
   (diff regress-oddball-map.expected regress-oddball-map.output)))
+
+(rule
+ (targets regress-external-ptr.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../bin/turbo-tv.exe --verify regress-external-ptr)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff regress-external-ptr.expected regress-external-ptr.output)))
