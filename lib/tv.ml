@@ -186,7 +186,22 @@ let check_wasm nparams program =
       let deopt = State.deopt final_state in
       Bool.not deopt
     in
-    Bool.ands [ final_state |> precondition_for_params nparams; no_deopt ]
+    let precond_for_params =
+      let params = Params.init nparams in
+      List.mapi
+        (fun _ param ->
+          Bool.ors
+            [
+              param |> Value.has_type Type.tagged_signed;
+              param |> Value.has_type Type.int32;
+              param |> Value.has_type Type.int64;
+              param |> Value.has_type Type.float32;
+              param |> Value.has_type Type.float64;
+            ])
+        params
+      |> Bool.ands
+    in
+    Bool.ands [ no_deopt; precond_for_params ]
   in
   let wasm_assertion =
     let pgm_retval = State.retval final_state in
