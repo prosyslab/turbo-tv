@@ -383,7 +383,7 @@ let word64_equal lval rval state =
  *   (IsTaggedPointer(ptr) /\ CanAccess(ptr, pos, repr))
  * assertion:
  *   mem = ite well-defined Store(ptr, pos, repr, mem) mem *)
-let store ptr pos repr value mem state =
+let store ptr pos repr value control mem state =
   let moved = TaggedPointer.move ptr pos in
   let ub = Bool.not (Memory.can_access_as moved repr mem) in
   let raw_ptr = moved |> BitVec.extract 31 0 in
@@ -408,7 +408,8 @@ let store ptr pos repr value mem state =
   {
     state with
     access_info = State.AccessInfo.add state.State.pc access state.access_info;
-    assertion = Bool.ands [ state.State.assertion; assertion ];
+    assertion =
+      Bool.implies control (Bool.ands [ state.State.assertion; assertion ]);
   }
   |> State.update ~mem ~ub
 
@@ -417,7 +418,7 @@ let store ptr pos repr value mem state =
  *   (IsTaggedPointer(ptr) /\ CanAccess(ptr, pos, repr))
  * assertion:
  *   value = (Mem[pos+size]) *)
-let load ptr pos repr mem state =
+let load ptr pos repr control mem state =
   let moved = TaggedPointer.move ptr pos in
   let ub = Bool.not (Memory.can_access_as moved repr mem) in
   let raw_ptr = moved |> BitVec.extract 31 0 in
@@ -458,7 +459,8 @@ let load ptr pos repr mem state =
   let is_angelic_value = moved |> Memory.is_angelic mem in
   {
     state with
-    assertion = Bool.ands [ state.State.assertion; assertion ];
+    assertion =
+      Bool.implies control (Bool.ands [ state.State.assertion; assertion ]);
     access_info = State.AccessInfo.add state.State.pc access state.access_info;
   }
   |> State.update ~value ~ub ~is_angelic_value

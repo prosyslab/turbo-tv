@@ -581,13 +581,13 @@ JSToNumeric,
 JSToObject,
 JSToString,
 JSWasmCall,
-Load,v1,v2,b1
+Load,v1,v2,b1,c1
 LoadDataViewElement,
-LoadElement,b1,b2,b4,v1,v2
+LoadElement,b1,b2,b4,v1,v2,c1
 LoadField,b2,b3,d3,v1,e1,c1
 LoadFieldByIndex,
 LoadFramePointer,
-LoadFromObject,v1,v2,b1
+LoadFromObject,v1,v2,b1,c1
 LoadImmutable,v1,v2,b1
 LoadImmutableFromObject,
 LoadLane,
@@ -597,7 +597,7 @@ LoadStackArgument,
 LoadStackCheckOffset,
 LoadStackPointer,
 LoadTransform,
-LoadTypedElement,b1,v2,v3,v4
+LoadTypedElement,b1,v2,v3,v4,c1
 Loop,
 LoopExit,
 LoopExitEffect,
@@ -699,8 +699,8 @@ PlainPrimitiveToWord32,
 Plug,
 PointerConstant,
 Projection,b1,v1
-ProtectedLoad,v1,v2,b1
-ProtectedStore,v1,v2,b1,v3
+ProtectedLoad,v1,v2,b1,c1
+ProtectedStore,v1,v2,b1,v3,c1
 ReferenceEqual,v1,v2
 RelocatableInt32Constant,
 RelocatableInt64Constant,
@@ -773,7 +773,7 @@ StackSlot,
 Start,
 StateValues,
 StaticAssert,
-Store,v1,v2,b1,v3
+Store,v1,v2,b1,v3,c1
 StoreDataViewElement,
 StoreElement,b1,b2,b4,v1,v2,v3,e1,c1
 StoreField,v1,b3,d3,v2,e1,c1

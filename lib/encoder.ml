@@ -560,7 +560,9 @@ let encode_instr program ?(check_wasm = false)
       let bid = RegisterFile.find bid_id rf in
       let ind_id = Operands.id_of_nth operands 4 in
       let ind = RegisterFile.find ind_id rf in
-      load_element header_size repr bid ind mem
+      let cid = Operands.id_of_nth operands 5 in
+      let ctrl = ControlFile.find cid cf in
+      load_element header_size repr bid ind ctrl mem
   | LoadField ->
       let offset = Operands.const_of_nth operands 1 |> int_of_string in
       let machine_type = Operands.const_of_nth operands 2 in
@@ -578,7 +580,9 @@ let encode_instr program ?(check_wasm = false)
       let pos_id = Operands.id_of_nth operands 1 in
       let pos = RegisterFile.find pos_id rf in
       let repr = Operands.const_of_nth operands 2 |> Repr.of_rs_string in
-      load ptr pos repr mem
+      let cid = Operands.id_of_nth operands 3 in
+      let ctrl = ControlFile.find cid cf in
+      load ptr pos repr ctrl mem
   | LoadTypedElement ->
       let array_type = Operands.const_of_nth operands 0 |> int_of_string in
       let base_id = Operands.id_of_nth operands 1 in
@@ -587,7 +591,9 @@ let encode_instr program ?(check_wasm = false)
       let extern = RegisterFile.find extern_id rf in
       let ind_id = Operands.id_of_nth operands 3 in
       let ind = RegisterFile.find ind_id rf in
-      load_typed_element array_type base extern ind mem
+      let cid = Operands.id_of_nth operands 4 in
+      let ctrl = ControlFile.find cid cf in
+      load_typed_element array_type base extern ind ctrl mem
   | StoreElement ->
       let header_size = Operands.const_of_nth operands 1 |> int_of_string in
       let machine_type = Operands.const_of_nth operands 2 in
@@ -879,21 +885,23 @@ let encode_instr program ?(check_wasm = false)
   | Word32Equal -> encode_v2 word32_equal
   | Word64Equal -> encode_v2 word64_equal
   (* machine: memory *)
-  | Load ->
+  | Load | ProtectedLoad ->
       let ptr_id = Operands.id_of_nth operands 0 in
       let ptr = RegisterFile.find ptr_id rf in
       let pos_id = Operands.id_of_nth operands 1 in
       let pos = RegisterFile.find pos_id rf in
       let repr = Operands.const_of_nth operands 2 |> Repr.of_rs_string in
-      load ptr pos repr mem
+      let cid = Operands.id_of_nth operands 3 in
+      let ctrl = ControlFile.find cid cf in
+      load ptr pos repr ctrl mem
   | LoadImmutable ->
       let ptr_id = Operands.id_of_nth operands 0 in
       let ptr = RegisterFile.find ptr_id rf in
       let pos_id = Operands.id_of_nth operands 1 in
       let pos = RegisterFile.find pos_id rf in
       let repr = Operands.const_of_nth operands 2 |> Repr.of_rs_string in
-      load ptr pos repr mem
-  | Store ->
+      load ptr pos repr Bool.tr mem
+  | Store | ProtectedStore ->
       let ptr_id = Operands.id_of_nth operands 0 in
       let ptr = RegisterFile.find ptr_id rf in
       let pos_id = Operands.id_of_nth operands 1 in
@@ -901,23 +909,9 @@ let encode_instr program ?(check_wasm = false)
       let repr = Operands.const_of_nth operands 2 |> Repr.of_string in
       let value_id = Operands.id_of_nth operands 3 in
       let value = RegisterFile.find value_id rf in
-      store ptr pos repr value mem
-  | ProtectedLoad ->
-      let ptr_id = Operands.id_of_nth operands 0 in
-      let ptr = RegisterFile.find ptr_id rf in
-      let pos_id = Operands.id_of_nth operands 1 in
-      let pos = RegisterFile.find pos_id rf in
-      let repr = Operands.const_of_nth operands 2 |> Repr.of_rs_string in
-      load ptr pos repr mem
-  | ProtectedStore ->
-      let ptr_id = Operands.id_of_nth operands 0 in
-      let ptr = RegisterFile.find ptr_id rf in
-      let pos_id = Operands.id_of_nth operands 1 in
-      let pos = RegisterFile.find pos_id rf in
-      let repr = Operands.const_of_nth operands 2 |> Repr.of_string in
-      let value_id = Operands.id_of_nth operands 3 in
-      let value = RegisterFile.find value_id rf in
-      store ptr pos repr value mem
+      let cid = Operands.id_of_nth operands 3 in
+      let ctrl = ControlFile.find cid cf in
+      store ptr pos repr value ctrl mem
   (* machine: bitcast *)
   | BitcastFloat32ToInt32 -> encode_v1 bitcast_float32_to_int32
   | BitcastFloat64ToInt64 -> encode_v1 bitcast_float64_to_int64

@@ -399,13 +399,13 @@ let allocate_raw size control mem state =
   let ptr, mem = Memory.allocate size mem in
   state |> State.update ~value:ptr ~control ~mem
 
-let load_element header_size repr bid ind mem state =
+let load_element header_size repr bid ind control mem state =
   let off =
     BitVec.addi
       (BitVec.shli ind (MachineType.Repr.element_size_log2_of repr))
       header_size
   in
-  state |> Machine.load bid off repr mem
+  state |> Machine.load bid off repr control mem
 
 let load_field offset repr ptr _eff control mem state =
   let off = offset |> BitVecVal.from_int ~len:Value.len in
@@ -447,18 +447,19 @@ let load_field offset repr ptr _eff control mem state =
   let is_angelic_value = moved |> Memory.is_angelic mem in
   {
     state with
-    assertion = Bool.ands [ state.State.assertion; assertion ];
+    assertion =
+      Bool.implies control (Bool.ands [ state.State.assertion; assertion ]);
     access_info = State.AccessInfo.add state.State.pc access state.access_info;
   }
   |> State.update ~value ~control ~ub ~is_angelic_value
 
-let load_typed_element array_type base extern ind mem state =
+let load_typed_element array_type base extern ind control mem state =
   let bid = BitVec.addb base extern in
   let _, header_size, machine_type =
     MachineType.for_type_array_element array_type true
   in
   let repr = MachineType.repr machine_type in
-  state |> load_element header_size repr bid ind mem
+  state |> load_element header_size repr bid ind control mem
 
 (* V2E1C1 -> E1 *)
 let store_element header_size repr bid ind value mem control state =
@@ -483,7 +484,7 @@ let store_element header_size repr bid ind value mem control state =
         |> failwith)
       value
   in
-  state |> Machine.store bid off repr value mem |> State.update ~control
+  state |> Machine.store bid off repr value control mem |> State.update ~control
 
 let store_field ptr offset repr value _eff control mem state =
   let off = offset |> BitVecVal.from_int ~len:Value.len in

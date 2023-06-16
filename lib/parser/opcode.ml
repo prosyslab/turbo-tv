@@ -24,17 +24,18 @@ type kind =
   | B1V1E1C1
   | V1V2C1
   | E1C1
-  | V1V2B1
-  | B1B2B4V1V2
+  | V1V2B1C1
+  | B1B2B4V1V2C1
   | B4
   | B2B3D3V1E1C1
   | B3
   | D3
-  | B1V2V3V4
+  | V1V2B1
+  | B1V2V3V4C1
   | V3
   | V4
   | VVC1
-  | V1V2B1V3
+  | V1V2B1V3C1
   | V2C1E1
   | V1V2V3
   | B1B2B4V1V2V3E1C1
@@ -955,20 +956,21 @@ type t =
   (* e1c1 *)
   | JSStackCheck
   | Unreachable
-  (* v1v2b1 *)
+  (* v1v2b1c1 *)
   | Load
   | LoadFromObject
-  | LoadImmutable
   | ProtectedLoad
-  (* b1b2b4v1v2 *)
+  (* b1b2b4v1v2c1 *)
   | LoadElement
   (* b2b3d3v1e1c1 *)
   | LoadField
-  (* b1v2v3v4 *)
+  (* v1v2b1 *)
+  | LoadImmutable
+  (* b1v2v3v4c1 *)
   | LoadTypedElement
   (* vvc1 *)
   | Phi
-  (* v1v2b1v3 *)
+  (* v1v2b1v3c1 *)
   | ProtectedStore
   | Store
   (* v2c1e1 *)
@@ -1244,12 +1246,13 @@ let get_kind opcode =
   | Int64MulWithOverflow | Int64SubWithOverflow | Uint32Div | Uint32Mod ->
       V1V2C1
   | JSStackCheck | Unreachable -> E1C1
-  | Load | LoadFromObject | LoadImmutable | ProtectedLoad -> V1V2B1
-  | LoadElement -> B1B2B4V1V2
+  | Load | LoadFromObject | ProtectedLoad -> V1V2B1C1
+  | LoadElement -> B1B2B4V1V2C1
   | LoadField -> B2B3D3V1E1C1
-  | LoadTypedElement -> B1V2V3V4
+  | LoadImmutable -> V1V2B1
+  | LoadTypedElement -> B1V2V3V4C1
   | Phi -> VVC1
-  | ProtectedStore | Store -> V1V2B1V3
+  | ProtectedStore | Store -> V1V2B1V3C1
   | Return -> V2C1E1
   | Select | StringConcat | StringIndexOf | StringSubstring -> V1V2V3
   | StoreElement -> B1B2B4V1V2V3E1C1
@@ -1282,17 +1285,18 @@ let split_kind kind =
   | B1V1E1C1 -> [ B1; V1; E1; C1 ]
   | V1V2C1 -> [ V1; V2; C1 ]
   | E1C1 -> [ E1; C1 ]
-  | V1V2B1 -> [ V1; V2; B1 ]
-  | B1B2B4V1V2 -> [ B1; B2; B4; V1; V2 ]
+  | V1V2B1C1 -> [ V1; V2; B1; C1 ]
+  | B1B2B4V1V2C1 -> [ B1; B2; B4; V1; V2; C1 ]
   | B4 -> [ B4 ]
   | B2B3D3V1E1C1 -> [ B2; B3; D3; V1; E1; C1 ]
   | B3 -> [ B3 ]
   | D3 -> [ D3 ]
-  | B1V2V3V4 -> [ B1; V2; V3; V4 ]
+  | V1V2B1 -> [ V1; V2; B1 ]
+  | B1V2V3V4C1 -> [ B1; V2; V3; V4; C1 ]
   | V3 -> [ V3 ]
   | V4 -> [ V4 ]
   | VVC1 -> [ VV; C1 ]
-  | V1V2B1V3 -> [ V1; V2; B1; V3 ]
+  | V1V2B1V3C1 -> [ V1; V2; B1; V3; C1 ]
   | V2C1E1 -> [ V2; C1; E1 ]
   | V1V2V3 -> [ V1; V2; V3 ]
   | B1B2B4V1V2V3E1C1 -> [ B1; B2; B4; V1; V2; V3; E1; C1 ]
@@ -2200,10 +2204,10 @@ let of_str str =
   | "Unreachable" -> Unreachable
   | "Load" -> Load
   | "LoadFromObject" -> LoadFromObject
-  | "LoadImmutable" -> LoadImmutable
   | "ProtectedLoad" -> ProtectedLoad
   | "LoadElement" -> LoadElement
   | "LoadField" -> LoadField
+  | "LoadImmutable" -> LoadImmutable
   | "LoadTypedElement" -> LoadTypedElement
   | "Phi" -> Phi
   | "ProtectedStore" -> ProtectedStore
@@ -3117,10 +3121,10 @@ let to_str opcode =
   | Unreachable -> "Unreachable"
   | Load -> "Load"
   | LoadFromObject -> "LoadFromObject"
-  | LoadImmutable -> "LoadImmutable"
   | ProtectedLoad -> "ProtectedLoad"
   | LoadElement -> "LoadElement"
   | LoadField -> "LoadField"
+  | LoadImmutable -> "LoadImmutable"
   | LoadTypedElement -> "LoadTypedElement"
   | Phi -> "Phi"
   | ProtectedStore -> "ProtectedStore"
