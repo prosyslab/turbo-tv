@@ -210,3 +210,22 @@
  (alias runtest)
  (action
   (diff regress-external-ptr.expected regress-external-ptr.output)))
+
+(rule
+ (targets regress-truncate-tagged-to-word32-oddball.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run
+     ../../bin/turbo-tv.exe
+     --verify
+     regress-truncate-tagged-to-word32-oddball)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   regress-truncate-tagged-to-word32-oddball.expected
+   regress-truncate-tagged-to-word32-oddball.output)))

@@ -1,0 +1,29 @@
+#60:Int32Constant[0]()()()
+#43:NumberConstant[0]()()()  [Type: Range(0, 0)]
+#62:ExternalConstant[0x5598a67c3460]()()()
+#58:Int64Constant[0]()()()
+#0:Start()()()  [Type: Internal]
+#63:Load[kRepWord64](#62:ExternalConstant, #58:Int64Constant)(#0:Start)(#0:Start)
+#64:StackPointerGreaterThan[JSFunctionEntry](#63:Load)(#63:Load)()
+#73:HeapConstant[0x354c0002ca55 <Code BUILTIN CEntry_Return1_ArgvOnStack_NoBuiltinExit>]()()()
+#70:LoadStackCheckOffset()()()
+#71:ExternalConstant[0x5598a4848ec0<StackGuardWithGap.entry>]()()()
+#72:Int32Constant[1]()()()
+#7:HeapConstant[0x354c00183c2d <NativeContext[281]>]()()()  [Type: HeapConstant(0x5598a68478e8 {0x354c00183c2d <NativeContext[281]>})]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#10:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#11:TypedStateValues[, sparse:....]()()()  [Type: Internal]
+#59:TypedStateValues[, sparse:.]()()()
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#48:HeapConstant[0x354c0019af8d <JSFunction opt (sfi = 0x354c0019ad41)>]()()()  [Type: HeapConstant(0x5598a68478f8 {0x354c0019af8d <JSFunction opt (sfi = 0x354c0019ad41)>})]
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x354c0019ad41 <SharedFunctionInfo opt>](#10:TypedStateValues, #11:TypedStateValues, #59:TypedStateValues, #5:Parameter, #48:HeapConstant)()()  [Type: Internal]
+#65:Branch[Unspecified, True](#64:StackPointerGreaterThan)()(#0:Start)
+#67:IfFalse()()(#65:Branch)
+#9:Call[Code:StackGuardWithGap:r1s1i5f1](#73:HeapConstant, #70:LoadStackCheckOffset, #71:ExternalConstant, #72:Int32Constant, #7:HeapConstant, #14:FrameState)(#64:StackPointerGreaterThan)(#67:IfFalse)
+#66:IfTrue()()(#65:Branch)
+#68:Merge()()(#66:IfTrue, #9:Call)
+#69:EffectPhi()(#64:StackPointerGreaterThan, #9:Call)(#68:Merge)
+#44:Return(#60:Int32Constant, #43:NumberConstant)(#69:EffectPhi)(#68:Merge)
+#45:End()()(#44:Return)

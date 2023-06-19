@@ -1001,12 +1001,29 @@ let checked_tagged_to_tagged_signed pval _checkpoint control state =
   state |> State.update ~value:pval ~control ~deopt
 
 let truncate_tagged_to_word32 pval state =
+  let rf = state.State.register_file in
   let value =
     Bool.ite
       (pval |> Value.has_type Type.tagged_signed)
+      (* number *)
       (TaggedSigned.to_int32 pval)
-      (pval |> Float64.to_int32)
+      (Bool.ite
+         (pval |> Value.has_type Type.float64)
+         (* number *)
+         (Float64.to_int32 pval)
+         (Bool.ite
+            (Bool.ors
+               (* false, null *)
+               [ pval |> Constant.is_false_cst rf; pval |> Constant.is_null rf ])
+            (Value.fl |> Value.cast Type.int32)
+            (Bool.ite
+               (pval |> Constant.is_true_cst rf)
+               (* true *)
+               (Value.tr |> Value.cast Type.int32)
+               (* undefined *)
+               (Float64.nan |> Float64.to_int32))))
   in
+
   state |> State.update ~value
 
 let checked_truncate_tagged_to_word32 hint pval mem state =
