@@ -609,30 +609,45 @@ module Word64 = Make_Word_Operator (struct
   let repr = MachineType.Repr.Word64
 end)
 
-module Float64 = struct
-  (* conversion *)
-  let to_value f = f |> Float.to_ieee_bv |> Value.entype Type.float64
+module type FloatValue = sig
+  val ty : Type.t
 
-  let of_float f = f |> Float.from_float |> to_value
+  val sort : Z3.Sort.sort
+end
 
-  let from_value value = value |> Value.data_of |> Float.from_ieee_bv
+module Make_Float_Operator (F : FloatValue) = struct
+  include F
+
+  let to_value f =
+    if sort = Z3utils.Float.single_sort then (
+      print_endline (f |> Expr.to_simplified_string);
+      f |> Float.to_ieee_bv |> BitVec.zero_extend 32 |> Value.entype ty)
+    else if sort = Z3utils.Float.double_sort then
+      f |> Float.to_ieee_bv |> Value.entype ty
+    else failwith "not implemented"
+
+  let of_float f = f |> Float.from_float ~sort |> to_value
+
+  let from_value value = value |> Value.data_of |> Float.from_ieee_bv ~sort
 
   (* constants *)
-  let nan = Float.nan () |> to_value
+  let nan =
+    print_endline (Z3.Sort.to_string sort);
+    Float.nan ~sort () |> to_value
 
-  let ninf = Float.ninf () |> to_value
+  let ninf = Float.ninf ~sort () |> to_value
 
-  let inf = Float.inf () |> to_value
+  let inf = Float.inf ~sort () |> to_value
 
-  let zero = Float.from_float 0.0 |> to_value
+  let zero = Float.from_float ~sort 0.0 |> to_value
 
-  let one = Float.from_float 1.0 |> to_value
+  let one = Float.from_float ~sort 1.0 |> to_value
 
-  let minus_zero = Float.minus_zero () |> to_value
+  let minus_zero = Float.minus_zero ~sort () |> to_value
 
-  let safe_integer_max = Float.safe_integer_max () |> to_value
+  let safe_integer_max = Float.safe_integer_max ~sort () |> to_value
 
-  let safe_integer_min = Float.safe_integer_min () |> to_value
+  let safe_integer_min = Float.safe_integer_min ~sort () |> to_value
 
   (* arithmetic *)
   let abs value = Float.abs (value |> from_value) |> to_value
@@ -706,7 +721,7 @@ module Float64 = struct
     (* https://tc39.es/ecma262/#sec-toint32 *)
     let value_w_bit =
       let modulo =
-        Stdlib.Float.pow 2.0 (width |> float_of_int) |> Float.from_float
+        Stdlib.Float.pow 2.0 (width |> float_of_int) |> Float.from_float ~sort
       in
       let f = value |> from_value in
       let number =
@@ -724,7 +739,8 @@ module Float64 = struct
                Float.is_inf f;
                Float.is_ninf f;
              ])
-          (Float.from_float 0.0) f
+          (Float.from_float ~sort 0.0)
+          f
       in
       let i =
         let fan = number |> Float.abs |> Float.round Float.rtn_mode in
@@ -852,10 +868,8 @@ module Float64 = struct
             (Bool.ite (lt lval rval) lval rval)))
 
   let pow base exp =
-    let float_sort = Z3utils.Float.double_sort in
     let pow_decl =
-      Z3.FuncDecl.mk_func_decl_s ctx "float64_pow" [ float_sort; float_sort ]
-        float_sort
+      Z3.FuncDecl.mk_func_decl_s ctx "float_pow" [ sort; sort ] sort
     in
     (* https://tc39.es/ecma262/#sec-numeric-types-number-exponentiate *)
     Bool.ite (is_nan exp) nan
@@ -893,9 +907,8 @@ module Float64 = struct
                                  |> to_value))))))))))
 
   let expm1 value =
-    let float_sort = Z3utils.Float.double_sort in
     let expm_decl =
-      Z3.FuncDecl.mk_func_decl_s ctx "float64_expm1" [ float_sort ] float_sort
+      Z3.FuncDecl.mk_func_decl_s ctx "float_expm1" [ sort ] sort
     in
     (* if num is NaN or 0 or -0 or inf, return num*)
     Bool.ite
@@ -907,10 +920,7 @@ module Float64 = struct
          (Z3.FuncDecl.apply expm_decl [ value |> from_value ] |> to_value))
 
   let asin value =
-    let float_sort = Z3utils.Float.double_sort in
-    let uif =
-      Z3.FuncDecl.mk_func_decl_s ctx "float64_asin" [ float_sort ] float_sort
-    in
+    let uif = Z3.FuncDecl.mk_func_decl_s ctx "float_asin" [ sort ] sort in
     (* https://tc39.es/ecma262/#sec-math.asin *)
     Bool.ite
       (Bool.ors [ value |> is_nan; value |> is_zero; value |> is_minus_zero ])
@@ -921,10 +931,7 @@ module Float64 = struct
          (Z3.FuncDecl.apply uif [ value |> from_value ] |> to_value))
 
   let asinh value =
-    let float_sort = Z3utils.Float.double_sort in
-    let uif =
-      Z3.FuncDecl.mk_func_decl_s ctx "float64_asinh" [ float_sort ] float_sort
-    in
+    let uif = Z3.FuncDecl.mk_func_decl_s ctx "float_asinh" [ sort ] sort in
     (* https://tc39.es/ecma262/#sec-math.asinh *)
     Bool.ite
       (Bool.ors
@@ -937,10 +944,7 @@ module Float64 = struct
       (Z3.FuncDecl.apply uif [ value |> from_value ] |> to_value)
 
   let sin value =
-    let float_sort = Z3utils.Float.double_sort in
-    let uif =
-      Z3.FuncDecl.mk_func_decl_s ctx "float64_sin" [ float_sort ] float_sort
-    in
+    let uif = Z3.FuncDecl.mk_func_decl_s ctx "float_sin" [ sort ] sort in
     (* https://tc39.es/ecma262/#sec-math.sin *)
     Bool.ite
       (Bool.ors [ value |> is_nan; value |> is_zero; value |> is_minus_zero ])
@@ -953,7 +957,7 @@ module Float64 = struct
   let rem lval rval =
     let lf = lval |> from_value in
     let rf = rval |> from_value in
-    let r_f64 =
+    let r_f =
       let r = Float.rem lf rf |> to_value in
       Bool.ite
         (Bool.ors
@@ -994,28 +998,60 @@ module Float64 = struct
                   lval
                   (Bool.ite
                      (* r = 0 \/ n < -0 -> -0 else, r *)
-                     (Bool.ands [ is_zero r_f64; lt lval minus_zero ])
-                     minus_zero r_f64)))))
+                     (Bool.ands [ is_zero r_f; lt lval minus_zero ])
+                     minus_zero r_f)))))
 
   let modulo = rem
 
   (* pp *)
   let to_string model value =
-    let evaluated = value |> Model.eval model in
-    if String.contains (evaluated |> is_nan |> Expr.to_simplified_string) 't'
-    then "Float64(NaN)"
-    else if
-      String.contains (evaluated |> is_inf |> Expr.to_simplified_string) 't'
-    then "Float64(+oo)"
-    else if
-      String.contains (evaluated |> is_ninf |> Expr.to_simplified_string) 't'
-    then "Float64(-oo)"
-    else if
-      String.contains
-        (evaluated |> is_minus_zero |> Expr.to_simplified_string)
-        't'
-    then "Float64(-0.0)"
-    else
-      Format.sprintf "Float64(%s)"
-        (evaluated |> from_value |> Model.eval model |> Real.to_decimal_string)
+    if sort = Z3utils.Float.single_sort then
+      let evaluated = value |> Model.eval model in
+      if String.contains (evaluated |> is_nan |> Expr.to_simplified_string) 't'
+      then "Float32(NaN)"
+      else if
+        String.contains (evaluated |> is_inf |> Expr.to_simplified_string) 't'
+      then "Float32(+oo)"
+      else if
+        String.contains (evaluated |> is_ninf |> Expr.to_simplified_string) 't'
+      then "Float32(-oo)"
+      else if
+        String.contains
+          (evaluated |> is_minus_zero |> Expr.to_simplified_string)
+          't'
+      then "Float32(-0.0)"
+      else
+        Format.sprintf "Float64(%s)"
+          (evaluated |> from_value |> Model.eval model |> Real.to_decimal_string)
+    else if sort = Z3utils.Float.double_sort then
+      let evaluated = value |> Model.eval model in
+      if String.contains (evaluated |> is_nan |> Expr.to_simplified_string) 't'
+      then "Float64(NaN)"
+      else if
+        String.contains (evaluated |> is_inf |> Expr.to_simplified_string) 't'
+      then "Float64(+oo)"
+      else if
+        String.contains (evaluated |> is_ninf |> Expr.to_simplified_string) 't'
+      then "Float64(-oo)"
+      else if
+        String.contains
+          (evaluated |> is_minus_zero |> Expr.to_simplified_string)
+          't'
+      then "Float64(-0.0)"
+      else
+        Format.sprintf "Float64(%s)"
+          (evaluated |> from_value |> Model.eval model |> Real.to_decimal_string)
+    else failwith "not implemented"
 end
+
+module Float32 = Make_Float_Operator (struct
+  let ty = Type.float32
+
+  let sort = Z3utils.Float.single_sort
+end)
+
+module Float64 = Make_Float_Operator (struct
+  let ty = Type.float64
+
+  let sort = Z3utils.Float.double_sort
+end)
