@@ -355,6 +355,14 @@ let encode_instr program ?(check_wasm = false)
       let control = ControlFile.find ctrl_id cf in
       let control_is_angelic = AngelicFile.find ctrl_id is_angelic_control in
       trap_if cond control control_is_angelic
+  | TrapUnless ->
+      let hint = Operands.const_of_nth operands 0 in
+      let cond_id = Operands.id_of_nth operands 1 in
+      let ctrl_id = Operands.id_of_nth operands 2 in
+      let cond = RegisterFile.find cond_id rf in
+      let control = ControlFile.find ctrl_id cf in
+      let control_is_angelic = AngelicFile.find ctrl_id is_angelic_control in
+      trap_unless hint cond control control_is_angelic
   (* common: dead *)
   | Dead -> nop
   (* common: procedure *)
