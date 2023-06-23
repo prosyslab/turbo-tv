@@ -193,10 +193,6 @@ let check_wasm nparams program =
           Bool.ors
             [
               param |> Value.has_type Type.tagged_signed;
-              param |> Value.has_type Type.int32;
-              param |> Value.has_type Type.int64;
-              param |> Value.has_type Type.float32;
-              param |> Value.has_type Type.float64;
             ])
         params
       |> Bool.ands
