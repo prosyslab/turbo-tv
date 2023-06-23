@@ -1,0 +1,29 @@
+#91:Int32Constant[0]()()()
+#81:HeapConstant[0x23e800000de1 <false>]()()()  [Type: HeapConstant(0x5604ff499f80 {0x23e800000de1 <false>})]
+#92:ExternalConstant[0x5604ff415460]()()()
+#89:Int64Constant[0]()()()
+#0:Start()()()  [Type: Internal]
+#93:Load[kRepWord64](#92:ExternalConstant, #89:Int64Constant)(#0:Start)(#0:Start)
+#94:StackPointerGreaterThan[JSFunctionEntry](#93:Load)(#93:Load)()
+#103:HeapConstant[0x23e80002ca55 <Code BUILTIN CEntry_Return1_ArgvOnStack_NoBuiltinExit>]()()()
+#100:LoadStackCheckOffset()()()
+#101:ExternalConstant[0x5604fd370ec0<StackGuardWithGap.entry>]()()()
+#102:Int32Constant[1]()()()
+#7:HeapConstant[0x23e800183c2d <NativeContext[281]>]()()()  [Type: HeapConstant(0x5604ff4998e8 {0x23e800183c2d <NativeContext[281]>})]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#10:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#11:TypedStateValues[, sparse:...........]()()()  [Type: Internal]
+#90:TypedStateValues[, sparse:.]()()()
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#78:HeapConstant[0x23e80019b00d <JSFunction opt (sfi = 0x23e80019adc1)>]()()()  [Type: HeapConstant(0x5604ff4998f8 {0x23e80019b00d <JSFunction opt (sfi = 0x23e80019adc1)>})]
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x23e80019adc1 <SharedFunctionInfo opt>](#10:TypedStateValues, #11:TypedStateValues, #90:TypedStateValues, #5:Parameter, #78:HeapConstant)()()  [Type: Internal]
+#95:Branch[Unspecified, True](#94:StackPointerGreaterThan)()(#0:Start)
+#97:IfFalse()()(#95:Branch)
+#9:Call[Code:StackGuardWithGap:r1s1i5f1](#103:HeapConstant, #100:LoadStackCheckOffset, #101:ExternalConstant, #102:Int32Constant, #7:HeapConstant, #14:FrameState)(#94:StackPointerGreaterThan)(#97:IfFalse)
+#96:IfTrue()()(#95:Branch)
+#98:Merge()()(#96:IfTrue, #9:Call)
+#99:EffectPhi()(#94:StackPointerGreaterThan, #9:Call)(#98:Merge)
+#74:Return(#91:Int32Constant, #81:HeapConstant)(#99:EffectPhi)(#98:Merge)
+#75:End()()(#74:Return)

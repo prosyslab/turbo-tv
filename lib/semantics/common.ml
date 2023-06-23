@@ -54,7 +54,21 @@ let external_constant _c state =
 
 (* behavior: value=c *)
 let number_constant c state =
-  let value = c |> BitVecVal.from_f64string |> Value.entype Type.float64 in
+  let is_int_string s =
+    try
+      int_of_string s |> ignore;
+      true
+    with Failure _ -> false
+  in
+  let value =
+    if is_int_string c then
+      let c_int = int_of_string c in
+      if TaggedSigned.min_limit <= c_int && c_int <= TaggedSigned.max_limit then
+        Int.shift_left c_int 1 |> Value.from_int
+        |> Value.cast Type.tagged_signed
+      else c |> BitVecVal.from_f64string |> Value.entype Type.float64
+    else c |> BitVecVal.from_f64string |> Value.entype Type.float64
+  in
   state |> State.update ~value
 
 (* common: control *)

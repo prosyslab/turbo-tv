@@ -229,3 +229,19 @@
   (diff
    regress-truncate-tagged-to-word32-oddball.expected
    regress-truncate-tagged-to-word32-oddball.output)))
+
+(rule
+ (targets regress-number-tagged-signed.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../bin/turbo-tv.exe --verify regress-number-tagged-signed)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   regress-number-tagged-signed.expected
+   regress-number-tagged-signed.output)))
