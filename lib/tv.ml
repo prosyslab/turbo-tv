@@ -57,6 +57,7 @@ let precondition_for_params nparams state =
   |> Bool.ands
 
 let check_ub nparams check_type program =
+  print_endline "fuck1";
   let state = Encoder.encode_pgr "pgm" program ~check_type nparams in
   let precond =
     (* precondition_for_params /\ not deopt(pgm) *)
@@ -189,11 +190,7 @@ let check_wasm nparams program =
     let precond_for_params =
       let params = Params.init nparams in
       List.mapi
-        (fun _ param ->
-          Bool.ors
-            [
-              param |> Value.has_type Type.tagged_signed;
-            ])
+        (fun _ param -> Bool.ors [ param |> Value.has_type Type.tagged_signed ])
         params
       |> Bool.ands
     in

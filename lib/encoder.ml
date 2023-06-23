@@ -348,13 +348,13 @@ let encode_instr program ?(check_wasm = false)
       in
       deoptimize_unless cond () () ct ctrl_is_angelic
   (* common: trap *)
-  | TrapIf -> 
-    let cond_id = Operands.id_of_nth operands 0 in
-    let ctrl_id = Operands.id_of_nth operands 1 in 
-    let cond = RegisterFile.find cond_id rf in
-    let control = ControlFile.find ctrl_id cf in 
-    let control_is_angelic = AngelicFile.find ctrl_id is_angelic_control in
-    trap_if cond control control_is_angelic
+  | TrapIf ->
+      let cond_id = Operands.id_of_nth operands 0 in
+      let ctrl_id = Operands.id_of_nth operands 1 in
+      let cond = RegisterFile.find cond_id rf in
+      let control = ControlFile.find ctrl_id cf in
+      let control_is_angelic = AngelicFile.find ctrl_id is_angelic_control in
+      trap_if cond control control_is_angelic
   (* common: dead *)
   | Dead -> nop
   (* common: procedure *)
