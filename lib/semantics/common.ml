@@ -159,6 +159,10 @@ let deoptimize_unless cond _frame _mem control ctrl_is_angelic state =
   let deopt = Bool.ite (Value.is_false cond) Bool.tr Bool.fl in
   state |> State.update ~control ~deopt ~is_angelic_value:ctrl_is_angelic
 
+(* common: trap *)
+let trap_if cond control control_is_angelic state =
+  state |> State.update ~ub:(Bool.ands [ control; Bool.not control_is_angelic; (Value.is_true cond) ])
+
 (* common: procedure *)
 let end_ retvals _retmems retctrls state =
   let rec mk_value values conds =

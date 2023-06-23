@@ -610,8 +610,6 @@ type t =
   | TransitionAndStoreNonNumberElement
   | TransitionAndStoreNumberElement
   | TransitionElementsKind
-  | TrapIf
-  | TrapUnless
   | TruncateBigIntToUint64
   | TruncateFloat32ToInt32
   | TruncateFloat32ToUint32
@@ -782,6 +780,8 @@ type t =
   | IfTrue
   (* v1c1 *)
   | AllocateRaw
+  | TrapIf
+  | TrapUnless
   (* v1v2 *)
   | BigIntAdd
   | BigIntBitwiseAnd
@@ -1134,22 +1134,21 @@ let get_kind opcode =
   | StringToLowerCaseIntl | StringToUpperCaseIntl | Switch | TaggedIndexConstant
   | TailCall | Terminate | TransitionAndStoreElement
   | TransitionAndStoreNonNumberElement | TransitionAndStoreNumberElement
-  | TransitionElementsKind | TrapIf | TrapUnless | TruncateBigIntToUint64
-  | TruncateFloat32ToInt32 | TruncateFloat32ToUint32 | TruncateFloat64ToFloat32
-  | TruncateFloat64ToUint32 | TruncateTaggedToFloat64
-  | TryTruncateFloat32ToInt64 | TryTruncateFloat32ToUint64
-  | TryTruncateFloat64ToInt64 | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf
-  | TypedObjectState | TypedStateValues | Uint32MulHigh | Uint64Div | Uint64Mod
-  | UnalignedLoad | UnalignedStore | UnsafePointerAdd | Unsigned32Divide
-  | V128AnyTrue | VerifyType | Word32AtomicAdd | Word32AtomicAnd
-  | Word32AtomicCompareExchange | Word32AtomicExchange | Word32AtomicLoad
-  | Word32AtomicOr | Word32AtomicPairAdd | Word32AtomicPairAnd
-  | Word32AtomicPairCompareExchange | Word32AtomicPairExchange
-  | Word32AtomicPairLoad | Word32AtomicPairOr | Word32AtomicPairStore
-  | Word32AtomicPairSub | Word32AtomicPairXor | Word32AtomicStore
-  | Word32AtomicSub | Word32AtomicXor | Word32Clz | Word32Ctz | Word32PairSar
-  | Word32PairShl | Word32PairShr | Word32Popcnt | Word32ReverseBits
-  | Word32Select | Word64AtomicAdd | Word64AtomicAnd
+  | TransitionElementsKind | TruncateBigIntToUint64 | TruncateFloat32ToInt32
+  | TruncateFloat32ToUint32 | TruncateFloat64ToFloat32 | TruncateFloat64ToUint32
+  | TruncateTaggedToFloat64 | TryTruncateFloat32ToInt64
+  | TryTruncateFloat32ToUint64 | TryTruncateFloat64ToInt64
+  | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf | TypedObjectState
+  | TypedStateValues | Uint32MulHigh | Uint64Div | Uint64Mod | UnalignedLoad
+  | UnalignedStore | UnsafePointerAdd | Unsigned32Divide | V128AnyTrue
+  | VerifyType | Word32AtomicAdd | Word32AtomicAnd | Word32AtomicCompareExchange
+  | Word32AtomicExchange | Word32AtomicLoad | Word32AtomicOr
+  | Word32AtomicPairAdd | Word32AtomicPairAnd | Word32AtomicPairCompareExchange
+  | Word32AtomicPairExchange | Word32AtomicPairLoad | Word32AtomicPairOr
+  | Word32AtomicPairStore | Word32AtomicPairSub | Word32AtomicPairXor
+  | Word32AtomicStore | Word32AtomicSub | Word32AtomicXor | Word32Clz
+  | Word32Ctz | Word32PairSar | Word32PairShl | Word32PairShr | Word32Popcnt
+  | Word32ReverseBits | Word32Select | Word64AtomicAdd | Word64AtomicAnd
   | Word64AtomicCompareExchange | Word64AtomicExchange | Word64AtomicLoad
   | Word64AtomicOr | Word64AtomicStore | Word64AtomicSub | Word64AtomicXor
   | Word64Clz | Word64ClzLowerable | Word64Ctz | Word64CtzLowerable
@@ -1188,7 +1187,7 @@ let get_kind opcode =
       V1
   | BeginRegion -> E1
   | IfFalse | IfSuccess | IfTrue -> C1
-  | AllocateRaw -> V1C1
+  | AllocateRaw | TrapIf | TrapUnless -> V1C1
   | BigIntAdd | BigIntBitwiseAnd | BigIntBitwiseOr | BigIntBitwiseXor
   | BigIntDivide | BigIntEqual | BigIntLessThan | BigIntLessThanOrEqual
   | BigIntModulus | BigIntMultiply | BigIntShiftLeft | BigIntShiftRight
@@ -1874,8 +1873,6 @@ let of_str str =
   | "TransitionAndStoreNonNumberElement" -> TransitionAndStoreNonNumberElement
   | "TransitionAndStoreNumberElement" -> TransitionAndStoreNumberElement
   | "TransitionElementsKind" -> TransitionElementsKind
-  | "TrapIf" -> TrapIf
-  | "TrapUnless" -> TrapUnless
   | "TruncateBigIntToUint64" -> TruncateBigIntToUint64
   | "TruncateFloat32ToInt32" -> TruncateFloat32ToInt32
   | "TruncateFloat32ToUint32" -> TruncateFloat32ToUint32
@@ -2041,6 +2038,8 @@ let of_str str =
   | "IfSuccess" -> IfSuccess
   | "IfTrue" -> IfTrue
   | "AllocateRaw" -> AllocateRaw
+  | "TrapIf" -> TrapIf
+  | "TrapUnless" -> TrapUnless
   | "BigIntAdd" -> BigIntAdd
   | "BigIntBitwiseAnd" -> BigIntBitwiseAnd
   | "BigIntBitwiseOr" -> BigIntBitwiseOr
@@ -2791,8 +2790,6 @@ let to_str opcode =
   | TransitionAndStoreNonNumberElement -> "TransitionAndStoreNonNumberElement"
   | TransitionAndStoreNumberElement -> "TransitionAndStoreNumberElement"
   | TransitionElementsKind -> "TransitionElementsKind"
-  | TrapIf -> "TrapIf"
-  | TrapUnless -> "TrapUnless"
   | TruncateBigIntToUint64 -> "TruncateBigIntToUint64"
   | TruncateFloat32ToInt32 -> "TruncateFloat32ToInt32"
   | TruncateFloat32ToUint32 -> "TruncateFloat32ToUint32"
@@ -2958,6 +2955,8 @@ let to_str opcode =
   | IfSuccess -> "IfSuccess"
   | IfTrue -> "IfTrue"
   | AllocateRaw -> "AllocateRaw"
+  | TrapIf -> "TrapIf"
+  | TrapUnless -> "TrapUnless"
   | BigIntAdd -> "BigIntAdd"
   | BigIntBitwiseAnd -> "BigIntBitwiseAnd"
   | BigIntBitwiseOr -> "BigIntBitwiseOr"
