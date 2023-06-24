@@ -31,6 +31,10 @@ let float32_min lval rval state =
   let value = Float64.min lval rval in
   state |> State.update ~value
 
+let float32_mul lval rval state =
+  let value = Float32.mul lval rval in
+  state |> State.update ~value
+
 let float64_abs pval state =
   let value = Float64.abs pval in
   state |> State.update ~value
@@ -567,6 +571,36 @@ let change_uint32_to_float64 pval state =
 
 let change_uint32_to_uint64 pval state =
   let value = pval |> Uint32.to_int Type.uint64 64 in
+  state |> State.update ~value
+
+let sign_extend_word16_to_int32 pval state =
+  let value =
+    pval |> BitVec.extract 15 0 |> BitVec.sign_extend 16 |> Int32.to_value
+  in
+  state |> State.update ~value
+
+let sign_extend_word16_to_int64 pval state =
+  let value =
+    pval |> BitVec.extract 15 0 |> BitVec.sign_extend 48 |> Int64.to_value
+  in
+  state |> State.update ~value
+
+let sign_extend_word32_to_int64 pval state =
+  let value =
+    pval |> BitVec.extract 31 0 |> BitVec.sign_extend 32 |> Int64.to_value
+  in
+  state |> State.update ~value
+
+let sign_extend_word8_to_int32 pval state =
+  let value =
+    pval |> BitVec.extract 7 0 |> BitVec.sign_extend 24 |> Int32.to_value
+  in
+  state |> State.update ~value
+
+let sign_extend_word8_to_int64 pval state =
+  let value =
+    pval |> BitVec.extract 7 0 |> BitVec.sign_extend 56 |> Int64.to_value
+  in
   state |> State.update ~value
 
 let truncate_float64_to_int64 pval state =

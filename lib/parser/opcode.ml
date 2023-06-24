@@ -163,15 +163,6 @@ type t =
   | FindOrderedHashMapEntry
   | FindOrderedHashMapEntryForInt32Key
   | FindOrderedHashSetEntry
-  | Float32Abs
-  | Float32Add
-  | Float32Div
-  | Float32Equal
-  | Float32LessThan
-  | Float32LessThanOrEqual
-  | Float32Max
-  | Float32Min
-  | Float32Mul
   | Float32Neg
   | Float32RoundDown
   | Float32RoundTiesEven
@@ -582,11 +573,6 @@ type t =
   | S128Zero
   | SLVerifierHint
   | SameValueNumbersOnly
-  | SignExtendWord16ToInt32
-  | SignExtendWord16ToInt64
-  | SignExtendWord32ToInt64
-  | SignExtendWord8ToInt32
-  | SignExtendWord8ToInt64
   | Simd128ReverseBytes
   | SpeculativeNumberPow
   | SpeculativeToBigInt
@@ -724,6 +710,7 @@ type t =
   | ChangeUint64ToBigInt
   | ChangeUint64ToTagged
   | CheckedTaggedSignedToInt32
+  | Float32Abs
   | Float64Abs
   | Float64Asin
   | Float64Asinh
@@ -757,6 +744,11 @@ type t =
   | ObjectIsNaN
   | ObjectIsSmi
   | RoundFloat64ToInt32
+  | SignExtendWord16ToInt32
+  | SignExtendWord16ToInt64
+  | SignExtendWord32ToInt64
+  | SignExtendWord8ToInt32
+  | SignExtendWord8ToInt64
   | SpeculativeBigIntNegate
   | StackPointerGreaterThan
   | StringFromSingleCharCode
@@ -796,6 +788,14 @@ type t =
   | BigIntShiftLeft
   | BigIntShiftRight
   | BigIntSubtract
+  | Float32Add
+  | Float32Div
+  | Float32Equal
+  | Float32LessThan
+  | Float32LessThanOrEqual
+  | Float32Max
+  | Float32Min
+  | Float32Mul
   | Float64Add
   | Float64Div
   | Float64Equal
@@ -1024,9 +1024,7 @@ let get_kind opcode =
   | F64x2Pmin | F64x2PromoteLowF32x4 | F64x2Qfma | F64x2Qfms | F64x2RelaxedMax
   | F64x2RelaxedMin | F64x2ReplaceLane | F64x2Splat | F64x2Sqrt | F64x2Sub
   | F64x2Trunc | FastApiCall | FindOrderedHashMapEntry
-  | FindOrderedHashMapEntryForInt32Key | FindOrderedHashSetEntry | Float32Abs
-  | Float32Add | Float32Div | Float32Equal | Float32LessThan
-  | Float32LessThanOrEqual | Float32Max | Float32Min | Float32Mul | Float32Neg
+  | FindOrderedHashMapEntryForInt32Key | FindOrderedHashSetEntry | Float32Neg
   | Float32RoundDown | Float32RoundTiesEven | Float32RoundTruncate
   | Float32RoundUp | Float32Select | Float32Sqrt | Float32Sub | Float64Acos
   | Float64Acosh | Float64Atan | Float64Atan2 | Float64Atanh | Float64Cbrt
@@ -1127,30 +1125,29 @@ let get_kind opcode =
   | RoundInt64ToFloat32 | RoundInt64ToFloat64 | RoundUint32ToFloat32
   | RoundUint64ToFloat32 | RoundUint64ToFloat64 | RuntimeAbort | S128And
   | S128AndNot | S128Const | S128Not | S128Or | S128Select | S128Xor | S128Zero
-  | SLVerifierHint | SameValueNumbersOnly | SignExtendWord16ToInt32
-  | SignExtendWord16ToInt64 | SignExtendWord32ToInt64 | SignExtendWord8ToInt32
-  | SignExtendWord8ToInt64 | Simd128ReverseBytes | SpeculativeNumberPow
-  | SpeculativeToBigInt | StackSlot | Start | StateValues | StaticAssert
-  | StoreDataViewElement | StoreLane | StoreMessage | StoreSignedSmallElement
-  | StoreToObject | StoreTypedElement | StringFromCodePointAt
-  | StringToLowerCaseIntl | StringToUpperCaseIntl | Switch | TaggedIndexConstant
-  | TailCall | Terminate | TransitionAndStoreElement
-  | TransitionAndStoreNonNumberElement | TransitionAndStoreNumberElement
-  | TransitionElementsKind | TruncateBigIntToUint64 | TruncateFloat32ToInt32
-  | TruncateFloat32ToUint32 | TruncateFloat64ToFloat32 | TruncateFloat64ToUint32
-  | TruncateTaggedToFloat64 | TryTruncateFloat32ToInt64
-  | TryTruncateFloat32ToUint64 | TryTruncateFloat64ToInt64
-  | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf | TypedObjectState
-  | TypedStateValues | Uint32MulHigh | Uint64Div | Uint64Mod | UnalignedLoad
-  | UnalignedStore | UnsafePointerAdd | Unsigned32Divide | V128AnyTrue
-  | VerifyType | Word32AtomicAdd | Word32AtomicAnd | Word32AtomicCompareExchange
-  | Word32AtomicExchange | Word32AtomicLoad | Word32AtomicOr
-  | Word32AtomicPairAdd | Word32AtomicPairAnd | Word32AtomicPairCompareExchange
-  | Word32AtomicPairExchange | Word32AtomicPairLoad | Word32AtomicPairOr
-  | Word32AtomicPairStore | Word32AtomicPairSub | Word32AtomicPairXor
-  | Word32AtomicStore | Word32AtomicSub | Word32AtomicXor | Word32Clz
-  | Word32Ctz | Word32PairSar | Word32PairShl | Word32PairShr | Word32Popcnt
-  | Word32ReverseBits | Word32Select | Word64AtomicAdd | Word64AtomicAnd
+  | SLVerifierHint | SameValueNumbersOnly | Simd128ReverseBytes
+  | SpeculativeNumberPow | SpeculativeToBigInt | StackSlot | Start | StateValues
+  | StaticAssert | StoreDataViewElement | StoreLane | StoreMessage
+  | StoreSignedSmallElement | StoreToObject | StoreTypedElement
+  | StringFromCodePointAt | StringToLowerCaseIntl | StringToUpperCaseIntl
+  | Switch | TaggedIndexConstant | TailCall | Terminate
+  | TransitionAndStoreElement | TransitionAndStoreNonNumberElement
+  | TransitionAndStoreNumberElement | TransitionElementsKind
+  | TruncateBigIntToUint64 | TruncateFloat32ToInt32 | TruncateFloat32ToUint32
+  | TruncateFloat64ToFloat32 | TruncateFloat64ToUint32 | TruncateTaggedToFloat64
+  | TryTruncateFloat32ToInt64 | TryTruncateFloat32ToUint64
+  | TryTruncateFloat64ToInt64 | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf
+  | TypedObjectState | TypedStateValues | Uint32MulHigh | Uint64Div | Uint64Mod
+  | UnalignedLoad | UnalignedStore | UnsafePointerAdd | Unsigned32Divide
+  | V128AnyTrue | VerifyType | Word32AtomicAdd | Word32AtomicAnd
+  | Word32AtomicCompareExchange | Word32AtomicExchange | Word32AtomicLoad
+  | Word32AtomicOr | Word32AtomicPairAdd | Word32AtomicPairAnd
+  | Word32AtomicPairCompareExchange | Word32AtomicPairExchange
+  | Word32AtomicPairLoad | Word32AtomicPairOr | Word32AtomicPairStore
+  | Word32AtomicPairSub | Word32AtomicPairXor | Word32AtomicStore
+  | Word32AtomicSub | Word32AtomicXor | Word32Clz | Word32Ctz | Word32PairSar
+  | Word32PairShl | Word32PairShr | Word32Popcnt | Word32ReverseBits
+  | Word32Select | Word64AtomicAdd | Word64AtomicAnd
   | Word64AtomicCompareExchange | Word64AtomicExchange | Word64AtomicLoad
   | Word64AtomicOr | Word64AtomicStore | Word64AtomicSub | Word64AtomicXor
   | Word64Clz | Word64ClzLowerable | Word64Ctz | Word64CtzLowerable
@@ -1172,8 +1169,8 @@ let get_kind opcode =
   | ChangeTaggedSignedToInt32 | ChangeTaggedSignedToInt64 | ChangeTaggedToBit
   | ChangeTaggedToFloat64 | ChangeUint32ToFloat64 | ChangeUint32ToTagged
   | ChangeUint32ToUint64 | ChangeUint64ToBigInt | ChangeUint64ToTagged
-  | CheckedTaggedSignedToInt32 | Float64Abs | Float64Asin | Float64Asinh
-  | Float64ExtractHighWord32 | Float64Neg | Float64RoundDown
+  | CheckedTaggedSignedToInt32 | Float32Abs | Float64Abs | Float64Asin
+  | Float64Asinh | Float64ExtractHighWord32 | Float64Neg | Float64RoundDown
   | Float64RoundTiesAway | Float64RoundTiesEven | Float64RoundTruncate
   | Float64RoundUp | Float64SilenceNaN | Float64Sin
   | Integral32OrMinusZeroToBigInt | NumberAbs | NumberCeil | NumberExpm1
@@ -1181,7 +1178,9 @@ let get_kind opcode =
   | NumberIsSafeInteger | NumberRound | NumberSign | NumberSin | NumberToBoolean
   | NumberToInt32 | NumberToString | NumberToUint32 | NumberTrunc
   | ObjectIsMinusZero | ObjectIsNaN | ObjectIsSmi | RoundFloat64ToInt32
-  | SpeculativeBigIntNegate | StackPointerGreaterThan | StringFromSingleCharCode
+  | SignExtendWord16ToInt32 | SignExtendWord16ToInt64 | SignExtendWord32ToInt64
+  | SignExtendWord8ToInt32 | SignExtendWord8ToInt64 | SpeculativeBigIntNegate
+  | StackPointerGreaterThan | StringFromSingleCharCode
   | StringFromSingleCodePoint | StringLength | StringToNumber | ToBoolean
   | TruncateBigIntToWord64 | TruncateFloat64ToInt64 | TruncateFloat64ToWord32
   | TruncateInt64ToInt32 | TruncateTaggedPointerToBit | TruncateTaggedToBit
@@ -1193,16 +1192,18 @@ let get_kind opcode =
   | BigIntAdd | BigIntBitwiseAnd | BigIntBitwiseOr | BigIntBitwiseXor
   | BigIntDivide | BigIntEqual | BigIntLessThan | BigIntLessThanOrEqual
   | BigIntModulus | BigIntMultiply | BigIntShiftLeft | BigIntShiftRight
-  | BigIntSubtract | Float64Add | Float64Div | Float64Equal | Float64LessThan
-  | Float64LessThanOrEqual | Float64Max | Float64Min | Float64Mod | Float64Mul
-  | Float64Pow | Float64Sub | Int32Add | Int32LessThan | Int32LessThanOrEqual
-  | Int32Mul | Int32Sub | Int64Add | Int64LessThan | Int64LessThanOrEqual
-  | Int64Mul | Int64MulHigh | Int64Sub | NumberAdd | NumberBitwiseAnd
-  | NumberBitwiseOr | NumberBitwiseXor | NumberDivide | NumberEqual | NumberImul
-  | NumberLessThan | NumberLessThanOrEqual | NumberMax | NumberMin
-  | NumberModulus | NumberMultiply | NumberSameValue | NumberShiftLeft
-  | NumberShiftRight | NumberShiftRightLogical | NumberSubtract | ReferenceEqual
-  | SameValue | SpeculativeBigIntAdd | SpeculativeBigIntBitwiseAnd
+  | BigIntSubtract | Float32Add | Float32Div | Float32Equal | Float32LessThan
+  | Float32LessThanOrEqual | Float32Max | Float32Min | Float32Mul | Float64Add
+  | Float64Div | Float64Equal | Float64LessThan | Float64LessThanOrEqual
+  | Float64Max | Float64Min | Float64Mod | Float64Mul | Float64Pow | Float64Sub
+  | Int32Add | Int32LessThan | Int32LessThanOrEqual | Int32Mul | Int32Sub
+  | Int64Add | Int64LessThan | Int64LessThanOrEqual | Int64Mul | Int64MulHigh
+  | Int64Sub | NumberAdd | NumberBitwiseAnd | NumberBitwiseOr | NumberBitwiseXor
+  | NumberDivide | NumberEqual | NumberImul | NumberLessThan
+  | NumberLessThanOrEqual | NumberMax | NumberMin | NumberModulus
+  | NumberMultiply | NumberSameValue | NumberShiftLeft | NumberShiftRight
+  | NumberShiftRightLogical | NumberSubtract | ReferenceEqual | SameValue
+  | SpeculativeBigIntAdd | SpeculativeBigIntBitwiseAnd
   | SpeculativeBigIntBitwiseOr | SpeculativeBigIntBitwiseXor
   | SpeculativeBigIntDivide | SpeculativeBigIntEqual | SpeculativeBigIntLessThan
   | SpeculativeBigIntLessThanOrEqual | SpeculativeBigIntModulus
@@ -1428,15 +1429,6 @@ let of_str str =
   | "FindOrderedHashMapEntry" -> FindOrderedHashMapEntry
   | "FindOrderedHashMapEntryForInt32Key" -> FindOrderedHashMapEntryForInt32Key
   | "FindOrderedHashSetEntry" -> FindOrderedHashSetEntry
-  | "Float32Abs" -> Float32Abs
-  | "Float32Add" -> Float32Add
-  | "Float32Div" -> Float32Div
-  | "Float32Equal" -> Float32Equal
-  | "Float32LessThan" -> Float32LessThan
-  | "Float32LessThanOrEqual" -> Float32LessThanOrEqual
-  | "Float32Max" -> Float32Max
-  | "Float32Min" -> Float32Min
-  | "Float32Mul" -> Float32Mul
   | "Float32Neg" -> Float32Neg
   | "Float32RoundDown" -> Float32RoundDown
   | "Float32RoundTiesEven" -> Float32RoundTiesEven
@@ -1848,11 +1840,6 @@ let of_str str =
   | "S128Zero" -> S128Zero
   | "SLVerifierHint" -> SLVerifierHint
   | "SameValueNumbersOnly" -> SameValueNumbersOnly
-  | "SignExtendWord16ToInt32" -> SignExtendWord16ToInt32
-  | "SignExtendWord16ToInt64" -> SignExtendWord16ToInt64
-  | "SignExtendWord32ToInt64" -> SignExtendWord32ToInt64
-  | "SignExtendWord8ToInt32" -> SignExtendWord8ToInt32
-  | "SignExtendWord8ToInt64" -> SignExtendWord8ToInt64
   | "Simd128ReverseBytes" -> Simd128ReverseBytes
   | "SpeculativeNumberPow" -> SpeculativeNumberPow
   | "SpeculativeToBigInt" -> SpeculativeToBigInt
@@ -1988,6 +1975,7 @@ let of_str str =
   | "ChangeUint64ToBigInt" -> ChangeUint64ToBigInt
   | "ChangeUint64ToTagged" -> ChangeUint64ToTagged
   | "CheckedTaggedSignedToInt32" -> CheckedTaggedSignedToInt32
+  | "Float32Abs" -> Float32Abs
   | "Float64Abs" -> Float64Abs
   | "Float64Asin" -> Float64Asin
   | "Float64Asinh" -> Float64Asinh
@@ -2021,6 +2009,11 @@ let of_str str =
   | "ObjectIsNaN" -> ObjectIsNaN
   | "ObjectIsSmi" -> ObjectIsSmi
   | "RoundFloat64ToInt32" -> RoundFloat64ToInt32
+  | "SignExtendWord16ToInt32" -> SignExtendWord16ToInt32
+  | "SignExtendWord16ToInt64" -> SignExtendWord16ToInt64
+  | "SignExtendWord32ToInt64" -> SignExtendWord32ToInt64
+  | "SignExtendWord8ToInt32" -> SignExtendWord8ToInt32
+  | "SignExtendWord8ToInt64" -> SignExtendWord8ToInt64
   | "SpeculativeBigIntNegate" -> SpeculativeBigIntNegate
   | "StackPointerGreaterThan" -> StackPointerGreaterThan
   | "StringFromSingleCharCode" -> StringFromSingleCharCode
@@ -2056,6 +2049,14 @@ let of_str str =
   | "BigIntShiftLeft" -> BigIntShiftLeft
   | "BigIntShiftRight" -> BigIntShiftRight
   | "BigIntSubtract" -> BigIntSubtract
+  | "Float32Add" -> Float32Add
+  | "Float32Div" -> Float32Div
+  | "Float32Equal" -> Float32Equal
+  | "Float32LessThan" -> Float32LessThan
+  | "Float32LessThanOrEqual" -> Float32LessThanOrEqual
+  | "Float32Max" -> Float32Max
+  | "Float32Min" -> Float32Min
+  | "Float32Mul" -> Float32Mul
   | "Float64Add" -> Float64Add
   | "Float64Div" -> Float64Div
   | "Float64Equal" -> Float64Equal
@@ -2345,15 +2346,6 @@ let to_str opcode =
   | FindOrderedHashMapEntry -> "FindOrderedHashMapEntry"
   | FindOrderedHashMapEntryForInt32Key -> "FindOrderedHashMapEntryForInt32Key"
   | FindOrderedHashSetEntry -> "FindOrderedHashSetEntry"
-  | Float32Abs -> "Float32Abs"
-  | Float32Add -> "Float32Add"
-  | Float32Div -> "Float32Div"
-  | Float32Equal -> "Float32Equal"
-  | Float32LessThan -> "Float32LessThan"
-  | Float32LessThanOrEqual -> "Float32LessThanOrEqual"
-  | Float32Max -> "Float32Max"
-  | Float32Min -> "Float32Min"
-  | Float32Mul -> "Float32Mul"
   | Float32Neg -> "Float32Neg"
   | Float32RoundDown -> "Float32RoundDown"
   | Float32RoundTiesEven -> "Float32RoundTiesEven"
@@ -2765,11 +2757,6 @@ let to_str opcode =
   | S128Zero -> "S128Zero"
   | SLVerifierHint -> "SLVerifierHint"
   | SameValueNumbersOnly -> "SameValueNumbersOnly"
-  | SignExtendWord16ToInt32 -> "SignExtendWord16ToInt32"
-  | SignExtendWord16ToInt64 -> "SignExtendWord16ToInt64"
-  | SignExtendWord32ToInt64 -> "SignExtendWord32ToInt64"
-  | SignExtendWord8ToInt32 -> "SignExtendWord8ToInt32"
-  | SignExtendWord8ToInt64 -> "SignExtendWord8ToInt64"
   | Simd128ReverseBytes -> "Simd128ReverseBytes"
   | SpeculativeNumberPow -> "SpeculativeNumberPow"
   | SpeculativeToBigInt -> "SpeculativeToBigInt"
@@ -2905,6 +2892,7 @@ let to_str opcode =
   | ChangeUint64ToBigInt -> "ChangeUint64ToBigInt"
   | ChangeUint64ToTagged -> "ChangeUint64ToTagged"
   | CheckedTaggedSignedToInt32 -> "CheckedTaggedSignedToInt32"
+  | Float32Abs -> "Float32Abs"
   | Float64Abs -> "Float64Abs"
   | Float64Asin -> "Float64Asin"
   | Float64Asinh -> "Float64Asinh"
@@ -2938,6 +2926,11 @@ let to_str opcode =
   | ObjectIsNaN -> "ObjectIsNaN"
   | ObjectIsSmi -> "ObjectIsSmi"
   | RoundFloat64ToInt32 -> "RoundFloat64ToInt32"
+  | SignExtendWord16ToInt32 -> "SignExtendWord16ToInt32"
+  | SignExtendWord16ToInt64 -> "SignExtendWord16ToInt64"
+  | SignExtendWord32ToInt64 -> "SignExtendWord32ToInt64"
+  | SignExtendWord8ToInt32 -> "SignExtendWord8ToInt32"
+  | SignExtendWord8ToInt64 -> "SignExtendWord8ToInt64"
   | SpeculativeBigIntNegate -> "SpeculativeBigIntNegate"
   | StackPointerGreaterThan -> "StackPointerGreaterThan"
   | StringFromSingleCharCode -> "StringFromSingleCharCode"
@@ -2973,6 +2966,14 @@ let to_str opcode =
   | BigIntShiftLeft -> "BigIntShiftLeft"
   | BigIntShiftRight -> "BigIntShiftRight"
   | BigIntSubtract -> "BigIntSubtract"
+  | Float32Add -> "Float32Add"
+  | Float32Div -> "Float32Div"
+  | Float32Equal -> "Float32Equal"
+  | Float32LessThan -> "Float32LessThan"
+  | Float32LessThanOrEqual -> "Float32LessThanOrEqual"
+  | Float32Max -> "Float32Max"
+  | Float32Min -> "Float32Min"
+  | Float32Mul -> "Float32Mul"
   | Float64Add -> "Float64Add"
   | Float64Div -> "Float64Div"
   | Float64Equal -> "Float64Equal"

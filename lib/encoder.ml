@@ -892,6 +892,9 @@ let encode_instr program ?(check_wasm = false)
   | Word32ReverseBytes -> encode_v1 word32_reverse_bytes
   | Word64ReverseBytes -> encode_v1 word64_reverse_bytes
   (* machine: logic *)
+  | Float32Equal -> encode_v2 float32_equal
+  | Float32LessThan -> encode_v2 float32_less_than
+  | Float32LessThanOrEqual -> encode_v2 float32_less_than_or_equal
   | Float64Equal -> encode_v2 float64_equal
   | Float64LessThan -> encode_v2 float64_less_than
   | Float64LessThanOrEqual -> encode_v2 float64_less_than_or_equal
@@ -955,6 +958,11 @@ let encode_instr program ?(check_wasm = false)
   | ChangeInt64ToFloat64 -> encode_v1 change_int64_to_float64
   | ChangeUint32ToFloat64 -> encode_v1 change_uint32_to_float64
   | ChangeUint32ToUint64 -> encode_v1 change_uint32_to_uint64
+  | SignExtendWord16ToInt32 -> encode_v1 sign_extend_word16_to_int32
+  | SignExtendWord16ToInt64 -> encode_v1 sign_extend_word16_to_int64
+  | SignExtendWord32ToInt64 -> encode_v1 sign_extend_word32_to_int64
+  | SignExtendWord8ToInt32 -> encode_v1 sign_extend_word8_to_int32
+  | SignExtendWord8ToInt64 -> encode_v1 sign_extend_word8_to_int64
   | RoundFloat64ToInt32 -> encode_v1 round_float64_to_int32
   | Empty -> nop
   | BeginRegion | StateValues | Checkpoint | EffectPhi | TypedStateValues
