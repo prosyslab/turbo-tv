@@ -829,6 +829,13 @@ let encode_instr program ?(check_wasm = false)
       let ctrl = ControlFile.find cid cf in
       ensure_writable_fast_elements () rval () ctrl
   (* machine: arithmetic *)
+  | Float32Abs -> encode_v1 float32_abs
+  | Float32Add -> encode_v2 float32_add
+  | Float32Div -> encode_v2 float32_div
+  | Float32Max -> encode_v2 float32_max
+  | Float32Min -> encode_v2 float32_min
+  | Float32Mul -> encode_v2 float32_mul
+  | Float32Neg -> encode_v1 float32_neg
   | Float64Abs -> encode_v1 float64_abs
   | Float64Add -> encode_v2 float64_add
   | Float64Asin -> encode_v1 float64_asin

@@ -3,6 +3,34 @@ open ValueOperator
 module Repr = MachineType.Repr
 
 (* machine: arithmetic *)
+let float32_abs pval state =
+  let value = Float32.abs pval in
+  state |> State.update ~value
+
+let float32_add lval rval state =
+  let value = Float32.add lval rval in
+  state |> State.update ~value
+
+let float32_asin value state =
+  let value = Float32.asin value in
+  state |> State.update ~value
+
+let float32_div lval rval state =
+  let value = Float64.div lval rval in
+  state |> State.update ~value
+
+let float32_neg pval state =
+  let value = Float64.neg pval in
+  state |> State.update ~value
+
+let float32_max lval rval state =
+  let value = Float32.max lval rval in
+  state |> State.update ~value
+
+let float32_min lval rval state =
+  let value = Float64.min lval rval in
+  state |> State.update ~value
+
 let float64_abs pval state =
   let value = Float64.abs pval in
   state |> State.update ~value
@@ -254,6 +282,18 @@ let word64_reverse_bytes v state =
   state |> State.update ~value
 
 (* machine: comparison *)
+let float32_equal lval rval state =
+  let value = Bool.ite (Float32.eq lval rval) Value.tr Value.fl in
+  state |> State.update ~value
+
+let float32_less_than lval rval state =
+  let value = Bool.ite (Float32.lt lval rval) Value.tr Value.fl in
+  state |> State.update ~value
+
+let float32_less_than_or_equal lval rval state =
+  let value = Bool.ite (Float32.le lval rval) Value.tr Value.fl in
+  state |> State.update ~value
+
 let float64_equal lval rval state =
   let value = Bool.ite (Float64.eq lval rval) Value.tr Value.fl in
   state |> State.update ~value

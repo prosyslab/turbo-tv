@@ -619,21 +619,23 @@ module Make_Float_Operator (F : FloatValue) = struct
   include F
 
   let to_value f =
-    if sort = Z3utils.Float.single_sort then (
-      print_endline (f |> Expr.to_simplified_string);
-      f |> Float.to_ieee_bv |> BitVec.zero_extend 32 |> Value.entype ty)
+    if sort = Z3utils.Float.single_sort then
+      f |> Float.to_ieee_bv |> BitVec.zero_extend 32 |> Value.entype ty
     else if sort = Z3utils.Float.double_sort then
       f |> Float.to_ieee_bv |> Value.entype ty
     else failwith "not implemented"
 
   let of_float f = f |> Float.from_float ~sort |> to_value
 
-  let from_value value = value |> Value.data_of |> Float.from_ieee_bv ~sort
+  let from_value value =
+    if sort = Z3utils.Float.single_sort then
+      value |> BitVec.extract 31 0 |> Float.from_ieee_bv ~sort
+    else if sort = Z3utils.Float.double_sort then
+      value |> Value.data_of |> Float.from_ieee_bv ~sort
+    else failwith "not implemented"
 
   (* constants *)
-  let nan =
-    print_endline (Z3.Sort.to_string sort);
-    Float.nan ~sort () |> to_value
+  let nan = Float.nan ~sort () |> to_value
 
   let ninf = Float.ninf ~sort () |> to_value
 
