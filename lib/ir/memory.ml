@@ -110,6 +110,10 @@ module Objects = struct
         ptr |> has_map_of Objmap.string_map mem;
       ]
 
+  let is_oddball mem ptr =
+    Bool.ors
+      [ ptr |> is_null mem; ptr |> is_undefined mem; ptr |> is_boolean mem ]
+
   let are_heap_nubmer mem ptrs =
     Bool.ands (List.map (has_map_of Objmap.heap_number_map mem) ptrs)
 end

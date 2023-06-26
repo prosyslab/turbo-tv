@@ -1,0 +1,40 @@
+#61:Int32Constant[0]()()()
+#0:Start()()()  [Type: Internal]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#10:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#52:Int64Constant[-2]()()()
+#18:TypedStateValues[kRepTagged|kTypeAny, sparse:.....^](#52:Int64Constant)()()  [Type: Internal]
+#53:TypedStateValues[kRepTagged|kTypeAny, dense](#2:Parameter)()()
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#44:HeapConstant[0x2b3f0019afbd <JSFunction opt (sfi = 0x2b3f0019ad71)>]()()()  [Type: HeapConstant(0x564dc8f738f8 {0x2b3f0019afbd <JSFunction opt (sfi = 0x2b3f0019ad71)>})]
+#19:FrameState[UNOPTIMIZED_FRAME, 8, Ignore, 0x2b3f0019ad71 <SharedFunctionInfo opt>](#10:TypedStateValues, #18:TypedStateValues, #53:TypedStateValues, #5:Parameter, #44:HeapConstant)()()  [Type: Internal]
+#63:ExternalConstant[0x564dc8eef460]()()()
+#51:Int64Constant[0]()()()
+#64:Load[kRepWord64](#63:ExternalConstant, #51:Int64Constant)(#0:Start)(#0:Start)
+#65:StackPointerGreaterThan[JSFunctionEntry](#64:Load)(#64:Load)()
+#74:HeapConstant[0x2b3f0002ca55 <Code BUILTIN CEntry_Return1_ArgvOnStack_NoBuiltinExit>]()()()
+#71:LoadStackCheckOffset()()()
+#72:ExternalConstant[0x564dc6959ec0<StackGuardWithGap.entry>]()()()
+#73:Int32Constant[1]()()()
+#7:HeapConstant[0x2b3f00183c2d <NativeContext[281]>]()()()  [Type: HeapConstant(0x564dc8f738e8 {0x2b3f00183c2d <NativeContext[281]>})]
+#11:TypedStateValues[, sparse:......]()()()  [Type: Internal]
+#54:TypedStateValues[, sparse:.]()()()
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x2b3f0019ad71 <SharedFunctionInfo opt>](#10:TypedStateValues, #11:TypedStateValues, #54:TypedStateValues, #5:Parameter, #44:HeapConstant)()()  [Type: Internal]
+#66:Branch[Unspecified, True](#65:StackPointerGreaterThan)()(#0:Start)
+#68:IfFalse()()(#66:Branch)
+#9:Call[Code:StackGuardWithGap:r1s1i5f1](#74:HeapConstant, #71:LoadStackCheckOffset, #72:ExternalConstant, #73:Int32Constant, #7:HeapConstant, #14:FrameState)(#65:StackPointerGreaterThan)(#68:IfFalse)
+#67:IfTrue()()(#66:Branch)
+#69:Merge()()(#67:IfTrue, #9:Call)
+#70:EffectPhi()(#65:StackPointerGreaterThan, #9:Call)(#69:Merge)
+#17:Checkpoint()(#70:EffectPhi)(#69:Merge)
+#56:CheckedTaggedToFloat64[NumberOrOddball, FeedbackSource(INVALID)](#2:Parameter)(#17:Checkpoint)(#69:Merge)
+#58:CheckedTaggedToFloat64[Number, FeedbackSource(INVALID)](#2:Parameter)(#56:CheckedTaggedToFloat64)(#69:Merge)
+#59:CheckedTruncateTaggedToWord32[NumberOrOddball, FeedbackSource(INVALID)](#2:Parameter)(#58:CheckedTaggedToFloat64)(#69:Merge)
+#31:HeapConstant[0x2b3f00000de1 <false>]()()()  [Type: HeapConstant(0x564dc8f73f70 {0x2b3f00000de1 <false>})]
+#60:CheckedTruncateTaggedToWord32[NumberOrOddball, FeedbackSource(INVALID)](#31:HeapConstant)(#59:CheckedTruncateTaggedToWord32)(#69:Merge)
+#39:Word32And(#59:CheckedTruncateTaggedToWord32, #60:CheckedTruncateTaggedToWord32)()()  [Type: Range(-2147483648, 2147483647)]
+#62:ChangeInt32ToTagged(#39:Word32And)()()
+#40:Return(#61:Int32Constant, #62:ChangeInt32ToTagged)(#60:CheckedTruncateTaggedToWord32)(#69:Merge)
+#41:End()()(#40:Return)

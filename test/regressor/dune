@@ -264,3 +264,19 @@
   (diff
    regress-checked-tagged-to-float64-f64.expected
    regress-checked-tagged-to-float64-f64.output)))
+
+(rule
+ (targets regress-check-number-oddball-map.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../bin/turbo-tv.exe --verify regress-check-number-oddball-map)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   regress-check-number-oddball-map.expected
+   regress-check-number-oddball-map.output)))

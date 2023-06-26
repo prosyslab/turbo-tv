@@ -7,11 +7,11 @@ module Repr = MachineType.Repr
 let check_map_for_heap_number_or_oddball_to_float64 hint pval mem =
   let is_heap_number = pval |> Value.has_type Type.float64 in
   let is_boolean = pval |> Objects.is_boolean mem in
+  let is_oddball = pval |> Objects.is_oddball mem in
   match hint with
   | "Number" -> is_heap_number
   | "NumberOrBoolean" -> Bool.ors [ is_heap_number; is_boolean ]
-  (* TODO: Implement MapInstanceType for NumberOrOddball *)
-  | "NumberOrOddball" -> Bool.fl
+  | "NumberOrOddball" -> Bool.ors [ is_heap_number; is_oddball ]
   | _ ->
       failwith (Printf.sprintf "CheckedTaggedToFloat64: Undefined hint %s" hint)
 
@@ -1038,7 +1038,12 @@ let checked_truncate_tagged_to_word32 hint pval mem state =
     in
     Bool.ors
       [
-        Bool.not (pval |> Value.has_type Type.any_tagged);
+        Bool.not
+          (Bool.ors
+             [
+               pval |> Value.has_type Type.any_tagged;
+               pval |> Value.has_type Type.float64;
+             ]);
         Bool.ands
           [ pval |> Value.has_type Type.tagged_pointer; Bool.not map_check ];
       ]
