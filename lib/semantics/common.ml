@@ -161,11 +161,11 @@ let deoptimize_unless cond _frame _mem control ctrl_is_angelic state =
 
 (* common: trap *)
 let trap_if cond control control_is_angelic state =
-  state
-  |> State.update
-       ~ub:
-         (Bool.ands
-            [ control; Bool.not control_is_angelic; Value.is_true cond ])
+  let ub =
+    Bool.ands [ control; Bool.not control_is_angelic; Value.is_true cond ]
+  in
+  let control = Value.is_false cond in
+  state |> State.update ~ub ~control
 
 let trap_unless hint value control control_is_angelic state =
   let ub =
@@ -188,8 +188,7 @@ let trap_unless hint value control control_is_angelic state =
                      (Uint64.is_zero value)
                      (Bool.ite
                         (value |> Value.has_type Type.float32)
-                        (* (Float32.is_zero value) *)
-                        Bool.tr
+                        (Float32.is_zero value)
                         (Bool.ite
                            (value |> Value.has_type Type.int64)
                            (Float64.is_zero value) Bool.tr)))));
@@ -200,8 +199,8 @@ let trap_unless hint value control control_is_angelic state =
       Bool.ands [ control; Bool.not control_is_angelic; Value.is_false value ]
     else Bool.tr
   in
-
-  state |> State.update ~ub
+  let control = Bool.not ub in
+  state |> State.update ~ub ~control
 
 (* common: procedure *)
 let end_ retvals _retmems retctrls state =
