@@ -27,3 +27,8 @@
  (name stringTest)
  (modules stringTest)
  (libraries helper))
+
+(test
+ (name numberTest)
+ (modules numberTest)
+ (libraries helper))

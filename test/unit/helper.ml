@@ -73,5 +73,14 @@ let value_printer ?(indent = 0) e =
       Format.sprintf "%sRaw: %s" indent (e |> Expr.to_simplified_string);
     ]
 
+let bool_printer ?(indent = 0) b =
+  let model = Z3utils.Solver.get_model solver |> Option.get in
+  let indent = repeat "  " indent in
+  String.concat "\n"
+    [
+      Format.sprintf "\n%sFormatted: %s" indent
+        (b |> Model.eval model |> Expr.to_simplified_string);
+    ]
+
 let apply_sem_v1m sem n =
   state |> sem n state.memory |> State.register_file |> RegisterFile.find "0"
