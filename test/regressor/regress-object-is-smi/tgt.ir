@@ -1,0 +1,32 @@
+#68:Int32Constant[0]()()()
+#61:Int64Constant[0]()()()
+#0:Start()()()  [Type: Internal]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#10:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#11:TypedStateValues[, sparse:...........]()()()  [Type: Internal]
+#62:Int64Constant[4]()()()
+#64:TypedStateValues[kRepTagged|kTypeAny, dense](#62:Int64Constant)()()
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#50:HeapConstant[0x1fbf0019b00d <JSFunction opt (sfi = 0x1fbf0019adc1)>]()()()  [Type: HeapConstant(0x56511c5928f8 {0x1fbf0019b00d <JSFunction opt (sfi = 0x1fbf0019adc1)>})]
+#18:FrameState[UNOPTIMIZED_FRAME, 9, Ignore, 0x1fbf0019adc1 <SharedFunctionInfo opt>](#10:TypedStateValues, #11:TypedStateValues, #64:TypedStateValues, #5:Parameter, #50:HeapConstant)()()  [Type: Internal]
+#7:HeapConstant[0x1fbf00183c2d <NativeContext[281]>]()()()  [Type: HeapConstant(0x56511c5928e8 {0x1fbf00183c2d <NativeContext[281]>})]
+#65:TypedStateValues[, sparse:.]()()()
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x1fbf0019adc1 <SharedFunctionInfo opt>](#10:TypedStateValues, #11:TypedStateValues, #65:TypedStateValues, #5:Parameter, #50:HeapConstant)()()  [Type: Internal]
+#9:JSStackCheck[JSFunctionEntry]()(#0:Start)(#0:Start)
+#17:Checkpoint()(#9:JSStackCheck)(#9:JSStackCheck)
+#70:CheckedTaggedSignedToInt32[FeedbackSource(INVALID)](#2:Parameter)(#17:Checkpoint)(#9:JSStackCheck)
+#66:Int32Constant[2]()()()
+#21:CheckedInt32Mul[dont-check-for-minus-zero](#70:CheckedTaggedSignedToInt32, #66:Int32Constant)(#70:CheckedTaggedSignedToInt32)(#9:JSStackCheck)  [Type: Number]
+#23:Word32Equal(#21:CheckedInt32Mul, #68:Int32Constant)()()  [Type: Boolean]
+#24:Word32Equal(#23:Word32Equal, #68:Int32Constant)()()  [Type: Boolean]
+#71:ChangeBitToTagged(#24:Word32Equal)()()
+#27:Branch[Machine, None](#23:Word32Equal)()(#9:JSStackCheck)
+#28:IfFalse()()(#27:Branch)
+#30:IfTrue()()(#27:Branch)
+#29:Merge()()(#28:IfFalse, #30:IfTrue)
+#31:Phi[kRepTagged](#71:ChangeBitToTagged, #62:Int64Constant)()(#29:Merge)  [Type: (Boolean | Range(2, 2))]
+#72:CheckedTaggedToTaggedSigned[FeedbackSource(INVALID)](#31:Phi)(#21:CheckedInt32Mul)(#29:Merge)
+#46:Return(#68:Int32Constant, #61:Int64Constant)(#72:CheckedTaggedToTaggedSigned)(#29:Merge)
+#47:End()()(#46:Return)

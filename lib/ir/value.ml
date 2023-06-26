@@ -116,3 +116,7 @@ let flip_type value =
                    (value |> has_type Type.uint8)
                    (value |> cast Type.int8)
                    value)))))
+
+let smi_tag = from_int 0
+
+let smi_tag_mask = from_int 1

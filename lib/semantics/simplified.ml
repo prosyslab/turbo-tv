@@ -4,6 +4,8 @@ module Objects = Memory.Objects
 module Repr = MachineType.Repr
 
 (* helper functions *)
+let object_is_smi_ pval = Word32.eqi (Word32.andi pval 1) 0
+
 let check_map_for_heap_number_or_oddball_to_float64 hint pval mem =
   let is_heap_number = pval |> Value.has_type Type.float64 in
   let is_boolean = pval |> Objects.is_boolean mem in
@@ -1002,7 +1004,9 @@ let checked_tagged_to_tagged_pointer pval _checkpoint control state =
   state |> State.update ~value:pval ~control ~deopt
 
 let checked_tagged_to_tagged_signed pval _checkpoint control state =
-  let deopt = Bool.not (pval |> Value.has_type Type.tagged_signed) in
+  let deopt = Bool.not (pval |> object_is_smi_) in
+  pval |> Expr.print_simplified;
+  deopt |> Expr.print_simplified;
   state |> State.update ~value:pval ~control ~deopt
 
 let truncate_tagged_to_word32 pval state =

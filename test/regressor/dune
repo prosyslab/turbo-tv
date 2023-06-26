@@ -280,3 +280,17 @@
   (diff
    regress-check-number-oddball-map.expected
    regress-check-number-oddball-map.output)))
+
+(rule
+ (targets regress-object-is-smi.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../bin/turbo-tv.exe --verify regress-object-is-smi)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff regress-object-is-smi.expected regress-object-is-smi.output)))
