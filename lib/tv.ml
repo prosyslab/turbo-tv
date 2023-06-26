@@ -57,7 +57,6 @@ let precondition_for_params nparams state =
   |> Bool.ands
 
 let check_ub nparams check_type program =
-  print_endline "fuck1";
   let state = Encoder.encode_pgr "pgm" program ~check_type nparams in
   let precond =
     (* precondition_for_params /\ not deopt(pgm) *)
