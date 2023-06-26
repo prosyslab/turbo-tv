@@ -443,7 +443,7 @@ Int32LessThan,v1,v2
 Int32LessThanOrEqual,v1,v2
 Int32Mod,v1,v2,c1
 Int32Mul,v1,v2
-Int32MulHigh,
+Int32MulHigh,v1,v2
 Int32MulWithOverflow,v1,v2,c1
 Int32PairAdd,
 Int32PairMul,
@@ -834,7 +834,7 @@ Uint32Div,v1,v2,c1
 Uint32LessThan,v1,v2
 Uint32LessThanOrEqual,v1,v2
 Uint32Mod,v1,v2,c1
-Uint32MulHigh,
+Uint32MulHigh,v1,v2
 Uint64Div,
 Uint64LessThan,v1,v2
 Uint64LessThanOrEqual,v1,v2

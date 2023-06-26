@@ -142,6 +142,13 @@ let int32_sub lval rval state = int_arith 32 "-" lval rval state
 
 let int32_mul lval rval state = int_arith 32 "*" lval rval state
 
+let int32_mul_high lval rval state =
+  let value =
+    BitVec.lshri (Int64.mul lval rval |> Value.data_of) 32
+    |> Value.entype Type.int32
+  in
+  state |> State.update ~value
+
 let int32_div lval rval control state =
   int_arith 32 "/" lval rval ~control state
 
@@ -198,6 +205,13 @@ let int64_mul_with_overflow lval rval control state =
 
 let round_float64_to_int32 pval state =
   let value = Float64.to_int32 pval in
+  state |> State.update ~value
+
+let uint32_mul_high lval rval state =
+  let value =
+    BitVec.lshri (Uint64.mul lval rval |> Value.data_of) 32
+    |> Value.entype Type.uint32
+  in
   state |> State.update ~value
 
 let uint32_div lval rval control state =

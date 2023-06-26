@@ -361,7 +361,6 @@ type t =
   | InductionVariablePhi
   | InitializeImmutableInObject
   | Int32AbsWithOverflow
-  | Int32MulHigh
   | Int32PairAdd
   | Int32PairMul
   | Int32PairSub
@@ -611,7 +610,6 @@ type t =
   | TypeOf
   | TypedObjectState
   | TypedStateValues
-  | Uint32MulHigh
   | Uint64Div
   | Uint64Mod
   | UnalignedLoad
@@ -811,6 +809,7 @@ type t =
   | Int32LessThan
   | Int32LessThanOrEqual
   | Int32Mul
+  | Int32MulHigh
   | Int32Sub
   | Int64Add
   | Int64LessThan
@@ -856,6 +855,7 @@ type t =
   | StringLessThanOrEqual
   | Uint32LessThan
   | Uint32LessThanOrEqual
+  | Uint32MulHigh
   | Uint64LessThan
   | Uint64LessThanOrEqual
   | Word32And
@@ -1071,10 +1071,10 @@ let get_kind opcode =
   | I8x16ShrS | I8x16ShrU | I8x16Shuffle | I8x16Splat | I8x16Sub | I8x16SubSatS
   | I8x16SubSatU | I8x16Swizzle | I8x16UConvertI16x8 | IfDefault | IfException
   | IfValue | InductionVariablePhi | InitializeImmutableInObject
-  | Int32AbsWithOverflow | Int32MulHigh | Int32PairAdd | Int32PairMul
-  | Int32PairSub | Int64AbsWithOverflow | JSAdd | JSAsyncFunctionEnter
-  | JSAsyncFunctionReject | JSAsyncFunctionResolve | JSBitwiseAnd | JSBitwiseNot
-  | JSBitwiseOr | JSBitwiseXor | JSCall | JSCallForwardVarargs | JSCallRuntime
+  | Int32AbsWithOverflow | Int32PairAdd | Int32PairMul | Int32PairSub
+  | Int64AbsWithOverflow | JSAdd | JSAsyncFunctionEnter | JSAsyncFunctionReject
+  | JSAsyncFunctionResolve | JSBitwiseAnd | JSBitwiseNot | JSBitwiseOr
+  | JSBitwiseXor | JSCall | JSCallForwardVarargs | JSCallRuntime
   | JSCallWithArrayLike | JSCallWithSpread | JSCloneObject | JSConstruct
   | JSConstructForwardVarargs | JSConstructWithArrayLike | JSConstructWithSpread
   | JSCreate | JSCreateArguments | JSCreateArray | JSCreateArrayFromIterable
@@ -1137,17 +1137,16 @@ let get_kind opcode =
   | TruncateFloat64ToFloat32 | TruncateFloat64ToUint32 | TruncateTaggedToFloat64
   | TryTruncateFloat32ToInt64 | TryTruncateFloat32ToUint64
   | TryTruncateFloat64ToInt64 | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf
-  | TypedObjectState | TypedStateValues | Uint32MulHigh | Uint64Div | Uint64Mod
-  | UnalignedLoad | UnalignedStore | UnsafePointerAdd | Unsigned32Divide
-  | V128AnyTrue | VerifyType | Word32AtomicAdd | Word32AtomicAnd
-  | Word32AtomicCompareExchange | Word32AtomicExchange | Word32AtomicLoad
-  | Word32AtomicOr | Word32AtomicPairAdd | Word32AtomicPairAnd
-  | Word32AtomicPairCompareExchange | Word32AtomicPairExchange
-  | Word32AtomicPairLoad | Word32AtomicPairOr | Word32AtomicPairStore
-  | Word32AtomicPairSub | Word32AtomicPairXor | Word32AtomicStore
-  | Word32AtomicSub | Word32AtomicXor | Word32Clz | Word32Ctz | Word32PairSar
-  | Word32PairShl | Word32PairShr | Word32Popcnt | Word32ReverseBits
-  | Word32Select | Word64AtomicAdd | Word64AtomicAnd
+  | TypedObjectState | TypedStateValues | Uint64Div | Uint64Mod | UnalignedLoad
+  | UnalignedStore | UnsafePointerAdd | Unsigned32Divide | V128AnyTrue
+  | VerifyType | Word32AtomicAdd | Word32AtomicAnd | Word32AtomicCompareExchange
+  | Word32AtomicExchange | Word32AtomicLoad | Word32AtomicOr
+  | Word32AtomicPairAdd | Word32AtomicPairAnd | Word32AtomicPairCompareExchange
+  | Word32AtomicPairExchange | Word32AtomicPairLoad | Word32AtomicPairOr
+  | Word32AtomicPairStore | Word32AtomicPairSub | Word32AtomicPairXor
+  | Word32AtomicStore | Word32AtomicSub | Word32AtomicXor | Word32Clz
+  | Word32Ctz | Word32PairSar | Word32PairShl | Word32PairShr | Word32Popcnt
+  | Word32ReverseBits | Word32Select | Word64AtomicAdd | Word64AtomicAnd
   | Word64AtomicCompareExchange | Word64AtomicExchange | Word64AtomicLoad
   | Word64AtomicOr | Word64AtomicStore | Word64AtomicSub | Word64AtomicXor
   | Word64Clz | Word64ClzLowerable | Word64Ctz | Word64CtzLowerable
@@ -1196,10 +1195,10 @@ let get_kind opcode =
   | Float32LessThanOrEqual | Float32Max | Float32Min | Float32Mul | Float64Add
   | Float64Div | Float64Equal | Float64LessThan | Float64LessThanOrEqual
   | Float64Max | Float64Min | Float64Mod | Float64Mul | Float64Pow | Float64Sub
-  | Int32Add | Int32LessThan | Int32LessThanOrEqual | Int32Mul | Int32Sub
-  | Int64Add | Int64LessThan | Int64LessThanOrEqual | Int64Mul | Int64MulHigh
-  | Int64Sub | NumberAdd | NumberBitwiseAnd | NumberBitwiseOr | NumberBitwiseXor
-  | NumberDivide | NumberEqual | NumberImul | NumberLessThan
+  | Int32Add | Int32LessThan | Int32LessThanOrEqual | Int32Mul | Int32MulHigh
+  | Int32Sub | Int64Add | Int64LessThan | Int64LessThanOrEqual | Int64Mul
+  | Int64MulHigh | Int64Sub | NumberAdd | NumberBitwiseAnd | NumberBitwiseOr
+  | NumberBitwiseXor | NumberDivide | NumberEqual | NumberImul | NumberLessThan
   | NumberLessThanOrEqual | NumberMax | NumberMin | NumberModulus
   | NumberMultiply | NumberSameValue | NumberShiftLeft | NumberShiftRight
   | NumberShiftRightLogical | NumberSubtract | ReferenceEqual | SameValue
@@ -1210,10 +1209,10 @@ let get_kind opcode =
   | SpeculativeBigIntMultiply | SpeculativeBigIntShiftLeft
   | SpeculativeBigIntShiftRight | SpeculativeBigIntSubtract | StringEqual
   | StringLessThan | StringLessThanOrEqual | Uint32LessThan
-  | Uint32LessThanOrEqual | Uint64LessThan | Uint64LessThanOrEqual | Word32And
-  | Word32Equal | Word32Or | Word32Rol | Word32Ror | Word32Shl | Word32Shr
-  | Word32Xor | Word64And | Word64Equal | Word64Or | Word64Rol | Word64Ror
-  | Word64Shl | Word64Shr | Word64Xor ->
+  | Uint32LessThanOrEqual | Uint32MulHigh | Uint64LessThan
+  | Uint64LessThanOrEqual | Word32And | Word32Equal | Word32Or | Word32Rol
+  | Word32Ror | Word32Shl | Word32Shr | Word32Xor | Word64And | Word64Equal
+  | Word64Or | Word64Rol | Word64Ror | Word64Shl | Word64Shr | Word64Xor ->
       V1V2
   | Branch | FinishRegion -> V1E1
   | Call -> B1VVCV
@@ -1627,7 +1626,6 @@ let of_str str =
   | "InductionVariablePhi" -> InductionVariablePhi
   | "InitializeImmutableInObject" -> InitializeImmutableInObject
   | "Int32AbsWithOverflow" -> Int32AbsWithOverflow
-  | "Int32MulHigh" -> Int32MulHigh
   | "Int32PairAdd" -> Int32PairAdd
   | "Int32PairMul" -> Int32PairMul
   | "Int32PairSub" -> Int32PairSub
@@ -1878,7 +1876,6 @@ let of_str str =
   | "TypeOf" -> TypeOf
   | "TypedObjectState" -> TypedObjectState
   | "TypedStateValues" -> TypedStateValues
-  | "Uint32MulHigh" -> Uint32MulHigh
   | "Uint64Div" -> Uint64Div
   | "Uint64Mod" -> Uint64Mod
   | "UnalignedLoad" -> UnalignedLoad
@@ -2072,6 +2069,7 @@ let of_str str =
   | "Int32LessThan" -> Int32LessThan
   | "Int32LessThanOrEqual" -> Int32LessThanOrEqual
   | "Int32Mul" -> Int32Mul
+  | "Int32MulHigh" -> Int32MulHigh
   | "Int32Sub" -> Int32Sub
   | "Int64Add" -> Int64Add
   | "Int64LessThan" -> Int64LessThan
@@ -2117,6 +2115,7 @@ let of_str str =
   | "StringLessThanOrEqual" -> StringLessThanOrEqual
   | "Uint32LessThan" -> Uint32LessThan
   | "Uint32LessThanOrEqual" -> Uint32LessThanOrEqual
+  | "Uint32MulHigh" -> Uint32MulHigh
   | "Uint64LessThan" -> Uint64LessThan
   | "Uint64LessThanOrEqual" -> Uint64LessThanOrEqual
   | "Word32And" -> Word32And
@@ -2544,7 +2543,6 @@ let to_str opcode =
   | InductionVariablePhi -> "InductionVariablePhi"
   | InitializeImmutableInObject -> "InitializeImmutableInObject"
   | Int32AbsWithOverflow -> "Int32AbsWithOverflow"
-  | Int32MulHigh -> "Int32MulHigh"
   | Int32PairAdd -> "Int32PairAdd"
   | Int32PairMul -> "Int32PairMul"
   | Int32PairSub -> "Int32PairSub"
@@ -2795,7 +2793,6 @@ let to_str opcode =
   | TypeOf -> "TypeOf"
   | TypedObjectState -> "TypedObjectState"
   | TypedStateValues -> "TypedStateValues"
-  | Uint32MulHigh -> "Uint32MulHigh"
   | Uint64Div -> "Uint64Div"
   | Uint64Mod -> "Uint64Mod"
   | UnalignedLoad -> "UnalignedLoad"
@@ -2989,6 +2986,7 @@ let to_str opcode =
   | Int32LessThan -> "Int32LessThan"
   | Int32LessThanOrEqual -> "Int32LessThanOrEqual"
   | Int32Mul -> "Int32Mul"
+  | Int32MulHigh -> "Int32MulHigh"
   | Int32Sub -> "Int32Sub"
   | Int64Add -> "Int64Add"
   | Int64LessThan -> "Int64LessThan"
@@ -3034,6 +3032,7 @@ let to_str opcode =
   | StringLessThanOrEqual -> "StringLessThanOrEqual"
   | Uint32LessThan -> "Uint32LessThan"
   | Uint32LessThanOrEqual -> "Uint32LessThanOrEqual"
+  | Uint32MulHigh -> "Uint32MulHigh"
   | Uint64LessThan -> "Uint64LessThan"
   | Uint64LessThanOrEqual -> "Uint64LessThanOrEqual"
   | Word32And -> "Word32And"

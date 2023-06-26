@@ -860,6 +860,7 @@ let encode_instr program ?(check_wasm = false)
   | Int32Div -> encode_v2c1 int32_div
   | Int32Mod -> encode_v2c1 int32_mod
   | Int32Mul -> encode_v2 int32_mul
+  | Int32MulHigh -> encode_v2 int32_mul_high
   | Int32MulWithOverflow -> encode_v2c1 int32_mul_with_overflow
   | Int32Sub -> encode_v2 int32_sub
   | Int32SubWithOverflow -> encode_v2c1 int32_sub_with_overflow
@@ -871,6 +872,7 @@ let encode_instr program ?(check_wasm = false)
   | Int64SubWithOverflow -> encode_v2c1 int64_sub_with_overflow
   | Int64Div -> encode_v2c1 int64_div
   | Int64Mod -> encode_v2c1 int64_mod
+  | Uint32MulHigh -> encode_v2 uint32_mul_high
   | Uint32Div -> encode_v2c1 uint32_div
   | Uint32Mod -> encode_v2c1 uint32_mod
   | Word32And -> encode_v2 word32_and
