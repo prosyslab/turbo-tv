@@ -1,0 +1,47 @@
+#64:Int32Constant[0]()()()
+#0:Start()()()  [Type: Internal]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#53:NumberConstant[nan]()()()  [Type: NaN]
+#81:Int32Constant[1]()()()
+#71:ExternalConstant[0x560d5dc5a460]()()()
+#61:Int64Constant[0]()()()
+#72:Load[kRepWord64](#71:ExternalConstant, #61:Int64Constant)(#0:Start)(#0:Start)
+#73:StackPointerGreaterThan[JSFunctionEntry](#72:Load)(#72:Load)()
+#74:Branch[Unspecified, True](#73:StackPointerGreaterThan)()(#0:Start)
+#75:IfTrue()()(#74:Branch)
+#82:HeapConstant[0x282b0002ca55 <Code BUILTIN CEntry_Return1_ArgvOnStack_NoBuiltinExit>]()()()
+#79:LoadStackCheckOffset()()()
+#80:ExternalConstant[0x560d5b1f3ec0<StackGuardWithGap.entry>]()()()
+#7:HeapConstant[0x282b00183c2d <NativeContext[281]>]()()()  [Type: HeapConstant(0x560d5dcde8e8 {0x282b00183c2d <NativeContext[281]>})]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#10:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#11:TypedStateValues[, sparse:......]()()()  [Type: Internal]
+#63:TypedStateValues[, sparse:.]()()()
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#52:HeapConstant[0x282b0019afcd <JSFunction opt (sfi = 0x282b0019ad81)>]()()()  [Type: HeapConstant(0x560d5dcde8f8 {0x282b0019afcd <JSFunction opt (sfi = 0x282b0019ad81)>})]
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x282b0019ad81 <SharedFunctionInfo opt>](#10:TypedStateValues, #11:TypedStateValues, #63:TypedStateValues, #5:Parameter, #52:HeapConstant)()()  [Type: Internal]
+#76:IfFalse()()(#74:Branch)
+#9:Call[Code:StackGuardWithGap:r1s1i5f1](#82:HeapConstant, #79:LoadStackCheckOffset, #80:ExternalConstant, #81:Int32Constant, #7:HeapConstant, #14:FrameState)(#73:StackPointerGreaterThan)(#76:IfFalse)
+#77:Merge()()(#75:IfTrue, #9:Call)
+#22:Branch[Machine, None](#81:Int32Constant)()(#77:Merge)
+#23:IfFalse()()(#22:Branch)
+#25:IfTrue()()(#22:Branch)
+#24:Merge()()(#23:IfFalse, #25:IfTrue)
+#38:Phi[kRepTagged](#3:Parameter, #53:NumberConstant)()(#24:Merge)  [Type: NonInternal]
+#40:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #61:Int64Constant, #38:Phi)()()  [Type: Internal]
+#41:FrameState[UNOPTIMIZED_FRAME, 33, Ignore, 0x282b0019ad81 <SharedFunctionInfo opt>](#40:TypedStateValues, #11:TypedStateValues, #63:TypedStateValues, #5:Parameter, #52:HeapConstant)()()  [Type: Internal]
+#18:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #61:Int64Constant, #3:Parameter)()()  [Type: Internal]
+#62:TypedStateValues[kRepTagged|kTypeAny, dense](#61:Int64Constant)()()
+#19:FrameState[UNOPTIMIZED_FRAME, 8, Ignore, 0x282b0019ad81 <SharedFunctionInfo opt>](#18:TypedStateValues, #11:TypedStateValues, #62:TypedStateValues, #5:Parameter, #52:HeapConstant)()()  [Type: Internal]
+#78:EffectPhi()(#73:StackPointerGreaterThan, #9:Call)(#77:Merge)
+#17:Checkpoint()(#78:EffectPhi)(#77:Merge)
+#37:EffectPhi()(#17:Checkpoint, #17:Checkpoint)(#24:Merge)
+#39:Checkpoint()(#37:EffectPhi)(#24:Merge)
+#68:CheckedTaggedToFloat64[NumberOrOddball, FeedbackSource(INVALID)](#38:Phi)(#39:Checkpoint)(#24:Merge)
+#46:Word32Sar[Normal](#64:Int32Constant, #64:Int32Constant)()()  [Type: Range(0, 0)]
+#69:ChangeInt32ToFloat64(#46:Word32Sar)()()
+#47:Float64Mul(#68:CheckedTaggedToFloat64, #69:ChangeInt32ToFloat64)()()  [Type: Number]
+#70:ChangeFloat64ToTagged[check-for-minus-zero](#47:Float64Mul)()()
+#48:Return(#64:Int32Constant, #70:ChangeFloat64ToTagged)(#68:CheckedTaggedToFloat64)(#24:Merge)
+#49:End()()(#48:Return)

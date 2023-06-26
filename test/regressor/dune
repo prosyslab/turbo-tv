@@ -245,3 +245,22 @@
   (diff
    regress-number-tagged-signed.expected
    regress-number-tagged-signed.output)))
+
+(rule
+ (targets regress-checked-tagged-to-float64-f64.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run
+     ../../bin/turbo-tv.exe
+     --verify
+     regress-checked-tagged-to-float64-f64)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   regress-checked-tagged-to-float64-f64.expected
+   regress-checked-tagged-to-float64-f64.output)))

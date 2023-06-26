@@ -969,7 +969,12 @@ let checked_tagged_to_float64 hint pval mem state =
   let deopt =
     Bool.ors
       [
-        Bool.not (pval |> Value.has_type Type.any_tagged);
+        Bool.not
+          (Bool.ors
+             [
+               pval |> Value.has_type Type.any_tagged;
+               pval |> Value.has_type Type.float64;
+             ]);
         Bool.ands [ is_tagged_pointer; Bool.not map_check ];
       ]
   in
