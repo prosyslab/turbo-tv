@@ -164,7 +164,6 @@ let trap_if cond control control_is_angelic state =
   let ub =
     Bool.ands [ control; Bool.not control_is_angelic; Value.is_true cond ]
   in
-  let control = Value.is_false cond in
   state |> State.update ~ub ~control
 
 let trap_unless hint value control control_is_angelic state =
@@ -199,7 +198,6 @@ let trap_unless hint value control control_is_angelic state =
       Bool.ands [ control; Bool.not control_is_angelic; Value.is_false value ]
     else Bool.tr
   in
-  let control = Bool.not ub in
   state |> State.update ~ub ~control
 
 (* common: procedure *)
