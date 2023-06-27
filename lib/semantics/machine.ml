@@ -144,7 +144,12 @@ let int32_mul lval rval state = int_arith 32 "*" lval rval state
 
 let int32_mul_high lval rval state =
   let value =
-    BitVec.lshri (Int64.mul lval rval |> Value.data_of) 32
+    BitVec.lshri
+      (Int64.mul
+         (lval |> Int32.to_int Type.int64 64)
+         (rval |> Int32.to_int Type.int64 64)
+      |> Value.data_of)
+      32
     |> Value.entype Type.int32
   in
   state |> State.update ~value
