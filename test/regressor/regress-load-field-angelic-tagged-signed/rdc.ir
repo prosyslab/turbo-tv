@@ -1,0 +1,76 @@
+#23:NumberConstant[0]()()()  [Type: Range(0, 0)]
+#3:HeapConstant[0x11be00000251 <undefined>]()()()  [Type: Undefined]
+#0:Start()()()  [Type: Internal]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#62:HeapConstant[0x11be0018e591 <Map[16](PACKED_SMI_ELEMENTS)>]()()()  [Type: OtherInternal]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#9:StateValues[dense](#1:Parameter, #2:Parameter)()()  [Type: Internal]
+#10:StateValues[sparse:.]()()()  [Type: Internal]
+#11:HeapConstant[0x11be00005bc1 <Odd Oddball: optimized_out>]()()()  [Type: HeapConstant(0x5604ac2fa8d8 {0x11be00005bc1 <Odd Oddball: optimized_out>})]
+#4:Parameter[4, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#28:HeapConstant[0x11be0004caad <JSFunction foo (sfi = 0x11be0019b851)>]()()()  [Type: HeapConstant(0x5604ac2f9ea8 {0x11be0004caad <JSFunction foo (sfi = 0x11be0019b851)>})]
+#15:FrameState[UNOPTIMIZED_FRAME, 0, Ignore, 0x11be0019b851 <SharedFunctionInfo foo>](#9:StateValues, #10:StateValues, #11:HeapConstant, #4:Parameter, #28:HeapConstant)()()  [Type: Internal]
+#6:HeapConstant[0x11be00183ced <NativeContext[280]>]()()()  [Type: HeapConstant(0x5604ac2f9e98 {0x11be00183ced <NativeContext[280]>})]
+#13:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x11be0019b851 <SharedFunctionInfo foo>](#9:StateValues, #10:StateValues, #11:HeapConstant, #4:Parameter, #28:HeapConstant)()()  [Type: Internal]
+#8:JSStackCheck[JSFunctionEntry]()(#0:Start)(#0:Start)
+#14:Checkpoint()(#8:JSStackCheck)(#8:JSStackCheck)
+#29:CheckMaps[None, 0x5604ac2fa470 {0x11be0018e591 <Map[16](PACKED_SMI_ELEMENTS)>}, FeedbackSource(INVALID)](#2:Parameter)(#14:Checkpoint)(#8:JSStackCheck)
+#32:LoadField[MapBitField2, tagged base, 11, Range(0, 255), kRepWord8|kTypeUint32, NoWriteBarrier, mutable](#62:HeapConstant)(#29:CheckMaps)(#8:JSStackCheck)  [Type: Range(0, 255)]
+#37:LoadField[JSArrayLength, tagged base, 12, Range(0, 134217725), kRepTaggedSigned|kTypeInt32, NoWriteBarrier, mutable](#2:Parameter)(#32:LoadField)(#8:JSStackCheck)  [Type: Range(0, 134217725)]
+#38:NumberEqual(#37:LoadField, #23:NumberConstant)()()  [Type: Boolean]
+#39:Branch[Unspecified, False](#38:NumberEqual)()(#8:JSStackCheck)
+#40:IfTrue()()(#39:Branch)
+#54:Return(#23:NumberConstant, #3:HeapConstant)(#37:LoadField)(#40:IfTrue)
+#41:IfFalse()()(#39:Branch)
+#42:LoadField[JSObjectElements, tagged base, 8, Internal, kRepTaggedPointer|kTypeAny, PointerWriteBarrier, mutable](#2:Parameter)(#37:LoadField)(#41:IfFalse)  [Type: Internal]
+#43:EnsureWritableFastElements(#2:Parameter, #42:LoadField)(#42:LoadField)(#41:IfFalse)  [Type: Internal]
+#44:NumberConstant[1]()()()  [Type: Range(1, 1)]
+#45:NumberSubtract(#37:LoadField, #44:NumberConstant)()()  [Type: Range(-1, 134217724)]
+#46:CheckBounds[FeedbackSource(#2), 2](#45:NumberSubtract, #37:LoadField)(#43:EnsureWritableFastElements)(#41:IfFalse)  [Type: Range(0, 134217724)]
+#47:StoreField[JSArrayLength, tagged base, 12, Range(0, 134217725), kRepTaggedSigned|kTypeInt32, NoWriteBarrier, mutable (initializing or transitioning store)](#2:Parameter, #46:CheckBounds)(#46:CheckBounds)(#41:IfFalse)
+#48:LoadElement[tagged base, 8, Signed31, kRepTaggedSigned|kTypeInt32, NoWriteBarrier](#43:EnsureWritableFastElements, #46:CheckBounds)(#47:StoreField)(#41:IfFalse)  [Type: Signed31]
+#49:HeapConstant[0x11be0000026d <Other heap object (HOLE_TYPE)>]()()()  [Type: Hole]
+#50:StoreElement[tagged base, 8, (Signed31 | Hole), kRepTagged|kTypeAny, FullWriteBarrier](#43:EnsureWritableFastElements, #46:CheckBounds, #49:HeapConstant)(#48:LoadElement)(#41:IfFalse)
+#55:Return(#23:NumberConstant, #48:LoadElement)(#50:StoreElement)(#41:IfFalse)
+#25:End()()(#54:Return, #55:Return)
+- Simplified Lowering
+#68:Int32Constant[0]()()()
+#3:HeapConstant[0x11be00000251 <undefined>]()()()  [Type: Undefined]
+#0:Start()()()  [Type: Internal]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#9:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter)()()  [Type: Internal]
+#10:TypedStateValues[, sparse:.]()()()  [Type: Internal]
+#64:TypedStateValues[, sparse:.]()()()
+#4:Parameter[4, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#28:HeapConstant[0x11be0004caad <JSFunction foo (sfi = 0x11be0019b851)>]()()()  [Type: HeapConstant(0x5604ac2f9ea8 {0x11be0004caad <JSFunction foo (sfi = 0x11be0019b851)>})]
+#15:FrameState[UNOPTIMIZED_FRAME, 0, Ignore, 0x11be0019b851 <SharedFunctionInfo foo>](#9:TypedStateValues, #10:TypedStateValues, #64:TypedStateValues, #4:Parameter, #28:HeapConstant)()()  [Type: Internal]
+#6:HeapConstant[0x11be00183ced <NativeContext[280]>]()()()  [Type: HeapConstant(0x5604ac2f9e98 {0x11be00183ced <NativeContext[280]>})]
+#13:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x11be0019b851 <SharedFunctionInfo foo>](#9:TypedStateValues, #10:TypedStateValues, #64:TypedStateValues, #4:Parameter, #28:HeapConstant)()()  [Type: Internal]
+#8:JSStackCheck[JSFunctionEntry]()(#0:Start)(#0:Start)
+#14:Checkpoint()(#8:JSStackCheck)(#8:JSStackCheck)
+#65:CheckedTaggedToTaggedPointer[FeedbackSource(INVALID)](#2:Parameter)(#14:Checkpoint)(#8:JSStackCheck)
+#29:CheckMaps[None, 0x5604ac2fa470 {0x11be0018e591 <Map[16](PACKED_SMI_ELEMENTS)>}, FeedbackSource(INVALID)](#65:CheckedTaggedToTaggedPointer)(#65:CheckedTaggedToTaggedPointer)(#8:JSStackCheck)
+#37:LoadField[JSArrayLength, tagged base, 12, Range(0, 134217725), kRepTaggedSigned|kTypeInt32, NoWriteBarrier, mutable](#2:Parameter)(#29:CheckMaps)(#8:JSStackCheck)  [Type: Range(0, 134217725)]
+#67:ChangeTaggedSignedToInt32(#37:LoadField)()()
+#38:Word32Equal(#67:ChangeTaggedSignedToInt32, #68:Int32Constant)()()  [Type: Boolean]
+#39:Branch[Machine, False](#38:Word32Equal)()(#8:JSStackCheck)
+#40:IfTrue()()(#39:Branch)
+#54:Return(#68:Int32Constant, #3:HeapConstant)(#37:LoadField)(#40:IfTrue)
+#41:IfFalse()()(#39:Branch)
+#42:LoadField[JSObjectElements, tagged base, 8, Internal, kRepTaggedPointer|kTypeAny, PointerWriteBarrier, mutable](#2:Parameter)(#37:LoadField)(#41:IfFalse)  [Type: Internal]
+#43:EnsureWritableFastElements(#2:Parameter, #42:LoadField)(#42:LoadField)(#41:IfFalse)  [Type: Internal]
+#70:ChangeTaggedSignedToInt32(#37:LoadField)()()
+#71:Int32Constant[1]()()()
+#45:Int32Sub(#70:ChangeTaggedSignedToInt32, #71:Int32Constant)()()  [Type: Range(-1, 134217724)]
+#72:ChangeTaggedSignedToInt32(#37:LoadField)()()
+#46:CheckedUint32Bounds[FeedbackSource(#2), 2](#45:Int32Sub, #72:ChangeTaggedSignedToInt32)(#43:EnsureWritableFastElements)(#41:IfFalse)  [Type: Range(0, 134217724)]
+#74:ChangeUint32ToUint64(#46:CheckedUint32Bounds)()()
+#73:ChangeInt31ToTaggedSigned(#46:CheckedUint32Bounds)()()
+#47:StoreField[JSArrayLength, tagged base, 12, Range(0, 134217725), kRepTaggedSigned|kTypeInt32, NoWriteBarrier, mutable (initializing or transitioning store)](#2:Parameter, #73:ChangeInt31ToTaggedSigned)(#46:CheckedUint32Bounds)(#41:IfFalse)
+#48:LoadElement[tagged base, 8, Signed31, kRepTaggedSigned|kTypeInt32, NoWriteBarrier](#43:EnsureWritableFastElements, #74:ChangeUint32ToUint64)(#47:StoreField)(#41:IfFalse)  [Type: Signed31]
+#75:ChangeUint32ToUint64(#46:CheckedUint32Bounds)()()
+#49:HeapConstant[0x11be0000026d <Other heap object (HOLE_TYPE)>]()()()  [Type: Hole]
+#50:StoreElement[tagged base, 8, (Signed31 | Hole), kRepTagged|kTypeAny, PointerWriteBarrier](#43:EnsureWritableFastElements, #75:ChangeUint32ToUint64, #49:HeapConstant)(#48:LoadElement)(#41:IfFalse)
+#55:Return(#68:Int32Constant, #48:LoadElement)(#50:StoreElement)(#41:IfFalse)
+#25:End()()(#54:Return, #55:Return)

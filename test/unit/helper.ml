@@ -80,7 +80,9 @@ let undefined_cst = RegisterFile.find "undefined" state.register_file
 (* value constructors *)
 
 let mk_tagged_signed i =
-  BitVec.shli (i |> Value.from_int) 1 |> Value.cast Type.tagged_signed
+  BitVec.shli (i |> Value.from_int) 1
+  |> BitVec.extract 31 0 |> BitVec.zero_extend 32
+  |> Value.entype Type.tagged_signed
 
 let mk_float64 f = Float64.of_float f
 

@@ -412,14 +412,25 @@ let load_element header_size repr bid ind control mem state =
 let load_field offset repr ptr _eff control mem state =
   let off = offset |> BitVecVal.from_int ~len:Value.len in
   let moved = TaggedPointer.move ptr off in
-  let ub = Bool.not (Memory.can_access_as moved repr mem) in
-  let raw_ptr = moved |> TaggedPointer.to_raw_pointer in
   let ty = Type.from_repr repr |> List.hd in
+  let raw_ptr = moved |> TaggedPointer.to_raw_pointer in
   let value =
-    Memory.Bytes.load_as raw_ptr repr mem
-    |> BitVec.zero_extend (64 - Repr.width_of repr)
-    |> Value.entype ty
+    let v =
+      Memory.Bytes.load_as raw_ptr repr mem
+      |> BitVec.zero_extend (64 - Repr.width_of repr)
+      |> Value.entype ty
+    in
+    (* if memory is angelic, loading the tagged value always succeeds *)
+    if ty = Type.tagged_signed then
+      Bool.ite
+        (moved |> Memory.is_angelic mem)
+        (BitVec.shli (BitVec.lshri v 1) 1)
+        v
+    else if ty = Type.tagged_pointer then
+      Bool.ite (moved |> Memory.is_angelic mem) (BitVec.ori v 1) v
+    else v
   in
+  let ub = Bool.not (Memory.can_access_as moved repr mem) in
   let assertion =
     Bool.ands
       [

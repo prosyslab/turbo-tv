@@ -1,6 +1,7 @@
 open Z3utils
 open ValueOperator
-module Objects = Memory.Objects 
+module Objects = Memory.Objects
+
 let to_string model mem ptr =
   let map = Objects.map_of ptr mem in
   let map_str = map |> Objmap.to_string model in
@@ -15,7 +16,6 @@ let to_string model mem ptr =
       let obj = Strings.load ptr mem in
       Strings.to_string model obj
   | s -> s ^ " object: not implemented yet"
-
 
 let value_to_string model rf mem value =
   let ty_str = value |> Value.ty_of |> Type.to_string model in

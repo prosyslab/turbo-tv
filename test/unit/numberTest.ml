@@ -80,6 +80,9 @@ let number_equal_tests =
     number_equal_eq_test (mk_tagged_signed (-1)) (mk_int32 (-1)) true;
     number_equal_eq_test (mk_tagged_signed (-1)) (mk_float64 (-1.0)) true;
     number_equal_eq_test (mk_tagged_signed (-1)) (mk_uint32 4294967295) false;
+    number_equal_eq_test
+      (mk_tagged_signed (-1073741824))
+      (mk_tagged_signed 0) false;
   ]
 
 let suite = "suite" >::: is_number_tests @ number_equal_tests

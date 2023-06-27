@@ -1,0 +1,385 @@
+Result: Not Verified 
+CounterExample: 
+Parameters: 
+Parameter[0]: TaggedPointer(bid: 4, offset: 0) => HeapConstant(Null)
+Parameter[1]: TaggedSigned(572522496)
+
+State of src
+#0:NumberConstant(0) [Range (0.000000, 0.000000)] => 
+  Value: Float64(0)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#1:HeapConstant(0x11be00000251 <undefined>) [Undefined] => 
+  Value: TaggedPointer(bid: 3, offset: 0) => HeapConstant(Undefined)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#2:Start() [Internal] => 
+  Value: empty
+  ControlToken: true
+  UB: false
+  Deopt: false
+#3:Parameter(1) [NonInternal] => 
+  Value: TaggedPointer(bid: 4, offset: 0) => HeapConstant(Null)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#4:HeapConstant(0x11be0018e591 <Map[16](PACKED_SMI_ELEMENTS)>) [OtherInternal] => 
+  Value: TaggedPointer(bid: 0, offset: 1631632) => BigInt(+0)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#5:Parameter(0) [Receiver] => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#6:StateValues() [Internal] => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#7:StateValues() [Internal] => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#8:HeapConstant(0x11be00005bc1 <Odd Oddball: optimized_out>) [HeapConstant (0x5604ac2fa8d8)] => 
+  Value: TaggedPointer(bid: 0, offset: 23488) => BigInt(+0)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#9:Parameter(4) [OtherInternal] => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#10:HeapConstant(0x11be0004caad <JSFunction foo (sfi = 0x11be0019b851)>) [HeapConstant (0x5604ac2f9ea8)] => 
+  Value: Pointer(#x000011be0004caad)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#11:FrameState() [Internal] => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#12:HeapConstant(0x11be00183ced <NativeContext[280]>) [HeapConstant (0x5604ac2f9e98)] => 
+  Value: TaggedPointer(bid: 0, offset: 1588460) => BigInt(+0)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#13:FrameState() [Internal] => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#14:JSStackCheck(#2,#2) => 
+  Value: empty
+  ControlToken: true
+  UB: false
+  Deopt: false
+#15:Checkpoint() => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#16:CheckMaps(0x5604ac2fa470 {0x11be0018e591 <Map[16](PACKED_SMI_ELEMENTS)>},#3) => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#17:LoadField(tagged base,11,kRepWord8|kTypeUint32,#4,#16,#14) [Range (0.000000, 255.000000)] => 
+  Value: int8(0)
+  ControlToken: true
+  UB: false
+  Deopt: false
+#18:LoadField(tagged base,12,kRepTaggedSigned|kTypeInt32,#3,#17,#14) [Range (0.000000, 134217725.000000)] => 
+  Value: TaggedSigned(-84)
+  ControlToken: true
+  UB: false
+  Deopt: false
+#19:NumberEqual(#18,#0) [Boolean] => 
+  Value: TaggedPointer(bid: 6, offset: 0) => HeapConstant(True)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#20:Branch(#19,#14) => 
+  Value: empty
+  ControlToken: (ControlTuple true false)
+  UB: false
+  Deopt: false
+#21:IfTrue(#20) => 
+  Value: empty
+  ControlToken: true
+  UB: false
+  Deopt: false
+#22:Return(#1,#21,#18) => 
+  Value: TaggedPointer(bid: 3, offset: 0) => HeapConstant(Undefined)
+  ControlToken: true
+  UB: false
+  Deopt: false
+#23:IfFalse(#20) => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#24:LoadField(tagged base,8,kRepTaggedPointer|kTypeAny,#3,#18,#23) [Internal] => 
+  Value: TaggedPointer(bid: 0, offset: 266623) => BigInt(+158976)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#25:EnsureWritableFastElements(#3,#24,#24,#23) [Internal] => 
+  Value: TaggedPointer(bid: 0, offset: 266623) => BigInt(+158976)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#26:NumberConstant(1) [Range (1.000000, 1.000000)] => 
+  Value: Float64(1)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#27:NumberSubtract(#18,#26) [Range (-1.000000, 134217724.000000)] => 
+  Value: Float64(0)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#28:CheckBounds(2,#27,#18,#25,#23) [Range (0.000000, 134217724.000000)] => 
+  Value: Float64(0)
+  ControlToken: false
+  UB: false
+  Deopt: true
+#29:StoreField(#3,12,kRepTaggedSigned|kTypeInt32,#28,#28,#23) => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: true
+#30:LoadElement(tagged base,8,kRepTaggedSigned|kTypeInt32,#25,#28,#23) [Signed31] => 
+  Value: TaggedSigned(0)
+  ControlToken: false
+  UB: false
+  Deopt: true
+#31:HeapConstant(0x11be0000026d <Other heap object (HOLE_TYPE)>) [Hole] => 
+  Value: TaggedPointer(bid: 0, offset: 620) => BigInt(+0)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#32:StoreElement(tagged base,8,kRepTagged|kTypeAny,#25,#28,#31,#30,#23) => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: true
+#33:Return(#30,#23,#32) => 
+  Value: TaggedSigned(0)
+  ControlToken: false
+  UB: false
+  Deopt: true
+#34:End(#33,#22) => 
+  Value: TaggedPointer(bid: 3, offset: 0) => HeapConstant(Undefined)
+  ControlToken: true
+  UB: false
+  Deopt: false
+
+State of tgt
+#0:Int32Constant(0) => 
+  Value: int32(0)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#1:HeapConstant(0x11be00000251 <undefined>) [Undefined] => 
+  Value: TaggedPointer(bid: 3, offset: 0) => HeapConstant(Undefined)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#2:Start() [Internal] => 
+  Value: empty
+  ControlToken: true
+  UB: false
+  Deopt: false
+#3:Parameter(1) [NonInternal] => 
+  Value: TaggedPointer(bid: 4, offset: 0) => HeapConstant(Null)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#4:Parameter(0) [Receiver] => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#5:TypedStateValues() [Internal] => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#6:TypedStateValues() [Internal] => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#7:TypedStateValues() => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#8:Parameter(4) [OtherInternal] => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#9:HeapConstant(0x11be0004caad <JSFunction foo (sfi = 0x11be0019b851)>) [HeapConstant (0x5604ac2f9ea8)] => 
+  Value: Pointer(#x000011be0004caad)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#10:FrameState() [Internal] => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#11:HeapConstant(0x11be00183ced <NativeContext[280]>) [HeapConstant (0x5604ac2f9e98)] => 
+  Value: TaggedPointer(bid: 0, offset: 1588460) => BigInt(+0)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#12:FrameState() [Internal] => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#13:JSStackCheck(#2,#2) => 
+  Value: empty
+  ControlToken: true
+  UB: false
+  Deopt: false
+#14:Checkpoint() => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#15:CheckedTaggedToTaggedPointer(#3,#14,#13) => 
+  Value: TaggedPointer(bid: 4, offset: 0) => HeapConstant(Null)
+  ControlToken: true
+  UB: false
+  Deopt: false
+#16:CheckMaps(0x5604ac2fa470 {0x11be0018e591 <Map[16](PACKED_SMI_ELEMENTS)>},#15) => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#17:LoadField(tagged base,12,kRepTaggedSigned|kTypeInt32,#3,#16,#13) [Range (0.000000, 134217725.000000)] => 
+  Value: TaggedSigned(-84)
+  ControlToken: true
+  UB: false
+  Deopt: false
+#18:ChangeTaggedSignedToInt32(#17) => 
+  Value: int32(-84)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#19:Word32Equal(#18,#0) [Boolean] => 
+  Value: Bool(0x0)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#20:Branch(#19,#13) => 
+  Value: empty
+  ControlToken: (ControlTuple false true)
+  UB: false
+  Deopt: false
+#21:IfTrue(#20) => 
+  Value: empty
+  ControlToken: false
+  UB: false
+  Deopt: false
+#22:Return(#1,#21,#17) => 
+  Value: TaggedPointer(bid: 3, offset: 0) => HeapConstant(Undefined)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#23:IfFalse(#20) => 
+  Value: empty
+  ControlToken: true
+  UB: false
+  Deopt: false
+#24:LoadField(tagged base,8,kRepTaggedPointer|kTypeAny,#3,#17,#23) [Internal] => 
+  Value: TaggedPointer(bid: 0, offset: 266623) => BigInt(+0)
+  ControlToken: true
+  UB: false
+  Deopt: false
+#25:EnsureWritableFastElements(#3,#24,#24,#23) [Internal] => 
+  Value: TaggedPointer(bid: 0, offset: 266623) => BigInt(+0)
+  ControlToken: true
+  UB: false
+  Deopt: false
+#26:ChangeTaggedSignedToInt32(#17) => 
+  Value: int32(-84)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#27:Int32Constant(1) => 
+  Value: int32(1)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#28:Int32Sub(#26,#27) [Range (-1.000000, 134217724.000000)] => 
+  Value: int32(-85)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#29:ChangeTaggedSignedToInt32(#17) => 
+  Value: int32(-84)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#30:CheckedUint32Bounds(2,#28,#29,#25,#23) [Range (0.000000, 134217724.000000)] => 
+  Value: int32(-85)
+  ControlToken: true
+  UB: false
+  Deopt: false
+#31:ChangeUint32ToUint64(#30) => 
+  Value: uint64(0xffffffab)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#32:ChangeInt31ToTaggedSigned(#30) => 
+  Value: TaggedSigned(-85)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#33:StoreField(#3,12,kRepTaggedSigned|kTypeInt32,#32,#30,#23) => 
+  Value: empty
+  ControlToken: true
+  UB: false
+  Deopt: false
+#34:LoadElement(tagged base,8,kRepTaggedSigned|kTypeInt32,#25,#31,#23) [Signed31] => 
+  Value: TaggedSigned(263489)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#35:ChangeUint32ToUint64(#30) => 
+  Value: uint64(0xffffffab)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#36:HeapConstant(0x11be0000026d <Other heap object (HOLE_TYPE)>) [Hole] => 
+  Value: TaggedPointer(bid: 0, offset: 620) => BigInt(+0)
+  ControlToken: false
+  UB: false
+  Deopt: false
+#37:StoreElement(tagged base,8,kRepTagged|kTypeAny,#25,#35,#36,#34,#23) => 
+  Value: empty
+  ControlToken: true
+  UB: false
+  Deopt: false
+#38:Return(#34,#23,#37) => 
+  Value: TaggedSigned(263489)
+  ControlToken: true
+  UB: false
+  Deopt: false
+#39:End(#38,#22) => 
+  Value: TaggedSigned(263489)
+  ControlToken: true
+  UB: false
+  Deopt: false
+

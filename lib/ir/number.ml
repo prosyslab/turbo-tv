@@ -142,10 +142,8 @@ let equal lnum rnum mem =
                 [ Float64.is_minus_zero lnum_f64; Float64.is_zero rnum_f64 ])
              Bool.tr
              (* lnum = 0 /\ rnum = -0 -> true *)
-             (Bool.ite
-                (Bool.ands
-                   [ Float64.is_minus_zero rnum_f64; Float64.is_zero lnum ])
-                Bool.tr Bool.fl))))
+             (Bool.ands
+                [ Float64.is_minus_zero rnum_f64; Float64.is_zero lnum_f64 ]))))
     Value.tr Value.fl
 
 let less_than lnum rnum mem =

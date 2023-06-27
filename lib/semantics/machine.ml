@@ -487,11 +487,22 @@ let load ptr pos repr control mem state =
   let raw_ptr = moved |> BitVec.extract 31 0 in
   let ty = Type.from_repr repr |> List.hd in
   let value =
-    (if ptr |> Memory.Objects.is_string mem |> Expr.simplify None |> B.is_true
-    then Memory.Strings.load raw_ptr mem |> Str.to_bv (Repr.width_of repr)
-    else Memory.Bytes.load_as raw_ptr repr mem)
-    |> BitVec.zero_extend (64 - Repr.width_of repr)
-    |> Value.entype ty
+    let v =
+      (if ptr |> Memory.Objects.is_string mem |> Expr.simplify None |> B.is_true
+      then Memory.Strings.load raw_ptr mem |> Str.to_bv (Repr.width_of repr)
+      else Memory.Bytes.load_as raw_ptr repr mem)
+      |> BitVec.zero_extend (64 - Repr.width_of repr)
+      |> Value.entype ty
+    in
+    (* if memory is angelic, loading the tagged value always succeeds *)
+    if ty = Type.tagged_signed then
+      Bool.ite
+        (moved |> Memory.is_angelic mem)
+        (BitVec.shli (BitVec.lshri v 1) 1)
+        v
+    else if ty = Type.tagged_pointer then
+      Bool.ite (moved |> Memory.is_angelic mem) (BitVec.ori v 1) v
+    else v
   in
   let assertion =
     Bool.ands
