@@ -189,7 +189,7 @@ let check_wasm nparams program =
     let precond_for_params =
       let params = Params.init nparams in
       List.mapi
-        (fun _ param -> Bool.ors [ param |> Value.has_type Type.tagged_signed ])
+        (fun _ param -> Bool.ors [ param |> Value.has_type Type.undefined ])
         params
       |> Bool.ands
     in
