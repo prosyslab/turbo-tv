@@ -44,7 +44,7 @@ let from_float64 cond mem value_f64 =
   let obj =
     { map = Objmap.heap_number_map; value = value_f64 |> Value.data_of }
   in
-  let mem = store cond ptr obj mem in
+  let mem = store ptr cond obj mem in
   (ptr, mem)
 
 let to_float64 obj = obj.value |> Value.entype Type.float64
