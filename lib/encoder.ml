@@ -997,7 +997,7 @@ let propagate program (state : State.t) =
   let ub = UBFile.find (pc |> string_of_int) uf in
   let deopt = DeoptFile.find (pc |> string_of_int) df in
 
-  let type_assertion, type_is_verified =
+  let type_is_verified =
     let is_angelic_value = AngelicFile.find (pc |> string_of_int) af in
     let ty_check =
       let value = RegisterFile.find (pc |> string_of_int) rf in
@@ -1011,7 +1011,7 @@ let propagate program (state : State.t) =
           else Typer.verify value ty mem
       | None -> Bool.tr
     in
-    (Bool.implies is_angelic_value ty_check, ty_check)
+    Bool.ite is_angelic_value Bool.tr ty_check
   in
   let ub_from_input, deopt_from_input =
     match opcode with
@@ -1092,14 +1092,6 @@ let propagate program (state : State.t) =
     else Bool.ors [ ub; ub_from_input ]
   in
   let deopt = Bool.ors [ deopt; deopt_from_input ] in
-  let state =
-    if state.check_type then
-      {
-        state with
-        assertion = Bool.ands [ state.State.assertion; type_assertion ];
-      }
-    else state
-  in
   state |> State.update ~ub ~deopt
 
 (* encode the program and retrieve a final state *)

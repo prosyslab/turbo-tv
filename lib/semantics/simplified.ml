@@ -460,7 +460,9 @@ let load_field offset repr ptr _eff control mem state =
   {
     state with
     assertion =
-      Bool.implies control (Bool.ands [ state.State.assertion; assertion ]);
+      Bool.ite control
+        (Bool.ands [ state.State.assertion; assertion ])
+        state.State.assertion;
     access_info = State.AccessInfo.add state.State.pc access state.access_info;
   }
   |> State.update ~value ~control ~ub ~is_angelic_value

@@ -7,16 +7,13 @@ let set_assertion program state =
     (fun (pc, (_, opcode, _)) state ->
       let pc = pc |> string_of_int in
       match opcode with
-      | LoadField ->
+      | Load | LoadField ->
           let is_angelic = AngelicFile.find pc state.State.is_angelic_value in
           let value = RegisterFile.find pc state.State.register_file in
           let assertion =
             Bool.implies
               (Bool.ands
-                 [
-                   is_angelic;
-                   BitVec.eqb (Value.ty_of value) Type.tagged_pointer;
-                 ])
+                 [ is_angelic; value |> Value.has_type Type.tagged_pointer ])
               (value |> Memory.is_angelic state.State.memory)
           in
           {

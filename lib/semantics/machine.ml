@@ -455,7 +455,6 @@ let store ptr pos repr value control mem state =
   let ub = Bool.not (Memory.can_access_as moved repr mem) in
   let raw_ptr = moved |> BitVec.extract 31 0 in
   let mem = mem |> Memory.Bytes.store_as (Bool.not ub) raw_ptr repr value in
-
   let access =
     State.AccessInfo.
       {
@@ -465,18 +464,18 @@ let store ptr pos repr value control mem state =
         upper = BitVec.addi (pos |> TaggedPointer.off_of) (repr |> Repr.size_of);
       }
   in
-
   let assertion =
     Bool.implies
       (moved |> Value.has_type Type.tagged_pointer)
       (Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of))
   in
-
   {
     state with
     access_info = State.AccessInfo.add state.State.pc access state.access_info;
     assertion =
-      Bool.implies control (Bool.ands [ state.State.assertion; assertion ]);
+      Bool.ite control
+        (Bool.ands [ state.State.assertion; assertion ])
+        state.State.assertion;
   }
   |> State.update ~mem ~ub
 
@@ -538,7 +537,9 @@ let load ptr pos repr control mem state =
   {
     state with
     assertion =
-      Bool.implies control (Bool.ands [ state.State.assertion; assertion ]);
+      Bool.ite control
+        (Bool.ands [ state.State.assertion; assertion ])
+        state.State.assertion;
     access_info = State.AccessInfo.add state.State.pc access state.access_info;
   }
   |> State.update ~value ~ub ~is_angelic_value
