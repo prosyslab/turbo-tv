@@ -16,11 +16,11 @@ let float32_asin value state =
   state |> State.update ~value
 
 let float32_div lval rval state =
-  let value = Float64.div lval rval in
+  let value = Float32.div lval rval in
   state |> State.update ~value
 
 let float32_neg pval state =
-  let value = Float64.neg pval in
+  let value = Float32.neg pval in
   state |> State.update ~value
 
 let float32_max lval rval state =
@@ -28,7 +28,7 @@ let float32_max lval rval state =
   state |> State.update ~value
 
 let float32_min lval rval state =
-  let value = Float64.min lval rval in
+  let value = Float32.min lval rval in
   state |> State.update ~value
 
 let float32_mul lval rval state =
