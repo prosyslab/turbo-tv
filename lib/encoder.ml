@@ -204,6 +204,12 @@ let encode_instr program ?(check_wasm = false)
   |>
   match opcode with
   (* common: constants *)
+  | Float32Constant ->
+      let c =
+        Operands.const_of_nth operands 0
+        |> Value.from_f32string |> Value.cast Type.float32
+      in
+      float32_constant c
   | Float64Constant ->
       let c =
         Operands.const_of_nth operands 0
@@ -836,6 +842,7 @@ let encode_instr program ?(check_wasm = false)
   | Float32Min -> encode_v2 float32_min
   | Float32Mul -> encode_v2 float32_mul
   | Float32Neg -> encode_v1 float32_neg
+  | Float32Sub -> encode_v2 float32_sub
   | Float64Abs -> encode_v1 float64_abs
   | Float64Add -> encode_v2 float64_add
   | Float64Asin -> encode_v1 float64_asin

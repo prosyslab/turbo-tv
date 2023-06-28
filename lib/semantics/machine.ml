@@ -31,6 +31,10 @@ let float32_min lval rval state =
   let value = Float32.min lval rval in
   state |> State.update ~value
 
+let float32_sub lval rval state =
+  let value = Float32.sub lval rval in
+  state |> State.update ~value
+
 let float32_mul lval rval state =
   let value = Float32.mul lval rval in
   state |> State.update ~value

@@ -4,6 +4,10 @@ module ControlTuple = Control.ControlTuple
 
 (* common: constants *)
 (* assertion: value = c *)
+let float32_constant c state =
+  let value = c |> Value.cast Type.float32 in
+  state |> State.update ~value
+
 let float64_constant c state =
   let value = c |> Value.cast Type.float64 in
   state |> State.update ~value
