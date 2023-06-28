@@ -14,7 +14,7 @@ module P = Z3.Probe
 module SQ = Z3.Seq
 
 (* global param *)
-let _ = Z3.set_global_param "memory_high_watermark" "2147483648"
+let _ = Z3.set_global_param "memory_high_watermark" "4294967296"
 
 (* global context *)
 let ctx = Z3.mk_context [ ("model", "true"); ("timeout", "180000") ]
