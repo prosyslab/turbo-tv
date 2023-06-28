@@ -57,7 +57,7 @@ let number_constant c state =
   let is_int_string s =
     try
       int_of_string s |> ignore;
-      true
+      s <> "-0"
     with Failure _ -> false
   in
   let value =
@@ -258,19 +258,24 @@ let call fname n_return args control state =
   let f_decl = Z3.FuncDecl.mk_func_decl_s ctx fname args_sort return_sort in
 
   let normalized_args =
+    let mem = state.State.memory in
     args
     |> List.map (fun arg ->
-           if Strings.is_string arg state.State.memory = true then arg
+           if Strings.is_string arg mem = true then arg
            else
              Bool.ite
                (* TaggedSigned | HeapNumber | Int32 | Uint32 | Float64 *)
-               (Number.is_number arg state.State.memory)
-               (arg |> Number.to_float64 state.State.memory)
+               (Number.is_number arg mem)
+               (arg |> Number.to_float64 mem)
                (* Int64 *)
                (Bool.ite
                   (arg |> Value.has_type Type.int64)
                   (Int64.div arg (Int64.of_int 2) |> Int64.to_float64)
-                  arg))
+                  (Bool.ite
+                     (* BigInt *)
+                     (arg |> Memory.Objects.is_big_int mem)
+                     ((Bigint.load arg mem).value |> Value.entype Type.int64)
+                     arg)))
   in
   let return = Z3.FuncDecl.apply f_decl normalized_args in
   let value =

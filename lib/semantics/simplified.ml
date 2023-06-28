@@ -372,8 +372,7 @@ let same_value lval rval mem state =
       (Bool.ite (Number.same_value lval rval mem) true_cst false_cst)
       (Bool.ite (Value.eq lval rval) true_cst false_cst)
   in
-
-  state |> number_same_value lval rval mem |> State.update ~value
+  state |> State.update ~value
 
 let speculative_number_equal hint lval rval _eff control mem state =
   let deopt =
