@@ -1017,8 +1017,6 @@ let checked_tagged_to_tagged_pointer pval _checkpoint control state =
 
 let checked_tagged_to_tagged_signed pval _checkpoint control state =
   let deopt = Bool.not (pval |> object_is_smi_) in
-  pval |> Expr.print_simplified;
-  deopt |> Expr.print_simplified;
   state |> State.update ~value:pval ~control ~deopt
 
 let truncate_tagged_to_word32 pval state =
