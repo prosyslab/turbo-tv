@@ -64,6 +64,10 @@ let float64_neg pval state =
   state |> State.update ~value
 
 (* to be fixed *)
+let float32_round_truncate pval state =
+  let value = pval |> Float32.trunc in
+  state |> State.update ~value
+
 let float64_extract_high_word32 pval state =
   let hword32 =
     pval |> Value.data_of |> BitVec.extract 63 32 |> BitVec.zero_extend 32
@@ -214,6 +218,10 @@ let int64_mul_with_overflow lval rval control state =
 
 let round_float64_to_int32 pval state =
   let value = Float64.to_int32 pval in
+  state |> State.update ~value
+
+let round_int32_to_float32 pval state =
+  let value = Int32.to_float32 pval in
   state |> State.update ~value
 
 let uint32_mul_high lval rval state =
@@ -638,8 +646,20 @@ let sign_extend_word8_to_int64 pval state =
   in
   state |> State.update ~value
 
+let truncate_float32_to_int32 pval state =
+  let truncated = pval |> Float32.to_int32 in
+  state |> State.update ~value:truncated
+
+let truncate_float32_to_uint32 pval state =
+  let truncated = pval |> Float32.to_uint32 in
+  state |> State.update ~value:truncated
+
 let truncate_float64_to_int64 pval state =
   let truncated = pval |> Float64.to_int64 in
+  state |> State.update ~value:truncated
+
+let truncate_float64_to_uint32 pval state =
+  let truncated = pval |> Float64.to_uint32 in
   state |> State.update ~value:truncated
 
 let truncate_float64_to_word32 pval state =

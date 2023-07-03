@@ -843,6 +843,7 @@ let encode_instr program ?(check_wasm = false)
   | Float32Mul -> encode_v2 float32_mul
   | Float32Neg -> encode_v1 float32_neg
   | Float32Sub -> encode_v2 float32_sub
+  | Float32RoundTruncate -> encode_v1 float32_round_truncate
   | Float64Abs -> encode_v1 float64_abs
   | Float64Add -> encode_v2 float64_add
   | Float64Asin -> encode_v1 float64_asin
@@ -954,7 +955,10 @@ let encode_instr program ?(check_wasm = false)
   | BitcastTaggedToWord -> encode_v1 bitcast_tagged_to_word
   | BitcastWord32ToWord64 -> encode_v1 bitcast_word32_to_word64
   | BitcastWordToTagged -> encode_v1 bitcast_word_to_tagged
+  | TruncateFloat32ToInt32 -> encode_v1 truncate_float32_to_int32
+  | TruncateFloat32ToUint32 -> encode_v1 truncate_float32_to_uint32
   | TruncateFloat64ToInt64 -> encode_v1 truncate_float64_to_int64
+  | TruncateFloat64ToUint32 -> encode_v1 truncate_float64_to_uint32
   | TruncateFloat64ToWord32 -> encode_v1 truncate_float64_to_word32
   | TruncateInt64ToInt32 -> encode_v1 truncate_int64_to_int32
   (* machine: type-conversion *)
@@ -972,6 +976,7 @@ let encode_instr program ?(check_wasm = false)
   | SignExtendWord32ToInt64 -> encode_v1 sign_extend_word32_to_int64
   | SignExtendWord8ToInt32 -> encode_v1 sign_extend_word8_to_int32
   | SignExtendWord8ToInt64 -> encode_v1 sign_extend_word8_to_int64
+  | RoundInt32ToFloat32 -> encode_v1 round_int32_to_float32
   | RoundFloat64ToInt32 -> encode_v1 round_float64_to_int32
   | Empty -> nop
   | BeginRegion | StateValues | Checkpoint | EffectPhi | TypedStateValues

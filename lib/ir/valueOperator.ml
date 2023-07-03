@@ -357,6 +357,17 @@ module Make_Integer_Operator (I : IntValue) = struct
     BitVec.shli extended 1 |> BitVec.zero_extend 32
     |> Value.entype Type.tagged_signed
 
+  let to_float32 value =
+    let data = value |> from_value in
+    if sign then
+      data
+      |> Float.from_signed_bv ~sort:Z3utils.Float.single_sort
+      |> Float.to_ieee_bv |> BitVec.zero_extend 32 |> Value.entype Type.float32
+    else
+      data
+      |> Float.from_unsigned_bv ~sort:Z3utils.Float.single_sort
+      |> Float.to_ieee_bv |> BitVec.zero_extend 32 |> Value.entype Type.float32
+
   let to_float64 value =
     let data = value |> from_value in
     if sign then

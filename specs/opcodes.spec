@@ -212,7 +212,7 @@ Float32Mul,v1,v2
 Float32Neg,v1
 Float32RoundDown,
 Float32RoundTiesEven,
-Float32RoundTruncate,
+Float32RoundTruncate,v1
 Float32RoundUp,
 Float32Select,
 Float32Sqrt,
@@ -708,7 +708,7 @@ RestLength,
 Retain,
 Return,v2,c1,e1
 RoundFloat64ToInt32,v1
-RoundInt32ToFloat32,
+RoundInt32ToFloat32,v1
 RoundInt64ToFloat32,
 RoundInt64ToFloat64,
 RoundUint32ToFloat32,
@@ -811,11 +811,11 @@ TrapIf,v1,c1
 TrapUnless,b1,v1,c1
 TruncateBigIntToUint64,
 TruncateBigIntToWord64,v1
-TruncateFloat32ToInt32,
-TruncateFloat32ToUint32,
+TruncateFloat32ToInt32,v1
+TruncateFloat32ToUint32,v1
 TruncateFloat64ToFloat32,
 TruncateFloat64ToInt64,v1
-TruncateFloat64ToUint32,
+TruncateFloat64ToUint32,v1
 TruncateFloat64ToWord32,v1
 TruncateInt64ToInt32,v1
 TruncateTaggedPointerToBit,v1
@@ -839,6 +839,7 @@ Uint64Div,
 Uint64LessThan,v1,v2
 Uint64LessThanOrEqual,v1,v2
 Uint64Mod,
+Uint64MulHigh,
 UnalignedLoad,
 UnalignedStore,
 Unreachable,e1,c1
