@@ -282,7 +282,9 @@ module BitVecVal = struct
   let from_istring_trunc ?(len = !bvlen) str = BV.mk_numeral ctx str len
 
   let from_f32string str =
-    Float.from_string ~sort:Float.single_sort str |> Float.to_ieee_bv
+    match str with
+    | "nan" | "-nan" -> Float.nan ~sort:Float.single_sort () |> Float.to_ieee_bv
+    | _ -> Float.from_string ~sort:Float.single_sort str |> Float.to_ieee_bv
 
   let from_f64string str =
     Float.from_string ~sort:Float.double_sort str |> Float.to_ieee_bv
