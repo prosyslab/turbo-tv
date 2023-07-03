@@ -63,7 +63,8 @@ let init name = BitVec.init ~len name
 
 let from_int i = BitVecVal.from_int ~len i |> cast Type.const
 
-let from_f32string s = BitVecVal.from_f32string s |> entype Type.const
+let from_f32string s =
+  BitVecVal.from_f32string s |> BitVec.zero_extend 32 |> entype Type.const
 
 let from_f64string s = BitVecVal.from_f64string s |> entype Type.const
 

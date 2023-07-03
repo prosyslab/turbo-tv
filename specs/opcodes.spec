@@ -209,14 +209,14 @@ Float32LessThanOrEqual,v1,v2
 Float32Max,v1,v2
 Float32Min,v1,v2
 Float32Mul,v1,v2
-Float32Neg,
+Float32Neg,v1
 Float32RoundDown,
 Float32RoundTiesEven,
 Float32RoundTruncate,
 Float32RoundUp,
 Float32Select,
 Float32Sqrt,
-Float32Sub,
+Float32Sub,v1,v2
 Float64Abs,v1
 Float64Acos,
 Float64Acosh,
