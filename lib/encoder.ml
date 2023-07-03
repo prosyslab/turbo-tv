@@ -207,7 +207,8 @@ let encode_instr program ?(check_wasm = false)
   | Float32Constant ->
       let c =
         Operands.const_of_nth operands 0
-        |> Value.from_f32string |> Value.cast Type.float32
+        |> Value.from_f32string |> BitVec.zero_extend 32
+        |> Value.cast Type.float32
       in
       float32_constant c
   | Float64Constant ->
