@@ -6,25 +6,25 @@ let len = 32
 
 let size = 4
 
-let big_int_map = BitVecVal.from_int ~len 0
+let big_int_map = BitVecVal.from_int ~len 1
 
-let boolean_map = BitVecVal.from_int ~len 1
+let boolean_map = BitVecVal.from_int ~len 3
 
-let fixed_array_map = BitVecVal.from_int ~len 2
+let fixed_array_map = BitVecVal.from_int ~len 5
 
-let fixed_double_array_map = BitVecVal.from_int ~len 3
+let fixed_double_array_map = BitVecVal.from_int ~len 7
 
-let weak_fixed_array_map = BitVecVal.from_int ~len 4
+let weak_fixed_array_map = BitVecVal.from_int ~len 9
 
-let heap_number_map = BitVecVal.from_int ~len 5
+let heap_number_map = BitVecVal.from_int ~len 11
 
-let undefined_map = BitVecVal.from_int ~len 6
+let undefined_map = BitVecVal.from_int ~len 13
 
-let null_map = BitVecVal.from_int ~len 7
+let null_map = BitVecVal.from_int ~len 15
 
-let oddball_map = BitVecVal.from_int ~len 8
+let oddball_map = BitVecVal.from_int ~len 17
 
-let string_map = BitVecVal.from_int ~len 9
+let string_map = BitVecVal.from_int ~len 19
 
 let custom_map n = BitVecVal.from_int ~len n
 

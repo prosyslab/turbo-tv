@@ -529,22 +529,7 @@ module Make_Word_Operator (W : WordValue) = struct
         (BitVec.eqb
            (lval |> TaggedPointer.bid_of)
            (rval |> TaggedPointer.bid_of))
-        (Bool.ite
-           (Bool.ors
-              [
-                Bool.ands
-                  [
-                    lval |> Value.has_type Type.tagged_pointer;
-                    Bool.not (rval |> Value.has_type Type.pointer);
-                  ];
-                Bool.ands
-                  [
-                    Bool.not (lval |> Value.has_type Type.pointer);
-                    rval |> Value.has_type Type.tagged_pointer;
-                  ];
-              ])
-           Bool.fl
-           (Z3utils.Bool.eq (lval |> from_value) (rval |> from_value)))
+        (Z3utils.Bool.eq (lval |> from_value) (rval |> from_value))
     else Z3utils.Bool.eq (lval |> from_value) (rval |> from_value)
 
   let eqi lval ri = BitVec.eqi (lval |> from_value) ri

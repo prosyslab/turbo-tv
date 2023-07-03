@@ -313,3 +313,17 @@
   (diff
    regress-type-check-for-angelic-value.expected
    regress-type-check-for-angelic-value.output)))
+
+(rule
+ (targets regress-oddball-map-eq.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../bin/turbo-tv.exe --check-ub regress-oddball-map-eq/src.ir)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff regress-oddball-map-eq.expected regress-oddball-map-eq.output)))
