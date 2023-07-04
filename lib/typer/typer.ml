@@ -166,7 +166,8 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
       let b = ub |> Float64.of_float in
       let a_bound = a |> transform_bound in
       let b_bound = b |> transform_bound in
-      let i32_min = Utils.pow 2 31 + 1 in
+      let i32_max = Utils.pow 2 31 - 1 in
+      let i32_min = Utils.pow 2 31 in
       let sovf =
         Bool.ands
           [
@@ -176,11 +177,25 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
       in
       (* if there is signed overflow, lower-bound is minimum value of type*)
       let lb_v =
-        Bool.ite sovf
+        Bool.ite
+          (Bool.ors
+             [
+               sovf;
+               Float64.is_in_range
+                 (-.(i32_min |> float_of_int) |> Float64.of_float)
+                 a b;
+             ])
           (-.(i32_min |> float_of_int) |> Float64.of_float)
           (Float64.min a_bound b_bound)
       in
-      let ub_v = Float64.max a_bound b_bound in
+      let ub_v =
+        Bool.ite
+          (Float64.is_in_range
+             (i32_max |> float_of_int |> Float64.of_float)
+             a b)
+          (i32_max |> float_of_int |> Float64.of_float)
+          (Float64.max a_bound b_bound)
+      in
       Float64.is_in_range s_v lb_v ub_v
   (* for now, handle only numeric types *)
   | _ -> Bool.tr

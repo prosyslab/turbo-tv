@@ -80,6 +80,12 @@ let i32_m2147483648_in_2147483647_and_2147483649 =
     (Types.Range (2147483647., 2147483649.))
     Bool.tr
 
+let ts_m67117101_in_m2147483648_and_2147483647 =
+  check "ts_m67117101_in_m2147483648_and_2147483647"
+    (mk_tagged_signed (-67117101))
+    (Types.Range (-2147483648., 2147483647.))
+    Bool.tr
+
 let suite =
   "typer test suite"
   >::: [
@@ -98,6 +104,7 @@ let suite =
          i32_zero_in_4294967295_and_4294967296;
          i32_2147483647_in_2147483647_and_2147483649;
          i32_m2147483648_in_2147483647_and_2147483649;
+         ts_m67117101_in_m2147483648_and_2147483647;
        ]
 
 let _ = OUnit2.run_test_tt_main suite

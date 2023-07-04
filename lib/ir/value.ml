@@ -34,9 +34,19 @@ let rec has_type (ty : Type.t) t =
     Bool.ors
       [ t |> has_type Type.tagged_pointer; t |> has_type Type.tagged_signed ]
   else if ty = Type.tagged_signed then
-    Bool.ands [ BitVec.eqb (ty_of t) ty; BitVec.eqi (BitVec.andi t 1) 0 ]
+    Bool.ands
+      [
+        Bool.ors
+          [ BitVec.eqb (ty_of t) ty; BitVec.eqb (ty_of t) Type.any_tagged ];
+        BitVec.eqi (BitVec.andi t 1) 0;
+      ]
   else if ty = Type.tagged_pointer then
-    Bool.ands [ BitVec.eqb (ty_of t) ty; BitVec.eqi (BitVec.andi t 1) 1 ]
+    Bool.ands
+      [
+        Bool.ors
+          [ BitVec.eqb (ty_of t) ty; BitVec.eqb (ty_of t) Type.any_tagged ];
+        BitVec.eqi (BitVec.andi t 1) 1;
+      ]
   else BitVec.eqb (ty_of t) ty
 
 let is_32bit_integer t =
