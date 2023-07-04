@@ -4,16 +4,24 @@ on: [push]
 
 jobs:
   build:
-    runs-on: ubuntu-20.04
-
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up OCaml
         uses: ocaml/setup-ocaml@v2
         with:
           ocaml-compiler: 4.13.1
+
+      - name: Use cached dependencies
+        id: cache-opam
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-opam
+        with:
+          path: ~/.opam
+          key: ${{ env.cache-name }}-build-${{ hashFiles('build.sh') }}
 
       - name: Build TurboTV
         run: |
