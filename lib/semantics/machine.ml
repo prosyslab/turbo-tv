@@ -316,6 +316,11 @@ let word64_reverse_bytes v state =
   let value = v |> Word64.swap in
   state |> State.update ~value
 
+(* machine: control *)
+let word32_select cond tr fl state =
+  let value = Bool.ite (Value.is_true cond) tr fl in
+  state |> State.update ~value
+
 (* machine: comparison *)
 let float32_equal lval rval state =
   let value = Bool.ite (Float32.eq lval rval) Value.tr Value.fl in

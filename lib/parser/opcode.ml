@@ -637,7 +637,6 @@ type t =
   | Word32PairShr
   | Word32Popcnt
   | Word32ReverseBits
-  | Word32Select
   | Word64AtomicAdd
   | Word64AtomicAnd
   | Word64AtomicCompareExchange
@@ -981,6 +980,7 @@ type t =
   | StringConcat
   | StringIndexOf
   | StringSubstring
+  | Word32Select
   (* b1b2b4v1v2v3e1c1 *)
   | StoreElement
   (* v1b3d3v2e1c1 *)
@@ -1146,7 +1146,7 @@ let get_kind opcode =
   | Word32AtomicPairStore | Word32AtomicPairSub | Word32AtomicPairXor
   | Word32AtomicStore | Word32AtomicSub | Word32AtomicXor | Word32Clz
   | Word32Ctz | Word32PairSar | Word32PairShl | Word32PairShr | Word32Popcnt
-  | Word32ReverseBits | Word32Select | Word64AtomicAdd | Word64AtomicAnd
+  | Word32ReverseBits | Word64AtomicAdd | Word64AtomicAnd
   | Word64AtomicCompareExchange | Word64AtomicExchange | Word64AtomicLoad
   | Word64AtomicOr | Word64AtomicStore | Word64AtomicSub | Word64AtomicXor
   | Word64Clz | Word64ClzLowerable | Word64Ctz | Word64CtzLowerable
@@ -1257,7 +1257,8 @@ let get_kind opcode =
   | Phi -> VVC1
   | ProtectedStore | Store -> V1V2B1V3C1
   | Return -> V2C1E1
-  | Select | StringConcat | StringIndexOf | StringSubstring -> V1V2V3
+  | Select | StringConcat | StringIndexOf | StringSubstring | Word32Select ->
+      V1V2V3
   | StoreElement -> B1B2B4V1V2V3E1C1
   | StoreField -> V1B3D3V2E1C1
   | Throw -> C1E1
@@ -1905,7 +1906,6 @@ let of_str str =
   | "Word32PairShr" -> Word32PairShr
   | "Word32Popcnt" -> Word32Popcnt
   | "Word32ReverseBits" -> Word32ReverseBits
-  | "Word32Select" -> Word32Select
   | "Word64AtomicAdd" -> Word64AtomicAdd
   | "Word64AtomicAnd" -> Word64AtomicAnd
   | "Word64AtomicCompareExchange" -> Word64AtomicCompareExchange
@@ -2222,6 +2222,7 @@ let of_str str =
   | "StringConcat" -> StringConcat
   | "StringIndexOf" -> StringIndexOf
   | "StringSubstring" -> StringSubstring
+  | "Word32Select" -> Word32Select
   | "StoreElement" -> StoreElement
   | "StoreField" -> StoreField
   | "Throw" -> Throw
@@ -2823,7 +2824,6 @@ let to_str opcode =
   | Word32PairShr -> "Word32PairShr"
   | Word32Popcnt -> "Word32Popcnt"
   | Word32ReverseBits -> "Word32ReverseBits"
-  | Word32Select -> "Word32Select"
   | Word64AtomicAdd -> "Word64AtomicAdd"
   | Word64AtomicAnd -> "Word64AtomicAnd"
   | Word64AtomicCompareExchange -> "Word64AtomicCompareExchange"
@@ -3140,6 +3140,7 @@ let to_str opcode =
   | StringConcat -> "StringConcat"
   | StringIndexOf -> "StringIndexOf"
   | StringSubstring -> "StringSubstring"
+  | Word32Select -> "Word32Select"
   | StoreElement -> "StoreElement"
   | StoreField -> "StoreField"
   | Throw -> "Throw"

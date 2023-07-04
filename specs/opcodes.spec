@@ -879,7 +879,7 @@ Word32ReverseBytes,v1
 Word32Rol,v1,v2
 Word32Ror,v1,v2
 Word32Sar,b1,v1,v2
-Word32Select,
+Word32Select,v1,v2,v3
 Word32Shl,v1,v2
 Word32Shr,v1,v2
 Word32Xor,v1,v2

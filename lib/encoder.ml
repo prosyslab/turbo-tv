@@ -908,6 +908,8 @@ let encode_instr program ?(check_wasm = false)
   | Float64Equal -> encode_v2 float64_equal
   | Float64LessThan -> encode_v2 float64_less_than
   | Float64LessThanOrEqual -> encode_v2 float64_less_than_or_equal
+  (* machine: control *)
+  | Word32Select -> encode_v3 word32_select
   (* machine: comparison *)
   | StackPointerGreaterThan -> stack_pointer_greater_than
   | Int32LessThan -> encode_v2 int32_less_than
