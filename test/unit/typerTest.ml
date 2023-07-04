@@ -62,6 +62,24 @@ let i64_minus_one_not_in_0_and_4294967295 =
     (Types.Range (0., 4294967295.))
     Bool.fl
 
+let i32_zero_in_4294967295_and_4294967296 =
+  check "i32:0_in_4294967295_and_4294967296"
+    (Value.from_int 0 |> Value.cast Type.int32)
+    (Types.Range (4294967295., 4294967296.))
+    Bool.tr
+
+let i32_2147483647_in_2147483647_and_2147483649 =
+  check "i32:2147483647_in_2147483647_and_2147483649"
+    (Value.from_int 2147483647 |> Value.cast Type.int32)
+    (Types.Range (2147483647., 2147483649.))
+    Bool.tr
+
+let i32_m2147483648_in_2147483647_and_2147483649 =
+  check "i32:m2147483648_in_2147483647_and_2147483649"
+    (Value.from_int (-2147483648) |> Value.cast Type.int32)
+    (Types.Range (2147483647., 2147483649.))
+    Bool.tr
+
 let suite =
   "typer test suite"
   >::: [
@@ -77,6 +95,9 @@ let suite =
          simple_in_range;
          simple_not_in_range;
          i64_minus_one_not_in_0_and_4294967295;
+         i32_zero_in_4294967295_and_4294967296;
+         i32_2147483647_in_2147483647_and_2147483649;
+         i32_m2147483648_in_2147483647_and_2147483649;
        ]
 
 let _ = OUnit2.run_test_tt_main suite

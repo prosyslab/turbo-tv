@@ -1,4 +1,5 @@
 open Z3utils
+module I32 = Int32
 open ValueOperator
 module Boundary = Types.Boundary
 module Objects = Memory.Objects
@@ -62,7 +63,9 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                 if lb == nan && ub == nan then value |> Float64.is_nan
                 else if lb == -0.0 && ub == -0.0 then
                   value |> Float64.is_minus_zero
-                else Float64.is_in_range value lb ub
+                else
+                  Float64.is_in_range value (lb |> Float64.of_float)
+                    (ub |> Float64.of_float)
             | OtherBoundary ->
                 Bool.ite
                   (value |> Value.has_type Type.int64)
@@ -80,8 +83,9 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                         (value |> Value.has_type Type.float64)
                         (Bool.not
                            (Float64.is_in_range value
-                              (-.Stdlib.Float.pow 2.0 31.0)
-                              (Stdlib.Float.pow 2.0 32.0 -. 1.)))
+                              (-.Stdlib.Float.pow 2.0 31.0 |> Float64.of_float)
+                              (Stdlib.Float.pow 2.0 32.0 -. 1.
+                              |> Float64.of_float)))
                         Bool.fl))
           in
           Bool.ors [ verified; in_bound ])
@@ -99,6 +103,30 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
         failwith
           (Format.sprintf "is: wrong number of fields %s" (ty |> Types.to_string))
   | Range (lb, ub) ->
+      let transform_bound b =
+        Bool.ite
+          (value |> Value.has_type Type.int32)
+          (b |> Float64.to_int32 |> Int32.to_float64)
+          (Bool.ite
+             (value |> Value.has_type Type.int64)
+             (b |> Float64.to_int64 |> Int64.to_float64)
+             (Bool.ite
+                (value |> Value.has_type Type.uint32)
+                (b |> Float64.to_uint32 |> Uint32.to_float64)
+                (Bool.ite
+                   (value |> Value.has_type Type.uint64)
+                   (b |> Float64.to_uint64 |> Uint64.to_float64)
+                   (Bool.ite
+                      (value |> Value.has_type Type.tagged_signed)
+                      (b |> Float64.to_tagged_signed |> TaggedSigned.to_float64)
+                      (Bool.ite
+                         (value |> Value.has_type Type.int8)
+                         (b |> Float64.to_int8 |> Int8.to_float64)
+                         (Bool.ite
+                            (value |> Value.has_type Type.uint8)
+                            (b |> Float64.to_uint8 |> Uint8.to_float64)
+                            b))))))
+      in
       let s_v =
         Bool.ite
           (value |> Value.has_type Type.int32)
@@ -134,6 +162,25 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                                   (value |> Number.to_float64 mem)
                                   value))))))))
       in
-      Bool.ors [ Float64.is_in_range s_v lb ub ]
+      let a = lb |> Float64.of_float in
+      let b = ub |> Float64.of_float in
+      let a_bound = a |> transform_bound in
+      let b_bound = b |> transform_bound in
+      let i32_min = Utils.pow 2 31 + 1 in
+      let sovf =
+        Bool.ands
+          [
+            value |> Value.has_type Type.int32;
+            Float64.is_in_range (Float64.of_float (i32_min |> float_of_int)) a b;
+          ]
+      in
+      (* if there is signed overflow, lower-bound is minimum value of type*)
+      let lb_v =
+        Bool.ite sovf
+          (-.(i32_min |> float_of_int) |> Float64.of_float)
+          (Float64.min a_bound b_bound)
+      in
+      let ub_v = Float64.max a_bound b_bound in
+      Float64.is_in_range s_v lb_v ub_v
   (* for now, handle only numeric types *)
   | _ -> Bool.tr

@@ -319,16 +319,17 @@ module Make_Integer_Operator (I : IntValue) = struct
       Bool.ite (BitVec.ugtb (lval |> from_value) (rval |> from_value)) lval rval
 
   let is_in_range value lb ub =
-    let lb_v = Int.min lb ub in
-    let ub_v = Int.max lb ub in
-    let int32_max = Int32.to_int Int32.max_int in
-    let ub_v =
-      if sign = true && width = 32 && ub_v > int32_max then int32_max else ub_v
+    let transform v =
+      (if width <> 64 then
+       let max_ = Utils.pow 2 width in
+       let truncated = v mod max_ in
+       if sign && truncated > max_ / 2 then max_ - truncated else truncated
+      else v)
+      |> Value.from_int |> Value.cast ty
     in
-
-    let lb = lb_v |> Value.from_int |> Value.cast ty in
-    let ub = ub_v |> Value.from_int |> Value.cast ty in
-    Z3utils.Bool.ands [ ge value lb; le value ub ]
+    let lb_v = transform lb in
+    let ub_v = transform ub in
+    Z3utils.Bool.ands [ ge value lb_v; le value ub_v ]
 
   (* conversion *)
   let to_int ty ty_width value =
@@ -773,6 +774,10 @@ module Make_Float_Operator (F : FloatValue) = struct
 
   let to_int64 value = value |> to_intx 64
 
+  let to_uint8 value = value |> to_intx ~sign:false 8
+
+  let to_uint16 value = value |> to_intx ~sign:false 16
+
   let to_uint32 value = value |> to_intx ~sign:false 32
 
   let to_uint64 value = value |> to_intx ~sign:false 64
@@ -825,8 +830,7 @@ module Make_Float_Operator (F : FloatValue) = struct
         le value (of_float (TaggedSigned.max_limit |> float_of_int));
       ]
 
-  let is_in_range value lb ub =
-    Bool.ands [ ge value (of_float lb); le value (of_float ub) ]
+  let is_in_range value lb ub = Bool.ands [ ge value lb; le value ub ]
 
   let can_be_smi value =
     Bool.ands [ value |> is_integer; value |> is_in_smi_range ]
