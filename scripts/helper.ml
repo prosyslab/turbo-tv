@@ -1,10 +1,11 @@
-#require "z3"
+#require "core_unix cmdliner ocamlgraph str re z3"
 
-#mod_use "lib/utils/err.ml"
+#load "_build/default/lib/lib.cma"
 
-#mod_use "lib/utils/z3utils.ml"
+#directory "_build/default/lib/.lib.objs/byte"
 
-open Z3utils
+open Lib.Z3utils
+open Lib.ValueOperator
 
 let pp exp = exp |> Expr.to_simplified_string |> print_endline
 
