@@ -35,6 +35,19 @@ let heap_constant name addr mem state =
     else if String.starts_with ~prefix:"String" name then
       Strings.allocate (Strings.from_string name) mem
       (* Angelic TaggedPointer *)
+    else if String.starts_with ~prefix:"Object map" name then
+      let tp = addr |> Value.cast Type.tagged_pointer in
+      let objmap =
+        (List.nth (String.split_on_char '=' name) 1
+        |> String.trim |> int_of_string)
+        land 0xffffffff
+      in
+      let mem =
+        Memory.Bytes.store Bool.tr
+          (TaggedPointer.to_raw_pointer tp)
+          Objmap.size (Objmap.custom_map objmap) mem
+      in
+      (tp, mem)
     else (addr |> Value.cast Type.tagged_pointer, mem)
   in
   state |> State.update ~value ~mem
@@ -67,7 +80,8 @@ let number_constant c state =
   let value =
     if is_int_string c then
       let c_int = int_of_string c in
-      if TaggedSigned.min_limit <= c_int && c_int <= TaggedSigned.max_limit then
+      if TaggedSigned.lower_limit <= c_int && c_int <= TaggedSigned.upper_limit
+      then
         Int.shift_left c_int 1 |> Value.from_int
         |> Value.cast Type.tagged_signed
       else c |> BitVecVal.from_f64string |> Value.entype Type.float64

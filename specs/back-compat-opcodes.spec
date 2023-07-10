@@ -767,7 +767,7 @@ SpeculativeNumberSubtract,b1,v1,v2,e1,c1
 SpeculativeSafeIntegerAdd,v1,v2,e1,c1
 SpeculativeSafeIntegerSubtract,v1,v2,e1,c1
 SpeculativeToBigInt,
-SpeculativeToNumber,v1,e1,c1
+SpeculativeToNumber,b1,v1,e1,c1
 StackPointerGreaterThan,v1
 StackSlot,
 Start,

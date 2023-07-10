@@ -668,7 +668,6 @@ type t =
   | CheckedUint32ToInt32
   | CheckedUint64ToInt64
   | Deoptimize
-  | SpeculativeToNumber
   (* v1 *)
   | BigIntNegate
   | BitcastFloat32ToInt32
@@ -940,6 +939,7 @@ type t =
   | CheckedTaggedToFloat64
   | CheckedTaggedToInt64
   | CheckedTruncateTaggedToWord32
+  | SpeculativeToNumber
   (* v1v2c1 *)
   | Int32AddWithOverflow
   | Int32Div
@@ -1156,7 +1156,7 @@ let get_kind opcode =
   | Allocate | CheckBigInt | CheckIf | CheckSmi | CheckString
   | CheckedBigIntToBigInt64 | CheckedInt64ToInt32 | CheckedTaggedToTaggedPointer
   | CheckedTaggedToTaggedSigned | CheckedUint32ToInt32 | CheckedUint64ToInt64
-  | Deoptimize | SpeculativeToNumber ->
+  | Deoptimize ->
       V1E1C1
   | BigIntNegate | BitcastFloat32ToInt32 | BitcastFloat64ToInt64
   | BitcastInt64ToFloat64 | BitcastTaggedToWord | BitcastWord32ToWord64
@@ -1242,7 +1242,7 @@ let get_kind opcode =
   | SpeculativeNumberSubtract ->
       B1V1V2E1C1
   | CheckedTaggedToFloat64 | CheckedTaggedToInt64
-  | CheckedTruncateTaggedToWord32 ->
+  | CheckedTruncateTaggedToWord32 | SpeculativeToNumber ->
       B1V1E1C1
   | Int32AddWithOverflow | Int32Div | Int32Mod | Int32MulWithOverflow
   | Int32SubWithOverflow | Int64AddWithOverflow | Int64Div | Int64Mod
@@ -1936,7 +1936,6 @@ let of_str str =
   | "CheckedUint32ToInt32" -> CheckedUint32ToInt32
   | "CheckedUint64ToInt64" -> CheckedUint64ToInt64
   | "Deoptimize" -> Deoptimize
-  | "SpeculativeToNumber" -> SpeculativeToNumber
   | "BigIntNegate" -> BigIntNegate
   | "BitcastFloat32ToInt32" -> BitcastFloat32ToInt32
   | "BitcastFloat64ToInt64" -> BitcastFloat64ToInt64
@@ -2193,6 +2192,7 @@ let of_str str =
   | "CheckedTaggedToFloat64" -> CheckedTaggedToFloat64
   | "CheckedTaggedToInt64" -> CheckedTaggedToInt64
   | "CheckedTruncateTaggedToWord32" -> CheckedTruncateTaggedToWord32
+  | "SpeculativeToNumber" -> SpeculativeToNumber
   | "Int32AddWithOverflow" -> Int32AddWithOverflow
   | "Int32Div" -> Int32Div
   | "Int32Mod" -> Int32Mod
@@ -2854,7 +2854,6 @@ let to_str opcode =
   | CheckedUint32ToInt32 -> "CheckedUint32ToInt32"
   | CheckedUint64ToInt64 -> "CheckedUint64ToInt64"
   | Deoptimize -> "Deoptimize"
-  | SpeculativeToNumber -> "SpeculativeToNumber"
   | BigIntNegate -> "BigIntNegate"
   | BitcastFloat32ToInt32 -> "BitcastFloat32ToInt32"
   | BitcastFloat64ToInt64 -> "BitcastFloat64ToInt64"
@@ -3111,6 +3110,7 @@ let to_str opcode =
   | CheckedTaggedToFloat64 -> "CheckedTaggedToFloat64"
   | CheckedTaggedToInt64 -> "CheckedTaggedToInt64"
   | CheckedTruncateTaggedToWord32 -> "CheckedTruncateTaggedToWord32"
+  | SpeculativeToNumber -> "SpeculativeToNumber"
   | Int32AddWithOverflow -> "Int32AddWithOverflow"
   | Int32Div -> "Int32Div"
   | Int32Mod -> "Int32Mod"

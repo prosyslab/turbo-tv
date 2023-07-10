@@ -1090,18 +1090,10 @@ let number_to_uint32 pval mem state =
   let value = pval |> Number.to_uint32 rf mem in
   state |> State.update ~value
 
-let speculative_to_number pval () control mem state =
+let speculative_to_number hint pval () control mem state =
   let rf = state.State.register_file in
   let deopt =
-    Bool.not
-      (Bool.ors
-         [
-           Number.is_number pval mem;
-           pval |> Value.has_type Type.bool;
-           pval |> Objects.is_null mem;
-           pval |> Objects.is_undefined mem;
-           pval |> Objects.is_boolean mem;
-         ])
+    Bool.not (type_guard hint [ pval ] state.State.register_file mem)
   in
   let value = pval |> Number.to_number rf mem in
   state |> State.update ~value ~deopt ~control

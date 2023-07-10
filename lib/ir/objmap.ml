@@ -47,14 +47,14 @@ let to_string model t =
     with _ -> -1
   in
   match map with
-  | 0 -> "big_int"
-  | 1 -> "boolean"
-  | 2 -> "fixed_array"
-  | 3 -> "fixed_double_array"
-  | 4 -> "weak_fixed_array"
-  | 5 -> "heap_number"
-  | 6 -> "undefined"
-  | 7 -> "null"
-  | 8 -> "oddball"
-  | 9 -> "string"
+  | 1 -> "big_int"
+  | 3 -> "boolean"
+  | 5 -> "fixed_array"
+  | 7 -> "fixed_double_array"
+  | 9 -> "weak_fixed_array"
+  | 11 -> "heap_number"
+  | 13 -> "undefined"
+  | 15 -> "null"
+  | 17 -> "oddball"
+  | 19 -> "string"
   | _ -> Format.sprintf "unknown(map:0x%x)" map

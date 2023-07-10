@@ -789,12 +789,13 @@ let encode_instr program ?(check_wasm = false)
       let pval = RegisterFile.find pid rf in
       number_to_uint32 pval mem
   | SpeculativeToNumber ->
-      let pid = Operands.id_of_nth operands 0 in
-      let _eid = Operands.id_of_nth operands 1 in
-      let cid = Operands.id_of_nth operands 2 in
+      let hint = Operands.const_of_nth operands 0 in
+      let pid = Operands.id_of_nth operands 1 in
+      let _eid = Operands.id_of_nth operands 2 in
+      let cid = Operands.id_of_nth operands 3 in
       let pval = RegisterFile.find pid rf in
       let ctrl = ControlFile.find cid cf in
-      speculative_to_number pval () ctrl mem
+      speculative_to_number hint pval () ctrl mem
   | ToBoolean ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in
