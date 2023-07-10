@@ -1,8 +1,9 @@
 all:
-	dune build
+	dune build bin
 	ln -sf _build/default/bin/turbo-tv.exe turbo-tv
 
 test: all
+	dune build test
 	dune test
 
 clean:
