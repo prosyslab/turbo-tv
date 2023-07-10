@@ -52,6 +52,9 @@ let rec has_type (ty : Type.t) t =
 let is_32bit_integer t =
   Bool.ors [ t |> has_type Type.int32; t |> has_type Type.uint32 ]
 
+let is_64bit_integer t =
+  Bool.ors [ t |> has_type Type.int64; t |> has_type Type.uint64 ]
+
 let is_signed_integer t =
   Bool.ors (List.map (fun ty -> has_type ty t) Type.int_types)
 

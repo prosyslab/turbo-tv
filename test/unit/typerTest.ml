@@ -12,7 +12,7 @@ let check desc value ty expected =
       (ty |> Types.to_string)
   in
   desc >:: fun _ ->
-  assert_equal ~msg ~cmp:(value_eq eq) ~printer type_is_verified expected
+  assert_equal ~msg ~cmp:(value_eq eq) ~printer expected type_is_verified
 
 let mz_is_mz = check "mz_is_mz" Float64.minus_zero Types.MinusZero Bool.tr
 
@@ -86,6 +86,11 @@ let ts_m67117101_in_m2147483648_and_2147483647 =
     (Types.Range (-2147483648., 2147483647.))
     Bool.tr
 
+let i64_m3238265527_in_m4294967295_and_0 =
+  check "i64_m3238265527_in_m4294967295_and_0" (mk_int64 (-3238265527))
+    (Types.Range (-4294967295., 0.))
+    Bool.tr
+
 let suite =
   "typer test suite"
   >::: [
@@ -105,6 +110,7 @@ let suite =
          i32_2147483647_in_2147483647_and_2147483649;
          i32_m2147483648_in_2147483647_and_2147483649;
          ts_m67117101_in_m2147483648_and_2147483647;
+         i64_m3238265527_in_m4294967295_and_0;
        ]
 
 let _ = OUnit2.run_test_tt_main suite

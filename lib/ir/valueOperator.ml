@@ -73,9 +73,9 @@ module TaggedSigned = struct
       ("0" ^ String.sub v_str 1 ((v_str |> String.length) - 1)
       |> Int32.of_string |> Int32.to_int)
 
-  let min_limit = -1073741824
+  let lower_limit = -1073741824
 
-  let max_limit = 1073741823
+  let upper_limit = 1073741823
 end
 
 module TaggedPointer = struct
@@ -262,6 +262,10 @@ module Make_Integer_Operator (I : IntValue) = struct
   (* constants *)
   let zero = BitVecVal.from_int ~len:width 0 |> to_value
 
+  let lower_limit = if sign then -Utils.pow 2 width else 0
+
+  let upper_limit = if sign then Utils.pow 2 (width - 1) else Utils.pow 2 width
+
   let min_limit =
     if sign then
       (* (1 << (width - 1)) *)
@@ -296,14 +300,14 @@ module Make_Integer_Operator (I : IntValue) = struct
     if sign then
       Z3utils.Bool.ands
         [
-          BitVec.sgei (value |> from_value) TaggedSigned.min_limit;
-          BitVec.slei (value |> from_value) TaggedSigned.max_limit;
+          BitVec.sgei (value |> from_value) TaggedSigned.lower_limit;
+          BitVec.slei (value |> from_value) TaggedSigned.upper_limit;
         ]
     else
       Z3utils.Bool.ands
         [
           BitVec.ugei (value |> from_value) 0;
-          BitVec.ulei (value |> from_value) TaggedSigned.max_limit;
+          BitVec.ulei (value |> from_value) TaggedSigned.upper_limit;
         ]
 
   let min lval rval =
@@ -319,17 +323,16 @@ module Make_Integer_Operator (I : IntValue) = struct
       Bool.ite (BitVec.ugtb (lval |> from_value) (rval |> from_value)) lval rval
 
   let is_in_range value lb ub =
-    let transform v =
-      (if width <> 64 then
-       let max_ = Utils.pow 2 width in
-       let truncated = v mod max_ in
-       if sign && truncated > max_ / 2 then max_ - truncated else truncated
-      else v)
-      |> Value.from_int |> Value.cast ty
+    let lb_v = Int.min lb ub in
+    let ub_v = Int.max lb ub in
+    let int32_max = Int32.to_int Int32.max_int in
+    let ub_v =
+      if sign = true && width = 32 && ub_v > int32_max then int32_max else ub_v
     in
-    let lb_v = transform lb in
-    let ub_v = transform ub in
-    Z3utils.Bool.ands [ ge value lb_v; le value ub_v ]
+
+    let lb = lb_v |> Value.from_int |> Value.cast ty in
+    let ub = ub_v |> Value.from_int |> Value.cast ty in
+    Z3utils.Bool.ands [ ge value lb; le value ub ]
 
   (* conversion *)
   let to_int ty ty_width value =
@@ -826,8 +829,8 @@ module Make_Float_Operator (F : FloatValue) = struct
   let is_in_smi_range value =
     Bool.ands
       [
-        ge value (of_float (TaggedSigned.min_limit |> float_of_int));
-        le value (of_float (TaggedSigned.max_limit |> float_of_int));
+        ge value (of_float (TaggedSigned.lower_limit |> float_of_int));
+        le value (of_float (TaggedSigned.upper_limit |> float_of_int));
       ]
 
   let is_in_range value lb ub = Bool.ands [ ge value lb; le value ub ]
