@@ -90,7 +90,8 @@ let check_ub nparams check_type program =
     | UNSATISFIABLE -> Printf.printf "Result: Not Possible\n"
     | UNKNOWN ->
         let reason = Z3.Solver.get_reason_unknown validator in
-        Printf.printf "Result: Unknown\nReason: %s" reason
+        if String.equal "timeout" reason then Printf.printf "Result: Timeout\n"
+        else Printf.printf "Result: Unknown\nReason: %s" reason
 
 let check_eq nparams src_program tgt_program =
   let src_state = Encoder.encode_pgr "src" src_program nparams in
@@ -176,7 +177,8 @@ let check_eq nparams src_program tgt_program =
     | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
     | UNKNOWN ->
         let reason = Z3.Solver.get_reason_unknown validator in
-        Printf.printf "Result: Unknown\nReason: %s\n" reason
+        if String.equal "timeout" reason then Printf.printf "Result: Timeout\n"
+        else Printf.printf "Result: Unknown\nReason: %s" reason
 
 let print_smt2_query nparams program =
   let final_state = Encoder.encode_pgr "pgm" program ~check_wasm:true nparams in
