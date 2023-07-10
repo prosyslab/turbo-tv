@@ -178,7 +178,7 @@ let check_eq nparams src_program tgt_program =
         let reason = Z3.Solver.get_reason_unknown validator in
         Printf.printf "Result: Unknown\nReason: %s\n" reason
 
-let check_wasm nparams program =
+let print_smt2_query nparams program =
   let final_state = Encoder.encode_pgr "pgm" program ~check_wasm:true nparams in
   let precond =
     (* precondition_for_params /\ not (deopt(src) \/ deopt(pgm)) *)
@@ -198,13 +198,7 @@ let check_wasm nparams program =
   let wasm_assertion =
     let pgm_retval = State.retval final_state in
     let ret = Z3.Expr.mk_const_s ctx "ret" (BV.mk_sort ctx Value.len) in
-    Bool.ands
-      [
-        State.assertion final_state;
-        precond;
-        (* Value.has_type Type.tagged_signed pgm_retval; *)
-        Bool.eq ret pgm_retval;
-      ]
+    Bool.ands [ State.assertion final_state; precond; Bool.eq ret pgm_retval ]
   in
 
   if State.not_implemented final_state then (
