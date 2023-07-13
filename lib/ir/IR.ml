@@ -71,7 +71,7 @@ let find_in_succ cond id graph =
     let reason =
       Printf.sprintf "Cannot found node that satisfy your condition"
     in
-    err (NodeNotFound ("", reason))
+    raise (NodeNotFound ("", reason))
 
 let find_by_opcode opcode graph =
   let node =
@@ -132,7 +132,7 @@ let parse_iid line =
   try Re.Group.get (Re.exec re line) 1
   with Not_found ->
     let reason = Format.asprintf "%a" Re.pp_re re in
-    err (NodeNotFound (line, reason))
+    raise (NodeNotFound (line, reason))
 
 let create_from graph_lines =
   let module IN = Map.Make (struct
