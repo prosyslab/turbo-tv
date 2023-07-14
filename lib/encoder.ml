@@ -964,6 +964,10 @@ let encode_instr program ?(check_wasm = false)
   | TruncateFloat64ToUint32 -> encode_v1 truncate_float64_to_uint32
   | TruncateFloat64ToWord32 -> encode_v1 truncate_float64_to_word32
   | TruncateInt64ToInt32 -> encode_v1 truncate_int64_to_int32
+  | TryTruncateFloat32ToInt64 -> encode_v1 try_truncate_float32_to_int64
+  | TryTruncateFloat32ToUint64 -> encode_v1 try_truncate_float32_to_uint64
+  | TryTruncateFloat64ToInt64 -> encode_v1 try_truncate_float64_to_int64
+  | TryTruncateFloat64ToUint64 -> encode_v1 try_truncate_float64_to_uint64
   (* machine: type-conversion *)
   | ChangeFloat64ToInt32 -> encode_v1 change_float64_to_int32
   | ChangeFloat64ToInt64 -> encode_v1 change_float64_to_int64

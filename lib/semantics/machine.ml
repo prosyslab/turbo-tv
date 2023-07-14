@@ -674,3 +674,59 @@ let truncate_float64_to_word32 pval state =
 let truncate_int64_to_int32 pval state =
   let value = pval |> Int64.to_int Type.int32 32 in
   state |> State.update ~value
+
+let try_truncate_float32_to_int64 pval state =
+  let cond =
+    Float32.lt (Float32.abs pval)
+      (Value.from_f32string "9.2233720368547758e+18" |> Value.cast Type.float32)
+  in
+  let truncated =
+    Bool.ite cond (Float32.to_int64 pval)
+      ("-9223372036854775808" |> BitVecVal.from_istring
+     |> Value.entype Type.int64)
+  in
+  let excpt = Bool.ite cond Value.fl Value.tr in
+  let value = Composed.from_values [ truncated; excpt ] in
+  state |> State.update ~value
+
+let try_truncate_float32_to_uint64 pval state =
+  let cond =
+    Float32.lt (Float32.abs pval)
+      (Value.from_f32string "9.2233720368547758e+18" |> Value.cast Type.float32)
+  in
+  let truncated =
+    Bool.ite cond (Float32.to_int64 pval)
+      ("-9223372036854775808" |> BitVecVal.from_istring
+     |> Value.entype Type.uint64)
+  in
+  let excpt = Bool.ite cond Value.fl Value.tr in
+  let value = Composed.from_values [ truncated; excpt ] in
+  state |> State.update ~value
+
+let try_truncate_float64_to_int64 pval state =
+  let cond =
+    Float64.lt (Float64.abs pval)
+      (Value.from_f64string "9.2233720368547758e+18" |> Value.cast Type.float64)
+  in
+  let truncated =
+    Bool.ite cond (Float64.to_int64 pval)
+      ("-9223372036854775808" |> BitVecVal.from_istring
+     |> Value.entype Type.int64)
+  in
+  let excpt = Bool.ite cond Value.fl Value.tr in
+  let value = Composed.from_values [ truncated; excpt ] in
+  state |> State.update ~value
+
+let try_truncate_float64_to_uint64 pval state =
+  let cond =
+    Float64.lt (Float64.abs pval)
+      (Value.from_f64string "9.2233720368547758e+18" |> Value.cast Type.float64)
+  in
+  let truncated =
+    Bool.ite cond (Float64.to_int64 pval)
+      ("-9223372036854775808" |> BitVecVal.from_istring
+     |> Value.entype Type.uint64)
+  in
+  let excpt = Bool.ite cond Value.fl Value.tr in
+  let value = Composed.from_values [ truncated; excpt ] in
+  state |> State.update ~value

@@ -822,10 +822,10 @@ TruncateTaggedPointerToBit,v1
 TruncateTaggedToBit,v1
 TruncateTaggedToFloat64,
 TruncateTaggedToWord32,v1
-TryTruncateFloat32ToInt64,
-TryTruncateFloat32ToUint64,
-TryTruncateFloat64ToInt64,
-TryTruncateFloat64ToUint64,
+TryTruncateFloat32ToInt64,v1
+TryTruncateFloat32ToUint64,v1
+TryTruncateFloat64ToInt64,v1
+TryTruncateFloat64ToUint64,v1
 TypeGuard,
 TypeOf,
 TypedObjectState,

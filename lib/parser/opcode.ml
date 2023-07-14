@@ -595,10 +595,6 @@ type t =
   | TruncateBigIntToUint64
   | TruncateFloat64ToFloat32
   | TruncateTaggedToFloat64
-  | TryTruncateFloat32ToInt64
-  | TryTruncateFloat32ToUint64
-  | TryTruncateFloat64ToInt64
-  | TryTruncateFloat64ToUint64
   | TypeGuard
   | TypeOf
   | TypedObjectState
@@ -759,6 +755,10 @@ type t =
   | TruncateTaggedPointerToBit
   | TruncateTaggedToBit
   | TruncateTaggedToWord32
+  | TryTruncateFloat32ToInt64
+  | TryTruncateFloat32ToUint64
+  | TryTruncateFloat64ToInt64
+  | TryTruncateFloat64ToUint64
   | Word32ReverseBytes
   | Word64ReverseBytes
   (* e1 *)
@@ -1134,9 +1134,7 @@ let get_kind opcode =
   | TailCall | Terminate | TransitionAndStoreElement
   | TransitionAndStoreNonNumberElement | TransitionAndStoreNumberElement
   | TransitionElementsKind | TruncateBigIntToUint64 | TruncateFloat64ToFloat32
-  | TruncateTaggedToFloat64 | TryTruncateFloat32ToInt64
-  | TryTruncateFloat32ToUint64 | TryTruncateFloat64ToInt64
-  | TryTruncateFloat64ToUint64 | TypeGuard | TypeOf | TypedObjectState
+  | TruncateTaggedToFloat64 | TypeGuard | TypeOf | TypedObjectState
   | TypedStateValues | Uint64Div | Uint64Mod | Uint64MulHigh | UnalignedLoad
   | UnalignedStore | UnsafePointerAdd | Unsigned32Divide | V128AnyTrue
   | VerifyType | Word32AtomicAdd | Word32AtomicAnd | Word32AtomicCompareExchange
@@ -1184,7 +1182,9 @@ let get_kind opcode =
   | TruncateBigIntToWord64 | TruncateFloat32ToInt32 | TruncateFloat32ToUint32
   | TruncateFloat64ToInt64 | TruncateFloat64ToUint32 | TruncateFloat64ToWord32
   | TruncateInt64ToInt32 | TruncateTaggedPointerToBit | TruncateTaggedToBit
-  | TruncateTaggedToWord32 | Word32ReverseBytes | Word64ReverseBytes ->
+  | TruncateTaggedToWord32 | TryTruncateFloat32ToInt64
+  | TryTruncateFloat32ToUint64 | TryTruncateFloat64ToInt64
+  | TryTruncateFloat64ToUint64 | Word32ReverseBytes | Word64ReverseBytes ->
       V1
   | BeginRegion -> E1
   | IfFalse | IfSuccess | IfTrue -> C1
@@ -1864,10 +1864,6 @@ let of_str str =
   | "TruncateBigIntToUint64" -> TruncateBigIntToUint64
   | "TruncateFloat64ToFloat32" -> TruncateFloat64ToFloat32
   | "TruncateTaggedToFloat64" -> TruncateTaggedToFloat64
-  | "TryTruncateFloat32ToInt64" -> TryTruncateFloat32ToInt64
-  | "TryTruncateFloat32ToUint64" -> TryTruncateFloat32ToUint64
-  | "TryTruncateFloat64ToInt64" -> TryTruncateFloat64ToInt64
-  | "TryTruncateFloat64ToUint64" -> TryTruncateFloat64ToUint64
   | "TypeGuard" -> TypeGuard
   | "TypeOf" -> TypeOf
   | "TypedObjectState" -> TypedObjectState
@@ -2026,6 +2022,10 @@ let of_str str =
   | "TruncateTaggedPointerToBit" -> TruncateTaggedPointerToBit
   | "TruncateTaggedToBit" -> TruncateTaggedToBit
   | "TruncateTaggedToWord32" -> TruncateTaggedToWord32
+  | "TryTruncateFloat32ToInt64" -> TryTruncateFloat32ToInt64
+  | "TryTruncateFloat32ToUint64" -> TryTruncateFloat32ToUint64
+  | "TryTruncateFloat64ToInt64" -> TryTruncateFloat64ToInt64
+  | "TryTruncateFloat64ToUint64" -> TryTruncateFloat64ToUint64
   | "Word32ReverseBytes" -> Word32ReverseBytes
   | "Word64ReverseBytes" -> Word64ReverseBytes
   | "BeginRegion" -> BeginRegion
@@ -2782,10 +2782,6 @@ let to_str opcode =
   | TruncateBigIntToUint64 -> "TruncateBigIntToUint64"
   | TruncateFloat64ToFloat32 -> "TruncateFloat64ToFloat32"
   | TruncateTaggedToFloat64 -> "TruncateTaggedToFloat64"
-  | TryTruncateFloat32ToInt64 -> "TryTruncateFloat32ToInt64"
-  | TryTruncateFloat32ToUint64 -> "TryTruncateFloat32ToUint64"
-  | TryTruncateFloat64ToInt64 -> "TryTruncateFloat64ToInt64"
-  | TryTruncateFloat64ToUint64 -> "TryTruncateFloat64ToUint64"
   | TypeGuard -> "TypeGuard"
   | TypeOf -> "TypeOf"
   | TypedObjectState -> "TypedObjectState"
@@ -2944,6 +2940,10 @@ let to_str opcode =
   | TruncateTaggedPointerToBit -> "TruncateTaggedPointerToBit"
   | TruncateTaggedToBit -> "TruncateTaggedToBit"
   | TruncateTaggedToWord32 -> "TruncateTaggedToWord32"
+  | TryTruncateFloat32ToInt64 -> "TryTruncateFloat32ToInt64"
+  | TryTruncateFloat32ToUint64 -> "TryTruncateFloat32ToUint64"
+  | TryTruncateFloat64ToInt64 -> "TryTruncateFloat64ToInt64"
+  | TryTruncateFloat64ToUint64 -> "TryTruncateFloat64ToUint64"
   | Word32ReverseBytes -> "Word32ReverseBytes"
   | Word64ReverseBytes -> "Word64ReverseBytes"
   | BeginRegion -> "BeginRegion"
