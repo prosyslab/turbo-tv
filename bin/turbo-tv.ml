@@ -109,7 +109,7 @@ let main () =
       let pgm_p = print_query in
       let pgm = IR.create_from_ir_file pgm_p in
       if not_target_op_exists pgm then Printf.printf "Result: Not target\n"
-      else Tv.print_smt2_query nparams pgm
+      else Tv.print_smt2_query 3 pgm
     with
     | Err.NodeNotFound _ ->
         Printf.printf
