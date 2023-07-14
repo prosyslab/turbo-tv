@@ -170,10 +170,10 @@ module Float = struct
   let from_float ?(sort = !float_sort) f = Fl.mk_numeral_f ctx f sort
 
   let from_string ?(sort = !float_sort) s =
-    if String.equal s "nan" then nan ()
-    else if String.equal s "-nan" then nan ()
-    else if String.equal s "inf" then inf ()
-    else if String.equal s "-inf" then ninf ()
+    if String.equal s "nan" then nan ~sort ()
+    else if String.equal s "-nan" then nan ~sort ()
+    else if String.equal s "inf" then inf ~sort ()
+    else if String.equal s "-inf" then ninf ~sort ()
     else
       try Fl.mk_numeral_s ctx s sort
       with _ ->
@@ -283,7 +283,6 @@ module BitVecVal = struct
 
   let from_f32string str =
     match str with
-    | "nan" | "-nan" -> Float.nan ~sort:Float.single_sort () |> Float.to_ieee_bv
     | _ -> Float.from_string ~sort:Float.single_sort str |> Float.to_ieee_bv
 
   let from_f64string str =
