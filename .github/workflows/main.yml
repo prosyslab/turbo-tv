@@ -20,7 +20,9 @@ jobs:
         env:
           cache-name: cache-opam
         with:
-          path: ~/.opam
+          path: | 
+            ~/.opam
+            ./_opam
           key: ${{ env.cache-name }}-build-${{ hashFiles('build.sh') }}
 
       - name: Build TurboTV
