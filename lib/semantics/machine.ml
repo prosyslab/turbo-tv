@@ -692,7 +692,7 @@ let try_truncate_float32_to_int64 pval state =
 let try_truncate_float32_to_uint64 pval state =
   let cond =
     Float32.lt (Float32.abs pval)
-      (Value.from_f32string "9.2233720368547758e+18" |> Value.cast Type.float32)
+      (Value.from_f32string "1.8446744073709552e+19" |> Value.cast Type.float32)
   in
   let truncated =
     Bool.ite cond (Float32.to_int64 pval)
@@ -720,7 +720,7 @@ let try_truncate_float64_to_int64 pval state =
 let try_truncate_float64_to_uint64 pval state =
   let cond =
     Float64.lt (Float64.abs pval)
-      (Value.from_f64string "9.2233720368547758e+18" |> Value.cast Type.float64)
+      (Value.from_f64string "1.8446744073709552e+19" |> Value.cast Type.float64)
   in
   let truncated =
     Bool.ite cond (Float64.to_int64 pval)
