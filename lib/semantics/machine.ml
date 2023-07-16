@@ -685,7 +685,7 @@ let try_truncate_float32_to_int64 pval state =
       ("-9223372036854775808" |> BitVecVal.from_istring
      |> Value.entype Type.int64)
   in
-  let excpt = Bool.ite cond Value.fl Value.tr in
+  let excpt = Bool.ite cond Value.tr Value.fl in
   let value = Composed.from_values [ truncated; excpt ] in
   state |> State.update ~value
 
@@ -699,7 +699,7 @@ let try_truncate_float32_to_uint64 pval state =
       ("-9223372036854775808" |> BitVecVal.from_istring
      |> Value.entype Type.uint64)
   in
-  let excpt = Bool.ite cond Value.fl Value.tr in
+  let excpt = Bool.ite cond Value.tr Value.fl in
   let value = Composed.from_values [ truncated; excpt ] in
   state |> State.update ~value
 
@@ -713,7 +713,7 @@ let try_truncate_float64_to_int64 pval state =
       ("-9223372036854775808" |> BitVecVal.from_istring
      |> Value.entype Type.int64)
   in
-  let excpt = Bool.ite cond Value.fl Value.tr in
+  let excpt = Bool.ite cond Value.tr Value.fl in
   let value = Composed.from_values [ truncated; excpt ] in
   state |> State.update ~value
 
@@ -727,6 +727,6 @@ let try_truncate_float64_to_uint64 pval state =
       ("-9223372036854775808" |> BitVecVal.from_istring
      |> Value.entype Type.uint64)
   in
-  let excpt = Bool.ite cond Value.fl Value.tr in
+  let excpt = Bool.ite cond Value.tr Value.fl in
   let value = Composed.from_values [ truncated; excpt ] in
   state |> State.update ~value
