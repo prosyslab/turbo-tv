@@ -57,14 +57,47 @@ let rec verify (value : Value.t) (ty : Types.t) mem =
                                     (Bool.ite
                                        (value |> Value.has_type Type.uint8)
                                        (Uint8.is_in_range value lb ub)
-                                       Bool.fl)))))))
+                                       (Bool.ite
+                                          (value |> Value.has_type Type.bool)
+                                          (Int32.is_in_range value lb ub)
+                                          Bool.fl))))))))
             | FloatBoundary (lb, ub) ->
-                if lb == nan && ub == nan then value |> Float64.is_nan
+                if lb == nan && ub == nan then 
+                  Bool.ite (value |> Value.has_type Type.float32)
+                  (value |> Float32.is_nan)
+                  (value |> Float64.is_nan)
                 else if lb == -0.0 && ub == -0.0 then
                   value |> Float64.is_minus_zero
                 else
-                  Float64.is_in_range value (lb |> Float64.of_float)
-                    (ub |> Float64.of_float)
+                  Bool.ite 
+                     (value |> Value.has_type Type.float32)
+                     (Float32.is_in_range value 
+                     (lb |> Float32.of_float)
+                     (ub |> Float32.of_float))
+                     (Bool.ite 
+                        (value |> Value.has_type Type.float64)
+                        (Float64.is_in_range value 
+                        (lb |> Float64.of_float)
+                        (ub |> Float64.of_float))
+                        (Bool.ite
+                           (value |> Value.has_type Type.int32)
+                           (Float32.is_in_range 
+                           (Int32.to_float32 value) 
+                           (lb |> Float32.of_float)
+                           (ub |> Float32.of_float))
+                           ((Bool.ite 
+                           (value |> Value.has_type Type.int64)
+                              (Float32.is_in_range 
+                              (Int64.to_float32 value) 
+                              (lb |> Float32.of_float)
+                              (ub |> Float32.of_float))
+                              ((Bool.ite 
+                                 (value |> Value.has_type Type.bool)
+                                 (Float32.is_in_range 
+                                 (Int32.to_float32 value) 
+                                 (lb |> Float32.of_float)
+                                 (ub |> Float32.of_float))
+                                 (Bool.fl)))))))
             | OtherBoundary ->
                 Bool.ite
                   (value |> Value.has_type Type.int64)

@@ -993,6 +993,10 @@ let decompose t =
         OtherInternal;
         Undefined;
       ]
+  | Wasmi32 -> [ Wasmi32 ]
+  | Wasmi64 -> [ Wasmi64 ]
+  | Wasmf32 -> [ Wasmf32 ]
+  | Wasmf64 -> [ Wasmf64 ]
   | None -> [ None ]
   | Any ->
       [
@@ -1104,6 +1108,10 @@ module Boundary = struct
     | MinusZero -> FloatBoundary (-0.0, -0.0)
     | NaN -> FloatBoundary (nan, nan)
     | OtherNumber -> OtherBoundary
+    | Wasmi32 -> FloatBoundary (-2147483648., 2147483647.)
+    | Wasmi64 -> FloatBoundary (-9223372036854775808., 9223372036854775807.)
+    | Wasmf32 -> FloatBoundary (-3.4e+38, 3.4e+38)
+    | Wasmf64 -> FloatBoundary (-1.7e+308, 1.7e+308)
     | _ -> failwith "unimplemented"
 
   let int_range_of t =
