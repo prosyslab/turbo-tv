@@ -41,7 +41,6 @@ type kind =
   | B1B2B4V1V2V3E1C1
   | V1B3D3V2E1C1
   | C1E1
-  | B1V1C1
   | B1V1V2
   | Empty
 
@@ -769,7 +768,6 @@ type t =
   | IfTrue
   (* v1c1 *)
   | AllocateRaw
-  | TrapIf
   (* v1v2 *)
   | BigIntAdd
   | BigIntBitwiseAnd
@@ -987,7 +985,7 @@ type t =
   | StoreField
   (* c1e1 *)
   | Throw
-  (* b1v1c1 *)
+  | TrapIf
   | TrapUnless
   (* b1v1v2 *)
   | Word32Sar
@@ -1188,7 +1186,7 @@ let get_kind opcode =
       V1
   | BeginRegion -> E1
   | IfFalse | IfSuccess | IfTrue -> C1
-  | AllocateRaw | TrapIf -> V1C1
+  | AllocateRaw -> V1C1
   | BigIntAdd | BigIntBitwiseAnd | BigIntBitwiseOr | BigIntBitwiseXor
   | BigIntDivide | BigIntEqual | BigIntLessThan | BigIntLessThanOrEqual
   | BigIntModulus | BigIntMultiply | BigIntShiftLeft | BigIntShiftRight
@@ -1261,8 +1259,7 @@ let get_kind opcode =
       V1V2V3
   | StoreElement -> B1B2B4V1V2V3E1C1
   | StoreField -> V1B3D3V2E1C1
-  | Throw -> C1E1
-  | TrapUnless -> B1V1C1
+  | Throw | TrapIf | TrapUnless -> C1E1
   | Word32Sar | Word64Sar -> B1V1V2
   | Empty -> Empty
 
@@ -1307,7 +1304,6 @@ let split_kind kind =
   | B1B2B4V1V2V3E1C1 -> [ B1; B2; B4; V1; V2; V3; E1; C1 ]
   | V1B3D3V2E1C1 -> [ V1; B3; D3; V2; E1; C1 ]
   | C1E1 -> [ C1; E1 ]
-  | B1V1C1 -> [ B1; V1; C1 ]
   | B1V1V2 -> [ B1; V1; V2 ]
   | Empty -> [ Empty ]
 
@@ -2033,7 +2029,6 @@ let of_str str =
   | "IfSuccess" -> IfSuccess
   | "IfTrue" -> IfTrue
   | "AllocateRaw" -> AllocateRaw
-  | "TrapIf" -> TrapIf
   | "BigIntAdd" -> BigIntAdd
   | "BigIntBitwiseAnd" -> BigIntBitwiseAnd
   | "BigIntBitwiseOr" -> BigIntBitwiseOr
@@ -2226,6 +2221,7 @@ let of_str str =
   | "StoreElement" -> StoreElement
   | "StoreField" -> StoreField
   | "Throw" -> Throw
+  | "TrapIf" -> TrapIf
   | "TrapUnless" -> TrapUnless
   | "Word32Sar" -> Word32Sar
   | "Word64Sar" -> Word64Sar
@@ -2951,7 +2947,6 @@ let to_str opcode =
   | IfSuccess -> "IfSuccess"
   | IfTrue -> "IfTrue"
   | AllocateRaw -> "AllocateRaw"
-  | TrapIf -> "TrapIf"
   | BigIntAdd -> "BigIntAdd"
   | BigIntBitwiseAnd -> "BigIntBitwiseAnd"
   | BigIntBitwiseOr -> "BigIntBitwiseOr"
@@ -3144,6 +3139,7 @@ let to_str opcode =
   | StoreElement -> "StoreElement"
   | StoreField -> "StoreField"
   | Throw -> "Throw"
+  | TrapIf -> "TrapIf"
   | TrapUnless -> "TrapUnless"
   | Word32Sar -> "Word32Sar"
   | Word64Sar -> "Word64Sar"

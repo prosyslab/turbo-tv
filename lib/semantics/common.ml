@@ -178,45 +178,9 @@ let deoptimize_unless cond _frame _mem control ctrl_is_angelic state =
   state |> State.update ~control ~deopt ~is_angelic_value:ctrl_is_angelic
 
 (* common: trap *)
-let trap_if cond control control_is_angelic state =
-  let ub =
-    Bool.ands [ control; Bool.not control_is_angelic; Value.is_true cond ]
-  in
-  state |> State.update ~ub ~control
+let trap_if control state = state |> State.update ~control
 
-let trap_unless hint value control control_is_angelic state =
-  let ub =
-    if hint = "TrapDivByZero" || hint = "TrapRemByZero" then
-      Bool.ands
-        [
-          control;
-          Bool.not control_is_angelic;
-          Bool.ite
-            (value |> Value.has_type Type.int32)
-            (Int32.is_zero value)
-            (Bool.ite
-               (value |> Value.has_type Type.int64)
-               (Int64.is_zero value)
-               (Bool.ite
-                  (value |> Value.has_type Type.uint32)
-                  (Uint32.is_zero value)
-                  (Bool.ite
-                     (value |> Value.has_type Type.uint64)
-                     (Uint64.is_zero value)
-                     (Bool.ite
-                        (value |> Value.has_type Type.float32)
-                        (Float32.is_zero value)
-                        (Bool.ite
-                           (value |> Value.has_type Type.int64)
-                           (Float64.is_zero value) Bool.tr)))));
-        ]
-    else if hint = "TrapUnreachable" then
-      Bool.ands [ control; Bool.not control_is_angelic ]
-    else if hint = "TrapFloatUnrepresentable" then
-      Bool.ands [ control; Bool.not control_is_angelic; Value.is_false value ]
-    else Bool.tr
-  in
-  state |> State.update ~ub ~control
+let trap_unless control state = state |> State.update ~control
 
 (* common: procedure *)
 let end_ retvals _retmems retctrls state =

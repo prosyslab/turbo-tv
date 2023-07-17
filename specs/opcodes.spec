@@ -807,8 +807,8 @@ TransitionAndStoreElement,
 TransitionAndStoreNonNumberElement,
 TransitionAndStoreNumberElement,
 TransitionElementsKind,
-TrapIf,v1,c1
-TrapUnless,b1,v1,c1
+TrapIf,c1,e1
+TrapUnless,c1,e1
 TruncateBigIntToUint64,
 TruncateBigIntToWord64,v1
 TruncateFloat32ToInt32,v1
