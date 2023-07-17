@@ -7,6 +7,7 @@ type conf = {
   print_query : string;
   check_type : bool;
   emit_graph : bool;
+  nparams : int;
 }
 
 let jstv_args =
@@ -31,12 +32,16 @@ let jstv_args =
     let doc = "print SMT query for the [IR]" in
     Arg.(value & opt file "" & info [ "print-query" ] ~doc)
   in
-  let mk_conf verify check_ub check_type emit_graph print_query =
-    { verify; check_ub; check_type; emit_graph; print_query }
+  let nparams_arg =
+    let doc = "Enter the number of parameters for the function" in
+    Arg.(value & opt int 2 & info [ "nparams" ] ~doc)
+  in
+  let mk_conf verify check_ub check_type emit_graph print_query nparams =
+    { verify; check_ub; check_type; emit_graph; print_query; nparams }
   in
   Term.(
     const mk_conf $ verify_arg $ check_ub_arg $ type_check_arg $ emit_graph_arg
-    $ print_query_arg)
+    $ print_query_arg $ nparams_arg)
 
 let parse_command_line () =
   let doc = "Translation validation for TurboFan IR" in
@@ -60,8 +65,7 @@ let not_target_op_exists pgm =
 let main () =
   Printexc.record_backtrace true;
   (* number of parameters (currenty fixed to 2) *)
-  let nparams = 2 in
-  let { verify; check_ub; check_type; emit_graph; print_query } =
+  let { verify; check_ub; check_type; emit_graph; print_query; nparams } =
     parse_command_line ()
   in
 
@@ -84,7 +88,7 @@ let main () =
         IR.generate_graph_output "target.dot" tgt);
       if not_target_op_exists src || not_target_op_exists tgt then
         Printf.printf "Result: Not target\n"
-      else Tv.check_eq nparams src tgt
+      else Tv.check_eq ~nparams src tgt
     with
     | Err.NodeNotFound _ ->
         Printf.printf
@@ -97,7 +101,7 @@ let main () =
       let pgm_p = check_ub in
       let pgm = IR.create_from_ir_file pgm_p in
       if not_target_op_exists pgm then Printf.printf "Result: Not target\n"
-      else Tv.check_ub nparams check_type pgm
+      else Tv.check_ub ~nparams check_type pgm
     with
     | Err.NodeNotFound _ ->
         Printf.printf
@@ -109,7 +113,7 @@ let main () =
       let pgm_p = print_query in
       let pgm = IR.create_from_ir_file pgm_p in
       if not_target_op_exists pgm then Printf.printf "Result: Not target\n"
-      else Tv.print_smt2_query 3 pgm
+      else Tv.print_smt2_query ~nparams pgm
     with
     | Err.NodeNotFound _ ->
         Printf.printf

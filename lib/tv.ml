@@ -56,7 +56,7 @@ let precondition_for_params nparams state =
     params
   |> Bool.ands
 
-let check_ub nparams check_type program =
+let check_ub ?(nparams = 2) check_type program =
   let state = Encoder.encode_pgr "pgm" program ~check_type nparams in
   let precond =
     (* precondition_for_params /\ not deopt(pgm) *)
@@ -93,7 +93,7 @@ let check_ub nparams check_type program =
         if String.equal "timeout" reason then Printf.printf "Result: Timeout\n"
         else Printf.printf "Result: Unknown\nReason: %s" reason
 
-let check_eq nparams src_program tgt_program =
+let check_eq ?(nparams = 2) src_program tgt_program =
   let src_state = Encoder.encode_pgr "src" src_program nparams in
   let tgt_state = Encoder.encode_pgr "tgt" tgt_program nparams in
   let precond =
@@ -180,7 +180,7 @@ let check_eq nparams src_program tgt_program =
         if String.equal "timeout" reason then Printf.printf "Result: Timeout\n"
         else Printf.printf "Result: Unknown\nReason: %s" reason
 
-let print_smt2_query nparams program =
+let print_smt2_query ?(nparams = 2) program =
   let final_state = Encoder.encode_pgr "pgm" program ~check_wasm:true nparams in
   let precond =
     (* precondition_for_params /\ not (deopt(src) \/ deopt(pgm)) *)
