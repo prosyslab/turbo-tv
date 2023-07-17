@@ -1,0 +1,23 @@
+#37:NumberConstant[0]()()()  [Type: Range(0, 0)]
+#3:HeapConstant[0x227900000251 <undefined>]()()()  [Type: Undefined]
+#44:HeapConstant[0x227900188b69 <JSFunction String (sfi = 0x227900146b0d)>]()()()  [Type: HeapConstant(0x561c05b17670 {0x227900188b69 <JSFunction String (sfi = 0x227900146b0d)>})]
+#0:Start()()()  [Type: Internal]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#9:StateValues[dense](#1:Parameter, #2:Parameter)()()  [Type: Internal]
+#14:HeapConstant[0x22790019b299 <String[6]: #-56900>]()()()  [Type: HeapConstant(0x561c05b17308 {0x22790019b299 <String[6]: #-56900>})]
+#17:StateValues[sparse:^...](#14:HeapConstant)()()  [Type: Internal]
+#11:HeapConstant[0x227900005bc1 <Odd Oddball: optimized_out>]()()()  [Type: HeapConstant(0x561c05b186e8 {0x227900005bc1 <Odd Oddball: optimized_out>})]
+#4:Parameter[4, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#42:HeapConstant[0x22790019b22d <JSFunction opt (sfi = 0x22790019b129)>]()()()  [Type: HeapConstant(0x561c05b170e8 {0x22790019b22d <JSFunction opt (sfi = 0x22790019b129)>})]
+#18:FrameState[UNOPTIMIZED_FRAME, 26, Ignore, 0x22790019b129 <SharedFunctionInfo opt>](#9:StateValues, #17:StateValues, #11:HeapConstant, #4:Parameter, #42:HeapConstant)()()  [Type: Internal]
+#6:HeapConstant[0x227900183ced <NativeContext[280]>]()()()  [Type: HeapConstant(0x561c05b170d8 {0x227900183ced <NativeContext[280]>})]
+#10:StateValues[sparse:....]()()()  [Type: Internal]
+#13:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x22790019b129 <SharedFunctionInfo opt>](#9:StateValues, #10:StateValues, #11:HeapConstant, #4:Parameter, #42:HeapConstant)()()  [Type: Internal]
+#8:JSStackCheck[JSFunctionEntry]()(#0:Start)(#0:Start)
+#16:Checkpoint()(#8:JSStackCheck)(#8:JSStackCheck)
+#48:LoadField[JSObjectPropertiesOrHashKnownPointer, tagged base, 4, Any, kRepTaggedPointer|kTypeAny, PointerWriteBarrier, mutable](#44:HeapConstant)(#16:Checkpoint)(#8:JSStackCheck)  [Type: Any]
+#31:NumberConstant[-8]()()()  [Type: Range(-8, -8)]
+#50:StoreField[BuildPropertyStore, tagged base, 24, Signed31, kRepTaggedSigned|kTypeInt32, NoWriteBarrier, mutable (initializing or transitioning store)](#48:LoadField, #31:NumberConstant)(#48:LoadField)(#8:JSStackCheck)
+#38:Return(#37:NumberConstant, #3:HeapConstant)(#50:StoreField)(#8:JSStackCheck)
+#39:End()()(#38:Return)

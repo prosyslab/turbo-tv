@@ -238,7 +238,6 @@ let call fname n_return args control state =
   let arg_sort = BV.mk_sort ctx Value.len in
   let args_sort = List.map (fun _ -> arg_sort) args in
   let f_decl = Z3.FuncDecl.mk_func_decl_s ctx fname args_sort return_sort in
-
   let normalized_args =
     let mem = state.State.memory in
     args

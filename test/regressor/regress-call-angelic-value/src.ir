@@ -1,0 +1,92 @@
+#124:Int32Constant[0]()()()
+#3:HeapConstant[0x332b00000251 <undefined>]()()()  [Type: Undefined]
+#84:HeapConstant[0x332b00025269 <Code BUILTIN CopyDataPropertiesWithExcludedProperties>]()()()  [Type: HeapConstant(0x56324789d9e0 {0x332b00025269 <Code BUILTIN CopyDataPropertiesWithExcludedProperties>})]
+#14:HeapConstant[0x332b000056c5 <String[5]: #stack>]()()()  [Type: HeapConstant(0x56324789c308 {0x332b000056c5 <String[5]: #stack>})]
+#112:Int64Constant[2]()()()
+#31:HeapConstant[0x332b0000532d <String[9]: #__proto__>]()()()  [Type: HeapConstant(0x56324789c660 {0x332b0000532d <String[9]: #__proto__>})]
+#0:Start()()()  [Type: Internal]
+#4:Parameter[4, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#9:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter)()()  [Type: Internal]
+#104:HeapConstant[0x332b0002cc85 <Code BUILTIN CEntry_Return1_ArgvOnStack_BuiltinExit>]()()()  [Type: HeapConstant(0x56324789da10 {0x332b0002cc85 <Code BUILTIN CEntry_Return1_ArgvOnStack_BuiltinExit>})]
+#82:HeapConstant[0x332b00184b1d <JSFunction get __proto__ (sfi = 0x332b00144485)>]()()()  [Type: HeapConstant(0x56324789d120 {0x332b00184b1d <JSFunction get __proto__ (sfi = 0x332b00144485)>})]
+#113:Int64Constant[10]()()()
+#106:HeapConstant[0x332b0000026d <Other heap object (HOLE_TYPE)>]()()()  [Type: Hole]
+#107:ExternalConstant[0x5632460d4370]()()()  [Type: ExternalPointer]
+#117:Int32Constant[5]()()()
+#99:HeapConstant[0x332b00037329 <Code BUILTIN StringPrototypeTrimEnd>]()()()  [Type: HeapConstant(0x56324789da00 {0x332b00037329 <Code BUILTIN StringPrototypeTrimEnd>})]
+#80:HeapConstant[0x332b00189405 <JSFunction trimEnd (sfi = 0x332b00147219)>]()()()  [Type: HeapConstant(0x56324789c338 {0x332b00189405 <JSFunction trimEnd (sfi = 0x332b00147219)>})]
+#115:Int32Constant[1]()()()
+#15:NumberConstant[-8.7490255600782845e+306]()()()  [Type: Range(-8749025560078284508975654444867130253159432697000430408730382667366563392154468293604971175856008394231444865738436257735526279502815179459738083477021838181995093629523757691396819198528205109913951541592467959101620200812965580659467614346252370250419693393344327959686691520727940327913822269593161302016, -8749025560078284508975654444867130253159432697000430408730382667366563392154468293604971175856008394231444865738436257735526279502815179459738083477021838181995093629523757691396819198528205109913951541592467959101620200812965580659467614346252370250419693393344327959686691520727940327913822269593161302016)]
+#17:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, sparse:^^...](#14:HeapConstant, #15:NumberConstant)()()  [Type: Internal]
+#114:TypedStateValues[, sparse:.]()()()
+#78:HeapConstant[0x332b0019b22d <JSFunction opt (sfi = 0x332b0019b129)>]()()()  [Type: HeapConstant(0x56324789c0e8 {0x332b0019b22d <JSFunction opt (sfi = 0x332b0019b129)>})]
+#18:FrameState[UNOPTIMIZED_FRAME, 6, Ignore, 0x332b0019b129 <SharedFunctionInfo opt>](#9:TypedStateValues, #17:TypedStateValues, #114:TypedStateValues, #4:Parameter, #78:HeapConstant)()()  [Type: Internal]
+#125:ExternalConstant[0x563247813760]()()()
+#111:Int64Constant[0]()()()
+#126:Load[kRepWord64](#125:ExternalConstant, #111:Int64Constant)(#0:Start)(#0:Start)
+#127:StackPointerGreaterThan[JSFunctionEntry](#126:Load)(#126:Load)()
+#135:HeapConstant[0x332b0002ccc1 <Code BUILTIN CEntry_Return1_ArgvOnStack_NoBuiltinExit>]()()()
+#133:LoadStackCheckOffset()()()
+#134:ExternalConstant[0x5632465b6440<StackGuardWithGap.entry>]()()()
+#6:HeapConstant[0x332b00183ced <NativeContext[280]>]()()()  [Type: HeapConstant(0x56324789c0d8 {0x332b00183ced <NativeContext[280]>})]
+#10:TypedStateValues[, sparse:.....]()()()  [Type: Internal]
+#13:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x332b0019b129 <SharedFunctionInfo opt>](#9:TypedStateValues, #10:TypedStateValues, #114:TypedStateValues, #4:Parameter, #78:HeapConstant)()()  [Type: Internal]
+#128:Branch[Unspecified, True](#127:StackPointerGreaterThan)()(#0:Start)
+#130:IfFalse()()(#128:Branch)
+#8:Call[Code:StackGuardWithGap:r1s1i5f1](#135:HeapConstant, #133:LoadStackCheckOffset, #134:ExternalConstant, #115:Int32Constant, #6:HeapConstant, #13:FrameState)(#127:StackPointerGreaterThan)(#130:IfFalse)
+#129:IfTrue()()(#128:Branch)
+#131:Merge()()(#129:IfTrue, #8:Call)
+#132:EffectPhi()(#127:StackPointerGreaterThan, #8:Call)(#131:Merge)
+#16:Checkpoint()(#132:EffectPhi)(#131:Merge)
+#98:LoadField[JSFunctionContext, tagged base, 16, Internal, kRepTaggedPointer|kTypeAny, PointerWriteBarrier, mutable](#80:HeapConstant)(#16:Checkpoint)(#131:Merge)  [Type: Internal]
+#25:FrameState[UNOPTIMIZED_FRAME, 11, PokeAt(0), 0x332b0019b129 <SharedFunctionInfo opt>](#9:TypedStateValues, #17:TypedStateValues, #114:TypedStateValues, #4:Parameter, #78:HeapConstant)()()  [Type: Internal]
+#24:Call[Code:JSTrampoline Descriptor:r1s1i6f1](#99:HeapConstant, #80:HeapConstant, #3:HeapConstant, #115:Int32Constant, #14:HeapConstant, #98:LoadField, #25:FrameState)(#98:LoadField)(#131:Merge)  [Type: String]
+#27:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, sparse:^.^..](#14:HeapConstant, #24:Call)()()  [Type: Internal]
+#116:TypedStateValues[kRepTagged|kTypeAny, dense](#15:NumberConstant)()()
+#28:FrameState[UNOPTIMIZED_FRAME, 18, Ignore, 0x332b0019b129 <SharedFunctionInfo opt>](#9:TypedStateValues, #27:TypedStateValues, #116:TypedStateValues, #4:Parameter, #78:HeapConstant)()()  [Type: Internal]
+#26:Checkpoint()(#24:Call)(#24:Call)
+#103:LoadField[JSFunctionContext, tagged base, 16, Internal, kRepTaggedPointer|kTypeAny, PointerWriteBarrier, mutable](#82:HeapConstant)(#26:Checkpoint)(#24:Call)  [Type: Internal]
+#33:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, sparse:^.^.^](#14:HeapConstant, #24:Call, #31:HeapConstant)()()  [Type: Internal]
+#36:FrameState[UNOPTIMIZED_FRAME, 24, PokeAt(0), 0x332b0019b129 <SharedFunctionInfo opt>](#9:TypedStateValues, #33:TypedStateValues, #114:TypedStateValues, #4:Parameter, #78:HeapConstant)()()  [Type: Internal]
+#83:Call[Code:ObjectPrototypeGetProto:r1s5i9f1](#104:HeapConstant, #3:HeapConstant, #82:HeapConstant, #113:Int64Constant, #106:HeapConstant, #14:HeapConstant, #107:ExternalConstant, #117:Int32Constant, #103:LoadField, #36:FrameState)(#103:LoadField)(#24:Call)  [Type: NonInternal]
+#41:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, sparse:^.^..](#83:Call, #24:Call)()()  [Type: Internal]
+#42:FrameState[UNOPTIMIZED_FRAME, 32, PokeAt(0), 0x332b0019b129 <SharedFunctionInfo opt>](#9:TypedStateValues, #41:TypedStateValues, #114:TypedStateValues, #4:Parameter, #78:HeapConstant)()()  [Type: Internal]
+#38:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, sparse:^.^^^](#83:Call, #24:Call, #14:HeapConstant, #31:HeapConstant)()()  [Type: Internal]
+#39:FrameState[UNOPTIMIZED_FRAME, 32, Ignore, 0x332b0019b129 <SharedFunctionInfo opt>](#9:TypedStateValues, #38:TypedStateValues, #114:TypedStateValues, #4:Parameter, #78:HeapConstant)()()  [Type: Internal]
+#37:Checkpoint()(#83:Call)(#83:Call)
+#40:Call[Code:CopyDataPropertiesWithExcludedProperties Descriptor:r1s1i5f1](#84:HeapConstant, #14:HeapConstant, #112:Int64Constant, #31:HeapConstant, #4:Parameter, #42:FrameState)(#37:Checkpoint)(#83:Call)  [Type: Any]
+#68:TypedStateValues[kRepTagged|kTypeAny, sparse:.^...](#40:Call)()()  [Type: Internal]
+#71:FrameState[UNOPTIMIZED_FRAME, 60, Ignore, 0x332b0019b129 <SharedFunctionInfo opt>](#9:TypedStateValues, #68:TypedStateValues, #114:TypedStateValues, #4:Parameter, #78:HeapConstant)()()  [Type: Internal]
+#137:HeapConstant[0x332b00025179 <Code BUILTIN DeleteProperty>]()()()
+#63:HeapConstant[0x332b00005a15 <String[7]: #valueOf>]()()()  [Type: HeapConstant(0x56324789c670 {0x332b00005a15 <String[7]: #valueOf>})]
+#69:FrameState[UNOPTIMIZED_FRAME, 58, PokeAt(0), 0x332b0019b129 <SharedFunctionInfo opt>](#9:TypedStateValues, #68:TypedStateValues, #114:TypedStateValues, #4:Parameter, #78:HeapConstant)()()  [Type: Internal]
+#58:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, sparse:^^...](#83:Call, #40:Call)()()  [Type: Internal]
+#118:TypedStateValues[kRepTagged|kTypeAny, dense](#24:Call)()()
+#59:FrameState[UNOPTIMIZED_FRAME, 53, Ignore, 0x332b0019b129 <SharedFunctionInfo opt>](#9:TypedStateValues, #58:TypedStateValues, #118:TypedStateValues, #4:Parameter, #78:HeapConstant)()()  [Type: Internal]
+#44:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, sparse:^^^..](#83:Call, #40:Call, #24:Call)()()  [Type: Internal]
+#136:HeapConstant[0x332b000351a5 <Code BUILTIN Multiply>]()()()
+#45:FrameState[UNOPTIMIZED_FRAME, 37, Ignore, 0x332b0019b129 <SharedFunctionInfo opt>](#9:TypedStateValues, #44:TypedStateValues, #114:TypedStateValues, #4:Parameter, #78:HeapConstant)()()  [Type: Internal]
+#43:Checkpoint()(#40:Call)(#40:Call)
+#119:CheckedTaggedToTaggedPointer[FeedbackSource(INVALID)](#83:Call)(#43:Checkpoint)(#40:Call)
+#85:CheckMaps[None, 0x56324789d310 {0x332b00198b0d <Map[16](FAST_STRING_WRAPPER_ELEMENTS)>}, FeedbackSource(INVALID)](#119:CheckedTaggedToTaggedPointer)(#119:CheckedTaggedToTaggedPointer)(#40:Call)
+#86:LoadField[JSObjectPropertiesOrHashKnownPointer, tagged base, 4, Any, kRepTaggedPointer|kTypeAny, PointerWriteBarrier, mutable](#83:Call)(#85:CheckMaps)(#40:Call)  [Type: Any]
+#87:LoadField[BuildLoadDataField, tagged base, 200, NonInternal, kRepTagged|kTypeAny, FullWriteBarrier, mutable](#86:LoadField)(#86:LoadField)(#40:Call)  [Type: NonInternal]
+#120:Int64Constant[-29366]()()()
+#52:FrameState[UNOPTIMIZED_FRAME, 41, PokeAt(0), 0x332b0019b129 <SharedFunctionInfo opt>](#9:TypedStateValues, #44:TypedStateValues, #114:TypedStateValues, #4:Parameter, #78:HeapConstant)()()  [Type: Internal]
+#51:Call[Code:Multiply Descriptor:r1s0i4f1](#136:HeapConstant, #87:LoadField, #120:Int64Constant, #6:HeapConstant, #52:FrameState)(#87:LoadField)(#40:Call)  [Type: Numeric]
+#121:TypedStateValues[kRepTagged|kTypeAny, dense](#51:Call)()()
+#54:FrameState[UNOPTIMIZED_FRAME, 47, Ignore, 0x332b0019b129 <SharedFunctionInfo opt>](#9:TypedStateValues, #44:TypedStateValues, #121:TypedStateValues, #4:Parameter, #78:HeapConstant)()()  [Type: Internal]
+#53:Checkpoint()(#51:Call)(#51:Call)
+#122:CheckedTaggedToTaggedPointer[FeedbackSource(INVALID)](#83:Call)(#53:Checkpoint)(#51:Call)
+#88:CheckMaps[None, 0x56324789d310 {0x332b00198b0d <Map[16](FAST_STRING_WRAPPER_ELEMENTS)>}, FeedbackSource(INVALID)](#122:CheckedTaggedToTaggedPointer)(#122:CheckedTaggedToTaggedPointer)(#51:Call)
+#89:LoadField[JSObjectPropertiesOrHashKnownPointer, tagged base, 4, Any, kRepTaggedPointer|kTypeAny, PointerWriteBarrier, mutable](#83:Call)(#88:CheckMaps)(#51:Call)  [Type: Any]
+#90:StoreField[BuildPropertyStore, tagged base, 200, NonInternal, kRepTagged|kTypeAny, FullWriteBarrier, mutable (initializing or transitioning store)](#89:LoadField, #51:Call)(#89:LoadField)(#51:Call)
+#57:Checkpoint()(#90:StoreField)(#51:Call)
+#67:Call[Code:DeleteProperty Descriptor:r1s0i5f1](#137:HeapConstant, #83:Call, #63:HeapConstant, #111:Int64Constant, #4:Parameter, #69:FrameState)(#57:Checkpoint)(#51:Call)  [Type: Boolean]
+#70:Checkpoint()(#67:Call)(#67:Call)
+#123:CheckedTaggedToTaggedPointer[FeedbackSource(INVALID)](#40:Call)(#70:Checkpoint)(#67:Call)
+#91:CheckMaps[None, 0x56324789d7b8 {0x332b001849a5 <Map[28](HOLEY_ELEMENTS)>}, FeedbackSource(INVALID)](#123:CheckedTaggedToTaggedPointer)(#123:CheckedTaggedToTaggedPointer)(#67:Call)
+#74:Return(#124:Int32Constant, #3:HeapConstant)(#91:CheckMaps)(#67:Call)
+#75:End()()(#74:Return)

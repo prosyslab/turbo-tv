@@ -158,7 +158,7 @@ let deopt_of id t = DeoptFile.find id (deopt_file t)
 let output_of id t = (value_of id t, control_of id t, ub_of id t, deopt_of id t)
 
 let update ?value ?mem ?control ?ub ?deopt ?is_angelic_value ?is_angelic_control
-    ?(final = false) t =
+    ?assertion ?(final = false) t =
   let pc = t.pc |> string_of_int in
   let register_file = RegisterFile.add pc value t.register_file in
   let control_file = ControlFile.add pc control t.control_file in
@@ -170,10 +170,16 @@ let update ?value ?mem ?control ?ub ?deopt ?is_angelic_value ?is_angelic_control
   let is_angelic_control =
     AngelicFile.add pc is_angelic_control t.is_angelic_control
   in
+  let assertion =
+    match assertion with
+    | Some a -> Bool.and_ t.assertion a
+    | None -> t.assertion
+  in
   {
     t with
     register_file;
     memory = (match mem with Some mem -> mem | None -> t.memory);
+    assertion;
     is_angelic_value;
     is_angelic_control;
     control_file;

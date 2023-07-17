@@ -478,19 +478,16 @@ let store ptr pos repr value control mem state =
       }
   in
   let assertion =
-    Bool.implies
-      (moved |> Value.has_type Type.tagged_pointer)
-      (Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of))
+    Bool.implies control
+      (Bool.implies
+         (ptr |> Value.has_type Type.tagged_pointer)
+         (Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of)))
   in
   {
     state with
     access_info = State.AccessInfo.add state.State.pc access state.access_info;
-    assertion =
-      Bool.ite control
-        (Bool.ands [ state.State.assertion; assertion ])
-        state.State.assertion;
   }
-  |> State.update ~mem ~ub
+  |> State.update ~mem ~ub ~assertion
 
 (* well-defined condition:
  *   IsPointer(ptr) \/
@@ -521,21 +518,22 @@ let load ptr pos repr control mem state =
     else v
   in
   let assertion =
-    Bool.ands
-      [
-        Bool.implies
-          (ptr |> Value.has_type Type.tagged_pointer)
-          (Bool.eq
-             (ptr |> TaggedPointer.bid_of)
-             (moved |> TaggedPointer.bid_of));
-        Bool.implies
-          (Bool.ands
-             [
-               moved |> Memory.is_angelic mem;
-               value |> Value.has_type Type.tagged_pointer;
-             ])
-          (value |> Memory.is_angelic mem);
-      ]
+    Bool.implies control
+      (Bool.ands
+         [
+           Bool.implies
+             (ptr |> Value.has_type Type.tagged_pointer)
+             (Bool.eq
+                (ptr |> TaggedPointer.bid_of)
+                (moved |> TaggedPointer.bid_of));
+           Bool.implies
+             (Bool.ands
+                [
+                  moved |> Memory.is_angelic mem;
+                  value |> Value.has_type Type.tagged_pointer;
+                ])
+             (value |> Memory.is_angelic mem);
+         ])
   in
   let access =
     State.AccessInfo.
@@ -549,13 +547,9 @@ let load ptr pos repr control mem state =
   let is_angelic_value = moved |> Memory.is_angelic mem in
   {
     state with
-    assertion =
-      Bool.ite control
-        (Bool.ands [ state.State.assertion; assertion ])
-        state.State.assertion;
     access_info = State.AccessInfo.add state.State.pc access state.access_info;
   }
-  |> State.update ~value ~ub ~is_angelic_value
+  |> State.update ~value ~ub ~is_angelic_value ~assertion
 
 (* machine: type-conversion *)
 let bitcast_float32_to_int32 v state =

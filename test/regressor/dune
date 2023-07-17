@@ -327,3 +327,33 @@
  (alias runtest)
  (action
   (diff regress-oddball-map-eq.expected regress-oddball-map-eq.output)))
+
+(rule
+ (targets regress-call-angelic-value.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../bin/turbo-tv.exe --check-ub regress-call-angelic-value/src.ir)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   regress-call-angelic-value.expected
+   regress-call-angelic-value.output)))
+
+(rule
+ (targets regress-store-field-ovfl.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../bin/turbo-tv.exe --check-ub regress-store-field-ovfl/src.ir)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff regress-store-field-ovfl.expected regress-store-field-ovfl.output)))
