@@ -357,3 +357,22 @@
  (alias runtest)
  (action
   (diff regress-store-field-ovfl.expected regress-store-field-ovfl.output)))
+
+(rule
+ (targets regress-heap-constant-objmap-parse.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run
+     ../../bin/turbo-tv.exe
+     --check-ub
+     regress-heap-constant-objmap-parse/src.ir)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   regress-heap-constant-objmap-parse.expected
+   regress-heap-constant-objmap-parse.output)))

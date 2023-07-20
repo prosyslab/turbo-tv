@@ -91,6 +91,11 @@ let check_ub ?(nparams = 2) check_type program =
     | UNKNOWN ->
         let reason = Z3.Solver.get_reason_unknown validator in
         if String.equal "timeout" reason then Printf.printf "Result: Timeout\n"
+        else if
+          String.equal "max. memory exceeded" reason
+          || String.equal
+               "smt tactic failed to show goal to be sat/unsat memout" reason
+        then Printf.printf "Result: Not target\n"
         else Printf.printf "Result: Unknown\nReason: %s" reason
 
 let check_eq ?(nparams = 2) src_program tgt_program =
@@ -178,6 +183,11 @@ let check_eq ?(nparams = 2) src_program tgt_program =
     | UNKNOWN ->
         let reason = Z3.Solver.get_reason_unknown validator in
         if String.equal "timeout" reason then Printf.printf "Result: Timeout\n"
+        else if
+          String.equal "max. memory exceeded" reason
+          || String.equal
+               "smt tactic failed to show goal to be sat/unsat memout" reason
+        then Printf.printf "Result: Not target\n"
         else Printf.printf "Result: Unknown\nReason: %s" reason
 
 let print_smt2_query ?(nparams = 2) program =

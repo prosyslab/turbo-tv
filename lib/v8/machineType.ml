@@ -252,5 +252,6 @@ let for_type_array_element array_type is_extern =
   | 6 -> (taggedness, header_size, Uint32)
   | 7 -> (taggedness, header_size, Float32)
   | 8 -> (taggedness, header_size, Float64)
-  | 10 | 11 -> failwith "Unimplemented"
+  | 10 -> (taggedness, header_size, TaggedPointer)
+  | 11 -> (taggedness, header_size, TaggedPointer)
   | _ -> failwith (Printf.sprintf "Unreachable: %d" array_type)

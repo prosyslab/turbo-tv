@@ -35,12 +35,12 @@ let heap_constant name addr mem state =
     else if String.starts_with ~prefix:"String" name then
       Strings.allocate (Strings.from_string name) mem
       (* Angelic TaggedPointer *)
-    else if String.starts_with ~prefix:"Object map" name then
+    else if String.starts_with ~prefix:"Object map = " name then
       let tp = addr |> Value.cast Type.tagged_pointer in
       let objmap =
-        (List.nth (String.split_on_char '=' name) 1
-        |> String.trim |> int_of_string)
-        land 0xffffffff
+        let pat = Re.Pcre.regexp "Object map = (0x[0-9a-fA-F]*)" in
+        try (Re.Group.get (Re.exec pat name) 1 |> int_of_string) land 0xffffffff
+        with Not_found -> failwith name
       in
       let mem =
         Memory.Bytes.store Bool.tr

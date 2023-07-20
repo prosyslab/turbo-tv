@@ -1,0 +1,119 @@
+#153:Int32Constant[0]()()()
+#189:ExternalConstant[0x556659629260]()()()
+#119:Int64Constant[0]()()()
+#76:HeapConstant[0x25c90014d3bd <CodeDataContainer BUILTIN ObjectGetPrototypeOf>]()()()  [Type: HeapConstant(0x5566596aa9f0 {0x25c90014d3bd <CodeDataContainer BUILTIN ObjectGetPrototypeOf>})]
+#56:HeapConstant[0x25c900184761 <JSFunction getPrototypeOf (sfi = 0x25c900152c3d)>]()()()  [Type: HeapConstant(0x5566596a8cf0 {0x25c900184761 <JSFunction getPrototypeOf (sfi = 0x25c900152c3d)>})]
+#4:HeapConstant[0x25c9000023e1 <undefined>]()()()  [Type: Undefined]
+#125:Int32Constant[2]()()()
+#53:HeapConstant[0x25c90018456d <JSFunction Object (sfi = 0x25c900152d81)>]()()()  [Type: HeapConstant(0x5566596a9140 {0x25c90018456d <JSFunction Object (sfi = 0x25c900152d81)>})]
+#123:Int64Constant[-131070]()()()
+#187:Int64Constant[15]()()()
+#141:Int64Constant[3]()()()
+#154:ExternalConstant[0x55665961c1c0]()()()
+#0:Start()()()  [Type: Internal]
+#155:Load[kRepWord64](#154:ExternalConstant, #119:Int64Constant)(#0:Start)(#0:Start)
+#156:StackPointerGreaterThan[JSFunctionEntry](#155:Load)(#155:Load)()
+#165:HeapConstant[0x25c900149ead <CodeDataContainer BUILTIN CEntry_Return1_ArgvOnStack_NoBuiltinExit>]()()()
+#162:LoadStackCheckOffset()()()
+#163:ExternalConstant[0x5566588f9ec0<StackGuardWithGap.entry>]()()()
+#164:Int32Constant[1]()()()
+#7:HeapConstant[0x25c900183bc1 <NativeContext[273]>]()()()  [Type: HeapConstant(0x5566596a8a88 {0x25c900183bc1 <NativeContext[273]>})]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#10:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#11:TypedStateValues[, sparse:....]()()()  [Type: Internal]
+#124:TypedStateValues[, sparse:.]()()()
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#52:HeapConstant[0x25c90019a72d <JSFunction opt (sfi = 0x25c90019a4a1)>]()()()  [Type: HeapConstant(0x5566596a8a98 {0x25c90019a72d <JSFunction opt (sfi = 0x25c90019a4a1)>})]
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x25c90019a4a1 <SharedFunctionInfo opt>](#10:TypedStateValues, #11:TypedStateValues, #124:TypedStateValues, #5:Parameter, #52:HeapConstant)()()  [Type: Internal]
+#157:Branch[Unspecified, True](#156:StackPointerGreaterThan)()(#0:Start)
+#159:IfFalse()()(#157:Branch)
+#9:Call[Code:StackGuardWithGap:r1s1i5f1](#165:HeapConstant, #162:LoadStackCheckOffset, #163:ExternalConstant, #164:Int32Constant, #7:HeapConstant, #14:FrameState)(#156:StackPointerGreaterThan)(#159:IfFalse)
+#158:IfTrue()()(#157:Branch)
+#160:Merge()()(#158:IfTrue, #9:Call)
+#161:EffectPhi()(#156:StackPointerGreaterThan, #9:Call)(#160:Merge)
+#54:Load[kRepTaggedPointer|kTypeAny](#53:HeapConstant, #141:Int64Constant)(#161:EffectPhi)(#160:Merge)  [Type: Any]
+#186:Int64Constant[59]()()()
+#55:Load[kRepTagged|kTypeAny](#54:Load, #186:Int64Constant)(#54:Load)(#160:Merge)  [Type: NonInternal]
+#57:Word32Equal(#55:Load, #56:HeapConstant)()()  [Type: Boolean]
+#16:FrameState[UNOPTIMIZED_FRAME, 0, Ignore, 0x25c90019a4a1 <SharedFunctionInfo opt>](#10:TypedStateValues, #11:TypedStateValues, #124:TypedStateValues, #5:Parameter, #52:HeapConstant)()()  [Type: Internal]
+#168:DeoptimizeUnless[WrongCallTarget, FeedbackSource(INVALID)](#57:Word32Equal, #16:FrameState)(#55:Load)(#160:Merge)
+#75:Load[kRepTaggedPointer|kTypeAny](#56:HeapConstant, #187:Int64Constant)(#168:DeoptimizeUnless)(#168:DeoptimizeUnless)  [Type: Internal]
+#29:FrameState[UNOPTIMIZED_FRAME, 16, PokeAt(0), 0x25c90019a4a1 <SharedFunctionInfo opt>](#10:TypedStateValues, #11:TypedStateValues, #124:TypedStateValues, #5:Parameter, #52:HeapConstant)()()  [Type: Internal]
+#28:Call[Code:JSTrampoline Descriptor:r1s2i7f1](#76:HeapConstant, #56:HeapConstant, #4:HeapConstant, #125:Int32Constant, #53:HeapConstant, #123:Int64Constant, #75:Load, #29:FrameState)(#75:Load)(#168:DeoptimizeUnless)  [Type: NonInternal]
+#59:HeapConstant[0x25c90018b841 <Object map = 0x25c90018b7b5 value = 0>]()()()  [Type: HeapConstant(0x5566596aa748 {0x25c90018b841 <Object map = 0x25c90018b7b5 value = 0>})]
+#60:Word32Equal(#28:Call, #59:HeapConstant)()()  [Type: Boolean]
+#126:TypedStateValues[kRepTagged|kTypeAny, dense](#28:Call)()()
+#31:FrameState[UNOPTIMIZED_FRAME, 21, Ignore, 0x25c90019a4a1 <SharedFunctionInfo opt>](#10:TypedStateValues, #11:TypedStateValues, #126:TypedStateValues, #5:Parameter, #52:HeapConstant)()()  [Type: Internal]
+#169:DeoptimizeUnless[ValueMismatch, FeedbackSource(INVALID)](#60:Word32Equal, #31:FrameState)(#28:Call)(#28:Call)
+#192:Load[kRepWord64](#189:ExternalConstant, #119:Int64Constant)(#169:DeoptimizeUnless)(#169:DeoptimizeUnless)
+#188:HeapConstant[0x25c900146925 <CodeDataContainer BUILTIN AllocateRegularInYoungGeneration>]()()()
+#191:Int64Constant[96]()()()
+#190:ExternalConstant[0x556659629268]()()()
+#193:Load[kRepWord64](#190:ExternalConstant, #119:Int64Constant)(#192:Load)(#169:DeoptimizeUnless)
+#194:Int64Add(#192:Load, #191:Int64Constant)()()
+#195:Uint64LessThan(#194:Int64Add, #193:Load)()()
+#196:Branch[Machine, True](#195:Uint64LessThan)()(#169:DeoptimizeUnless)
+#197:IfFalse()()(#196:Branch)
+#199:Merge()()(#197:IfFalse)
+#200:Call[Code:Allocate Descriptor:r1s0i2f0](#188:HeapConstant, #191:Int64Constant)(#193:Load)(#199:Merge)
+#201:BitcastTaggedToWord(#200:Call)(#200:Call)(#199:Merge)
+#236:Int64Constant[-1]()()()
+#202:Int64Add(#201:BitcastTaggedToWord, #236:Int64Constant)()()
+#198:IfTrue()()(#196:Branch)
+#203:Merge()()(#198:IfTrue, #199:Merge)
+#205:Phi[kRepWord64](#192:Load, #202:Int64Add)()(#203:Merge)
+#127:Int64Constant[80]()()()
+#206:Int64Add(#205:Phi, #127:Int64Constant)()()
+#139:Int64Constant[1]()()()
+#231:Int64Add(#206:Int64Add, #139:Int64Constant)()()
+#128:Int64Constant[16]()()()
+#229:Int64Add(#206:Int64Add, #128:Int64Constant)()()
+#208:Int64Add(#205:Phi, #139:Int64Constant)()()
+#204:EffectPhi()(#193:Load, #201:BitcastTaggedToWord)(#203:Merge)
+#207:Store[kRepWord64, NoWriteBarrier](#189:ExternalConstant, #119:Int64Constant, #206:Int64Add)(#204:EffectPhi)(#203:Merge)
+#209:BitcastWordToTagged(#208:Int64Add)(#207:Store)(#203:Merge)
+#238:Int64Constant[71]()()()
+#140:Float64Constant[1.0000000000000001e-15]()()()
+#240:Int64Constant[63]()()()
+#148:Float64Constant[-130670.49240485497]()()()
+#242:Int64Constant[55]()()()
+#146:Float64Constant[-1]()()()
+#244:Int64Constant[47]()()()
+#145:Float64Constant[2.2204460492503131e-16]()()()
+#246:Int64Constant[39]()()()
+#143:Float64Constant[0]()()()
+#248:Int64Constant[31]()()()
+#142:Float64Constant[6.594963166744931e+307]()()()
+#250:Int64Constant[23]()()()
+#138:Float64Constant[1000000000]()()()
+#147:Int64Constant[7]()()()
+#137:Int64Constant[18]()()()
+#87:HeapConstant[0x25c900002ac1 <Map(FIXED_DOUBLE_ARRAY_TYPE)>]()()()  [Type: HeapConstant(0x5566596b5398 {0x25c900002ac1 <Map(FIXED_DOUBLE_ARRAY_TYPE)>})]
+#88:Store[kRepTaggedPointer, NoWriteBarrier](#209:BitcastWordToTagged, #236:Int64Constant, #87:HeapConstant)(#209:BitcastWordToTagged)(#203:Merge)
+#90:Store[kRepTaggedSigned, NoWriteBarrier](#209:BitcastWordToTagged, #141:Int64Constant, #137:Int64Constant)(#88:Store)(#203:Merge)
+#91:Store[kRepFloat64, NoWriteBarrier](#209:BitcastWordToTagged, #147:Int64Constant, #138:Float64Constant)(#90:Store)(#203:Merge)
+#93:Store[kRepFloat64, NoWriteBarrier](#209:BitcastWordToTagged, #187:Int64Constant, #138:Float64Constant)(#91:Store)(#203:Merge)
+#94:Store[kRepFloat64, NoWriteBarrier](#209:BitcastWordToTagged, #250:Int64Constant, #140:Float64Constant)(#93:Store)(#203:Merge)
+#96:Store[kRepFloat64, NoWriteBarrier](#209:BitcastWordToTagged, #248:Int64Constant, #142:Float64Constant)(#94:Store)(#203:Merge)
+#97:Store[kRepFloat64, NoWriteBarrier](#209:BitcastWordToTagged, #246:Int64Constant, #143:Float64Constant)(#96:Store)(#203:Merge)
+#99:Store[kRepFloat64, NoWriteBarrier](#209:BitcastWordToTagged, #244:Int64Constant, #145:Float64Constant)(#97:Store)(#203:Merge)
+#101:Store[kRepFloat64, NoWriteBarrier](#209:BitcastWordToTagged, #242:Int64Constant, #146:Float64Constant)(#99:Store)(#203:Merge)
+#103:Store[kRepFloat64, NoWriteBarrier](#209:BitcastWordToTagged, #240:Int64Constant, #148:Float64Constant)(#101:Store)(#203:Merge)
+#105:Store[kRepFloat64, NoWriteBarrier](#209:BitcastWordToTagged, #238:Int64Constant, #140:Float64Constant)(#103:Store)(#203:Merge)
+#230:Store[kRepWord64, NoWriteBarrier](#189:ExternalConstant, #119:Int64Constant, #229:Int64Add)(#105:Store)(#203:Merge)
+#232:BitcastWordToTagged(#231:Int64Add)(#230:Store)(#203:Merge)
+#256:Int64Constant[39]()()()
+#151:Float64Constant[nan]()()()
+#69:Float64SilenceNaN(#151:Float64Constant)()()  [Type: Number]
+#233:Int64Constant[11]()()()
+#112:HeapConstant[0x25c900002259 <FixedArray[0]>]()()()  [Type: HeapConstant(0x5566596b5328 {0x25c900002259 <FixedArray[0]>})]
+#110:HeapConstant[0x25c90018e7a9 <Map[16](PACKED_DOUBLE_ELEMENTS)>]()()()  [Type: HeapConstant(0x5566596aa868 {0x25c90018e7a9 <Map[16](PACKED_DOUBLE_ELEMENTS)>})]
+#111:Store[kRepTaggedPointer, NoWriteBarrier](#232:BitcastWordToTagged, #236:Int64Constant, #110:HeapConstant)(#232:BitcastWordToTagged)(#203:Merge)
+#113:Store[kRepTaggedPointer, NoWriteBarrier](#232:BitcastWordToTagged, #141:Int64Constant, #112:HeapConstant)(#111:Store)(#203:Merge)
+#114:Store[kRepTaggedPointer, NoWriteBarrier](#232:BitcastWordToTagged, #147:Int64Constant, #209:BitcastWordToTagged)(#113:Store)(#203:Merge)
+#115:Store[kRepTaggedSigned, NoWriteBarrier](#232:BitcastWordToTagged, #233:Int64Constant, #137:Int64Constant)(#114:Store)(#203:Merge)
+#70:Store[kRepFloat64, NoWriteBarrier](#209:BitcastWordToTagged, #256:Int64Constant, #69:Float64SilenceNaN)(#115:Store)(#203:Merge)
+#48:Return(#153:Int32Constant, #232:BitcastWordToTagged)(#70:Store)(#203:Merge)
+#49:End()()(#48:Return)
