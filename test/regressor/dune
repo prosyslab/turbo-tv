@@ -376,3 +376,57 @@
   (diff
    regress-heap-constant-objmap-parse.expected
    regress-heap-constant-objmap-parse.output)))
+
+(rule
+ (targets regress-load-field-map-header.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run
+     ../../bin/turbo-tv.exe
+     --check-ub
+     regress-load-field-map-header/src.ir)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   regress-load-field-map-header.expected
+   regress-load-field-map-header.output)))
+
+(rule
+ (targets regress-load-field-angelic-tagged-signed-2.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run
+     ../../bin/turbo-tv.exe
+     --check-ub
+     regress-load-field-angelic-tagged-signed-2/src.ir)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   regress-load-field-angelic-tagged-signed-2.expected
+   regress-load-field-angelic-tagged-signed-2.output)))
+
+(rule
+ (targets regress-store-element-ovfl.output)
+ (action
+  (with-stdout-to
+   %{targets}
+   (pipe-stdout
+    (run ../../bin/turbo-tv.exe --check-ub regress-store-element-ovfl/src.ir)
+    (run head -n 1)))))
+
+(rule
+ (alias runtest)
+ (action
+  (diff
+   regress-store-element-ovfl.expected
+   regress-store-element-ovfl.output)))

@@ -479,9 +479,7 @@ let store ptr pos repr value control mem state =
   in
   let assertion =
     Bool.implies control
-      (Bool.implies
-         (ptr |> Value.has_type Type.tagged_pointer)
-         (Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of)))
+      (Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of))
   in
   {
     state with
@@ -519,22 +517,9 @@ let load ptr pos repr control mem state =
   in
   let assertion =
     Bool.implies control
-      (Bool.ands
-         [
-           Bool.implies
-             (ptr |> Value.has_type Type.tagged_pointer)
-             (Bool.eq
-                (ptr |> TaggedPointer.bid_of)
-                (moved |> TaggedPointer.bid_of));
-           Bool.implies
-             (Bool.ands
-                [
-                  moved |> Memory.is_angelic mem;
-                  value |> Value.has_type Type.tagged_pointer;
-                ])
-             (value |> Memory.is_angelic mem);
-         ])
+      (Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of))
   in
+
   let access =
     State.AccessInfo.
       {

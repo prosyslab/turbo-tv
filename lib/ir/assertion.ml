@@ -22,22 +22,21 @@ let set_assertion program state =
               Re.Group.get (Re.exec args_regexp fname) 1 |> int_of_string
             in
             Bool.implies control
-              (if n_return = 1 then
-               Bool.implies
-                 (value |> Value.has_type Type.tagged_pointer)
-                 (value |> Memory.is_angelic mem)
+              (if n_return = 1 then value |> Memory.is_angelic mem
               else
                 Bool.ands
                   (value |> ValueOperator.Composed.to_list
-                  |> List.map (fun v ->
-                         Bool.implies
-                           (v |> Value.has_type Type.tagged_pointer)
-                           (v |> Memory.is_angelic mem))))
+                  |> List.map (Memory.is_angelic mem)))
         | _ ->
             Bool.implies
               (Bool.ands
                  [
-                   is_angelic_value; value |> Value.has_type Type.tagged_pointer;
+                   is_angelic_value;
+                   Bool.ors
+                     [
+                       value |> Value.has_type Type.tagged_pointer;
+                       value |> Value.has_type Type.map_in_header;
+                     ];
                  ])
               (value |> Memory.is_angelic state.State.memory)
       in

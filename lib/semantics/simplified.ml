@@ -432,14 +432,7 @@ let load_field offset repr ptr _eff control mem state =
   let ub = Bool.not (Memory.can_access_as moved repr mem) in
   let assertion =
     Bool.implies control
-      (Bool.ands
-         [
-           Bool.implies
-             (ptr |> Value.has_type Type.tagged_pointer)
-             (Bool.eq
-                (ptr |> TaggedPointer.bid_of)
-                (moved |> TaggedPointer.bid_of));
-         ])
+      (Bool.eq (ptr |> TaggedPointer.bid_of) (moved |> TaggedPointer.bid_of))
   in
   let access =
     State.AccessInfo.

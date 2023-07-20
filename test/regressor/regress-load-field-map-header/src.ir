@@ -1,0 +1,59 @@
+#89:Int32Constant[0]()()()
+#63:HeapConstant[0x20610003710d <Code BUILTIN StringPrototypeRepeat>]()()()  [Type: HeapConstant(0x55ea9360f0b0 {0x20610003710d <Code BUILTIN StringPrototypeRepeat>})]
+#55:HeapConstant[0x206100189245 <JSFunction repeat (sfi = 0x206100146f59)>]()()()  [Type: HeapConstant(0x55ea9360e368 {0x206100189245 <JSFunction repeat (sfi = 0x206100146f59)>})]
+#3:HeapConstant[0x206100000251 <undefined>]()()()  [Type: Undefined]
+#79:Int32Constant[2]()()()
+#14:HeapConstant[0x206100005069 <String[3]: #NaN>]()()()  [Type: HeapConstant(0x55ea9360e338 {0x206100005069 <String[3]: #NaN>})]
+#20:NumberConstant[518379.48693082808]()()()  [Type: OtherNumberConstant(518379.48693082808)]
+#90:ExternalConstant[0x55ea93585780]()()()
+#76:Int64Constant[0]()()()
+#0:Start()()()  [Type: Internal]
+#91:Load[kRepWord64](#90:ExternalConstant, #76:Int64Constant)(#0:Start)(#0:Start)
+#92:StackPointerGreaterThan[JSFunctionEntry](#91:Load)(#91:Load)()
+#101:HeapConstant[0x20610002ccc1 <Code BUILTIN CEntry_Return1_ArgvOnStack_NoBuiltinExit>]()()()
+#98:LoadStackCheckOffset()()()
+#99:ExternalConstant[0x55ea912da590<StackGuardWithGap.entry>]()()()
+#100:Int32Constant[1]()()()
+#6:HeapConstant[0x206100183ced <NativeContext[280]>]()()()  [Type: HeapConstant(0x55ea9360e0f8 {0x206100183ced <NativeContext[280]>})]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#9:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter)()()  [Type: Internal]
+#10:TypedStateValues[, sparse:........]()()()  [Type: Internal]
+#78:TypedStateValues[, sparse:.]()()()
+#4:Parameter[4, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#53:HeapConstant[0x20610019b5e1 <JSFunction opt (sfi = 0x20610019b361)>]()()()  [Type: HeapConstant(0x55ea9360e108 {0x20610019b5e1 <JSFunction opt (sfi = 0x20610019b361)>})]
+#13:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x20610019b361 <SharedFunctionInfo opt>](#9:TypedStateValues, #10:TypedStateValues, #78:TypedStateValues, #4:Parameter, #53:HeapConstant)()()  [Type: Internal]
+#93:Branch[Unspecified, True](#92:StackPointerGreaterThan)()(#0:Start)
+#95:IfFalse()()(#93:Branch)
+#8:Call[Code:StackGuardWithGap:r1s1i5f1](#101:HeapConstant, #98:LoadStackCheckOffset, #99:ExternalConstant, #100:Int32Constant, #6:HeapConstant, #13:FrameState)(#92:StackPointerGreaterThan)(#95:IfFalse)
+#94:IfTrue()()(#93:Branch)
+#96:Merge()()(#94:IfTrue, #8:Call)
+#97:EffectPhi()(#92:StackPointerGreaterThan, #8:Call)(#96:Merge)
+#62:LoadField[JSFunctionContext, tagged base, 16, Internal, kRepTaggedPointer|kTypeAny, PointerWriteBarrier, mutable](#55:HeapConstant)(#97:EffectPhi)(#96:Merge)  [Type: Internal]
+#25:FrameState[UNOPTIMIZED_FRAME, 11, PokeAt(0), 0x20610019b361 <SharedFunctionInfo opt>](#9:TypedStateValues, #10:TypedStateValues, #78:TypedStateValues, #4:Parameter, #53:HeapConstant)()()  [Type: Internal]
+#24:Call[Code:JSTrampoline Descriptor:r1s2i7f1](#63:HeapConstant, #55:HeapConstant, #3:HeapConstant, #79:Int32Constant, #14:HeapConstant, #20:NumberConstant, #62:LoadField, #25:FrameState)(#62:LoadField)(#96:Merge)  [Type: NonInternal]
+#102:HeapConstant[0x206100035385 <Code BUILTIN ShiftLeft>]()()()
+#118:HeapConstant[0x20610002cded <Code BUILTIN StringAdd_CheckNone>]()()()
+#48:NumberConstant[0]()()()  [Type: Range(0, 0)]
+#105:Word32And(#24:Call, #100:Int32Constant)()()
+#106:Word32Equal(#105:Word32And, #89:Int32Constant)()()
+#27:TypedStateValues[kRepTagged|kTypeAny, sparse:^.......](#24:Call)()()  [Type: Internal]
+#80:TypedStateValues[kRepTagged|kTypeAny, dense](#14:HeapConstant)()()
+#28:FrameState[UNOPTIMIZED_FRAME, 19, Ignore, 0x20610019b361 <SharedFunctionInfo opt>](#9:TypedStateValues, #27:TypedStateValues, #80:TypedStateValues, #4:Parameter, #53:HeapConstant)()()  [Type: Internal]
+#107:DeoptimizeIf[Smi, FeedbackSource(INVALID)](#106:Word32Equal, #28:FrameState)(#24:Call)(#24:Call)
+#108:LoadField[Map, tagged base, 0, OtherInternal, kRepMapWord|kTypeAny, MapWriteBarrier, mutable](#24:Call)(#107:DeoptimizeIf)(#107:DeoptimizeIf)
+#109:LoadField[MapInstanceType, tagged base, 8, Range(0, 65535), kRepWord16|kTypeUint32, NoWriteBarrier, mutable](#108:LoadField)(#108:LoadField)(#107:DeoptimizeIf)
+#110:Int32Constant[128]()()()
+#111:Uint32LessThan(#109:LoadField, #110:Int32Constant)()()
+#112:DeoptimizeUnless[NotAString, FeedbackSource(INVALID)](#111:Uint32LessThan, #28:FrameState)(#109:LoadField)(#107:DeoptimizeIf)
+#113:LoadField[StringLength, tagged base, 8, Range(0, 536870888), kRepWord32|kTypeUint32, NoWriteBarrier, mutable](#24:Call)(#112:DeoptimizeUnless)(#112:DeoptimizeUnless)
+#83:Int32Constant[3]()()()
+#68:Int32Add(#113:LoadField, #83:Int32Constant)()()  [Type: Range(3, 536870891)]
+#85:Int32Constant[536870889]()()()
+#114:Uint32LessThan(#68:Int32Add, #85:Int32Constant)()()
+#115:DeoptimizeUnless[OutOfBounds, FeedbackSource(INVALID)](#114:Uint32LessThan, #28:FrameState)(#113:LoadField)(#112:DeoptimizeUnless)
+#119:Call[Code:StringAdd_CheckNone Descriptor:r1s0i4f0](#118:HeapConstant, #24:Call, #14:HeapConstant, #48:NumberConstant)(#115:DeoptimizeUnless)()
+#35:FrameState[UNOPTIMIZED_FRAME, 25, PokeAt(0), 0x20610019b361 <SharedFunctionInfo opt>](#9:TypedStateValues, #27:TypedStateValues, #78:TypedStateValues, #4:Parameter, #53:HeapConstant)()()  [Type: Internal]
+#34:Call[Code:ShiftLeft Descriptor:r1s0i4f1](#102:HeapConstant, #119:Call, #24:Call, #6:HeapConstant, #35:FrameState)(#119:Call)(#115:DeoptimizeUnless)  [Type: Number]
+#57:Return(#89:Int32Constant, #24:Call)(#34:Call)(#34:Call)
+#50:End()()(#57:Return)
