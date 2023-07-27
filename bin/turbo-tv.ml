@@ -120,6 +120,6 @@ let main () =
           "Result: Not target\nReason: invalid graph(node not found)"
     | Err.InvalidBracketArgs _ ->
         Printf.printf "Result: Not target\nReason: invalid graph(bracket args)"
-  else failwith "must give option '--verify' or '--check-ub' or --check-wasm"
+  else failwith "must give option '--verify' or '--check-ub' or --print-query"
 
 let () = main ()
