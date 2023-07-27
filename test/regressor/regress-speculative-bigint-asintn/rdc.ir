@@ -1,0 +1,74 @@
+#40:NumberConstant[0]()()()  [Type: Range(0, 0)]
+#25:HeapConstant[0x02470019a7d5 <BigInt + 771611400>]()()()  [Type: HeapConstant(0x55fa325e9cf0 {0x02470019a7d5 <BigInt + 771611400>})]
+#46:HeapConstant[0x024700186179 <JSFunction BigInt (sfi = 0x24700153811)>]()()()  [Type: HeapConstant(0x55fa325ea240 {0x024700186179 <JSFunction BigInt (sfi = 0x24700153811)>})]
+#0:Start()()()  [Type: Internal]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#10:StateValues[dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#11:StateValues[sparse:......]()()()  [Type: Internal]
+#12:HeapConstant[0x0247000028c1 <Odd Oddball: optimized_out>]()()()  [Type: HeapConstant(0x55fa325eb188 {0x0247000028c1 <Odd Oddball: optimized_out>})]
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#45:HeapConstant[0x02470019a729 <JSFunction opt (sfi = 0x2470019a4b1)>]()()()  [Type: HeapConstant(0x55fa325e9a98 {0x02470019a729 <JSFunction opt (sfi = 0x2470019a4b1)>})]
+#16:FrameState[UNOPTIMIZED_FRAME, 0, Ignore, 0x02470019a4b1 <SharedFunctionInfo opt>](#10:StateValues, #11:StateValues, #12:HeapConstant, #5:Parameter, #45:HeapConstant)()()  [Type: Internal]
+#7:HeapConstant[0x024700183bc1 <NativeContext[273]>]()()()  [Type: HeapConstant(0x55fa325e9a88 {0x024700183bc1 <NativeContext[273]>})]
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x02470019a4b1 <SharedFunctionInfo opt>](#10:StateValues, #11:StateValues, #12:HeapConstant, #5:Parameter, #45:HeapConstant)()()  [Type: Internal]
+#9:JSStackCheck[JSFunctionEntry]()(#0:Start)(#0:Start)
+#15:Checkpoint()(#9:JSStackCheck)(#9:JSStackCheck)
+#47:LoadField[JSObjectPropertiesOrHashKnownPointer, tagged base, 4, Any, kRepTaggedPointer|kTypeAny, PointerWriteBarrier, mutable](#46:HeapConstant)(#15:Checkpoint)(#9:JSStackCheck)  [Type: Any]
+#48:LoadField[BuildLoadDataField, tagged base, 16, NonInternal, kRepTagged|kTypeAny, FullWriteBarrier, mutable](#47:LoadField)(#47:LoadField)(#9:JSStackCheck)  [Type: NonInternal]
+#30:SpeculativeBigIntNegate[BigInt](#25:HeapConstant)(#48:LoadField)(#9:JSStackCheck)  [Type: BigInt]
+#49:HeapConstant[0x0247001861c9 <JSFunction asIntN (sfi = 0x247001537ed)>]()()()  [Type: HeapConstant(0x55fa325e9d60 {0x0247001861c9 <JSFunction asIntN (sfi = 0x247001537ed)>})]
+#50:ReferenceEqual(#48:LoadField, #49:HeapConstant)()()  [Type: Boolean]
+#51:CheckIf[WrongCallTarget, FeedbackSource(INVALID)](#50:ReferenceEqual)(#30:SpeculativeBigIntNegate)(#9:JSStackCheck)
+#52:SpeculativeBigIntAsIntN[6, FeedbackSource(#5)](#30:SpeculativeBigIntNegate)(#51:CheckIf)(#9:JSStackCheck)  [Type: SignedBigInt64]
+#33:HeapConstant[0x02470019a7e5 <BigInt + 1834871197>]()()()  [Type: HeapConstant(0x55fa325ea068 {0x02470019a7e5 <BigInt + 1834871197>})]
+#35:StateValues[sparse:^.....](#52:SpeculativeBigIntAsIntN)()()  [Type: Internal]
+#36:FrameState[UNOPTIMIZED_FRAME, 26, Ignore, 0x02470019a4b1 <SharedFunctionInfo opt>](#10:StateValues, #35:StateValues, #33:HeapConstant, #5:Parameter, #45:HeapConstant)()()  [Type: Internal]
+#34:Checkpoint()(#52:SpeculativeBigIntAsIntN)(#9:JSStackCheck)
+#37:SpeculativeBigIntNegate[BigInt](#33:HeapConstant)(#34:Checkpoint)(#9:JSStackCheck)  [Type: BigInt]
+#38:SpeculativeBigIntBitwiseAnd[BigInt64](#37:SpeculativeBigIntNegate, #52:SpeculativeBigIntAsIntN)(#37:SpeculativeBigIntNegate)(#9:JSStackCheck)  [Type: BigInt]
+#39:SpeculativeBigIntBitwiseOr[BigInt64](#52:SpeculativeBigIntAsIntN, #38:SpeculativeBigIntBitwiseAnd)(#38:SpeculativeBigIntBitwiseAnd)(#9:JSStackCheck)  [Type: BigInt]
+#41:Return(#40:NumberConstant, #39:SpeculativeBigIntBitwiseOr)(#39:SpeculativeBigIntBitwiseOr)(#9:JSStackCheck)
+#42:End()()(#41:Return)
+- Simplified Lowering
+#68:Int32Constant[0]()()()
+#59:Int64Constant[0]()()()
+#61:Int64Constant[771611400]()()()
+#30:Int64Sub(#59:Int64Constant, #61:Int64Constant)()()  [Type: BigInt]
+#62:Int64Constant[58]()()()
+#63:Word64Shl(#30:Int64Sub, #62:Int64Constant)()()
+#64:Word64Sar[Normal](#63:Word64Shl, #62:Int64Constant)()()
+#33:HeapConstant[0x02470019a7e5 <BigInt + 1834871197>]()()()  [Type: HeapConstant(0x55fa325ea068 {0x02470019a7e5 <BigInt + 1834871197>})]
+#37:BigIntNegate(#33:HeapConstant)()()  [Type: BigInt]
+#0:Start()()()  [Type: Internal]
+#1:Parameter[0, debug name: %this](#0:Start)()()  [Type: Receiver]
+#2:Parameter[1](#0:Start)()()  [Type: NonInternal]
+#3:Parameter[2](#0:Start)()()  [Type: NonInternal]
+#10:TypedStateValues[kRepTagged|kTypeAny, kRepTagged|kTypeAny, kRepTagged|kTypeAny, dense](#1:Parameter, #2:Parameter, #3:Parameter)()()  [Type: Internal]
+#35:TypedStateValues[kRepWord64|kTypeSignedBigInt64, sparse:^.....](#64:Word64Sar)()()  [Type: Internal]
+#65:TypedStateValues[kRepTagged|kTypeAny, dense](#33:HeapConstant)()()
+#5:Parameter[5, debug name: %context](#0:Start)()()  [Type: OtherInternal]
+#45:HeapConstant[0x02470019a729 <JSFunction opt (sfi = 0x2470019a4b1)>]()()()  [Type: HeapConstant(0x55fa325e9a98 {0x02470019a729 <JSFunction opt (sfi = 0x2470019a4b1)>})]
+#36:FrameState[UNOPTIMIZED_FRAME, 26, Ignore, 0x02470019a4b1 <SharedFunctionInfo opt>](#10:TypedStateValues, #35:TypedStateValues, #65:TypedStateValues, #5:Parameter, #45:HeapConstant)()()  [Type: Internal]
+#46:HeapConstant[0x024700186179 <JSFunction BigInt (sfi = 0x24700153811)>]()()()  [Type: HeapConstant(0x55fa325ea240 {0x024700186179 <JSFunction BigInt (sfi = 0x24700153811)>})]
+#11:TypedStateValues[, sparse:......]()()()  [Type: Internal]
+#60:TypedStateValues[, sparse:.]()()()
+#16:FrameState[UNOPTIMIZED_FRAME, 0, Ignore, 0x02470019a4b1 <SharedFunctionInfo opt>](#10:TypedStateValues, #11:TypedStateValues, #60:TypedStateValues, #5:Parameter, #45:HeapConstant)()()  [Type: Internal]
+#7:HeapConstant[0x024700183bc1 <NativeContext[273]>]()()()  [Type: HeapConstant(0x55fa325e9a88 {0x024700183bc1 <NativeContext[273]>})]
+#14:FrameState[UNOPTIMIZED_FRAME, -1, Ignore, 0x02470019a4b1 <SharedFunctionInfo opt>](#10:TypedStateValues, #11:TypedStateValues, #60:TypedStateValues, #5:Parameter, #45:HeapConstant)()()  [Type: Internal]
+#9:JSStackCheck[JSFunctionEntry]()(#0:Start)(#0:Start)
+#15:Checkpoint()(#9:JSStackCheck)(#9:JSStackCheck)
+#47:LoadField[JSObjectPropertiesOrHashKnownPointer, tagged base, 4, Any, kRepTaggedPointer|kTypeAny, PointerWriteBarrier, mutable](#46:HeapConstant)(#15:Checkpoint)(#9:JSStackCheck)  [Type: Any]
+#48:LoadField[BuildLoadDataField, tagged base, 16, NonInternal, kRepTagged|kTypeAny, FullWriteBarrier, mutable](#47:LoadField)(#47:LoadField)(#9:JSStackCheck)  [Type: NonInternal]
+#49:HeapConstant[0x0247001861c9 <JSFunction asIntN (sfi = 0x247001537ed)>]()()()  [Type: HeapConstant(0x55fa325e9d60 {0x0247001861c9 <JSFunction asIntN (sfi = 0x247001537ed)>})]
+#50:Word32Equal(#48:LoadField, #49:HeapConstant)()()  [Type: Boolean]
+#51:CheckIf[WrongCallTarget, FeedbackSource(INVALID)](#50:Word32Equal)(#48:LoadField)(#9:JSStackCheck)
+#34:Checkpoint()(#51:CheckIf)(#9:JSStackCheck)
+#66:CheckedBigIntToBigInt64[FeedbackSource(INVALID)](#37:BigIntNegate)(#34:Checkpoint)(#9:JSStackCheck)
+#67:TruncateBigIntToWord64(#66:CheckedBigIntToBigInt64)()()
+#38:Word64And(#67:TruncateBigIntToWord64, #64:Word64Sar)()()  [Type: BigInt]
+#39:Word64Or(#64:Word64Sar, #38:Word64And)()()  [Type: BigInt]
+#69:ChangeInt64ToBigInt(#39:Word64Or)()()
+#41:Return(#68:Int32Constant, #69:ChangeInt64ToBigInt)(#66:CheckedBigIntToBigInt64)(#9:JSStackCheck)
+#42:End()()(#41:Return)
