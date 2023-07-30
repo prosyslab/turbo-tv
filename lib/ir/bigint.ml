@@ -131,19 +131,24 @@ let to_int64 t =
 let as_intN n t =
   if n = 0 then zero
   else
-    let bits = BitVec.extract (n - 1) 0 t.value in
+    let bits =
+      Bool.ite (BitVec.eqb t.sign pos_sign) t.value (t.value |> BitVec.neg)
+      |> BitVec.extract (n - 1) 0
+    in
     let sign = BitVec.extract (n - 1) (n - 1) bits in
     let value =
       Bool.ite (BitVec.eqb sign pos_sign) bits (bits |> BitVec.neg)
       |> BitVec.zero_extend (digit_length - n)
     in
-    create (BitVec.xor sign t.sign) value
+    create sign value
 
 let as_uintN n t =
   if n = 0 then zero
   else
     let value =
-      BitVec.extract (n - 1) 0 t.value |> BitVec.zero_extend (digit_length - n)
+      Bool.ite (BitVec.eqb t.sign pos_sign) t.value (t.value |> BitVec.neg)
+      |> BitVec.extract (n - 1) 0
+      |> BitVec.zero_extend (digit_length - n)
     in
     create pos_sign value
 
