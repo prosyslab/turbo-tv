@@ -17,7 +17,7 @@ and discovered a new miscompilation in LLVM.
 ## Publications
 
 * **Translation Validation for JIT Compiler in the V8 JavaScript Engine** <a href="https://prosys.kaist.ac.kr/publications/icse24.pdf"><i class="fas fa-file-pdf"></i></a><br>
-  Seungwan Kwon, Jaeseong Kwon, Wooseok Kang, Juneyoung Lee, and [Kihong Heo](https://kihongheo.kaist.ac.kr)<br>
+  Seungwan Kwon, [Jaeseong Kwon](https://doitman.kr), Wooseok Kang, [Juneyoung Lee](https://aqjune.github.io), and [Kihong Heo](https://kihongheo.kaist.ac.kr)<br>
   ICSE 2024: International Conference on Software Engineering, 2024
 
 ## Artifacts
