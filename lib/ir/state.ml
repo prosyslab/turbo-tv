@@ -3,6 +3,12 @@ open ValueOperator
 module DeoptFile = ExprMap.Make (Deopt)
 module UBFile = ExprMap.Make (Ub)
 
+module Stage = struct
+  type t = Src | Tgt | Pgm
+
+  let string_of t = match t with Src -> "src" | Tgt -> "tgt" | Pgm -> "pgm"
+end
+
 module Params = struct
   module Param = struct
     type t = BitVec.t
@@ -97,6 +103,7 @@ let install_constants state =
   { state with memory = mem; register_file = rf }
 
 let init nparams ?check_type stage : t =
+  let stage = Stage.string_of stage in
   {
     stage;
     pc = 0;

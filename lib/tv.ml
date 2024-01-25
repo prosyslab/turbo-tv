@@ -1,3 +1,4 @@
+module Stage = State.Stage
 module Params = State.Params
 module OpcodeSet = State.OpcodeSet
 module Objects = Memory.Objects
@@ -57,7 +58,7 @@ let precondition_for_params nparams state =
   |> Bool.ands
 
 let check_ub ?(nparams = 2) check_type program =
-  let state = Encoder.encode_pgr "pgm" program ~check_type nparams in
+  let state = Encoder.encode_pgr Stage.Pgm program ~check_type nparams in
   let precond =
     (* precondition_for_params /\ not deopt(pgm) *)
     Bool.ands [ state |> precondition_for_params nparams; Bool.not state.deopt ]
@@ -88,19 +89,18 @@ let check_ub ?(nparams = 2) check_type program =
           (State.memory state) (State.params state);
         Printer.print_counter_example program state model
     | UNSATISFIABLE -> Printf.printf "Result: Not Possible\n"
-    | UNKNOWN ->
+    | UNKNOWN -> (
         let reason = Z3.Solver.get_reason_unknown validator in
-        if String.equal "timeout" reason then Printf.printf "Result: Timeout\n"
-        else if
-          String.equal "max. memory exceeded" reason
-          || String.equal
-               "smt tactic failed to show goal to be sat/unsat memout" reason
-        then Printf.printf "Result: Not target\n"
-        else Printf.printf "Result: Unknown\nReason: %s" reason
+        match reason with
+        | "timeout" -> Printf.printf "Result: Timeout\n"
+        | "max. memory exceeded"
+        | "smt tactic failed to show goal to be sat/unsat memout" ->
+            Printf.printf "Result: Not target\n"
+        | _ -> Printf.printf "Result: Unknown\nReason: %s" reason)
 
 let check_eq ?(nparams = 2) src_program tgt_program =
-  let src_state = Encoder.encode_pgr "src" src_program nparams in
-  let tgt_state = Encoder.encode_pgr "tgt" tgt_program nparams in
+  let src_state = Encoder.encode_pgr Stage.Src src_program nparams in
+  let tgt_state = Encoder.encode_pgr Stage.Tgt tgt_program nparams in
   let precond =
     (* precondition_for_params /\ not (deopt(src) \/ deopt(pgm)) *)
     let no_deopt =
@@ -180,18 +180,19 @@ let check_eq ?(nparams = 2) src_program tgt_program =
         Printer.print_counter_example src_program src_state model;
         Printer.print_counter_example tgt_program tgt_state model
     | UNSATISFIABLE -> Printf.printf "Result: Verified\n"
-    | UNKNOWN ->
+    | UNKNOWN -> (
         let reason = Z3.Solver.get_reason_unknown validator in
-        if String.equal "timeout" reason then Printf.printf "Result: Timeout\n"
-        else if
-          String.equal "max. memory exceeded" reason
-          || String.equal
-               "smt tactic failed to show goal to be sat/unsat memout" reason
-        then Printf.printf "Result: Not target\n"
-        else Printf.printf "Result: Unknown\nReason: %s" reason
+        match reason with
+        | "timeout" -> Printf.printf "Result: Timeout\n"
+        | "max. memory exceeded"
+        | "smt tactic failed to show goal to be sat/unsat memout" ->
+            Printf.printf "Result: Not target\n"
+        | _ -> Printf.printf "Result: Unknown\nReason: %s" reason)
 
 let print_smt2_query ?(nparams = 2) program =
-  let final_state = Encoder.encode_pgr "pgm" program ~check_wasm:true nparams in
+  let final_state =
+    Encoder.encode_pgr Stage.Pgm program ~check_wasm:true nparams
+  in
   let precond =
     (* precondition_for_params /\ not (deopt(src) \/ deopt(pgm)) *)
     let no_deopt =

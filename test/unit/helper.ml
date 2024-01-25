@@ -6,7 +6,7 @@ include Common
 include ValueOperator
 include OUnit2
 
-let state = State.init 0 "test"
+let state = State.init 0 State.Stage.Pgm
 
 let solver = Z3utils.Solver.init None
 
