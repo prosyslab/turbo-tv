@@ -231,6 +231,12 @@ let start state = state |> State.update ~control:Bool.tr
 let finish_region pval state = state |> State.update ~value:pval
 
 (* temporary *)
+let js_call n_input fname state =
+  if fname = "startsWith" then
+    if n_input <= 3 then state |> State.update ~value:Value.tr ~control:Bool.tr
+    else failwith "not implemented"
+  else failwith "not implemented"
+
 let js_stack_check _eff control state = state |> State.update ~control
 
 let call fname n_return args control state =

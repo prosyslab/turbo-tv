@@ -472,7 +472,7 @@ JSBitwiseAnd,
 JSBitwiseNot,
 JSBitwiseOr,
 JSBitwiseXor,
-JSCall,
+JSCall,b1,vv,c1
 JSCallForwardVarargs,
 JSCallRuntime,
 JSCallWithArrayLike,

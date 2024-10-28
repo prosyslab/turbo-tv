@@ -23,6 +23,7 @@ type kind =
   | B1V1V2E1C1
   | B1V1E1C1
   | V1V2C1
+  | B1VVC1
   | E1C1
   | V1V2B1C1
   | B1B2B4V1V2C1
@@ -58,7 +59,6 @@ type t =
   | ChangeTaggedToInt32
   | ChangeTaggedToInt64
   | ChangeTaggedToTaggedSigned
-  | ChangeTaggedToUint32
   | CheckClosure
   | CheckEqualsInternalizedString
   | CheckEqualsSymbol
@@ -369,7 +369,6 @@ type t =
   | JSBitwiseNot
   | JSBitwiseOr
   | JSBitwiseXor
-  | JSCall
   | JSCallForwardVarargs
   | JSCallRuntime
   | JSCallWithArrayLike
@@ -689,6 +688,7 @@ type t =
   | ChangeTaggedSignedToInt64
   | ChangeTaggedToBit
   | ChangeTaggedToFloat64
+  | ChangeTaggedToUint32
   | ChangeUint32ToFloat64
   | ChangeUint32ToTagged
   | ChangeUint32ToUint64
@@ -951,6 +951,8 @@ type t =
   | Int64SubWithOverflow
   | Uint32Div
   | Uint32Mod
+  (* b1vvc1 *)
+  | JSCall
   (* e1c1 *)
   | JSStackCheck
   | Unreachable
@@ -999,28 +1001,28 @@ let get_kind opcode =
   | ArgumentsLengthState | AssertType | BitcastInt32ToFloat32
   | BitcastTaggedToWordForTagAndSmiBits | BitcastWordToTaggedSigned
   | ChangeFloat64ToTaggedPointer | ChangeTaggedToInt32 | ChangeTaggedToInt64
-  | ChangeTaggedToTaggedSigned | ChangeTaggedToUint32 | CheckClosure
-  | CheckEqualsInternalizedString | CheckEqualsSymbol | CheckFloat64Hole
-  | CheckHeapObject | CheckInternalizedString | CheckNotTaggedHole | CheckNumber
-  | CheckReceiver | CheckReceiverOrNullOrUndefined | CheckSymbol
-  | CheckedFloat64ToInt64 | CheckedInt32Mod | CheckedInt32ToTaggedSigned
-  | CheckedInt64ToTaggedSigned | CheckedTaggedToArrayIndex
-  | CheckedTaggedToInt32 | CheckedUint32Mod | CheckedUint32ToTaggedSigned
-  | CheckedUint64ToInt32 | CheckedUint64ToTaggedSigned | Checkpoint | Comment
-  | CompareMaps | CompressedHeapConstant | ConvertReceiver
-  | ConvertTaggedHoleToUndefined | DateNow | Dead | DeadValue | DebugBreak
-  | DelayedStringConstant | DoubleArrayMax | DoubleArrayMin | EffectPhi
-  | EnterMachineGraph | ExitMachineGraph | F32x4Abs | F32x4Add | F32x4Ceil
-  | F32x4DemoteF64x2Zero | F32x4Div | F32x4Eq | F32x4ExtractLane | F32x4Floor
-  | F32x4Ge | F32x4Gt | F32x4Le | F32x4Lt | F32x4Max | F32x4Min | F32x4Mul
-  | F32x4Ne | F32x4NearestInt | F32x4Neg | F32x4Pmax | F32x4Pmin | F32x4Qfma
-  | F32x4Qfms | F32x4RecipApprox | F32x4RecipSqrtApprox | F32x4RelaxedMax
-  | F32x4RelaxedMin | F32x4ReplaceLane | F32x4SConvertI32x4 | F32x4Splat
-  | F32x4Sqrt | F32x4Sub | F32x4Trunc | F32x4UConvertI32x4 | F64x2Abs | F64x2Add
-  | F64x2Ceil | F64x2ConvertLowI32x4S | F64x2ConvertLowI32x4U | F64x2Div
-  | F64x2Eq | F64x2ExtractLane | F64x2Floor | F64x2Le | F64x2Lt | F64x2Max
-  | F64x2Min | F64x2Mul | F64x2Ne | F64x2NearestInt | F64x2Neg | F64x2Pmax
-  | F64x2Pmin | F64x2PromoteLowF32x4 | F64x2Qfma | F64x2Qfms | F64x2RelaxedMax
+  | ChangeTaggedToTaggedSigned | CheckClosure | CheckEqualsInternalizedString
+  | CheckEqualsSymbol | CheckFloat64Hole | CheckHeapObject
+  | CheckInternalizedString | CheckNotTaggedHole | CheckNumber | CheckReceiver
+  | CheckReceiverOrNullOrUndefined | CheckSymbol | CheckedFloat64ToInt64
+  | CheckedInt32Mod | CheckedInt32ToTaggedSigned | CheckedInt64ToTaggedSigned
+  | CheckedTaggedToArrayIndex | CheckedTaggedToInt32 | CheckedUint32Mod
+  | CheckedUint32ToTaggedSigned | CheckedUint64ToInt32
+  | CheckedUint64ToTaggedSigned | Checkpoint | Comment | CompareMaps
+  | CompressedHeapConstant | ConvertReceiver | ConvertTaggedHoleToUndefined
+  | DateNow | Dead | DeadValue | DebugBreak | DelayedStringConstant
+  | DoubleArrayMax | DoubleArrayMin | EffectPhi | EnterMachineGraph
+  | ExitMachineGraph | F32x4Abs | F32x4Add | F32x4Ceil | F32x4DemoteF64x2Zero
+  | F32x4Div | F32x4Eq | F32x4ExtractLane | F32x4Floor | F32x4Ge | F32x4Gt
+  | F32x4Le | F32x4Lt | F32x4Max | F32x4Min | F32x4Mul | F32x4Ne
+  | F32x4NearestInt | F32x4Neg | F32x4Pmax | F32x4Pmin | F32x4Qfma | F32x4Qfms
+  | F32x4RecipApprox | F32x4RecipSqrtApprox | F32x4RelaxedMax | F32x4RelaxedMin
+  | F32x4ReplaceLane | F32x4SConvertI32x4 | F32x4Splat | F32x4Sqrt | F32x4Sub
+  | F32x4Trunc | F32x4UConvertI32x4 | F64x2Abs | F64x2Add | F64x2Ceil
+  | F64x2ConvertLowI32x4S | F64x2ConvertLowI32x4U | F64x2Div | F64x2Eq
+  | F64x2ExtractLane | F64x2Floor | F64x2Le | F64x2Lt | F64x2Max | F64x2Min
+  | F64x2Mul | F64x2Ne | F64x2NearestInt | F64x2Neg | F64x2Pmax | F64x2Pmin
+  | F64x2PromoteLowF32x4 | F64x2Qfma | F64x2Qfms | F64x2RelaxedMax
   | F64x2RelaxedMin | F64x2ReplaceLane | F64x2Splat | F64x2Sqrt | F64x2Sub
   | F64x2Trunc | FastApiCall | FindOrderedHashMapEntry
   | FindOrderedHashMapEntryForInt32Key | FindOrderedHashSetEntry
@@ -1072,7 +1074,7 @@ let get_kind opcode =
   | InductionVariablePhi | InitializeImmutableInObject | Int32AbsWithOverflow
   | Int32PairAdd | Int32PairMul | Int32PairSub | Int64AbsWithOverflow | JSAdd
   | JSAsyncFunctionEnter | JSAsyncFunctionReject | JSAsyncFunctionResolve
-  | JSBitwiseAnd | JSBitwiseNot | JSBitwiseOr | JSBitwiseXor | JSCall
+  | JSBitwiseAnd | JSBitwiseNot | JSBitwiseOr | JSBitwiseXor
   | JSCallForwardVarargs | JSCallRuntime | JSCallWithArrayLike
   | JSCallWithSpread | JSCloneObject | JSConstruct | JSConstructForwardVarargs
   | JSConstructWithArrayLike | JSConstructWithSpread | JSCreate
@@ -1162,12 +1164,13 @@ let get_kind opcode =
   | ChangeInt32ToFloat64 | ChangeInt32ToInt64 | ChangeInt32ToTagged
   | ChangeInt64ToBigInt | ChangeInt64ToFloat64 | ChangeInt64ToTagged
   | ChangeTaggedSignedToInt32 | ChangeTaggedSignedToInt64 | ChangeTaggedToBit
-  | ChangeTaggedToFloat64 | ChangeUint32ToFloat64 | ChangeUint32ToTagged
-  | ChangeUint32ToUint64 | ChangeUint64ToBigInt | ChangeUint64ToTagged
-  | CheckedTaggedSignedToInt32 | Float32Abs | Float32Neg | Float32RoundTruncate
-  | Float64Abs | Float64Asin | Float64Asinh | Float64ExtractHighWord32
-  | Float64Neg | Float64RoundDown | Float64RoundTiesAway | Float64RoundTiesEven
-  | Float64RoundTruncate | Float64RoundUp | Float64SilenceNaN | Float64Sin
+  | ChangeTaggedToFloat64 | ChangeTaggedToUint32 | ChangeUint32ToFloat64
+  | ChangeUint32ToTagged | ChangeUint32ToUint64 | ChangeUint64ToBigInt
+  | ChangeUint64ToTagged | CheckedTaggedSignedToInt32 | Float32Abs | Float32Neg
+  | Float32RoundTruncate | Float64Abs | Float64Asin | Float64Asinh
+  | Float64ExtractHighWord32 | Float64Neg | Float64RoundDown
+  | Float64RoundTiesAway | Float64RoundTiesEven | Float64RoundTruncate
+  | Float64RoundUp | Float64SilenceNaN | Float64Sin
   | Integral32OrMinusZeroToBigInt | NumberAbs | NumberCeil | NumberExpm1
   | NumberFloor | NumberIsInteger | NumberIsMinusZero | NumberIsNaN
   | NumberIsSafeInteger | NumberRound | NumberSign | NumberSin | NumberToBoolean
@@ -1246,6 +1249,7 @@ let get_kind opcode =
   | Int32SubWithOverflow | Int64AddWithOverflow | Int64Div | Int64Mod
   | Int64MulWithOverflow | Int64SubWithOverflow | Uint32Div | Uint32Mod ->
       V1V2C1
+  | JSCall -> B1VVC1
   | JSStackCheck | Unreachable -> E1C1
   | Load | LoadFromObject | ProtectedLoad -> V1V2B1C1
   | LoadElement -> B1B2B4V1V2C1
@@ -1286,6 +1290,7 @@ let split_kind kind =
   | B1V1V2E1C1 -> [ B1; V1; V2; E1; C1 ]
   | B1V1E1C1 -> [ B1; V1; E1; C1 ]
   | V1V2C1 -> [ V1; V2; C1 ]
+  | B1VVC1 -> [ B1; VV; C1 ]
   | E1C1 -> [ E1; C1 ]
   | V1V2B1C1 -> [ V1; V2; B1; C1 ]
   | B1B2B4V1V2C1 -> [ B1; B2; B4; V1; V2; C1 ]
@@ -1323,7 +1328,6 @@ let of_str str =
   | "ChangeTaggedToInt32" -> ChangeTaggedToInt32
   | "ChangeTaggedToInt64" -> ChangeTaggedToInt64
   | "ChangeTaggedToTaggedSigned" -> ChangeTaggedToTaggedSigned
-  | "ChangeTaggedToUint32" -> ChangeTaggedToUint32
   | "CheckClosure" -> CheckClosure
   | "CheckEqualsInternalizedString" -> CheckEqualsInternalizedString
   | "CheckEqualsSymbol" -> CheckEqualsSymbol
@@ -1634,7 +1638,6 @@ let of_str str =
   | "JSBitwiseNot" -> JSBitwiseNot
   | "JSBitwiseOr" -> JSBitwiseOr
   | "JSBitwiseXor" -> JSBitwiseXor
-  | "JSCall" -> JSCall
   | "JSCallForwardVarargs" -> JSCallForwardVarargs
   | "JSCallRuntime" -> JSCallRuntime
   | "JSCallWithArrayLike" -> JSCallWithArrayLike
@@ -1953,6 +1956,7 @@ let of_str str =
   | "ChangeTaggedSignedToInt64" -> ChangeTaggedSignedToInt64
   | "ChangeTaggedToBit" -> ChangeTaggedToBit
   | "ChangeTaggedToFloat64" -> ChangeTaggedToFloat64
+  | "ChangeTaggedToUint32" -> ChangeTaggedToUint32
   | "ChangeUint32ToFloat64" -> ChangeUint32ToFloat64
   | "ChangeUint32ToTagged" -> ChangeUint32ToTagged
   | "ChangeUint32ToUint64" -> ChangeUint32ToUint64
@@ -2200,6 +2204,7 @@ let of_str str =
   | "Int64SubWithOverflow" -> Int64SubWithOverflow
   | "Uint32Div" -> Uint32Div
   | "Uint32Mod" -> Uint32Mod
+  | "JSCall" -> JSCall
   | "JSStackCheck" -> JSStackCheck
   | "Unreachable" -> Unreachable
   | "Load" -> Load
@@ -2241,7 +2246,6 @@ let to_str opcode =
   | ChangeTaggedToInt32 -> "ChangeTaggedToInt32"
   | ChangeTaggedToInt64 -> "ChangeTaggedToInt64"
   | ChangeTaggedToTaggedSigned -> "ChangeTaggedToTaggedSigned"
-  | ChangeTaggedToUint32 -> "ChangeTaggedToUint32"
   | CheckClosure -> "CheckClosure"
   | CheckEqualsInternalizedString -> "CheckEqualsInternalizedString"
   | CheckEqualsSymbol -> "CheckEqualsSymbol"
@@ -2552,7 +2556,6 @@ let to_str opcode =
   | JSBitwiseNot -> "JSBitwiseNot"
   | JSBitwiseOr -> "JSBitwiseOr"
   | JSBitwiseXor -> "JSBitwiseXor"
-  | JSCall -> "JSCall"
   | JSCallForwardVarargs -> "JSCallForwardVarargs"
   | JSCallRuntime -> "JSCallRuntime"
   | JSCallWithArrayLike -> "JSCallWithArrayLike"
@@ -2871,6 +2874,7 @@ let to_str opcode =
   | ChangeTaggedSignedToInt64 -> "ChangeTaggedSignedToInt64"
   | ChangeTaggedToBit -> "ChangeTaggedToBit"
   | ChangeTaggedToFloat64 -> "ChangeTaggedToFloat64"
+  | ChangeTaggedToUint32 -> "ChangeTaggedToUint32"
   | ChangeUint32ToFloat64 -> "ChangeUint32ToFloat64"
   | ChangeUint32ToTagged -> "ChangeUint32ToTagged"
   | ChangeUint32ToUint64 -> "ChangeUint32ToUint64"
@@ -3118,6 +3122,7 @@ let to_str opcode =
   | Int64SubWithOverflow -> "Int64SubWithOverflow"
   | Uint32Div -> "Uint32Div"
   | Uint32Mod -> "Uint32Mod"
+  | JSCall -> "JSCall"
   | JSStackCheck -> "JSStackCheck"
   | Unreachable -> "Unreachable"
   | Load -> "Load"

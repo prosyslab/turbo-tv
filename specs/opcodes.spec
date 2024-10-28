@@ -54,7 +54,7 @@ ChangeTaggedToFloat64,v1
 ChangeTaggedToInt32,
 ChangeTaggedToInt64,
 ChangeTaggedToTaggedSigned,
-ChangeTaggedToUint32,
+ChangeTaggedToUint32,v1
 ChangeUint32ToFloat64,v1
 ChangeUint32ToTagged,v1
 ChangeUint32ToUint64,v1
@@ -472,7 +472,7 @@ JSBitwiseAnd,
 JSBitwiseNot,
 JSBitwiseOr,
 JSBitwiseXor,
-JSCall,
+JSCall,b1,vv,c1
 JSCallForwardVarargs,
 JSCallRuntime,
 JSCallWithArrayLike,

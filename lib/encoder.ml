@@ -415,6 +415,20 @@ let encode_instr program ?(check_wasm = false)
       let pval = RegisterFile.find pid rf in
       finish_region pval
   (* JS: comparision *)
+  | JSCall ->
+      let n_input = Operands.const_of_nth operands 0 |> int_of_string in
+      let fname_id = Operands.id_of_nth operands 3 |> int_of_string in
+      let fname =
+        let re = Re.Pcre.regexp "JSFunction ([a-zA-Z0-9_]+)" in
+        Re.Group.get
+          (Re.Pcre.exec ~rex:re
+             (Operands.const_of_nth
+                (program |> IR.find_by_id fname_id |> IR.Node.instr
+               |> Instr.operands)
+                0))
+          1
+      in
+      js_call n_input fname
   | JSStackCheck ->
       let _eid = Operands.id_of_nth operands 0 in
       let cid = Operands.id_of_nth operands 1 in
@@ -722,6 +736,10 @@ let encode_instr program ?(check_wasm = false)
   | ChangeTaggedToFloat64 -> encode_v1 change_tagged_to_float64
   | ChangeTaggedSignedToInt32 -> encode_v1 change_tagged_signed_to_int32
   | ChangeTaggedSignedToInt64 -> encode_v1 change_tagged_signed_to_int64
+  | ChangeTaggedToUint32 ->
+      let pid = Operands.id_of_nth operands 0 in
+      let pval = RegisterFile.find pid rf in
+      change_tagged_to_uint32 pval
   | ChangeUint32ToTagged ->
       let pid = Operands.id_of_nth operands 0 in
       let pval = RegisterFile.find pid rf in

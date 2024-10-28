@@ -901,6 +901,12 @@ let change_tagged_signed_to_int64 pval state =
   let value = TaggedSigned.to_int64 pval in
   state |> State.update ~value
 
+let change_tagged_to_uint32 pval state =
+  let value =
+    Bool.ite (Value.has_type Type.float64 pval) (Float64.to_uint32 pval) pval
+  in
+  state |> State.update ~value
+
 let change_uint32_to_tagged pval state =
   let is_in_smi_range = Uint32.is_in_smi_range pval in
   let smi = Uint32.to_tagged_signed pval in
